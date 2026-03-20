@@ -24,7 +24,7 @@ import { Input } from "./components/ui/input";
 import { Badge } from "./components/ui/badge";
 import { Avatar, AvatarFallback } from "./components/ui/avatar";
 
-const API_BASE = "https://saraswati-tutorial1-2.onrender.com";
+const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
 
 const categories = [
   { name: "Academic Tutors", icon: GraduationCap },
