@@ -6,6 +6,7 @@ import mongoose from "mongoose";
 import tutorRoutes from "./routes/tutorRoutes.js";
 import bookingRoutes from "./routes/bookingRoutes.js";
 import enquiryRoutes from "./routes/enquiryRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
 
 dotenv.config();
 
@@ -13,6 +14,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
+app.use("/api/auth", authRoutes);
 app.use(express.json());
 
 app.get("/", (req, res) => {

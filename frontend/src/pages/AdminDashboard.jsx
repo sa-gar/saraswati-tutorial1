@@ -1,9 +1,17 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
 
 export default function AdminDashboard() {
   const [enquiries, setEnquiries] = useState([]);
+  const navigate = useNavigate();
+
+function handleLogout() {
+  localStorage.removeItem("adminToken");
+  localStorage.removeItem("adminEmail");
+  navigate("/admin-login");
+}
   const [bookings, setBookings] = useState([]);
   const [tutors, setTutors] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -58,6 +66,12 @@ export default function AdminDashboard() {
           className="bg-black text-white px-4 py-2 rounded-xl"
         >
           Refresh
+        </button>
+        <button
+          onClick={handleLogout}
+          className="bg-red-500 text-white px-4 py-2 rounded-xl"
+        >
+          Logout
         </button>
       </div>
 
