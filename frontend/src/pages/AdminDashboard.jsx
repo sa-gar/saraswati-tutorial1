@@ -19,6 +19,17 @@ export default function AdminDashboard() {
     price: "",
     about: "",
   });
+  const [showAddForm, setShowAddForm] = useState(false);
+
+const [newTutor, setNewTutor] = useState({
+  name: "",
+  subject: "",
+  qualification: "",
+  location: "",
+  experience: "",
+  price: "",
+  about: "",
+});
 
   const navigate = useNavigate();
 
@@ -96,7 +107,33 @@ export default function AdminDashboard() {
     } else {
       alert("Failed to update tutor");
     }
+    
   };
+  const createTutor = async () => {
+  const res = await fetch(`${API_BASE}/tutors`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(newTutor),
+  });
+
+  if (res.ok) {
+    setShowAddForm(false);
+    setNewTutor({
+      name: "",
+      subject: "",
+      qualification: "",
+      location: "",
+      experience: "",
+      price: "",
+      about: "",
+    });
+    fetchData();
+  } else {
+    alert("Failed to add tutor");
+  }
+};
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-10">
@@ -115,6 +152,80 @@ export default function AdminDashboard() {
           >
             Logout
           </button>
+          <button
+  onClick={() => setShowAddForm(true)}
+  className="bg-green-600 text-white px-4 py-2 rounded-xl"
+>
+  + Add Tutor
+</button>
+{showAddForm && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl">
+      <h2 className="mb-4 text-2xl font-bold">Add Tutor</h2>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <input
+          className="rounded-xl border px-4 py-3"
+          placeholder="Name"
+          value={newTutor.name}
+          onChange={(e) => setNewTutor({ ...newTutor, name: e.target.value })}
+        />
+        <input
+          className="rounded-xl border px-4 py-3"
+          placeholder="Subject"
+          value={newTutor.subject}
+          onChange={(e) => setNewTutor({ ...newTutor, subject: e.target.value })}
+        />
+        <input
+          className="rounded-xl border px-4 py-3"
+          placeholder="Qualification"
+          value={newTutor.qualification}
+          onChange={(e) => setNewTutor({ ...newTutor, qualification: e.target.value })}
+        />
+        <input
+          className="rounded-xl border px-4 py-3"
+          placeholder="Location"
+          value={newTutor.location}
+          onChange={(e) => setNewTutor({ ...newTutor, location: e.target.value })}
+        />
+        <input
+          className="rounded-xl border px-4 py-3"
+          placeholder="Experience"
+          value={newTutor.experience}
+          onChange={(e) => setNewTutor({ ...newTutor, experience: e.target.value })}
+        />
+        <input
+          className="rounded-xl border px-4 py-3"
+          placeholder="Price"
+          value={newTutor.price}
+          onChange={(e) => setNewTutor({ ...newTutor, price: e.target.value })}
+        />
+      </div>
+
+      <textarea
+        className="mt-4 w-full rounded-xl border px-4 py-3"
+        placeholder="About"
+        value={newTutor.about}
+        onChange={(e) => setNewTutor({ ...newTutor, about: e.target.value })}
+      />
+
+      <div className="mt-6 flex gap-3">
+        <button
+          onClick={createTutor}
+          className="bg-black text-white px-5 py-3 rounded-xl"
+        >
+          Add Tutor
+        </button>
+        <button
+          onClick={() => setShowAddForm(false)}
+          className="border px-5 py-3 rounded-xl"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+)}
         </div>
       </div>
 
