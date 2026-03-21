@@ -6,87 +6,108 @@ export default function AdminDashboard() {
   const [enquiries, setEnquiries] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [tutors, setTutors] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // 🔄 Fetch all data
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [eRes, bRes, tRes] = await Promise.all([
+        fetch(`${API_BASE}/enquiries`),
+        fetch(`${API_BASE}/bookings`),
+        fetch(`${API_BASE}/tutors`)
+      ]);
+
+      const [eData, bData, tData] = await Promise.all([
+        eRes.json(),
+        bRes.json(),
+        tRes.json()
+      ]);
+
+      setEnquiries(eData);
+      setBookings(bData);
+      setTutors(tData);
+    } catch (err) {
+      console.error(err);
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
-    fetch(`${API_BASE}/enquiries`)
-      .then((res) => res.json())
-      .then((data) => setEnquiries(data))
-      .catch((err) => console.error(err));
-
-    fetch(`${API_BASE}/bookings`)
-      .then((res) => res.json())
-      .then((data) => setBookings(data))
-      .catch((err) => console.error(err));
-
-    fetch(`${API_BASE}/tutors`)
-      .then((res) => res.json())
-      .then((data) => setTutors(data))
-      .catch((err) => console.error(err));
+    fetchData();
   }, []);
+
+  // ❌ DELETE tutor
+  const deleteTutor = async (id) => {
+    if (!confirm("Delete this tutor?")) return;
+
+    await fetch(`${API_BASE}/tutors/${id}`, {
+      method: "DELETE",
+    });
+
+    fetchData(); // refresh
+  };
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-10">
-      <h1 className="mb-8 text-3xl font-bold text-slate-900">Admin Dashboard</h1>
+      
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+        <button
+          onClick={fetchData}
+          className="bg-black text-white px-4 py-2 rounded-xl"
+        >
+          Refresh
+        </button>
+      </div>
 
+      {loading && <p>Loading data...</p>}
+
+      {/* ENQUIRIES */}
       <section className="mb-10">
-        <h2 className="mb-4 text-2xl font-semibold text-slate-800">Enquiries</h2>
-        {enquiries.length === 0 ? (
-          <p className="text-slate-500">No enquiries yet.</p>
-        ) : (
-          <div className="space-y-4">
-            {enquiries.map((e) => (
-              <div key={e._id} className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
-                <p><b>Parent:</b> {e.parentName}</p>
-                <p><b>Student:</b> {e.studentName}</p>
-                <p><b>Phone:</b> {e.phone}</p>
-                <p><b>Email:</b> {e.email}</p>
-                <p><b>Subject:</b> {e.subjectNeeded}</p>
-                <p><b>Message:</b> {e.message}</p>
-              </div>
-            ))}
+        <h2 className="text-xl font-semibold mb-4">Enquiries</h2>
+        {enquiries.map((e) => (
+          <div key={e._id} className="bg-white p-4 rounded-xl shadow mb-3">
+            <p><b>{e.parentName}</b> → {e.studentName}</p>
+            <p>{e.phone} | {e.email}</p>
+            <p>{e.subjectNeeded}</p>
           </div>
-        )}
+        ))}
       </section>
 
+      {/* BOOKINGS */}
       <section className="mb-10">
-        <h2 className="mb-4 text-2xl font-semibold text-slate-800">Bookings</h2>
-        {bookings.length === 0 ? (
-          <p className="text-slate-500">No bookings yet.</p>
-        ) : (
-          <div className="space-y-4">
-            {bookings.map((b) => (
-              <div key={b._id} className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
-                <p><b>Tutor:</b> {b.tutorName}</p>
-                <p><b>Learner:</b> {b.learnerName}</p>
-                <p><b>Phone:</b> {b.phone}</p>
-                <p><b>Date:</b> {b.preferredDate}</p>
-                <p><b>Slot:</b> {b.preferredSlot}</p>
-                <p><b>Status:</b> {b.status}</p>
-                <p><b>Message:</b> {b.message}</p>
-              </div>
-            ))}
+        <h2 className="text-xl font-semibold mb-4">Bookings</h2>
+        {bookings.map((b) => (
+          <div key={b._id} className="bg-white p-4 rounded-xl shadow mb-3">
+            <p><b>{b.tutorName}</b></p>
+            <p>{b.learnerName} | {b.phone}</p>
+            <p>{b.preferredDate} - {b.preferredSlot}</p>
           </div>
-        )}
+        ))}
       </section>
 
+      {/* TUTORS */}
       <section>
-        <h2 className="mb-4 text-2xl font-semibold text-slate-800">Tutors</h2>
-        {tutors.length === 0 ? (
-          <p className="text-slate-500">No tutors yet.</p>
-        ) : (
-          <div className="space-y-4">
-            {tutors.map((t) => (
-              <div key={t._id} className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
-                <p><b>Name:</b> {t.name}</p>
-                <p><b>Subject:</b> {t.subject}</p>
-                <p><b>Qualification:</b> {t.qualification}</p>
-                <p><b>Location:</b> {t.location}</p>
-                <p><b>Experience:</b> {t.experience}</p>
-              </div>
-            ))}
+        <h2 className="text-xl font-semibold mb-4">Tutors</h2>
+        {tutors.map((t) => (
+          <div key={t._id} className="bg-white p-4 rounded-xl shadow mb-3 flex justify-between items-center">
+            <div>
+              <p className="font-semibold">{t.name}</p>
+              <p>{t.subject}</p>
+              <p className="text-sm text-gray-500">{t.location}</p>
+            </div>
+
+            <button
+              onClick={() => deleteTutor(t._id)}
+              className="bg-red-500 text-white px-3 py-1 rounded-lg"
+            >
+              Delete
+            </button>
           </div>
-        )}
+        ))}
       </section>
+
     </div>
   );
 }

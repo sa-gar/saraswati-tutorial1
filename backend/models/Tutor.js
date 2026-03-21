@@ -27,3 +27,12 @@ const tutorSchema = new mongoose.Schema(
 );
 
 export default mongoose.model("Tutor", tutorSchema);
+// DELETE tutor
+router.delete("/:id", async (req, res) => {
+  try {
+    await Tutor.findByIdAndDelete(req.params.id);
+    res.json({ message: "Tutor deleted" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
