@@ -139,6 +139,22 @@ const [newTutor, setNewTutor] = useState({
     <div className="mx-auto max-w-6xl px-6 py-10">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div className="bg-white p-5 rounded-xl shadow text-center">
+        <h3 className="text-sm text-gray-500">Total Tutors</h3>
+        <p className="text-2xl font-bold">{tutors.length}</p>
+      </div>
+
+      <div className="bg-white p-5 rounded-xl shadow text-center">
+        <h3 className="text-sm text-gray-500">Total Enquiries</h3>
+        <p className="text-2xl font-bold">{enquiries.length}</p>
+      </div>
+
+      <div className="bg-white p-5 rounded-xl shadow text-center">
+        <h3 className="text-sm text-gray-500">Total Bookings</h3>
+        <p className="text-2xl font-bold">{bookings.length}</p>
+      </div>
+    </div>
         <div className="flex gap-3">
           <button
             onClick={fetchData}
