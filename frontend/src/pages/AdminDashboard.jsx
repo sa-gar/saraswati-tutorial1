@@ -5,31 +5,42 @@ const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
 
 export default function AdminDashboard() {
   const [enquiries, setEnquiries] = useState([]);
-  const navigate = useNavigate();
-
-function handleLogout() {
-  localStorage.removeItem("adminToken");
-  localStorage.removeItem("adminEmail");
-  navigate("/admin-login");
-}
   const [bookings, setBookings] = useState([]);
   const [tutors, setTutors] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // 🔄 Fetch all data
+  const [editingTutor, setEditingTutor] = useState(null);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    subject: "",
+    qualification: "",
+    location: "",
+    experience: "",
+    price: "",
+    about: "",
+  });
+
+  const navigate = useNavigate();
+
+  function handleLogout() {
+    localStorage.removeItem("adminToken");
+    localStorage.removeItem("adminEmail");
+    navigate("/admin-login");
+  }
+
   const fetchData = async () => {
     setLoading(true);
     try {
       const [eRes, bRes, tRes] = await Promise.all([
         fetch(`${API_BASE}/enquiries`),
         fetch(`${API_BASE}/bookings`),
-        fetch(`${API_BASE}/tutors`)
+        fetch(`${API_BASE}/tutors`),
       ]);
 
       const [eData, bData, tData] = await Promise.all([
         eRes.json(),
         bRes.json(),
-        tRes.json()
+        tRes.json(),
       ]);
 
       setEnquiries(eData);
@@ -45,83 +56,205 @@ function handleLogout() {
     fetchData();
   }, []);
 
-  // ❌ DELETE tutor
   const deleteTutor = async (id) => {
-    if (!confirm("Delete this tutor?")) return;
+    if (!window.confirm("Delete this tutor?")) return;
 
     await fetch(`${API_BASE}/tutors/${id}`, {
       method: "DELETE",
     });
 
-    fetchData(); // refresh
+    fetchData();
+  };
+
+  const startEditTutor = (tutor) => {
+    setEditingTutor(tutor);
+    setEditForm({
+      name: tutor.name || "",
+      subject: tutor.subject || "",
+      qualification: tutor.qualification || "",
+      location: tutor.location || "",
+      experience: tutor.experience || "",
+      price: tutor.price || "",
+      about: tutor.about || "",
+    });
+  };
+
+  const saveTutorEdit = async () => {
+    if (!editingTutor) return;
+
+    const res = await fetch(`${API_BASE}/tutors/${editingTutor._id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(editForm),
+    });
+
+    if (res.ok) {
+      setEditingTutor(null);
+      fetchData();
+    } else {
+      alert("Failed to update tutor");
+    }
   };
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-10">
-      
-      <div className="flex justify-between items-center mb-6">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-        <button
-          onClick={fetchData}
-          className="bg-black text-white px-4 py-2 rounded-xl"
-        >
-          Refresh
-        </button>
-        <button
-          onClick={handleLogout}
-          className="bg-red-500 text-white px-4 py-2 rounded-xl"
-        >
-          Logout
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={fetchData}
+            className="rounded-xl bg-black px-4 py-2 text-white"
+          >
+            Refresh
+          </button>
+          <button
+            onClick={handleLogout}
+            className="rounded-xl border border-slate-300 px-4 py-2"
+          >
+            Logout
+          </button>
+        </div>
       </div>
 
       {loading && <p>Loading data...</p>}
 
-      {/* ENQUIRIES */}
       <section className="mb-10">
-        <h2 className="text-xl font-semibold mb-4">Enquiries</h2>
-        {enquiries.map((e) => (
-          <div key={e._id} className="bg-white p-4 rounded-xl shadow mb-3">
-            <p><b>{e.parentName}</b> → {e.studentName}</p>
-            <p>{e.phone} | {e.email}</p>
-            <p>{e.subjectNeeded}</p>
-          </div>
-        ))}
+        <h2 className="mb-4 text-xl font-semibold">Enquiries</h2>
+        {enquiries.length === 0 ? (
+          <p className="text-slate-500">No enquiries yet.</p>
+        ) : (
+          enquiries.map((e) => (
+            <div key={e._id} className="mb-3 rounded-xl bg-white p-4 shadow">
+              <p><b>{e.parentName}</b> → {e.studentName}</p>
+              <p>{e.phone} | {e.email}</p>
+              <p>{e.subjectNeeded}</p>
+              <p className="text-sm text-slate-500">{e.message}</p>
+            </div>
+          ))
+        )}
       </section>
 
-      {/* BOOKINGS */}
       <section className="mb-10">
-        <h2 className="text-xl font-semibold mb-4">Bookings</h2>
-        {bookings.map((b) => (
-          <div key={b._id} className="bg-white p-4 rounded-xl shadow mb-3">
-            <p><b>{b.tutorName}</b></p>
-            <p>{b.learnerName} | {b.phone}</p>
-            <p>{b.preferredDate} - {b.preferredSlot}</p>
-          </div>
-        ))}
+        <h2 className="mb-4 text-xl font-semibold">Bookings</h2>
+        {bookings.length === 0 ? (
+          <p className="text-slate-500">No bookings yet.</p>
+        ) : (
+          bookings.map((b) => (
+            <div key={b._id} className="mb-3 rounded-xl bg-white p-4 shadow">
+              <p><b>{b.tutorName}</b></p>
+              <p>{b.learnerName} | {b.phone}</p>
+              <p>{b.preferredDate} - {b.preferredSlot}</p>
+              <p className="text-sm text-slate-500">{b.message}</p>
+            </div>
+          ))
+        )}
       </section>
 
-      {/* TUTORS */}
       <section>
-        <h2 className="text-xl font-semibold mb-4">Tutors</h2>
-        {tutors.map((t) => (
-          <div key={t._id} className="bg-white p-4 rounded-xl shadow mb-3 flex justify-between items-center">
-            <div>
-              <p className="font-semibold">{t.name}</p>
-              <p>{t.subject}</p>
-              <p className="text-sm text-gray-500">{t.location}</p>
+        <h2 className="mb-4 text-xl font-semibold">Tutors</h2>
+        {tutors.length === 0 ? (
+          <p className="text-slate-500">No tutors yet.</p>
+        ) : (
+          tutors.map((t) => (
+            <div
+              key={t._id}
+              className="mb-3 flex flex-col justify-between gap-4 rounded-xl bg-white p-4 shadow md:flex-row md:items-center"
+            >
+              <div>
+                <p className="font-semibold">{t.name}</p>
+                <p>{t.subject}</p>
+                <p className="text-sm text-gray-500">{t.location}</p>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => startEditTutor(t)}
+                  className="rounded-lg bg-blue-600 px-3 py-1 text-white"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => deleteTutor(t._id)}
+                  className="rounded-lg bg-red-500 px-3 py-1 text-white"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </section>
+
+      {editingTutor && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl">
+            <h2 className="mb-4 text-2xl font-bold">Edit Tutor</h2>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <input
+                className="rounded-xl border border-slate-300 px-4 py-3"
+                placeholder="Name"
+                value={editForm.name}
+                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+              />
+              <input
+                className="rounded-xl border border-slate-300 px-4 py-3"
+                placeholder="Subject"
+                value={editForm.subject}
+                onChange={(e) => setEditForm({ ...editForm, subject: e.target.value })}
+              />
+              <input
+                className="rounded-xl border border-slate-300 px-4 py-3"
+                placeholder="Qualification"
+                value={editForm.qualification}
+                onChange={(e) => setEditForm({ ...editForm, qualification: e.target.value })}
+              />
+              <input
+                className="rounded-xl border border-slate-300 px-4 py-3"
+                placeholder="Location"
+                value={editForm.location}
+                onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
+              />
+              <input
+                className="rounded-xl border border-slate-300 px-4 py-3"
+                placeholder="Experience"
+                value={editForm.experience}
+                onChange={(e) => setEditForm({ ...editForm, experience: e.target.value })}
+              />
+              <input
+                className="rounded-xl border border-slate-300 px-4 py-3"
+                placeholder="Price"
+                value={editForm.price}
+                onChange={(e) => setEditForm({ ...editForm, price: e.target.value })}
+              />
             </div>
 
-            <button
-              onClick={() => deleteTutor(t._id)}
-              className="bg-red-500 text-white px-3 py-1 rounded-lg"
-            >
-              Delete
-            </button>
-          </div>
-        ))}
-      </section>
+            <textarea
+              className="mt-4 min-h-[120px] w-full rounded-xl border border-slate-300 px-4 py-3"
+              placeholder="About"
+              value={editForm.about}
+              onChange={(e) => setEditForm({ ...editForm, about: e.target.value })}
+            />
 
+            <div className="mt-6 flex gap-3">
+              <button
+                onClick={saveTutorEdit}
+                className="rounded-xl bg-black px-5 py-3 text-white"
+              >
+                Save Changes
+              </button>
+              <button
+                onClick={() => setEditingTutor(null)}
+                className="rounded-xl border border-slate-300 px-5 py-3"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
