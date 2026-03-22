@@ -80,11 +80,19 @@ function TutorCard({ tutor, onViewProfile, onBook }) {
         <CardContent className="p-6">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-4">
-              <Avatar className="h-14 w-14 rounded-2xl">
-                <AvatarFallback className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-sm font-semibold text-slate-800">
-                  {tutor.name?.split(" ").map((n) => n[0]).join("")}
-                </AvatarFallback>
-              </Avatar>
+              {tutor.photo ? (
+  <img
+    src={tutor.photo}
+    alt={tutor.name}
+    className="h-14 w-14 rounded-2xl object-cover"
+  />
+) : (
+  <Avatar className="h-14 w-14 rounded-2xl">
+    <AvatarFallback className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-sm font-semibold text-slate-800">
+      {tutor.name?.split(" ").map((n) => n[0]).join("")}
+    </AvatarFallback>
+  </Avatar>
+)}
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="text-lg font-semibold text-slate-900">{tutor.name}</h3>
@@ -369,11 +377,19 @@ export default function HomePage() {
         {selectedTutor ? (
           <div className="space-y-6">
             <div className="flex items-start gap-4">
-              <Avatar className="h-16 w-16 rounded-2xl">
-                <AvatarFallback className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-slate-800">
-                  {selectedTutor.name?.split(" ").map((n) => n[0]).join("")}
-                </AvatarFallback>
-              </Avatar>
+             {selectedTutor.photo ? (
+  <img
+    src={selectedTutor.photo}
+    alt={selectedTutor.name}
+    className="h-16 w-16 rounded-2xl object-cover"
+  />
+) : (
+  <Avatar className="h-16 w-16 rounded-2xl">
+    <AvatarFallback className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-slate-800">
+      {selectedTutor.name?.split(" ").map((n) => n[0]).join("")}
+    </AvatarFallback>
+  </Avatar>
+)}
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <h4 className="text-2xl font-semibold text-slate-900">{selectedTutor.name}</h4>

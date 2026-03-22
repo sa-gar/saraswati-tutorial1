@@ -10,15 +10,16 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
 
   const [editingTutor, setEditingTutor] = useState(null);
-  const [editForm, setEditForm] = useState({
-    name: "",
-    subject: "",
-    qualification: "",
-    location: "",
-    experience: "",
-    price: "",
-    about: "",
-  });
+const [editForm, setEditForm] = useState({
+  name: "",
+  subject: "",
+  qualification: "",
+  location: "",
+  experience: "",
+  price: "",
+  about: "",
+  photo: "",
+});
   const [showAddForm, setShowAddForm] = useState(false);
 
 const [newTutor, setNewTutor] = useState({
@@ -29,6 +30,7 @@ const [newTutor, setNewTutor] = useState({
   experience: "",
   price: "",
   about: "",
+  photo: "",
 });
 
   const navigate = useNavigate();
@@ -77,18 +79,19 @@ const [newTutor, setNewTutor] = useState({
     fetchData();
   };
 
-  const startEditTutor = (tutor) => {
-    setEditingTutor(tutor);
-    setEditForm({
-      name: tutor.name || "",
-      subject: tutor.subject || "",
-      qualification: tutor.qualification || "",
-      location: tutor.location || "",
-      experience: tutor.experience || "",
-      price: tutor.price || "",
-      about: tutor.about || "",
-    });
-  };
+ const startEditTutor = (tutor) => {
+  setEditingTutor(tutor);
+  setEditForm({
+    name: tutor.name || "",
+    subject: tutor.subject || "",
+    qualification: tutor.qualification || "",
+    location: tutor.location || "",
+    experience: tutor.experience || "",
+    price: tutor.price || "",
+    about: tutor.about || "",
+    photo: tutor.photo || "",
+  });
+};
 
   const saveTutorEdit = async () => {
     if (!editingTutor) return;
@@ -216,6 +219,12 @@ const [newTutor, setNewTutor] = useState({
           value={newTutor.price}
           onChange={(e) => setNewTutor({ ...newTutor, price: e.target.value })}
         />
+        <input
+  className="rounded-xl border px-4 py-3 md:col-span-2"
+  placeholder="Photo URL"
+  value={newTutor.photo}
+  onChange={(e) => setNewTutor({ ...newTutor, photo: e.target.value })}
+/>
       </div>
 
       <textarea
@@ -286,30 +295,44 @@ const [newTutor, setNewTutor] = useState({
         ) : (
           tutors.map((t) => (
             <div
-              key={t._id}
-              className="mb-3 flex flex-col justify-between gap-4 rounded-xl bg-white p-4 shadow md:flex-row md:items-center"
-            >
-              <div>
-                <p className="font-semibold">{t.name}</p>
-                <p>{t.subject}</p>
-                <p className="text-sm text-gray-500">{t.location}</p>
-              </div>
+  key={t._id}
+  className="mb-3 flex flex-col justify-between gap-4 rounded-xl bg-white p-4 shadow md:flex-row md:items-center"
+>
+  <div className="flex items-center gap-4">
+    {t.photo ? (
+      <img
+        src={t.photo}
+        alt={t.name}
+        className="h-16 w-16 rounded-xl object-cover"
+      />
+    ) : (
+      <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
+        No Image
+      </div>
+    )}
 
-              <div className="flex gap-2">
-                <button
-                  onClick={() => startEditTutor(t)}
-                  className="rounded-lg bg-blue-600 px-3 py-1 text-white"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => deleteTutor(t._id)}
-                  className="rounded-lg bg-red-500 px-3 py-1 text-white"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
+    <div>
+      <p className="font-semibold">{t.name}</p>
+      <p>{t.subject}</p>
+      <p className="text-sm text-gray-500">{t.location}</p>
+    </div>
+  </div>
+
+  <div className="flex gap-2">
+    <button
+      onClick={() => startEditTutor(t)}
+      className="rounded-lg bg-blue-600 px-3 py-1 text-white"
+    >
+      Edit
+    </button>
+    <button
+      onClick={() => deleteTutor(t._id)}
+      className="rounded-lg bg-red-500 px-3 py-1 text-white"
+    >
+      Delete
+    </button>
+  </div>
+</div>
           ))
         )}
       </section>
@@ -356,6 +379,12 @@ const [newTutor, setNewTutor] = useState({
                 value={editForm.price}
                 onChange={(e) => setEditForm({ ...editForm, price: e.target.value })}
               />
+              <input
+  className="rounded-xl border border-slate-300 px-4 py-3 md:col-span-2"
+  placeholder="Photo URL"
+  value={editForm.photo}
+  onChange={(e) => setEditForm({ ...editForm, photo: e.target.value })}
+/>
             </div>
 
             <textarea
