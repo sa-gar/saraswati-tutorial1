@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Link } from "react-router-dom";
 import {
   Search,
   Star,
@@ -21,6 +22,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
 import { Avatar, AvatarFallback } from "../components/ui/avatar";
+
 
 const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
 
@@ -272,6 +274,12 @@ export default function HomePage() {
           <p className="mt-5 max-w-xl text-lg leading-8 text-slate-600">
             Search tutors, compare profiles, and request a demo class in a few clicks.
           </p>
+          <Link
+  to="/parent-enquiry"
+  className="bg-black text-white px-6 py-3 rounded-xl"
+>
+  Book Free Demo
+</Link>
 
           <div className="mt-8 rounded-[28px] bg-white p-4 shadow-xl ring-1 ring-slate-200">
             <div className="grid gap-3 md:grid-cols-[1.2fr_1fr]">
@@ -348,29 +356,6 @@ export default function HomePage() {
             ))}
           </div>
         )}
-      </section>
-
-      <section className="mx-auto max-w-7xl px-6 py-16">
-        <SectionTitle
-          eyebrow="Parent enquiry"
-          title="Need help choosing a tutor?"
-          subtitle="Share your requirement and we will contact you."
-        />
-        <Card className="mt-8 rounded-[32px] border-0 bg-white shadow-sm ring-1 ring-slate-200">
-          <CardContent className="p-6 md:p-8">
-            <form className="grid gap-4 md:grid-cols-2" onSubmit={submitEnquiry}>
-              <Input className="h-12 rounded-2xl border border-slate-200 px-4" placeholder="Parent name" value={enquiry.parentName} onChange={(e) => setEnquiry({ ...enquiry, parentName: e.target.value })} />
-              <Input className="h-12 rounded-2xl border border-slate-200 px-4" placeholder="Student name" value={enquiry.studentName} onChange={(e) => setEnquiry({ ...enquiry, studentName: e.target.value })} />
-              <Input className="h-12 rounded-2xl border border-slate-200 px-4" placeholder="Phone" value={enquiry.phone} onChange={(e) => setEnquiry({ ...enquiry, phone: e.target.value })} />
-              <Input className="h-12 rounded-2xl border border-slate-200 px-4" placeholder="Email" value={enquiry.email} onChange={(e) => setEnquiry({ ...enquiry, email: e.target.value })} />
-              <Input className="h-12 rounded-2xl border border-slate-200 px-4 md:col-span-2" placeholder="Subject needed" value={enquiry.subjectNeeded} onChange={(e) => setEnquiry({ ...enquiry, subjectNeeded: e.target.value })} />
-              <textarea className="min-h-[120px] rounded-2xl border border-slate-200 px-4 py-3 outline-none md:col-span-2" placeholder="Tell us your requirement" value={enquiry.message} onChange={(e) => setEnquiry({ ...enquiry, message: e.target.value })} />
-              <Button className="rounded-2xl bg-slate-900 px-6 py-3 text-white md:col-span-2">
-                Submit Enquiry
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
       </section>
 
       <Modal open={!!selectedTutor} onClose={() => setSelectedTutor(null)} title="Tutor Profile">
