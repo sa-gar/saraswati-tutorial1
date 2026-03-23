@@ -7,7 +7,6 @@ export default function AdminDashboard() {
   const [enquiries, setEnquiries] = useState([]);
   const [parentEnquiries, setParentEnquiries] = useState([]);
   const [bookings, setBookings] = useState([]);
-  const [payments, setPayments] = useState([]);
   const [tutors, setTutors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -51,46 +50,31 @@ export default function AdminDashboard() {
   }
 
   const fetchData = async () => {
-  setLoading(true);
+    setLoading(true);
+    try {
+      const [eRes, peRes, bRes, tRes] = await Promise.all([
+        fetch(`${API_BASE}/enquiries`),
+        fetch(`${API_BASE}/parent-enquiries`),
+        fetch(`${API_BASE}/bookings`),
+        fetch(`${API_BASE}/tutors`),
+      ]);
 
-  try {
-    const [eRes, peRes, bRes, pRes, tRes] = await Promise.all([
-      fetch(`${API_BASE}/enquiries`),
-      fetch(`${API_BASE}/parent-enquiries`),
-      fetch(`${API_BASE}/bookings`),
-      fetch(`${API_BASE}/payments`),
-      fetch(`${API_BASE}/tutors`)
-    ]);
+      const [eData, peData, bData, tData] = await Promise.all([
+        eRes.json(),
+        peRes.json(),
+        bRes.json(),
+        tRes.json(),
+      ]);
 
-    console.log("enquiries status:", eRes.status);
-    console.log("parent enquiries status:", peRes.status);
-    console.log("bookings status:", bRes.status);
-    console.log("payments status:", pRes.status);
-    console.log("tutors status:", tRes.status);
-
-    const eData = await eRes.json();
-    const peData = await peRes.json();
-    const bData = await bRes.json();
-    const pData = await pRes.json();
-    const tData = await tRes.json();
-
-    console.log("enquiries:", eData);
-    console.log("parent enquiries:", peData);
-    console.log("bookings:", bData);
-    console.log("payments:", pData);
-    console.log("tutors:", tData);
-
-    setEnquiries(Array.isArray(eData) ? eData : []);
-    setParentEnquiries(Array.isArray(peData) ? peData : []);
-    setBookings(Array.isArray(bData) ? bData : []);
-    setPayments(Array.isArray(pData) ? pData : []);
-    setTutors(Array.isArray(tData) ? tData : []);
-  } catch (err) {
-    console.error("Dashboard fetch error:", err);
-  }
-
-  setLoading(false);
-};
+      setEnquiries(Array.isArray(eData) ? eData : []);
+      setParentEnquiries(Array.isArray(peData) ? peData : []);
+      setBookings(Array.isArray(bData) ? bData : []);
+      setTutors(Array.isArray(tData) ? tData : []);
+    } catch (err) {
+      console.error("Dashboard fetch error:", err);
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
     fetchData();
@@ -236,7 +220,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-5">
+      <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-4">
         <div className="rounded-xl bg-white p-5 text-center shadow">
           <h3 className="text-sm text-gray-500">Tutors</h3>
           <p className="text-2xl font-bold">{tutors.length}</p>
@@ -255,11 +239,6 @@ export default function AdminDashboard() {
         <div className="rounded-xl bg-white p-5 text-center shadow">
           <h3 className="text-sm text-gray-500">Bookings</h3>
           <p className="text-2xl font-bold">{bookings.length}</p>
-        </div>
-
-        <div className="rounded-xl bg-white p-5 text-center shadow">
-          <h3 className="text-sm text-gray-500">Payments</h3>
-          <p className="text-2xl font-bold">{payments.length}</p>
         </div>
       </div>
 
@@ -359,28 +338,6 @@ export default function AdminDashboard() {
               <p>
                 {b.preferredDate} - {b.preferredSlot}
               </p>
-            </div>
-          ))
-        )}
-      </section>
-
-      <section className="mb-10">
-        <h2 className="mb-4 text-xl font-semibold text-slate-900">
-          Payments
-        </h2>
-
-        {payments.length === 0 ? (
-          <p className="text-gray-500">No payments yet.</p>
-        ) : (
-          payments.map((p) => (
-            <div key={p._id} className="mb-3 rounded-xl bg-white p-4 shadow">
-              <p>
-                <b>{p.name}</b>
-              </p>
-              <p>{p.email}</p>
-              <p>₹{p.amount}</p>
-              <p className="text-sm text-gray-500">{p.paymentId}</p>
-              <p className="font-medium text-green-600">{p.status}</p>
             </div>
           ))
         )}
