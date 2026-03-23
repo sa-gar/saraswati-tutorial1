@@ -89,17 +89,17 @@ export default function ParentEnquiryForm() {
 
   const validateStep = () => {
     if (step === 1) {
-      return form.parentName && form.phone && form.occupation && form.area && form.pincode;
-    }
-
-    if (step === 2) {
       return form.wards.every(
-        (ward) => ward.wardName && ward.classGrade && ward.subjectsNeeded
+        (w) => w.wardName && w.classGrade && w.subjectsNeeded
       );
     }
 
-    if (step === 3) {
+    if (step === 2) {
       return form.preferredMode && form.preferredGender && form.preferredTime;
+    }
+
+    if (step === 3) {
+      return form.parentName && form.phone && form.occupation && form.area && form.pincode;
     }
 
     return true;
@@ -112,11 +112,13 @@ export default function ParentEnquiryForm() {
     }
     setMessage("");
     setStep((prev) => prev + 1);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const prevStep = () => {
     setMessage("");
     setStep((prev) => prev - 1);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleSubmit = async (e) => {
@@ -174,91 +176,22 @@ export default function ParentEnquiryForm() {
       </div>
 
       <div className="mb-8 grid grid-cols-3 gap-3">
-        <StepBox active={step === 1} done={step > 1} title="Parent Details" />
-        <StepBox active={step === 2} done={step > 2} title="Ward Details" />
-        <StepBox active={step === 3} done={false} title="Tutor Preference" />
+        <StepBox active={step === 1} done={step > 1} title="Student Details" />
+        <StepBox active={step === 2} done={step > 2} title="Tutor Preference" />
+        <StepBox active={step === 3} done={false} title="Parent Details" />
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-8">
         {step === 1 && (
           <section>
-            <h2 className="mb-4 text-xl font-semibold text-slate-900">
-              Parent Details
-            </h2>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <Input
-                label="Parent / Guardian Name"
-                name="parentName"
-                value={form.parentName}
-                onChange={handleChange}
-                required
-              />
-
-              <Input
-                label="Phone Number"
-                name="phone"
-                value={form.phone}
-                onChange={handleChange}
-                required
-              />
-
-              <Input
-                label="Email Address"
-                name="email"
-                type="email"
-                value={form.email}
-                onChange={handleChange}
-              />
-
-              <Select
-                label="Occupation"
-                name="occupation"
-                value={form.occupation}
-                onChange={handleChange}
-                options={occupationOptions}
-                required
-              />
-
-              {form.occupation && (
-                <Select
-                  label="Occupation Type"
-                  name="occupationType"
-                  value={form.occupationType}
-                  onChange={handleChange}
-                  options={occupationTypeOptions}
-                />
-              )}
-
-              <Input
-                label="Area / Locality"
-                name="area"
-                value={form.area}
-                onChange={handleChange}
-                required
-              />
-
-              <Input
-                label="PIN Code"
-                name="pincode"
-                value={form.pincode}
-                onChange={handleChange}
-                required
-              />
-            </div>
-          </section>
-        )}
-
-        {step === 2 && (
-          <section>
             <div className="mb-4 flex items-center justify-between gap-4">
-              <h2 className="text-xl font-semibold text-slate-900">Ward Details</h2>
+              <h2 className="text-xl font-semibold text-slate-900">Student Details</h2>
               <button
                 type="button"
                 onClick={addWard}
                 className="rounded-xl bg-slate-900 px-4 py-2 text-sm text-white"
               >
-                + Add Another Ward
+                + Add Another Student
               </button>
             </div>
 
@@ -270,7 +203,7 @@ export default function ParentEnquiryForm() {
                 >
                   <div className="mb-4 flex items-center justify-between">
                     <h3 className="text-lg font-semibold text-slate-800">
-                      Ward {index + 1}
+                      Student {index + 1}
                     </h3>
                     {form.wards.length > 1 && (
                       <button
@@ -341,7 +274,7 @@ export default function ParentEnquiryForm() {
           </section>
         )}
 
-        {step === 3 && (
+        {step === 2 && (
           <section>
             <h2 className="mb-4 text-xl font-semibold text-slate-900">
               Tutor Preference
@@ -408,8 +341,79 @@ export default function ParentEnquiryForm() {
           </section>
         )}
 
+        {step === 3 && (
+          <section>
+            <h2 className="mb-4 text-xl font-semibold text-slate-900">
+              Parent Details
+            </h2>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <Input
+                label="Parent / Guardian Name"
+                name="parentName"
+                value={form.parentName}
+                onChange={handleChange}
+                required
+              />
+
+              <Input
+                label="Phone Number"
+                name="phone"
+                value={form.phone}
+                onChange={handleChange}
+                required
+              />
+
+              <Input
+                label="Email Address"
+                name="email"
+                type="email"
+                value={form.email}
+                onChange={handleChange}
+              />
+
+              <Select
+                label="Occupation"
+                name="occupation"
+                value={form.occupation}
+                onChange={handleChange}
+                options={occupationOptions}
+                required
+              />
+
+              {form.occupation && (
+                <Select
+                  label="Occupation Type"
+                  name="occupationType"
+                  value={form.occupationType}
+                  onChange={handleChange}
+                  options={occupationTypeOptions}
+                />
+              )}
+
+              <Input
+                label="Area / Locality"
+                name="area"
+                value={form.area}
+                onChange={handleChange}
+                required
+              />
+
+              <Input
+                label="PIN Code"
+                name="pincode"
+                value={form.pincode}
+                onChange={handleChange}
+                required
+              />
+            </div>
+          </section>
+        )}
+
         {message ? (
-          <p className="text-sm text-red-600">{message}</p>
+          <p className={`text-sm ${message.includes("successfully") ? "text-green-600" : "text-red-600"}`}>
+            {message}
+          </p>
         ) : null}
 
         <div className="flex gap-3">
