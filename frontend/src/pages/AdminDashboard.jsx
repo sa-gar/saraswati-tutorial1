@@ -255,7 +255,7 @@ export default function AdminDashboard() {
           parentEnquiries.map((p) => (
             <div key={p._id} className="mb-4 rounded-xl bg-white p-4 shadow">
               <p>
-                <b>Parent:</b> {p.parentName} ({p.relationshipToWard})
+                <b>Parent:</b> {p.parentName}
               </p>
               <p>
                 <b>Phone:</b> {p.phone}
@@ -264,13 +264,26 @@ export default function AdminDashboard() {
                 <b>Email:</b> {p.email}
               </p>
               <p>
-                <b>Location:</b> {p.area}, {p.city} - {p.pincode}
+                <b>Occupation:</b> {p.occupation}
+                {p.occupationType ? ` (${p.occupationType})` : ""}
+              </p>
+              <p>
+                <b>Area:</b> {p.area}
+              </p>
+              <p>
+                <b>PIN Code:</b> {p.pincode}
               </p>
               <p>
                 <b>Preferred Mode:</b> {p.preferredMode}
               </p>
               <p>
-                <b>Budget:</b> {p.monthlyBudget}
+                <b>Preferred Gender:</b> {p.preferredGender}
+              </p>
+              <p>
+                <b>Preferred Time:</b> {p.preferredTime}
+              </p>
+              <p>
+                <b>Preferred Days:</b> {p.preferredDays?.join(", ")}
               </p>
 
               <div className="mt-3">
@@ -278,16 +291,22 @@ export default function AdminDashboard() {
                 {p.wards?.map((ward, index) => (
                   <div key={index} className="mt-2 rounded-lg bg-slate-50 p-3">
                     <p>
-                      <b>Name:</b> {ward.fullName}
+                      <b>Ward Name:</b> {ward.wardName}
+                    </p>
+                    <p>
+                      <b>School:</b> {ward.schoolName}
                     </p>
                     <p>
                       <b>Class:</b> {ward.classGrade}
                     </p>
                     <p>
-                      <b>Board:</b> {ward.board}
+                      <b>Subjects:</b> {ward.subjectsNeeded}
                     </p>
                     <p>
-                      <b>Subjects:</b> {ward.subjectsNeeded}
+                      <b>Performance:</b> {ward.currentPerformance}
+                    </p>
+                    <p>
+                      <b>Special Notes:</b> {ward.specialNeeds}
                     </p>
                   </div>
                 ))}
