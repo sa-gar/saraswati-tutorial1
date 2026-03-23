@@ -4,21 +4,16 @@ const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
 
 const initialWard = {
   fullName: "",
-  gender: "",
-  dateOfBirth: "",
   schoolName: "",
   classGrade: "",
-  board: "",
   subjectsNeeded: "",
   currentPerformance: "",
-  specialNeeds: "",
+  
 };
 
 const initialForm = {
   parentName: "",
-  relationshipToWard: "",
   phone: "",
-  alternatePhone: "",
   email: "",
   occupation: "",
   addressLine1: "",
@@ -30,11 +25,6 @@ const initialForm = {
   tuitionType: "",
   preferredDays: [],
   preferredTime: "",
-  monthlyBudget: "",
-  howDidYouHear: "",
-  emergencyContactName: "",
-  emergencyContactPhone: "",
-  remarks: "",
   wards: [{ ...initialWard }],
 };
 
@@ -139,92 +129,6 @@ export default function ParentEnquiryForm() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-10">
-        <section>
-          <h2 className="mb-4 text-xl font-semibold text-slate-900">Parent Details</h2>
-          <div className="grid gap-4 md:grid-cols-2">
-            <Input
-              label="Parent / Guardian Name"
-              name="parentName"
-              value={form.parentName}
-              onChange={handleChange}
-              required
-            />
-            <Input
-              label="Relationship to Ward"
-              name="relationshipToWard"
-              value={form.relationshipToWard}
-              onChange={handleChange}
-              placeholder="Mother / Father / Guardian"
-              required
-            />
-            <Input
-              label="Phone Number"
-              name="phone"
-              value={form.phone}
-              onChange={handleChange}
-              required
-            />
-            <Input
-              label="Alternate Phone"
-              name="alternatePhone"
-              value={form.alternatePhone}
-              onChange={handleChange}
-            />
-            <Input
-              label="Email Address"
-              name="email"
-              type="email"
-              value={form.email}
-              onChange={handleChange}
-            />
-            <Input
-              label="Occupation"
-              name="occupation"
-              value={form.occupation}
-              onChange={handleChange}
-            />
-          </div>
-        </section>
-
-        <section>
-          <h2 className="mb-4 text-xl font-semibold text-slate-900">Address Details</h2>
-          <div className="grid gap-4 md:grid-cols-2">
-            <Input
-              label="Address Line 1"
-              name="addressLine1"
-              value={form.addressLine1}
-              onChange={handleChange}
-              required
-            />
-            <Input
-              label="Address Line 2"
-              name="addressLine2"
-              value={form.addressLine2}
-              onChange={handleChange}
-            />
-            <Input
-              label="Area / Locality"
-              name="area"
-              value={form.area}
-              onChange={handleChange}
-              required
-            />
-            <Input
-              label="City"
-              name="city"
-              value={form.city}
-              onChange={handleChange}
-              required
-            />
-            <Input
-              label="PIN Code"
-              name="pincode"
-              value={form.pincode}
-              onChange={handleChange}
-              required
-            />
-          </div>
-        </section>
 
         <section>
           <div className="mb-4 flex items-center justify-between gap-4">
@@ -267,20 +171,7 @@ export default function ParentEnquiryForm() {
                     onChange={(e) => handleWardChange(index, e)}
                     required
                   />
-                  <Select
-                    label="Gender"
-                    name="gender"
-                    value={ward.gender}
-                    onChange={(e) => handleWardChange(index, e)}
-                    options={["Male", "Female", "Other"]}
-                  />
-                  <Input
-                    label="Date of Birth"
-                    name="dateOfBirth"
-                    type="date"
-                    value={ward.dateOfBirth}
-                    onChange={(e) => handleWardChange(index, e)}
-                  />
+                  
                   <Input
                     label="School / College Name"
                     name="schoolName"
@@ -294,12 +185,7 @@ export default function ParentEnquiryForm() {
                     onChange={(e) => handleWardChange(index, e)}
                     required
                   />
-                  <Input
-                    label="Board / Curriculum"
-                    name="board"
-                    value={ward.board}
-                    onChange={(e) => handleWardChange(index, e)}
-                  />
+                 
                   <div className="md:col-span-2">
                     <TextArea
                       label="Subjects Required"
@@ -355,13 +241,7 @@ export default function ParentEnquiryForm() {
               onChange={handleChange}
               placeholder="5 PM - 7 PM"
             />
-            <Input
-              label="Monthly Budget"
-              name="monthlyBudget"
-              value={form.monthlyBudget}
-              onChange={handleChange}
-              placeholder="₹3000 - ₹5000"
-            />
+           
           </div>
 
           <div className="mt-4">
@@ -389,39 +269,56 @@ export default function ParentEnquiryForm() {
             </div>
           </div>
         </section>
-
-        <section>
-          <h2 className="mb-4 text-xl font-semibold text-slate-900">Emergency & Additional Info</h2>
+<section>
+          <h2 className="mb-4 text-xl font-semibold text-slate-900">Parent Details</h2>
           <div className="grid gap-4 md:grid-cols-2">
             <Input
-              label="Emergency Contact Name"
-              name="emergencyContactName"
-              value={form.emergencyContactName}
+              label="Parent / Guardian Name"
+              name="parentName"
+              value={form.parentName}
               onChange={handleChange}
+              required
+            />
+          
+            <Input
+              label="Phone Number"
+              name="phone"
+              value={form.phone}
+              onChange={handleChange}
+              required
             />
             <Input
-              label="Emergency Contact Phone"
-              name="emergencyContactPhone"
-              value={form.emergencyContactPhone}
-              onChange={handleChange}
-            />
-            <Input
-              label="How did you hear about us?"
-              name="howDidYouHear"
-              value={form.howDidYouHear}
-              onChange={handleChange}
-            />
-          </div>
-
-          <div className="mt-4">
-            <TextArea
-              label="Additional Remarks"
-              name="remarks"
-              value={form.remarks}
+              label="Occupation"
+              name="occupation"
+              value={form.occupation}
               onChange={handleChange}
             />
           </div>
         </section>
+
+        <section>
+          <h2 className="mb-4 text-xl font-semibold text-slate-900">Address Details</h2>
+          <div className="grid gap-4 md:grid-cols-2">
+           
+            <Input
+              label="Area / Locality"
+              name="area"
+              value={form.area}
+              onChange={handleChange}
+              required
+            />
+            <Input
+          
+            
+              label="PIN Code"
+              name="pincode"
+              value={form.pincode}
+              onChange={handleChange}
+              required
+            />
+          </div>
+        </section>
+    
 
         <div className="flex flex-col gap-3 md:flex-row md:items-center">
           <button
