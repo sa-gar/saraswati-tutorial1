@@ -332,7 +332,13 @@ export default function HomePage() {
         <a href="#tutors" onClick={() => setMenuOpen(false)}>Tutors</a>
         <a href="#about" onClick={() => setMenuOpen(false)}>About</a>
         <a href="#contact" onClick={() => setMenuOpen(false)}>Contact</a>
-
+<Link
+  to="/admin"
+  onClick={() => setMenuOpen(false)}
+  className="border px-5 py-3 rounded-xl text-center"
+>
+  Admin
+</Link>
         <Link
           to="/parent-enquiry"
           onClick={() => setMenuOpen(false)}
