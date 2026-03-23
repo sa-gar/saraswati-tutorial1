@@ -51,34 +51,46 @@ export default function AdminDashboard() {
   }
 
   const fetchData = async () => {
-    setLoading(true);
-    try {
-      const [eRes, peRes, bRes, pRes, tRes] = await Promise.all([
-        fetch(`${API_BASE}/enquiries`),
-        fetch(`${API_BASE}/parent-enquiries`),
-        fetch(`${API_BASE}/bookings`),
-        fetch(`${API_BASE}/payments`),
-        fetch(`${API_BASE}/tutors`),
-      ]);
+  setLoading(true);
 
-      const [eData, peData, bData, pData, tData] = await Promise.all([
-        eRes.json(),
-        peRes.json(),
-        bRes.json(),
-        pRes.json(),
-        tRes.json(),
-      ]);
+  try {
+    const [eRes, peRes, bRes, pRes, tRes] = await Promise.all([
+      fetch(`${API_BASE}/enquiries`),
+      fetch(`${API_BASE}/parent-enquiries`),
+      fetch(`${API_BASE}/bookings`),
+      fetch(`${API_BASE}/payments`),
+      fetch(`${API_BASE}/tutors`)
+    ]);
 
-      setEnquiries(Array.isArray(eData) ? eData : []);
-      setParentEnquiries(Array.isArray(peData) ? peData : []);
-      setBookings(Array.isArray(bData) ? bData : []);
-      setPayments(Array.isArray(pData) ? pData : []);
-      setTutors(Array.isArray(tData) ? tData : []);
-    } catch (err) {
-      console.error("Dashboard fetch error:", err);
-    }
-    setLoading(false);
-  };
+    console.log("enquiries status:", eRes.status);
+    console.log("parent enquiries status:", peRes.status);
+    console.log("bookings status:", bRes.status);
+    console.log("payments status:", pRes.status);
+    console.log("tutors status:", tRes.status);
+
+    const eData = await eRes.json();
+    const peData = await peRes.json();
+    const bData = await bRes.json();
+    const pData = await pRes.json();
+    const tData = await tRes.json();
+
+    console.log("enquiries:", eData);
+    console.log("parent enquiries:", peData);
+    console.log("bookings:", bData);
+    console.log("payments:", pData);
+    console.log("tutors:", tData);
+
+    setEnquiries(Array.isArray(eData) ? eData : []);
+    setParentEnquiries(Array.isArray(peData) ? peData : []);
+    setBookings(Array.isArray(bData) ? bData : []);
+    setPayments(Array.isArray(pData) ? pData : []);
+    setTutors(Array.isArray(tData) ? tData : []);
+  } catch (err) {
+    console.error("Dashboard fetch error:", err);
+  }
+
+  setLoading(false);
+};
 
   useEffect(() => {
     fetchData();
