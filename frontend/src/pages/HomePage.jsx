@@ -290,6 +290,12 @@ export default function HomePage() {
       <a href="#tutors">Tutors</a>
       <a href="#about">About</a>
       <a href="#contact">Contact</a>
+      <Link
+  to="/admin"
+  className="border px-4 py-2 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-100"
+>
+  Admin
+</Link>
 
       <Link
         to="/parent-enquiry"
