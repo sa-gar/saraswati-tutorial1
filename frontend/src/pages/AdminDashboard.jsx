@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+8import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
@@ -215,6 +215,43 @@ const createBlog = async () => {
   );
 
   return (
+<div className="mt-10 rounded-xl bg-white p-6 shadow">
+  <h2 className="mb-4 text-xl font-bold">Add Blog</h2>
+
+  <input
+    placeholder="Title"
+    className="mb-3 w-full rounded border p-2"
+    value={blogForm.title}
+    onChange={(e) =>
+      setBlogForm({ ...blogForm, title: e.target.value })
+    }
+  />
+
+  <textarea
+    placeholder="Content"
+    className="mb-3 w-full rounded border p-2"
+    value={blogForm.content}
+    onChange={(e) =>
+      setBlogForm({ ...blogForm, content: e.target.value })
+    }
+  />
+
+  <input
+    placeholder="Image URL"
+    className="mb-3 w-full rounded border p-2"
+    value={blogForm.image}
+    onChange={(e) =>
+      setBlogForm({ ...blogForm, image: e.target.value })
+    }
+  />
+
+  <button
+    onClick={createBlog}
+    className="rounded bg-black px-4 py-2 text-white"
+  >
+    Add Blog
+  </button>
+</div>
     <div className="mx-auto max-w-7xl px-6 py-10">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-3xl font-bold text-slate-900">Admin Dashboard</h1>
