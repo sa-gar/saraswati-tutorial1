@@ -10,7 +10,7 @@ import authRoutes from "./routes/authRoutes.js";
 import parentEnquiryRoutes from "./routes/parentEnquiryRoutes.js";
 import blogRoutes from "./routes/blogRoutes.js";
 
-app.use("/api/blogs", blogRoutes);
+
 dotenv.config();
 
 const app = express();
