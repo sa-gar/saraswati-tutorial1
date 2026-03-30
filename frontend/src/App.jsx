@@ -1,11 +1,9 @@
-import { Routes, Route, Link, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminLogin from "./pages/AdminLogin";
 import ParentEnquiryForm from "./pages/ParentEnquiryForm";
 import BlogPage from "./pages/BlogPage";
-
-
 
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem("adminToken");
@@ -15,13 +13,12 @@ function ProtectedRoute({ children }) {
 export default function App() {
   return (
     <div className="min-h-screen bg-slate-50">
-    
-
       <Routes>
         <Route path="/" element={<HomePage />} />
-<Route path="/blogs" element={<BlogPage />} />
+        <Route path="/blogs" element={<BlogPage />} />
         <Route path="/admin-login" element={<AdminLogin />} />
-        
+        <Route path="/parent-enquiry" element={<ParentEnquiryForm />} />
+
         <Route
           path="/admin"
           element={
@@ -29,9 +26,7 @@ export default function App() {
               <AdminDashboard />
             </ProtectedRoute>
           }
-          
         />
-        <Route path="/parent-enquiry" element={<ParentEnquiryForm />} />
       </Routes>
     </div>
   );
