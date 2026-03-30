@@ -3,6 +3,9 @@ import HomePage from "./pages/HomePage";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminLogin from "./pages/AdminLogin";
 import ParentEnquiryForm from "./pages/ParentEnquiryForm";
+import BlogPage from "./pages/BlogPage";
+
+
 
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem("adminToken");
@@ -16,6 +19,7 @@ export default function App() {
 
       <Routes>
         <Route path="/" element={<HomePage />} />
+<Route path="/blogs" element={<BlogPage />} />
         <Route path="/admin-login" element={<AdminLogin />} />
         
         <Route
