@@ -10,6 +10,11 @@ export default function AdminDashboard() {
   const [tutors, setTutors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+const [blogForm, setBlogForm] = useState({
+  title: "",
+  content: "",
+  image: "",
+});
 
   const [editingTutor, setEditingTutor] = useState(null);
   const [editForm, setEditForm] = useState({
