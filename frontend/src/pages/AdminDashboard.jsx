@@ -150,7 +150,25 @@ const [blogForm, setBlogForm] = useState({
       alert("Failed to update tutor");
     }
   };
+const createBlog = async () => {
+  const token = localStorage.getItem("adminToken");
 
+  const res = await fetch(`${API_BASE}/blogs`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(blogForm),
+  });
+
+  if (res.ok) {
+    alert("Blog added");
+    setBlogForm({ title: "", content: "", image: "" });
+  } else {
+    alert("Failed to add blog");
+  }
+};
   const createTutor = async () => {
     const token = localStorage.getItem("adminToken");
 
