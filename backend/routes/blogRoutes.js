@@ -3,7 +3,6 @@ import Blog from "../models/Blog.js";
 
 const router = express.Router();
 
-// GET all blogs
 router.get("/", async (req, res) => {
   try {
     const blogs = await Blog.find().sort({ createdAt: -1 });
@@ -13,7 +12,6 @@ router.get("/", async (req, res) => {
   }
 });
 
-// GET single blog
 router.get("/:id", async (req, res) => {
   try {
     const blog = await Blog.findById(req.params.id);
@@ -28,10 +26,28 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// CREATE blog
 router.post("/", async (req, res) => {
   try {
     const blog = new Blog(req.body);
     const saved = await blog.save();
     res.status(201).json(saved);
-  } catch (error)
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+router.delete("/:id", async (req, res) => {
+  try {
+    const deleted = await Blog.findByIdAndDelete(req.params.id);
+
+    if (!deleted) {
+      return res.status(404).json({ message: "Blog not found" });
+    }
+
+    res.json({ message: "Blog deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+export default router;
