@@ -10,28 +10,33 @@ import authRoutes from "./routes/authRoutes.js";
 import parentEnquiryRoutes from "./routes/parentEnquiryRoutes.js";
 import blogRoutes from "./routes/blogRoutes.js";
 
-
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Middleware
 app.use(cors());
 app.use(express.json());
 
-app.use("/api/parent-enquiries", parentEnquiryRoutes);
-app.use("/api/blogs", blogRoutes);
-
+// Health check
 app.get("/", (req, res) => {
   res.json({ message: "Saraswati Tutorial backend is running" });
 });
 
+// API Routes
 app.use("/api/tutors", tutorRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/enquiries", enquiryRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/parent-enquiries", parentEnquiryRoutes);
+app.use("/api/blogs", blogRoutes);
 
-if (process.env.MONGO_URI && process.env.MONGO_URI !== "your_mongodb_connection_string") {
+// MongoDB Connection + Server Start
+if (
+  process.env.MONGO_URI &&
+  process.env.MONGO_URI !== "your_mongodb_connection_string"
+) {
   mongoose
     .connect(process.env.MONGO_URI)
     .then(() => {
