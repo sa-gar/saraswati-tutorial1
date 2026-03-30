@@ -34,4 +34,4 @@ router.post("/", async (req, res) => {
     const blog = new Blog(req.body);
     const saved = await blog.save();
     res.status(201).json(saved);
-  } catch (error
+  } catch (error)
