@@ -8,7 +8,9 @@ import bookingRoutes from "./routes/bookingRoutes.js";
 import enquiryRoutes from "./routes/enquiryRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import parentEnquiryRoutes from "./routes/parentEnquiryRoutes.js";
+import blogRoutes from "./routes/blogRoutes.js";
 
+app.use("/api/blogs", blogRoutes);
 dotenv.config();
 
 const app = express();
@@ -18,6 +20,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use("/api/parent-enquiries", parentEnquiryRoutes);
+app.use("/api/blogs", blogRoutes);
 
 app.get("/", (req, res) => {
   res.json({ message: "Saraswati Tutorial backend is running" });
