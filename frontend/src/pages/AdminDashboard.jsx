@@ -1,4 +1,4 @@
-8import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
