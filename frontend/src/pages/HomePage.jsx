@@ -574,7 +574,8 @@ export default function HomePage() {
             <div className="mt-8 space-y-4">
               <div className="flex items-center gap-3">
                 <Phone className="h-5 w-5" />
-                <span>+91 98765 43210</span>
+                <span>+91 8904457689</span>
+<span>+91 9041157689</span>
               </div>
               <div className="flex items-center gap-3">
                 <Mail className="h-5 w-5" />
