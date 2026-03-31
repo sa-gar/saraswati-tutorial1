@@ -26,6 +26,8 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
 import { Avatar, AvatarFallback } from "../components/ui/avatar";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 
 const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
 
@@ -798,14 +800,15 @@ export default function HomePage() {
               />
             </div>
 
-            <textarea
-              className="min-h-[110px] w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none"
-              placeholder="Share goals or class expectations"
-              value={bookingForm.message}
-              onChange={(e) =>
-                setBookingForm({ ...bookingForm, message: e.target.value })
-              }
-            />
+
+
+<ReactQuill
+  value={blogForm.content}
+  onChange={(value) =>
+    setBlogForm({ ...blogForm, content: value })
+  }
+  theme="snow"
+/>
 
             <div className="flex items-center justify-between rounded-3xl bg-emerald-50 p-4 text-sm text-emerald-800">
               <div className="flex items-center gap-2">

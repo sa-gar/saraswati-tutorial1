@@ -12,11 +12,20 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 
+
   const [blogForm, setBlogForm] = useState({
     title: "",
     content: "",
     image: "",
   });
+  const modules = {
+  toolbar: [
+    [{ header: [1, 2, 3, false] }],
+    ["bold", "italic", "underline"],
+    [{ list: "ordered" }, { list: "bullet" }],
+    ["link", "image"]
+  ]
+};
 
   const [editingTutor, setEditingTutor] = useState(null);
   const [editForm, setEditForm] = useState({
