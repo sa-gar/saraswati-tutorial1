@@ -9,6 +9,7 @@ import enquiryRoutes from "./routes/enquiryRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import parentEnquiryRoutes from "./routes/parentEnquiryRoutes.js";
 import blogRoutes from "./routes/blogRoutes.js";
+import uploadRoutes from "./routes/uploadRoutes.js"; 
 
 dotenv.config();
 
@@ -31,6 +32,7 @@ app.use("/api/enquiries", enquiryRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/parent-enquiries", parentEnquiryRoutes);
 app.use("/api/blogs", blogRoutes);
+app.use("/api/upload", uploadRoutes);
 
 // MongoDB Connection + Server Start
 if (
