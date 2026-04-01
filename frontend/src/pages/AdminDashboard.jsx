@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 
 const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
 
@@ -18,6 +20,7 @@ export default function AdminDashboard() {
     content: "",
     image: "",
   });
+  
   const modules = {
   toolbar: [
     [{ header: [1, 2, 3, false] }],
@@ -528,14 +531,14 @@ export default function AdminDashboard() {
           }
         />
 
-        <textarea
-          placeholder="Content"
-          className="mb-3 w-full rounded border p-2"
-          value={blogForm.content}
-          onChange={(e) =>
-            setBlogForm({ ...blogForm, content: e.target.value })
-          }
-        />
+        <ReactQuill
+  value={blogForm.content}
+  onChange={(value) =>
+    setBlogForm({ ...blogForm, content: value })
+  }
+  modules={modules}
+  theme="snow"
+/>
 
    <input
   type="file"
