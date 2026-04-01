@@ -246,6 +246,36 @@ export default function AdminDashboard() {
       alert("Failed to delete blog");
     }
   };
+  const handleBlogImageUpload = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append("image", file);
+
+  try {
+    const res = await fetch(`${API_BASE}/upload`, {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Upload failed");
+      return;
+    }
+
+    setBlogForm({
+      ...blogForm,
+      image: data.imageUrl,
+    });
+
+  } catch (error) {
+    console.error(error);
+    alert("Image upload failed");
+  }
+};
 
   const filteredTutors = tutors.filter((t) =>
     t.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -507,15 +537,19 @@ export default function AdminDashboard() {
           }
         />
 
-        <input
-          placeholder="Image URL"
-          className="mb-3 w-full rounded border p-2"
-          value={blogForm.image}
-          onChange={(e) =>
-            setBlogForm({ ...blogForm, image: e.target.value })
-          }
-        />
-
+   <input
+  type="file"
+  accept="image/*"
+  onChange={handleBlogImageUpload}
+  className="mb-3 w-full rounded border p-2"
+/>
+{blogForm.image && (
+  <img
+    src={blogForm.image}
+    alt="preview"
+    className="mb-3 h-40 w-full rounded object-cover"
+  />
+)}
         <button
           onClick={createBlog}
           className="rounded bg-black px-4 py-2 text-white"
