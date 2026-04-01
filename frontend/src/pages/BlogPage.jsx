@@ -60,9 +60,10 @@ export default function BlogPage() {
                     {blog.title}
                   </h2>
 
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    {blog.content?.slice(0, 140)}...
-                  </p>
+                  <div
+  className="mt-2 text-sm leading-6 text-slate-600"
+  dangerouslySetInnerHTML={{ __html: blog.content }}
+/>
 
                   <div className="mt-4 text-xs text-slate-500">
                     {blog.author || "Admin"}
