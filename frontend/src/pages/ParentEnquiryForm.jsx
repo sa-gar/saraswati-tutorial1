@@ -9,7 +9,6 @@ const initialWard = {
   schoolName: "",
   classGrade: "",
   subjectsNeeded: "",
-  currentPerformance: "",
   specialNeeds: "",
 };
 
@@ -36,6 +35,85 @@ const occupationOptions = [
   "Student",
   "Homemaker",
   "Other",
+];
+const classOptions = [
+  "Pre-Nursery",
+  "Nursery",
+  "LKG",
+  "UKG",
+  "Class 1",
+  "Class 2",
+  "Class 3",
+  "Class 4",
+  "Class 5",
+  "Class 6",
+  "Class 7",
+  "Class 8",
+  "Class 9",
+  "Class 10",
+  "Class 11",
+  "Class 12",
+  "PUC 1",
+  "PUC 2",
+];
+
+const subjectOptions = [
+  "Mathematics",
+  "Science",
+  "Physics",
+  "Chemistry",
+  "Biology",
+  "English",
+  "Hindi",
+  "Kannada",
+  "Sanskrit",
+  "Social Studies",
+  "History",
+  "Geography",
+  "Economics",
+  "Political Science",
+  "Accountancy",
+  "Business Studies",
+  "Computer Science",
+  "Informatics Practices",
+  "Programming",
+  "Statistics",
+  "French",
+  "German",
+  "Spoken English",
+];
+
+const schoolOptions = [
+  "The International School Bangalore",
+  "Inventure Academy",
+  "Mallya Aditi International School",
+  "Bangalore International School",
+  "Greenwood High International School",
+  "Vidyashilp Academy",
+  "Vidya Niketan School",
+  "The Valley School",
+  "Ebenezer International School",
+  "BGS International School",
+  "Sarala Birla Academy",
+  "Legacy School",
+  "Indus International School Bangalore",
+  "National Public School, Indiranagar",
+  "National Public School, Koramangala",
+  "National Public School, HSR Layout",
+  "Delhi Public School Bangalore South",
+  "Delhi Public School Bangalore East",
+  "New Horizon Gurukul",
+  "Sophia High School",
+  "Bishop Cotton Girls' School",
+  "Bishop Cotton Boys' School",
+  "The Frank Anthony Public School",
+  "Clarence High School",
+  "Bethany High",
+  "Ryan International School, Kundalahalli",
+  "Canadian International School",
+  "TRIO World Academy",
+  "Jain International Residential School",
+  "Sri Kumaran Children's Home",
 ];
 const occupationTypeOptions = [
   "Entrepreneur",
@@ -133,13 +211,12 @@ const [step, setStep] = useState(1);
     const payload = {
       ...form,
       wards: form.wards.map((ward) => ({
-        wardName: ward.wardName,
-        schoolName: ward.schoolName,
-        classGrade: ward.classGrade,
-        subjectsNeeded: ward.subjectsNeeded,
-        currentPerformance: ward.currentPerformance,
-        specialNeeds: ward.specialNeeds,
-      })),
+  wardName: ward.wardName,
+  schoolName: ward.schoolName,
+  classGrade: ward.classGrade,
+  subjectsNeeded: ward.subjectsNeeded,
+  specialNeeds: ward.specialNeeds,
+})),
     };
 
     const res = await fetch(`${API_BASE}/parent-enquiries`, {
@@ -214,58 +291,58 @@ const [step, setStep] = useState(1);
                       </button>
                     )}
                   </div>
+<div className="grid gap-4 md:grid-cols-2">
+  <Input
+    label="Ward Name"
+    name="wardName"
+    value={ward.wardName}
+    onChange={(e) => handleWardChange(index, e)}
+    required
+  />
 
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <Input
-                      label="Ward Name"
-                      name="wardName"
-                      value={ward.wardName}
-                      onChange={(e) => handleWardChange(index, e)}
-                      required
-                    />
+  <SearchableInput
+    label="School Name"
+    name="schoolName"
+    value={ward.schoolName}
+    onChange={(e) => handleWardChange(index, e)}
+    options={schoolOptions}
+    listId={`schools-${index}`}
+    placeholder="Search or select school"
+  />
 
-                    <Input
-                      label="School / College Name"
-                      name="schoolName"
-                      value={ward.schoolName}
-                      onChange={(e) => handleWardChange(index, e)}
-                    />
+  <SearchableInput
+    label="Class"
+    name="classGrade"
+    value={ward.classGrade}
+    onChange={(e) => handleWardChange(index, e)}
+    options={classOptions}
+    listId={`classes-${index}`}
+    placeholder="Search or select class"
+    required
+  />
 
-                    <Input
-                      label="Class / Grade"
-                      name="classGrade"
-                      value={ward.classGrade}
-                      onChange={(e) => handleWardChange(index, e)}
-                      required
-                    />
+  <SearchableInput
+    label="Subjects Required"
+    name="subjectsNeeded"
+    value={ward.subjectsNeeded}
+    onChange={(e) => handleWardChange(index, e)}
+    options={subjectOptions}
+    listId={`subjects-${index}`}
+    placeholder="Search or select subject"
+    required
+  />
 
-                    <div className="md:col-span-2">
-                      <TextArea
-                        label="Subjects Required"
-                        name="subjectsNeeded"
-                        value={ward.subjectsNeeded}
-                        onChange={(e) => handleWardChange(index, e)}
-                        required
-                      />
-                    </div>
+  <div className="md:col-span-2">
+    <TextArea
+      label="Special Learning Needs / Notes"
+      name="specialNeeds"
+      value={ward.specialNeeds}
+      onChange={(e) => handleWardChange(index, e)}
+    />
+  </div>
+</div>
 
-                    <div className="md:col-span-2">
-                      <TextArea
-                        label="Current Performance / Academic Concerns"
-                        name="currentPerformance"
-                        value={ward.currentPerformance}
-                        onChange={(e) => handleWardChange(index, e)}
-                      />
-                    </div>
-
-                    <div className="md:col-span-2">
-                      <TextArea
-                        label="Special Learning Needs / Notes"
-                        name="specialNeeds"
-                        value={ward.specialNeeds}
-                        onChange={(e) => handleWardChange(index, e)}
-                      />
-                    </div>
+                    
                   </div>
                 </div>
               ))}
@@ -489,6 +566,36 @@ function TextArea({ label, ...props }) {
         {...props}
         className="min-h-[110px] w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none"
       />
+    </div>
+  );
+}
+function SearchableInput({
+  label,
+  name,
+  value,
+  onChange,
+  options = [],
+  listId,
+  ...props
+}) {
+  return (
+    <div>
+      <label className="mb-2 block text-sm font-medium text-slate-700">
+        {label}
+      </label>
+      <input
+        list={listId}
+        name={name}
+        value={value}
+        onChange={onChange}
+        className="h-12 w-full rounded-2xl border border-slate-200 px-4 outline-none"
+        {...props}
+      />
+      <datalist id={listId}>
+        {options.map((option) => (
+          <option key={option} value={option} />
+        ))}
+      </datalist>
     </div>
   );
 }
