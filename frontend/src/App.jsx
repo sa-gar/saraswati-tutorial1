@@ -4,6 +4,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminLogin from "./pages/AdminLogin";
 import ParentEnquiryForm from "./pages/ParentEnquiryForm";
 import BlogPage from "./pages/BlogPage";
+import ThankYou from "./pages/ThankYou";
 
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem("adminToken");
