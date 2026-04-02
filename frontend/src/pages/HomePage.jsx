@@ -28,7 +28,7 @@ import { Badge } from "../components/ui/badge";
 import { Avatar, AvatarFallback } from "../components/ui/avatar";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
-import logo from "../assets/logo.png";
+import logo from "../assets/logo1.png";
 
 const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
 
