@@ -125,49 +125,45 @@ const [step, setStep] = useState(1);
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSubmitting(true);
-    setMessage("");
+  e.preventDefault();
+  setSubmitting(true);
+  setMessage("");
 
-    try {
-      const payload = {
-        ...form,
-        wards: form.wards.map((ward) => ({
-          wardName: ward.wardName,
-          schoolName: ward.schoolName,
-          classGrade: ward.classGrade,
-          subjectsNeeded: ward.subjectsNeeded,
-          currentPerformance: ward.currentPerformance,
-          specialNeeds: ward.specialNeeds,
-        })),
-      };
+  try {
+    const payload = {
+      ...form,
+      wards: form.wards.map((ward) => ({
+        wardName: ward.wardName,
+        schoolName: ward.schoolName,
+        classGrade: ward.classGrade,
+        subjectsNeeded: ward.subjectsNeeded,
+        currentPerformance: ward.currentPerformance,
+        specialNeeds: ward.specialNeeds,
+      })),
+    };
 
-      console.log("Submitting parent enquiry:", payload);
+    const res = await fetch(`${API_BASE}/parent-enquiries`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
 
-      const res = await fetch(`${API_BASE}/parent-enquiries`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+    const data = await res.json();
 
-      const data = await res.json();
-      console.log("Parent enquiry response:", data);
-
-      if (!res.ok) {
-        throw new Error(data.message || "Submission failed");
-      }
-
-      setMessage("Parent enquiry submitted successfully.");
-      setForm(initialForm);
-      setStep(1);
-    } catch (error) {
-      setMessage(error.message || "Something went wrong.");
-    } finally {
-      setSubmitting(false);
+    if (!res.ok) {
+      throw new Error(data.message || "Submission failed");
     }
-  };
+
+    setForm(initialForm);
+    navigate("/thank-you");
+  } catch (error) {
+    setMessage(error.message || "Something went wrong.");
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   return (
     <div className="mx-auto max-w-5xl rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200 md:p-8">
