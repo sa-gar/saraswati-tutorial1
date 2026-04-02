@@ -18,6 +18,7 @@ export default function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/blogs" element={<BlogPage />} />
         <Route path="/admin-login" element={<AdminLogin />} />
+<Route path="/thank-you" element={<ThankYou />} />
         <Route path="/parent-enquiry" element={<ParentEnquiryForm />} />
 
         <Route
