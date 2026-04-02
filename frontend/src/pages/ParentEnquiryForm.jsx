@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 
 const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
 
@@ -45,7 +47,8 @@ const occupationTypeOptions = [
 ];
 
 export default function ParentEnquiryForm() {
-  const [step, setStep] = useState(1);
+  const navigate = useNavigate();
+const [step, setStep] = useState(1);
   const [form, setForm] = useState(initialForm);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
