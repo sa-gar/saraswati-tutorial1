@@ -28,6 +28,7 @@ import { Badge } from "../components/ui/badge";
 import { Avatar, AvatarFallback } from "../components/ui/avatar";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
+import logo from "../assets/logo.png";
 
 const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
 
@@ -290,9 +291,12 @@ export default function HomePage() {
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div>
-            <h1 className="text-xl font-bold text-slate-900">
-              Saraswati Tutorial
-            </h1>
+            <div className="flex items-center gap-2">
+  <img src={logo} alt="Logo" className="h-10 w-10 object-contain" />
+  <h1 className="text-xl font-bold text-slate-900">
+    Saraswati Tutorial
+  </h1>
+</div>
           </div>
 
           <nav className="hidden items-center gap-8 md:flex">
