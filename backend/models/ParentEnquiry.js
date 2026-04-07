@@ -5,7 +5,11 @@ const wardSchema = new mongoose.Schema(
     wardName: { type: String, required: true, trim: true },
     schoolName: { type: String, default: "", trim: true },
     classGrade: { type: String, required: true, trim: true },
-    subjectsNeeded: { type: String, required: true, trim: true },
+   subjectsNeeded: {
+  type: [String],   // ✅ array of strings
+  required: true,
+  default: []
+},
     currentPerformance: { type: String, default: "", trim: true },
     specialNeeds: { type: String, default: "", trim: true },
   },

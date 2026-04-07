@@ -8,7 +8,7 @@ const initialWard = {
   wardName: "",
   schoolName: "",
   classGrade: "",
-  subjectsNeeded: "",
+  subjectsNeeded: [],
   specialNeeds: "",
 };
 
@@ -154,7 +154,15 @@ const [step, setStep] = useState(1);
     updatedWards[index][name] = value;
     setForm((prev) => ({ ...prev, wards: updatedWards }));
   };
+const handleSubjectsChange = (wardIndex, e) => {
+  const selected = Array.from(e.target.selectedOptions, (opt) => opt.value);
 
+  setForm((prev) => {
+    const updated = [...prev.wards];
+    updated[wardIndex].subjectsNeeded = selected;
+    return { ...prev, wards: updated };
+  });
+};
   const addWard = () => {
     setForm((prev) => ({
       ...prev,
@@ -170,9 +178,13 @@ const [step, setStep] = useState(1);
 
   const validateStep = () => {
     if (step === 1) {
-      return form.wards.every(
-        (w) => w.wardName && w.classGrade && w.subjectsNeeded
-      );
+     return form.wards.every(
+  (w) =>
+    w.wardName &&
+    w.classGrade &&
+    Array.isArray(w.subjectsNeeded) &&
+    w.subjectsNeeded.length > 0
+);
     }
 
     if (step === 2) {
@@ -321,16 +333,34 @@ const [step, setStep] = useState(1);
     required
   />
 
-  <SearchableInput
-    label="Subjects Required"
-    name="subjectsNeeded"
+  <div className="md:col-span-2">
+  <label className="mb-2 block text-sm font-medium text-slate-700">
+    Subjects Required (Select multiple)
+  </label>
+
+  <select
+    multiple
     value={ward.subjectsNeeded}
-    onChange={(e) => handleWardChange(index, e)}
-    options={subjectOptions}
-    listId={`subjects-${index}`}
-    placeholder="Search or select subject"
-    required
-  />
+    onChange={(e) => handleSubjectsChange(index, e)}
+    className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none"
+  >
+    {subjectOptions.map((subject) => (
+      <option key={subject} value={subject}>
+        {subject}
+      </option>
+    ))}
+  </select>
+
+  <p className="mt-2 text-xs text-slate-500">
+    Hold Ctrl (Windows) or Cmd (Mac) to select multiple
+  </p>
+
+  {ward.subjectsNeeded.length > 0 && (
+    <p className="mt-2 text-sm text-slate-600">
+      Selected: {ward.subjectsNeeded.join(", ")}
+    </p>
+  )}
+</div>
 
   <div className="md:col-span-2">
     <TextArea
