@@ -20,7 +20,7 @@ export default function App() {
         <Route path="/admin-login" element={<AdminLogin />} />
 <Route path="/thank-you" element={<ThankYou />} />
         <Route path="/parent-enquiry" element={<ParentEnquiryForm />} />
-
+<Route path="/blogs/:slug" element={<BlogDetail />} />
         <Route
           path="/admin"
           element={
