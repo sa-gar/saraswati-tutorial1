@@ -20,6 +20,12 @@ export default function AdminDashboard() {
     content: "",
     image: "",
   });
+  const [editingBlog, setEditingBlog] = useState(null);
+const [editBlogForm, setEditBlogForm] = useState({
+  title: "",
+  content: "",
+  image: "",
+});
   
   const modules = {
   toolbar: [
@@ -230,6 +236,40 @@ export default function AdminDashboard() {
       alert("Failed to add blog");
     }
   };
+  const startEditBlog = (blog) => {
+  setEditingBlog(blog);
+  setEditBlogForm({
+    title: blog.title || "",
+    content: blog.content || "",
+    image: blog.image || "",
+  });
+};
+
+const saveBlogEdit = async () => {
+  try {
+    const res = await fetch(`${API_BASE}/blogs/${editingBlog._id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(editBlogForm),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Failed to update blog");
+      return;
+    }
+
+    alert("Blog updated successfully");
+    setEditingBlog(null);
+    fetchData();
+  } catch (error) {
+    console.error(error);
+    alert("Failed to update blog");
+  }
+};
 
   const deleteBlog = async (id) => {
     if (!window.confirm("Delete this blog?")) return;
@@ -249,6 +289,35 @@ export default function AdminDashboard() {
       alert("Failed to delete blog");
     }
   };
+  const handleEditBlogImageUpload = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append("image", file);
+
+  try {
+    const res = await fetch(`${API_BASE}/upload`, {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Upload failed");
+      return;
+    }
+
+    setEditBlogForm({
+      ...editBlogForm,
+      image: data.imageUrl,
+    });
+  } catch (error) {
+    console.error(error);
+    alert("Image upload failed");
+  }
+};
   const handleBlogImageUpload = async (e) => {
   const file = e.target.files[0];
   if (!file) return;
@@ -577,12 +646,21 @@ export default function AdminDashboard() {
                   </p>
                 </div>
 
-                <button
-                  onClick={() => deleteBlog(blog._id)}
-                  className="rounded-lg bg-red-500 px-3 py-1 text-white"
-                >
-                  Delete
-                </button>
+               <div className="flex gap-2">
+  <button
+    onClick={() => startEditBlog(blog)}
+    className="rounded-lg bg-blue-600 px-3 py-1 text-white"
+  >
+    Edit
+  </button>
+
+  <button
+    onClick={() => deleteBlog(blog._id)}
+    className="rounded-lg bg-red-500 px-3 py-1 text-white"
+  >
+    Delete
+  </button>
+</div>
               </div>
             </div>
           ))
@@ -687,6 +765,62 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+      {editingBlog && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div className="w-full max-w-3xl rounded-2xl bg-white p-6 shadow-xl">
+      <h2 className="mb-4 text-2xl font-bold">Edit Blog</h2>
+
+      <input
+        placeholder="Title"
+        className="mb-3 w-full rounded border p-2"
+        value={editBlogForm.title}
+        onChange={(e) =>
+          setEditBlogForm({ ...editBlogForm, title: e.target.value })
+        }
+      />
+
+      <input
+        type="file"
+        accept="image/*"
+        onChange={handleEditBlogImageUpload}
+        className="mb-3 w-full rounded border p-2"
+      />
+
+      {editBlogForm.image && (
+        <img
+          src={editBlogForm.image}
+          alt="preview"
+          className="mb-3 h-40 w-full rounded object-cover"
+        />
+      )}
+
+      <ReactQuill
+        value={editBlogForm.content}
+        onChange={(value) =>
+          setEditBlogForm({ ...editBlogForm, content: value })
+        }
+        modules={modules}
+        theme="snow"
+      />
+
+      <div className="mt-6 flex gap-3">
+        <button
+          onClick={saveBlogEdit}
+          className="rounded-xl bg-black px-5 py-3 text-white"
+        >
+          Save Changes
+        </button>
+
+        <button
+          onClick={() => setEditingBlog(null)}
+          className="rounded-xl border px-5 py-3"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
       {showAddForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
