@@ -2,6 +2,19 @@ import express from "express";
 import Blog from "../models/Blog.js";
 
 const router = express.Router();
+router.get("/slug/:slug", async (req, res) => {
+  try {
+    const blog = await Blog.findOne({ slug: req.params.slug });
+
+    if (!blog) {
+      return res.status(404).json({ message: "Blog not found" });
+    }
+
+    res.json(blog);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
 router.get("/", async (req, res) => {
   try {
