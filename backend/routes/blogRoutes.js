@@ -2,6 +2,15 @@ import express from "express";
 import Blog from "../models/Blog.js";
 
 const router = express.Router();
+
+function generateSlug(title) {
+  return title
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
 router.get("/slug/:slug", async (req, res) => {
   try {
     const blog = await Blog.findOne({ slug: req.params.slug });
@@ -41,9 +50,68 @@ router.get("/:id", async (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
-    const blog = new Blog(req.body);
+    const { title, content, image, author } = req.body;
+
+    let slug = generateSlug(title);
+
+    const existing = await Blog.findOne({ slug });
+    if (existing) {
+      slug = `${slug}-${Date.now()}`;
+    }
+
+    const blog = new Blog({
+      title,
+      content,
+      image,
+      author: author || "Admin",
+      slug,
+    });
+
     const saved = await blog.save();
     res.status(201).json(saved);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+router.put("/:id", async (req, res) => {
+  try {
+    const { title, content, image, author } = req.body;
+
+    const existingBlog = await Blog.findById(req.params.id);
+
+    if (!existingBlog) {
+      return res.status(404).json({ message: "Blog not found" });
+    }
+
+    let slug = existingBlog.slug;
+
+    if (title && title !== existingBlog.title) {
+      slug = generateSlug(title);
+
+      const duplicate = await Blog.findOne({
+        slug,
+        _id: { $ne: req.params.id },
+      });
+
+      if (duplicate) {
+        slug = `${slug}-${Date.now()}`;
+      }
+    }
+
+    const updated = await Blog.findByIdAndUpdate(
+      req.params.id,
+      {
+        title,
+        content,
+        image,
+        author,
+        slug,
+      },
+      { new: true }
+    );
+
+    res.json(updated);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -62,21 +130,5 @@ router.delete("/:id", async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
-router.put("/:id", async (req, res) => {
-  try {
-    const updated = await Blog.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    );
 
-    if (!updated) {
-      return res.status(404).json({ message: "Blog not found" });
-    }
-
-    res.json(updated);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-});
 export default router;
