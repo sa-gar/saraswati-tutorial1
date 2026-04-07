@@ -9,5 +9,5 @@ const blogSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-
+slug: { type: String, unique: true }
 export default mongoose.model("Blog", blogSchema);
