@@ -61,7 +61,7 @@ export default function BlogPage() {
                   </h2>
 
                   <div
-  className="mt-2 text-sm leading-6 text-slate-600"
+  className="prose prose-slate mt-3 max-w-none"
   dangerouslySetInnerHTML={{ __html: blog.content }}
 />
 
