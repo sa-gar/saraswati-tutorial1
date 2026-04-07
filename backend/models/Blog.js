@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 const blogSchema = new mongoose.Schema(
   {
+slug: { type: String, unique: true },
     title: { type: String, required: true },
     content: { type: String, required: true },
     image: { type: String, default: "" },
@@ -9,5 +10,5 @@ const blogSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-slug: { type: String, unique: true }
+
 export default mongoose.model("Blog", blogSchema);
