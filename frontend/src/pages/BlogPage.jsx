@@ -50,15 +50,47 @@ function getExcerpt(content = "", length = 180) {
 }
 
 function getCategory(blog) {
-  if (blog.category) return blog.category;
-  const title = `${blog.title || ""} ${stripHtml(blog.content || "")}`.toLowerCase();
+  if (blog?.category) return blog.category;
 
-  if (title.includes("math")) return "Mathematics";
-  if (title.includes("science") || title.includes("physics") || title.includes("chemistry") || title.includes("biology")) return "Science";
-  if (title.includes("english") || title.includes("language") || title.includes("grammar")) return "Languages";
-  if (title.includes("exam") || title.includes("board") || title.includes("neet") || title.includes("jee")) return "Exams";
+  const title = `${blog?.title || ""} ${stripHtml(blog?.content || "")}`.toLowerCase();
+
+  if (
+    title.includes("math") ||
+    title.includes("algebra") ||
+    title.includes("geometry")
+  ) {
+    return "Mathematics";
+  }
+
+  if (
+    title.includes("science") ||
+    title.includes("physics") ||
+    title.includes("chemistry") ||
+    title.includes("biology")
+  ) {
+    return "Science";
+  }
+
+  if (
+    title.includes("english") ||
+    title.includes("language") ||
+    title.includes("grammar")
+  ) {
+    return "Languages";
+  }
+
+  if (
+    title.includes("exam") ||
+    title.includes("board") ||
+    title.includes("neet") ||
+    title.includes("jee")
+  ) {
+    return "Exams";
+  }
+
   if (title.includes("parent")) return "Parenting";
   if (title.includes("tutor") || title.includes("teaching")) return "Tutoring";
+
   return "Study Tips";
 }
 
@@ -91,7 +123,7 @@ function BlogMeta({ blog }) {
 function BlogCard({ blog, compact = false }) {
   return (
     <article className="group overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-200 transition hover:-translate-y-1 hover:shadow-md">
-      <Link to={`/blogs/${blog.slug}`} className="block">
+      <Link to={`/blogs/${blog.slug || blog._id}`} className="block">
         {blog.image ? (
           <div className={compact ? "h-52 overflow-hidden" : "h-64 overflow-hidden"}>
             <img
@@ -109,7 +141,13 @@ function BlogCard({ blog, compact = false }) {
             {getCategory(blog)}
           </span>
 
-          <h2 className={compact ? "mt-4 text-xl font-bold text-slate-900" : "mt-4 text-2xl font-bold text-slate-900"}>
+          <h2
+            className={
+              compact
+                ? "mt-4 text-xl font-bold text-slate-900 group-hover:underline"
+                : "mt-4 text-2xl font-bold text-slate-900 group-hover:underline"
+            }
+          >
             {blog.title}
           </h2>
 
@@ -155,10 +193,12 @@ export default function BlogPage() {
 
   const filteredBlogs = useMemo(() => {
     return blogs.filter((blog) => {
+      const q = query.toLowerCase();
+
       const matchesQuery =
-        (blog.title || "").toLowerCase().includes(query.toLowerCase()) ||
-        stripHtml(blog.content || "").toLowerCase().includes(query.toLowerCase()) ||
-        (blog.author || "").toLowerCase().includes(query.toLowerCase());
+        (blog.title || "").toLowerCase().includes(q) ||
+        stripHtml(blog.content || "").toLowerCase().includes(q) ||
+        (blog.author || "").toLowerCase().includes(q);
 
       const matchesCategory =
         category === "All" || getCategory(blog) === category;
@@ -243,7 +283,7 @@ export default function BlogPage() {
 
                 <article className="overflow-hidden rounded-[32px] bg-white shadow-sm ring-1 ring-slate-200">
                   <div className="grid gap-0 lg:grid-cols-2">
-                    <Link to={`/blogs/${featuredBlog.slug}`} className="block">
+                    <Link to={`/blogs/${featuredBlog.slug || featuredBlog._id}`} className="block">
                       {featuredBlog.image ? (
                         <img
                           src={featuredBlog.image}
@@ -260,8 +300,8 @@ export default function BlogPage() {
                         {getCategory(featuredBlog)}
                       </span>
 
-                      <Link to={`/blogs/${featuredBlog.slug}`}>
-                        <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">
+                      <Link to={`/blogs/${featuredBlog.slug || featuredBlog._id}`}>
+                        <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-900 md:text-4xl hover:underline">
                           {featuredBlog.title}
                         </h2>
                       </Link>
@@ -273,7 +313,7 @@ export default function BlogPage() {
                       <BlogMeta blog={featuredBlog} />
 
                       <Link
-                        to={`/blogs/${featuredBlog.slug}`}
+                        to={`/blogs/${featuredBlog.slug || featuredBlog._id}`}
                         className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-5 py-3 font-medium text-white"
                       >
                         Read full article
