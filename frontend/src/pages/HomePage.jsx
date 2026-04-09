@@ -300,27 +300,20 @@ export default function HomePage() {
           </div>
 
           <nav className="hidden items-center gap-8 md:flex">
-            <a href="#home">Home</a>
-            <a href="#tutors">Tutors</a>
-            <a href="#about">About</a>
-            <a href="#contact">Contact</a>
+  <a href="#home">Home</a>
+  <a href="#tutors">Tutors</a>
+  <a href="#about">About</a>
+  <a href="#contact">Contact</a>
 
-            <Link to="/blogs">Blog</Link>
+  <Link to="/blogs">Blog</Link>
 
-            <Link
-              to="/parent-enquiry"
-              className="rounded-xl bg-slate-900 px-4 py-2 text-white"
-            >
-              Book Demo
-            </Link>
-
-            <Link
-              to="/admin"
-              className="rounded-xl border px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
-            >
-              Admin
-            </Link>
-          </nav>
+  <Link
+    to="/parent-enquiry"
+    className="rounded-xl bg-slate-900 px-4 py-2 text-white"
+  >
+    Book Demo
+  </Link>
+</nav>
 
           <button onClick={() => setMenuOpen(true)} className="md:hidden">
             ☰
@@ -342,39 +335,31 @@ export default function HomePage() {
             </div>
 
             <div className="flex flex-col gap-6 text-lg">
-              <a href="#home" onClick={() => setMenuOpen(false)}>
-                Home
-              </a>
-              <a href="#tutors" onClick={() => setMenuOpen(false)}>
-                Tutors
-              </a>
-              <a href="#about" onClick={() => setMenuOpen(false)}>
-                About
-              </a>
-              <a href="#contact" onClick={() => setMenuOpen(false)}>
-                Contact
-              </a>
+  <a href="#home" onClick={() => setMenuOpen(false)}>
+    Home
+  </a>
+  <a href="#tutors" onClick={() => setMenuOpen(false)}>
+    Tutors
+  </a>
+  <a href="#about" onClick={() => setMenuOpen(false)}>
+    About
+  </a>
+  <a href="#contact" onClick={() => setMenuOpen(false)}>
+    Contact
+  </a>
 
-              <Link to="/blogs" onClick={() => setMenuOpen(false)}>
-                Blog
-              </Link>
+  <Link to="/blogs" onClick={() => setMenuOpen(false)}>
+    Blog
+  </Link>
 
-              <Link
-                to="/admin"
-                onClick={() => setMenuOpen(false)}
-                className="rounded-xl border px-5 py-3 text-center"
-              >
-                Admin
-              </Link>
-
-              <Link
-                to="/parent-enquiry"
-                onClick={() => setMenuOpen(false)}
-                className="rounded-xl bg-black px-5 py-3 text-center text-white"
-              >
-                Book Demo
-              </Link>
-            </div>
+  <Link
+    to="/parent-enquiry"
+    onClick={() => setMenuOpen(false)}
+    className="rounded-xl bg-black px-5 py-3 text-center text-white"
+  >
+    Book Demo
+  </Link>
+</div>
           </motion.div>
         )}
       </AnimatePresence>
