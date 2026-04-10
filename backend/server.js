@@ -25,6 +25,22 @@ app.use(express.json());
 app.get("/", (req, res) => {
   res.json({ message: "Saraswati Tutorial backend is running" });
 });
+app.get("/s/:shortId", (req, res) => {
+  const { shortId } = req.params;
+
+  // 🔥 Hardcoded mapping (test)
+  const links = {
+    abc123: "https://google.com",
+  };
+
+  const fullUrl = links[shortId];
+
+  if (!fullUrl) {
+    return res.status(404).send("Link not found");
+  }
+
+  return res.redirect(fullUrl);
+});
 
 // API Routes
 app.use("/api/tutors", tutorRoutes);
