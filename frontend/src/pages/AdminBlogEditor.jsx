@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import {
@@ -11,6 +11,8 @@ import {
   Image as ImageIcon,
   X,
   ArrowLeft,
+  LogOut,
+  FileText,
 } from "lucide-react";
 
 const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
