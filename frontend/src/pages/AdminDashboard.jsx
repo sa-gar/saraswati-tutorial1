@@ -1,40 +1,17 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css";
 
 const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
 
 export default function AdminDashboard() {
+  const navigate = useNavigate();
+
   const [enquiries, setEnquiries] = useState([]);
   const [parentEnquiries, setParentEnquiries] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [tutors, setTutors] = useState([]);
-  const [blogs, setBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-
-
-  const [blogForm, setBlogForm] = useState({
-    title: "",
-    content: "",
-    image: "",
-  });
-  const [editingBlog, setEditingBlog] = useState(null);
-const [editBlogForm, setEditBlogForm] = useState({
-  title: "",
-  content: "",
-  image: "",
-});
-  
-  const modules = {
-  toolbar: [
-    [{ header: [1, 2, 3, false] }],
-    ["bold", "italic", "underline"],
-    [{ list: "ordered" }, { list: "bullet" }],
-    ["link", "image"]
-  ]
-};
 
   const [editingTutor, setEditingTutor] = useState(null);
   const [editForm, setEditForm] = useState({
@@ -66,8 +43,6 @@ const [editBlogForm, setEditBlogForm] = useState({
     mode: "",
   });
 
-  const navigate = useNavigate();
-
   function handleLogout() {
     localStorage.removeItem("adminToken");
     localStorage.removeItem("adminEmail");
@@ -77,27 +52,24 @@ const [editBlogForm, setEditBlogForm] = useState({
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [eRes, peRes, bRes, tRes, blogRes] = await Promise.all([
+      const [eRes, peRes, bRes, tRes] = await Promise.all([
         fetch(`${API_BASE}/enquiries`),
         fetch(`${API_BASE}/parent-enquiries`),
         fetch(`${API_BASE}/bookings`),
         fetch(`${API_BASE}/tutors`),
-        fetch(`${API_BASE}/blogs`),
       ]);
 
-      const [eData, peData, bData, tData, blogData] = await Promise.all([
+      const [eData, peData, bData, tData] = await Promise.all([
         eRes.json(),
         peRes.json(),
         bRes.json(),
         tRes.json(),
-        blogRes.json(),
       ]);
 
       setEnquiries(Array.isArray(eData) ? eData : []);
       setParentEnquiries(Array.isArray(peData) ? peData : []);
       setBookings(Array.isArray(bData) ? bData : []);
       setTutors(Array.isArray(tData) ? tData : []);
-      setBlogs(Array.isArray(blogData) ? blogData : []);
     } catch (err) {
       console.error("Dashboard fetch error:", err);
     }
@@ -213,147 +185,13 @@ const [editBlogForm, setEditBlogForm] = useState({
     }
   };
 
-  const createBlog = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/blogs`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(blogForm),
-      });
-
-      if (res.ok) {
-        alert("Blog added");
-        setBlogForm({ title: "", content: "", image: "" });
-        fetchData();
-      } else {
-        const data = await res.json();
-        alert(data.message || "Failed to add blog");
-      }
-    } catch (error) {
-      console.error(error);
-      alert("Failed to add blog");
-    }
-  };
-  const startEditBlog = (blog) => {
-  setEditingBlog(blog);
-  setEditBlogForm({
-    title: blog.title || "",
-    content: blog.content || "",
-    image: blog.image || "",
-  });
-};
-
-const saveBlogEdit = async () => {
-  try {
-    const res = await fetch(`${API_BASE}/blogs/${editingBlog._id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(editBlogForm),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      alert(data.message || "Failed to update blog");
-      return;
-    }
-
-    alert("Blog updated successfully");
-    setEditingBlog(null);
-    fetchData();
-  } catch (error) {
-    console.error(error);
-    alert("Failed to update blog");
-  }
-};
-
-  const deleteBlog = async (id) => {
-    if (!window.confirm("Delete this blog?")) return;
-
-    try {
-      const res = await fetch(`${API_BASE}/blogs/${id}`, {
-        method: "DELETE",
-      });
-
-      if (res.ok) {
-        fetchData();
-      } else {
-        alert("Failed to delete blog");
-      }
-    } catch (error) {
-      console.error(error);
-      alert("Failed to delete blog");
-    }
-  };
-  const handleEditBlogImageUpload = async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  const formData = new FormData();
-  formData.append("image", file);
-
-  try {
-    const res = await fetch(`${API_BASE}/upload`, {
-      method: "POST",
-      body: formData,
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      alert(data.message || "Upload failed");
-      return;
-    }
-
-    setEditBlogForm({
-      ...editBlogForm,
-      image: data.imageUrl,
-    });
-  } catch (error) {
-    console.error(error);
-    alert("Image upload failed");
-  }
-};
-  const handleBlogImageUpload = async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  const formData = new FormData();
-  formData.append("image", file);
-
-  try {
-    const res = await fetch(`${API_BASE}/upload`, {
-      method: "POST",
-      body: formData,
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      alert(data.message || "Upload failed");
-      return;
-    }
-
-    setBlogForm({
-      ...blogForm,
-      image: data.imageUrl,
-    });
-
-  } catch (error) {
-    console.error(error);
-    alert("Image upload failed");
-  }
-};
-
-  const filteredTutors = tutors.filter((t) =>
-    t.name?.toLowerCase().includes(search.toLowerCase()) ||
-    t.subject?.toLowerCase().includes(search.toLowerCase()) ||
-    t.location?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredTutors = useMemo(() => {
+    return tutors.filter((t) =>
+      t.name?.toLowerCase().includes(search.toLowerCase()) ||
+      t.subject?.toLowerCase().includes(search.toLowerCase()) ||
+      t.location?.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [tutors, search]);
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-10">
@@ -377,14 +215,14 @@ const saveBlogEdit = async () => {
 
           <button
             onClick={handleLogout}
-            className="rounded-xl bg-slate-900 px-4 py-2 text-white"
+            className="rounded-xl bg-red-600 px-4 py-2 text-white"
           >
             Logout
           </button>
         </div>
       </div>
 
-      <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-5">
+      <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-4">
         <div className="rounded-xl bg-white p-5 text-center shadow">
           <h3 className="text-sm text-gray-500">Tutors</h3>
           <p className="text-2xl font-bold">{tutors.length}</p>
@@ -404,11 +242,6 @@ const saveBlogEdit = async () => {
           <h3 className="text-sm text-gray-500">Bookings</h3>
           <p className="text-2xl font-bold">{bookings.length}</p>
         </div>
-
-        <div className="rounded-xl bg-white p-5 text-center shadow">
-          <h3 className="text-sm text-gray-500">Blogs</h3>
-          <p className="text-2xl font-bold">{blogs.length}</p>
-        </div>
       </div>
 
       {loading && <p className="mb-6">Loading data...</p>}
@@ -424,7 +257,7 @@ const saveBlogEdit = async () => {
           parentEnquiries.map((p) => (
             <div key={p._id} className="mb-4 rounded-xl bg-white p-4 shadow">
               <p>
-                <b>Parent:</b> {p.parentName}
+                <b>Parent:</b> {p.parentName || p.name}
               </p>
               <p>
                 <b>Phone:</b> {p.phone}
@@ -469,10 +302,10 @@ const saveBlogEdit = async () => {
                       <b>Class:</b> {ward.classGrade}
                     </p>
                     <p>
-                      <b>Subjects:</b> {ward.subjectsNeeded}
-                    </p>
-                    <p>
-                      <b>Performance:</b> {ward.currentPerformance}
+                      <b>Subjects:</b>{" "}
+                      {Array.isArray(ward.subjectsNeeded)
+                        ? ward.subjectsNeeded.join(", ")
+                        : ward.subjectsNeeded}
                     </p>
                     <p>
                       <b>Special Notes:</b> {ward.specialNeeds}
@@ -496,12 +329,12 @@ const saveBlogEdit = async () => {
           enquiries.map((e) => (
             <div key={e._id} className="mb-3 rounded-xl bg-white p-4 shadow">
               <p>
-                <b>{e.parentName}</b> → {e.studentName}
+                <b>{e.parentName || e.name}</b> → {e.studentName}
               </p>
               <p>
                 {e.phone} | {e.email}
               </p>
-              <p>{e.subjectNeeded}</p>
+              <p>{e.subjectNeeded || e.subject}</p>
             </div>
           ))
         )}
@@ -531,7 +364,7 @@ const saveBlogEdit = async () => {
         )}
       </section>
 
-      <section className="mb-10">
+      <section>
         <h2 className="mb-4 text-xl font-semibold text-slate-900">Tutors</h2>
 
         <input
@@ -582,85 +415,6 @@ const saveBlogEdit = async () => {
                 >
                   Delete
                 </button>
-              </div>
-            </div>
-          ))
-        )}
-      </section>
-
-      <section className="mt-10 rounded-xl bg-white p-6 shadow">
-        <h2 className="mb-4 text-xl font-bold">Add Blog</h2>
-
-        <input
-          placeholder="Title"
-          className="mb-3 w-full rounded border p-2"
-          value={blogForm.title}
-          onChange={(e) =>
-            setBlogForm({ ...blogForm, title: e.target.value })
-          }
-        />
-
-        <ReactQuill
-  value={blogForm.content}
-  onChange={(value) =>
-    setBlogForm({ ...blogForm, content: value })
-  }
-  modules={modules}
-  theme="snow"
-/>
-
-   <input
-  type="file"
-  accept="image/*"
-  onChange={handleBlogImageUpload}
-  className="mb-3 w-full rounded border p-2"
-/>
-{blogForm.image && (
-  <img
-    src={blogForm.image}
-    alt="preview"
-    className="mb-3 h-40 w-full rounded object-cover"
-  />
-)}
-        <button
-          onClick={createBlog}
-          className="rounded bg-black px-4 py-2 text-white"
-        >
-          Add Blog
-        </button>
-      </section>
-
-      <section className="mt-10">
-        <h2 className="mb-4 text-xl font-semibold text-slate-900">All Blogs</h2>
-
-        {blogs.length === 0 ? (
-          <p className="text-gray-500">No blogs yet.</p>
-        ) : (
-          blogs.map((blog) => (
-            <div key={blog._id} className="mb-4 rounded-xl bg-white p-4 shadow">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-lg font-bold">{blog.title}</p>
-                  <p className="mt-1 text-sm text-slate-600">
-                    {blog.content?.slice(0, 150)}...
-                  </p>
-                </div>
-
-               <div className="flex gap-2">
-  <button
-    onClick={() => startEditBlog(blog)}
-    className="rounded-lg bg-blue-600 px-3 py-1 text-white"
-  >
-    Edit
-  </button>
-
-  <button
-    onClick={() => deleteBlog(blog._id)}
-    className="rounded-lg bg-red-500 px-3 py-1 text-white"
-  >
-    Delete
-  </button>
-</div>
               </div>
             </div>
           ))
@@ -765,62 +519,6 @@ const saveBlogEdit = async () => {
           </div>
         </div>
       )}
-      {editingBlog && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-    <div className="w-full max-w-3xl rounded-2xl bg-white p-6 shadow-xl">
-      <h2 className="mb-4 text-2xl font-bold">Edit Blog</h2>
-
-      <input
-        placeholder="Title"
-        className="mb-3 w-full rounded border p-2"
-        value={editBlogForm.title}
-        onChange={(e) =>
-          setEditBlogForm({ ...editBlogForm, title: e.target.value })
-        }
-      />
-
-      <input
-        type="file"
-        accept="image/*"
-        onChange={handleEditBlogImageUpload}
-        className="mb-3 w-full rounded border p-2"
-      />
-
-      {editBlogForm.image && (
-        <img
-          src={editBlogForm.image}
-          alt="preview"
-          className="mb-3 h-40 w-full rounded object-cover"
-        />
-      )}
-
-      <ReactQuill
-        value={editBlogForm.content}
-        onChange={(value) =>
-          setEditBlogForm({ ...editBlogForm, content: value })
-        }
-        modules={modules}
-        theme="snow"
-      />
-
-      <div className="mt-6 flex gap-3">
-        <button
-          onClick={saveBlogEdit}
-          className="rounded-xl bg-black px-5 py-3 text-white"
-        >
-          Save Changes
-        </button>
-
-        <button
-          onClick={() => setEditingBlog(null)}
-          className="rounded-xl border px-5 py-3"
-        >
-          Cancel
-        </button>
-      </div>
-    </div>
-  </div>
-)}
 
       {showAddForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
