@@ -22,9 +22,6 @@ app.use(cors());
 app.use(express.json());
 
 // Health check
-app.get("/", (req, res) => {
-  res.json({ message: "Saraswati Tutorial backend is running" });
-});
 app.get("/s/:shortId", (req, res) => {
   const { shortId } = req.params;
 
@@ -41,6 +38,10 @@ app.get("/s/:shortId", (req, res) => {
 
   return res.redirect(fullUrl);
 });
+app.get("/", (req, res) => {
+  res.json({ message: "Saraswati Tutorial backend is running" });
+});
+
 
 // API Routes
 app.use("/api/tutors", tutorRoutes);
