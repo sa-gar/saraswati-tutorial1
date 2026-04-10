@@ -1,12 +1,8 @@
 {
-  "routes": [
+  "rewrites": [
     {
-      "src": "^/s/(.*)",
-      "dest": "https://saraswati-tutorial1-2.onrender.com/s/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/"
+      "source": "/s/:path*",
+      "destination": "https://saraswati-tutorial1-2.onrender.com/s/:path*"
     }
   ]
 }
