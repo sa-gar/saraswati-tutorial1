@@ -7,7 +7,7 @@ import ParentEnquiryForm from "./pages/ParentEnquiryForm";
 import BlogPage from "./pages/BlogPage";
 import BlogDetail from "./pages/BlogDetail";
 import ThankYou from "./pages/ThankYou";
-
+import TutorRegistration from "./pages/TutorRegistration";
 // Blog separate system
 import BlogLogin from "./pages/BlogLogin";
 import AdminBlogEditor from "./pages/AdminBlogEditor";
@@ -36,7 +36,7 @@ export default function App() {
         <Route path="/blogs/:slug" element={<BlogDetail />} />
         <Route path="/parent-enquiry" element={<ParentEnquiryForm />} />
         <Route path="/thank-you" element={<ThankYou />} />
-
+        <Route path="/tutor-register" element={<TutorRegistration />} />
         {/* Admin Login */}
         <Route path="/admin-login" element={<AdminLogin />} />
 
