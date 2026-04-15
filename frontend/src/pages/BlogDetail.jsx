@@ -149,6 +149,7 @@ export default function BlogDetail() {
             <img
               src={blog.image}
               alt={blog.title}
+              loading="lazy"
               className="h-[280px] w-full object-cover md:h-[420px]"
             />
           ) : null}
@@ -245,6 +246,7 @@ export default function BlogDetail() {
                     <img
                       src={item.image}
                       alt={item.title}
+                      loading="lazy"
                       className="h-44 w-full object-cover"
                     />
                   ) : (

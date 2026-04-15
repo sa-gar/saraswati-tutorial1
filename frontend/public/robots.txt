@@ -4,6 +4,6 @@ Allow: /
 
 Disallow: /admin
 Disallow: /blog-editor
-Disallow: /api
+Disallow: /api/
 
 Sitemap: https://saraswatitutorial.com/sitemap.xml

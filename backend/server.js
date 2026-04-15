@@ -11,6 +11,7 @@ import parentEnquiryRoutes from "./routes/parentEnquiryRoutes.js";
 import blogRoutes from "./routes/blogRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js"; 
 import blogAuthRoutes from "./routes/blogAuthRoutes.js";
+import compression from "compression";
 
 dotenv.config();
 
@@ -20,7 +21,7 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(cors());
 app.use(express.json());
-
+app.use(compression());
 // Health check
 app.get("/s/:shortId", (req, res) => {
   const { shortId } = req.params;
