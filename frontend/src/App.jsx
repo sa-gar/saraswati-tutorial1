@@ -63,7 +63,7 @@ export default function App() {
           }
         />
 
-        {/*  Optional: Catch all route */}
+        
         {/* <Route path="*" element={<Navigate to="/" />} /> */}
         <Route path="*" element={<div>Page Not Found</div>} />
       </Routes>
