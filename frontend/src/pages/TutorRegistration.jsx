@@ -229,7 +229,7 @@ export default function TutorRegistration() {
                 <>
                     {/*  OCCUPATION */}
                     <p className="mb-2 text-sm font-medium">
-                        Have you worked/work in any school, college, or institute?
+                       Have you worked or are you working in any school, college, or institute?
                     </p>
 
                     <div className="flex gap-2 mb-3">
