@@ -387,6 +387,7 @@ export default function AdminDashboard() {
                   <img
                     src={t.photo}
                     alt={t.name}
+                    loading="lazy"
                     className="h-16 w-16 rounded-xl object-cover"
                   />
                 ) : (
@@ -399,6 +400,15 @@ export default function AdminDashboard() {
                   <p className="font-semibold">{t.name}</p>
                   <p>{t.subject}</p>
                   <p className="text-sm text-gray-500">{t.location}</p>
+                  <p><b>Experience:</b> {t.experience}</p>
+
+                  <p><b>Locations:</b> {t.locations?.join(", ")}</p>
+
+                  <p><b>Vehicle:</b> {t.hasVehicle}</p>
+
+                  <p><b>Timings:</b> {t.timings?.join(", ")}</p>
+
+                  <p><b>Status:</b> {t.status}</p>
                 </div>
               </div>
 

@@ -103,6 +103,7 @@ function TutorCard({ tutor, onViewProfile, onBook }) {
                 <img
                   src={tutor.photo}
                   alt={tutor.name}
+                  loading="lazy"
                   className="h-16 w-16 rounded-2xl object-cover"
                 />
               ) : (
@@ -662,6 +663,7 @@ export default function HomePage() {
                 <img
                   src={selectedTutor.photo}
                   alt={selectedTutor.name}
+                  loading="lazy"
                   className="h-16 w-16 rounded-2xl object-cover"
                 />
               ) : (

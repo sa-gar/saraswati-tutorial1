@@ -63,9 +63,9 @@ export default function App() {
           }
         />
 
-        {/* ❌ Optional: Catch all route */}
-        <Route path="*" element={<Navigate to="/" />} />
-
+        
+        {/* <Route path="*" element={<Navigate to="/" />} /> */}
+        <Route path="*" element={<h1>404 - Page Not Found</h1>} />
       </Routes>
     </div>
   );

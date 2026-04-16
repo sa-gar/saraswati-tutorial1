@@ -37,22 +37,102 @@ export default function TutorRegistration() {
             };
         });
     };
+    const validateForm = () => {
+        // Name
+        if (!formData.name || formData.name.trim().length < 3) {
+            return "Name must be at least 3 characters";
+        }
 
-  const handleSubmit = async () => {
-  try {
-    // await axios.post(`${API_BASE}/tutors`, formData);
+        // Email
+        if (!formData.email) {
+            return "Email is required";
+        }
 
-    alert("Tutor Registered Successfully");
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.email)) {
+            return "Enter a valid email address";
+        }
 
-    //  redirect (BEST UX)
-    navigate("/thank-you"); // better than home
+        // Experience
+        if (!formData.experience || formData.experience === "Select Experience") {
+            return "Please select experience";
+        }
 
-  } catch (err) {
-    console.error(err);
-    alert("Error saving tutor");
-  }
-};
+        // Location
+        if (!formData.locations || formData.locations.length === 0) {
+            return "Select at least one location";
+        }
 
+        return null;
+    };
+
+    //   const handleSubmit = async () => {
+    //   try {
+    //     // await axios.post(`${API_BASE}/tutors`, formData);
+
+    //     alert("Tutor Registered Successfully");
+
+    //     //  redirect (BEST UX)
+    //     navigate("/thank-you"); // better than home
+
+    //   } catch (err) {
+    //     console.error(err);
+    //     alert("Error saving tutor");
+    //   }
+    // };
+
+
+
+    //     const handleSubmit = async () => {
+    //   const error = validateForm();
+
+    //   if (error) {
+    //     alert(error);
+    //     return;
+    //   }
+
+    //   try {
+    //     const fd = new FormData();
+    //     fd.append("idProof", formData.idProof);
+    //     fd.append("expCert", formData.expCert);
+    //     if (formData.otherDoc) fd.append("otherDoc", formData.otherDoc);
+
+    //     const uploadRes = await axios.post(`${API_BASE}/upload`, fd);
+
+    //     await axios.post(`${API_BASE}/tutors`, {
+    //       ...formData,
+    //       documents: uploadRes.data,
+    //     });
+
+    //     navigate("/thank-you");
+    //   } catch (err) {
+    //     console.error(err);
+    //     alert("Something went wrong");
+    //   }
+    // };
+
+    const handleSubmit = async () => {
+        const error = validateForm();
+
+        if (error) {
+            alert(error);
+            return;
+        }
+
+        try {
+            await axios.post(`${API_BASE}/tutors`, {
+                ...formData,
+                documents: {},
+            });
+
+            alert("Data saved successfully ");
+            navigate("/thank-you");
+
+        } catch (err) {
+            console.error(err);
+            alert("Error saving tutor");
+        }
+    };
     const areas = [
         "Indiranagar",
         "Whitefield",
@@ -144,11 +224,13 @@ export default function TutorRegistration() {
                     </div>
                 </>
             )}
-          
+
             {step === 2 && (
                 <>
                     {/*  OCCUPATION */}
-                    <p className="mb-2">Do you have occupation?</p>
+                    <p className="mb-2 text-sm font-medium">
+                       Have you worked or are you working in any school, college, or institute?
+                    </p>
 
                     <div className="flex gap-2 mb-3">
                         <button
@@ -318,7 +400,7 @@ export default function TutorRegistration() {
 
                         <div className="space-y-4">
                             {/* ID Proof */}
-                            <div className="border-2 border-dashed rounded-xl p-4 text-center hover:border-blue-500 hover:bg-blue-50 transition cursor-pointer">
+                            <div className="border border-gray-200 rounded-xl p-4 bg-white shadow-sm hover:shadow-md transition">
                                 <input
                                     type="file"
                                     className="hidden"
@@ -342,7 +424,7 @@ export default function TutorRegistration() {
                             </div>
 
                             {/* Experience */}
-                            <div className="border-2 border-dashed rounded-xl p-4 text-center hover:border-blue-500 hover:bg-blue-50 transition cursor-pointer">
+                            <div className="border border-gray-200 rounded-xl p-4 bg-white shadow-sm hover:shadow-md transition">
                                 <input
                                     type="file"
                                     className="hidden"
@@ -352,7 +434,7 @@ export default function TutorRegistration() {
                                     }
                                 />
                                 <label htmlFor="expCert" className="cursor-pointer">
-                                    <p className="text-sm font-medium">Experience Certificate (Required)</p>
+                                    <p className="text-sm font-medium">Education Certificate (Required)</p>
                                     <p className="text-xs text-gray-500 mt-1">
                                         Click to upload
                                     </p>
@@ -366,7 +448,7 @@ export default function TutorRegistration() {
                             </div>
 
                             {/* Other */}
-                            <div className="border-2 border-dashed rounded-xl p-4 text-center hover:border-blue-500 hover:bg-blue-50 transition cursor-pointer">
+                            <div className="border border-gray-200 rounded-xl p-4 bg-white shadow-sm hover:shadow-md transition">
                                 <input
                                     type="file"
                                     className="hidden"
@@ -376,7 +458,7 @@ export default function TutorRegistration() {
                                     }
                                 />
                                 <label htmlFor="otherDoc" className="cursor-pointer">
-                                    <p className="text-sm font-medium">Other Document (Optional)</p>
+                                    <p className="text-sm font-medium">Experience/Appraisal Document(Optional)</p>
 
                                     {formData.otherDoc && (
                                         <p className="text-green-600 text-sm mt-2">
@@ -475,6 +557,7 @@ export default function TutorRegistration() {
                     </div>
                 </>
             )}
+
         </div>
     );
 }

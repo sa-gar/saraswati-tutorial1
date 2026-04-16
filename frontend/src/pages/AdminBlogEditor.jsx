@@ -303,6 +303,7 @@ export default function AdminBlogEditor() {
                 <img
                   src={blogForm.image}
                   alt="Blog cover preview"
+                  loading="lazy"
                   className="h-56 w-full object-cover"
                 />
               </div>
@@ -342,6 +343,7 @@ export default function AdminBlogEditor() {
                   <img
                     src={blogForm.image}
                     alt="Preview"
+                    loading="lazy"
                     className="h-48 w-full object-cover"
                   />
                 )}
@@ -401,6 +403,7 @@ export default function AdminBlogEditor() {
                     <img
                       src={blog.image}
                       alt={blog.title}
+                      loading="lazy"
                       className="h-48 w-full object-cover"
                     />
                   ) : (
@@ -523,6 +526,7 @@ export default function AdminBlogEditor() {
                 <img
                   src={editBlogForm.image}
                   alt="Edit preview"
+                  loading="lazy"
                   className="h-56 w-full object-cover"
                 />
               </div>
