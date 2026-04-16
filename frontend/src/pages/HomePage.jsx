@@ -314,6 +314,12 @@ export default function HomePage() {
   >
     Book Demo
   </Link>
+   <Link
+    to="/tutor-register"
+    className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-4 py-2 text-white transition"
+  >
+    Become a Tutor
+  </Link>
 </nav>
 
           <button onClick={() => setMenuOpen(true)} className="md:hidden">
@@ -360,6 +366,13 @@ export default function HomePage() {
   >
     Book Demo
   </Link>
+ <Link
+  to="/tutor-register"
+  onClick={() => setMenuOpen(false)}
+  className="w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-5 py-3 text-center text-white transition"
+>
+  Become a Tutor
+</Link>
 </div>
           </motion.div>
         )}
@@ -729,6 +742,7 @@ export default function HomePage() {
               >
                 Book demo
               </Button>
+              
             </div>
           </div>
         ) : null}
