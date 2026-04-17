@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -20,15 +20,14 @@ import {
   Mail,
   Facebook,
   Instagram,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
 import { Avatar, AvatarFallback } from "../components/ui/avatar";
-import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css";
-
 
 const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
 
@@ -92,13 +91,17 @@ function Modal({ open, onClose, title, children }) {
   );
 }
 
-function TutorCard({ tutor, onViewProfile, onBook }) {
+function TutorCard({ tutor, onViewProfile, onBook, swipeMode = false }) {
   return (
-    <motion.div whileHover={{ y: -4 }} transition={{ duration: 0.2 }}>
+    <motion.div
+      whileHover={{ y: -4 }}
+      transition={{ duration: 0.2 }}
+      className={swipeMode ? "w-[88vw] max-w-sm flex-shrink-0 snap-start sm:w-[420px]" : ""}
+    >
       <Card className="overflow-hidden rounded-3xl border-0 bg-white shadow-sm ring-1 ring-slate-200">
         <CardContent className="p-6">
           <div className="flex items-start justify-between gap-4">
-            <div className="flex items-center gap-4">
+            <div className="flex min-w-0 items-center gap-4">
               {tutor.photo ? (
                 <img
                   src={tutor.photo}
@@ -114,9 +117,9 @@ function TutorCard({ tutor, onViewProfile, onBook }) {
                 </Avatar>
               )}
 
-              <div>
+              <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="text-lg font-semibold text-slate-900">
+                  <h3 className="truncate text-lg font-semibold text-slate-900">
                     {tutor.name}
                   </h3>
                   {tutor.verified ? (
@@ -213,11 +216,13 @@ export default function HomePage() {
     message: "",
   });
 
+  const sliderRef = useRef(null);
+
   useEffect(() => {
     fetch(`${API_BASE}/tutors`)
       .then((res) => res.json())
       .then((data) => {
-        setTutors(data);
+        setTutors(Array.isArray(data) ? data : []);
         setLoading(false);
       })
       .catch(() => {
@@ -264,63 +269,71 @@ export default function HomePage() {
       ...bookingForm,
     };
 
-    const res = await fetch(`${API_BASE}/bookings`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (res.ok) {
-      setToast(`Demo requested with ${bookingTutor.name}`);
-      setBookingTutor(null);
-      setBookingForm({
-        learnerName: "",
-        phone: "",
-        preferredDate: "",
-        preferredSlot: "",
-        message: "",
+    try {
+      const res = await fetch(`${API_BASE}/bookings`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
       });
-    } else {
+
+      if (res.ok) {
+        setToast(`Demo requested with ${bookingTutor.name}`);
+        setBookingTutor(null);
+        setBookingForm({
+          learnerName: "",
+          phone: "",
+          preferredDate: "",
+          preferredSlot: "",
+          message: "",
+        });
+      } else {
+        setToast("Booking failed");
+      }
+    } catch {
       setToast("Booking failed");
     }
+  }
+
+  function scrollTutors(direction) {
+    if (!sliderRef.current) return;
+    const amount = direction === "left" ? -320 : 320;
+    sliderRef.current.scrollBy({ left: amount, behavior: "smooth" });
   }
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <div>
-            <div className="flex items-center gap-2">
-  
-  <h1 className="text-xl font-bold text-slate-900">
-    Saraswati Tutorial
-  </h1>
-</div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-bold text-slate-900">
+              Saraswati Tutorial
+            </h1>
           </div>
 
           <nav className="hidden items-center gap-8 md:flex">
-  <a href="#home">Home</a>
-  <a href="#tutors">Tutors</a>
-  <a href="#about">About</a>
-  <a href="#contact">Contact</a>
+            <a href="#home">Home</a>
+            <a href="#tutors">Tutors</a>
+            <a href="#about">About</a>
+            <a href="#contact">Contact</a>
 
-  <Link to="/blogs">Blog</Link>
+            <Link to="/blogs">Blog</Link>
 
-  <Link
-    to="/parent-enquiry"
-    className="rounded-xl bg-slate-900 px-4 py-2 text-white"
-  >
-    Book Demo
-  </Link>
-   <Link
-    to="/tutor-register"
-    className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-4 py-2 text-white transition"
-  >
-    Become a Tutor
-  </Link>
-</nav>
+            <Link
+              to="/parent-enquiry"
+              className="rounded-xl bg-slate-900 px-4 py-2 text-white"
+            >
+              Book Demo
+            </Link>
+
+            <Link
+              to="/tutor-register"
+              className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-white transition hover:from-blue-700 hover:to-indigo-700"
+            >
+              Become a Tutor
+            </Link>
+          </nav>
 
           <button onClick={() => setMenuOpen(true)} className="md:hidden">
             ☰
@@ -342,38 +355,39 @@ export default function HomePage() {
             </div>
 
             <div className="flex flex-col gap-6 text-lg">
-  <a href="#home" onClick={() => setMenuOpen(false)}>
-    Home
-  </a>
-  <a href="#tutors" onClick={() => setMenuOpen(false)}>
-    Tutors
-  </a>
-  <a href="#about" onClick={() => setMenuOpen(false)}>
-    About
-  </a>
-  <a href="#contact" onClick={() => setMenuOpen(false)}>
-    Contact
-  </a>
+              <a href="#home" onClick={() => setMenuOpen(false)}>
+                Home
+              </a>
+              <a href="#tutors" onClick={() => setMenuOpen(false)}>
+                Tutors
+              </a>
+              <a href="#about" onClick={() => setMenuOpen(false)}>
+                About
+              </a>
+              <a href="#contact" onClick={() => setMenuOpen(false)}>
+                Contact
+              </a>
 
-  <Link to="/blogs" onClick={() => setMenuOpen(false)}>
-    Blog
-  </Link>
+              <Link to="/blogs" onClick={() => setMenuOpen(false)}>
+                Blog
+              </Link>
 
-  <Link
-    to="/parent-enquiry"
-    onClick={() => setMenuOpen(false)}
-    className="rounded-xl bg-black px-5 py-3 text-center text-white"
-  >
-    Book Demo
-  </Link>
- <Link
-  to="/tutor-register"
-  onClick={() => setMenuOpen(false)}
-  className="w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-5 py-3 text-center text-white transition"
->
-  Become a Tutor
-</Link>
-</div>
+              <Link
+                to="/parent-enquiry"
+                onClick={() => setMenuOpen(false)}
+                className="rounded-xl bg-black px-5 py-3 text-center text-white"
+              >
+                Book Demo
+              </Link>
+
+              <Link
+                to="/tutor-register"
+                onClick={() => setMenuOpen(false)}
+                className="w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-3 text-center text-white transition hover:from-blue-700 hover:to-indigo-700"
+              >
+                Become a Tutor
+              </Link>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -498,17 +512,53 @@ export default function HomePage() {
           <div className="rounded-3xl bg-white p-8 ring-1 ring-slate-200">
             Loading tutors...
           </div>
-        ) : (
-          <div className="grid gap-6 xl:grid-cols-2">
-            {filteredTutors.map((tutor) => (
-              <TutorCard
-                key={tutor._id}
-                tutor={tutor}
-                onViewProfile={setSelectedTutor}
-                onBook={setBookingTutor}
-              />
-            ))}
+        ) : filteredTutors.length === 0 ? (
+          <div className="rounded-3xl bg-white p-8 ring-1 ring-slate-200">
+            No tutors found for the selected filters.
           </div>
+        ) : (
+          <>
+            <div className="mb-4 flex justify-end gap-2 lg:hidden">
+              <button
+                onClick={() => scrollTutors("left")}
+                className="rounded-full border border-slate-300 bg-white p-3 shadow-sm"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => scrollTutors("right")}
+                className="rounded-full border border-slate-300 bg-white p-3 shadow-sm"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div
+              ref={sliderRef}
+              className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4 scroll-smooth lg:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
+              {filteredTutors.map((tutor) => (
+                <TutorCard
+                  key={tutor._id}
+                  tutor={tutor}
+                  onViewProfile={setSelectedTutor}
+                  onBook={setBookingTutor}
+                  swipeMode
+                />
+              ))}
+            </div>
+
+            <div className="hidden gap-6 xl:grid xl:grid-cols-2">
+              {filteredTutors.map((tutor) => (
+                <TutorCard
+                  key={tutor._id}
+                  tutor={tutor}
+                  onViewProfile={setSelectedTutor}
+                  onBook={setBookingTutor}
+                />
+              ))}
+            </div>
+          </>
         )}
       </section>
 
@@ -578,7 +628,7 @@ export default function HomePage() {
               <div className="flex items-center gap-3">
                 <Phone className="h-5 w-5" />
                 <span>+91 8904457689</span>
-<span>+91 9041157689</span>
+                <span>+91 9041157689</span>
               </div>
               <div className="flex items-center gap-3">
                 <Mail className="h-5 w-5" />
@@ -742,7 +792,6 @@ export default function HomePage() {
               >
                 Book demo
               </Button>
-              
             </div>
           </div>
         ) : null}
@@ -783,8 +832,8 @@ export default function HomePage() {
                 }
               />
               <Input
+                type="date"
                 className="h-12 rounded-2xl border border-slate-200 px-4"
-                placeholder="Preferred date"
                 value={bookingForm.preferredDate}
                 onChange={(e) =>
                   setBookingForm({
@@ -806,15 +855,17 @@ export default function HomePage() {
               />
             </div>
 
-
-
-<ReactQuill
-  value={blogForm.content}
-  onChange={(value) =>
-    setBlogForm({ ...blogForm, content: value })
-  }
-  theme="snow"
-/>
+            <textarea
+              className="min-h-[120px] w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none"
+              placeholder="Additional message"
+              value={bookingForm.message}
+              onChange={(e) =>
+                setBookingForm({
+                  ...bookingForm,
+                  message: e.target.value,
+                })
+              }
+            />
 
             <div className="flex items-center justify-between rounded-3xl bg-emerald-50 p-4 text-sm text-emerald-800">
               <div className="flex items-center gap-2">
