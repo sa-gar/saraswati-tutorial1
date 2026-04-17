@@ -10,7 +10,7 @@ async function run() {
     await mongoose.connect(process.env.MONGO_URI);
 
     const email = "admin@gmail.com";
-    const password = "admin123";
+    const password = "adityast1";
 
     const existing = await Admin.findOne({ email });
     if (existing) {
