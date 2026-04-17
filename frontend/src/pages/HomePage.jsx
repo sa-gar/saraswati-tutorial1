@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -20,15 +20,14 @@ import {
   Mail,
   Facebook,
   Instagram,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
 import { Avatar, AvatarFallback } from "../components/ui/avatar";
-import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css";
-
 
 const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
 
@@ -92,13 +91,17 @@ function Modal({ open, onClose, title, children }) {
   );
 }
 
-function TutorCard({ tutor, onViewProfile, onBook }) {
+function TutorCard({ tutor, onViewProfile, onBook, swipeMode = false }) {
   return (
-    <motion.div whileHover={{ y: -4 }} transition={{ duration: 0.2 }}>
+    <motion.div
+      whileHover={{ y: -4 }}
+      transition={{ duration: 0.2 }}
+      className={swipeMode ? "w-[88vw] max-w-sm flex-shrink-0 snap-start sm:w-[420px]" : ""}
+    >
       <Card className="overflow-hidden rounded-3xl border-0 bg-white shadow-sm ring-1 ring-slate-200">
         <CardContent className="p-6">
           <div className="flex items-start justify-between gap-4">
-            <div className="flex items-center gap-4">
+            <div className="flex min-w-0 items-center gap-4">
               {tutor.photo ? (
                 <img
                   src={tutor.photo}
@@ -114,9 +117,9 @@ function TutorCard({ tutor, onViewProfile, onBook }) {
                 </Avatar>
               )}
 
-              <div>
+              <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="text-lg font-semibold text-slate-900">
+                  <h3 className="truncate text-lg font-semibold text-slate-900">
                     {tutor.name}
                   </h3>
                   {tutor.verified ? (
@@ -281,27 +284,37 @@ export default function HomePage() {
       ...bookingForm,
     };
 
-    const res = await fetch(`${API_BASE}/bookings`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (res.ok) {
-      setToast(`Demo requested with ${bookingTutor.name}`);
-      setBookingTutor(null);
-      setBookingForm({
-        learnerName: "",
-        phone: "",
-        preferredDate: "",
-        preferredSlot: "",
-        message: "",
+    try {
+      const res = await fetch(`${API_BASE}/bookings`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
       });
-    } else {
+
+      if (res.ok) {
+        setToast(`Demo requested with ${bookingTutor.name}`);
+        setBookingTutor(null);
+        setBookingForm({
+          learnerName: "",
+          phone: "",
+          preferredDate: "",
+          preferredSlot: "",
+          message: "",
+        });
+      } else {
+        setToast("Booking failed");
+      }
+    } catch {
       setToast("Booking failed");
     }
+  }
+
+  function scrollTutors(direction) {
+    if (!sliderRef.current) return;
+    const amount = direction === "left" ? -320 : 320;
+    sliderRef.current.scrollBy({ left: amount, behavior: "smooth" });
   }
 
   return (
@@ -516,17 +529,53 @@ export default function HomePage() {
           <div className="rounded-3xl bg-white p-8 ring-1 ring-slate-200">
             Loading tutors...
           </div>
-        ) : (
-          <div className="grid gap-6 xl:grid-cols-2">
-            {filteredTutors.map((tutor) => (
-              <TutorCard
-                key={tutor._id}
-                tutor={tutor}
-                onViewProfile={setSelectedTutor}
-                onBook={setBookingTutor}
-              />
-            ))}
+        ) : filteredTutors.length === 0 ? (
+          <div className="rounded-3xl bg-white p-8 ring-1 ring-slate-200">
+            No tutors found for the selected filters.
           </div>
+        ) : (
+          <>
+            <div className="mb-4 flex justify-end gap-2 lg:hidden">
+              <button
+                onClick={() => scrollTutors("left")}
+                className="rounded-full border border-slate-300 bg-white p-3 shadow-sm"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => scrollTutors("right")}
+                className="rounded-full border border-slate-300 bg-white p-3 shadow-sm"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div
+              ref={sliderRef}
+              className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4 scroll-smooth lg:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
+              {filteredTutors.map((tutor) => (
+                <TutorCard
+                  key={tutor._id}
+                  tutor={tutor}
+                  onViewProfile={setSelectedTutor}
+                  onBook={setBookingTutor}
+                  swipeMode
+                />
+              ))}
+            </div>
+
+            <div className="hidden gap-6 xl:grid xl:grid-cols-2">
+              {filteredTutors.map((tutor) => (
+                <TutorCard
+                  key={tutor._id}
+                  tutor={tutor}
+                  onViewProfile={setSelectedTutor}
+                  onBook={setBookingTutor}
+                />
+              ))}
+            </div>
+          </>
         )}
 
         <div className="mt-10">
@@ -836,8 +885,8 @@ export default function HomePage() {
                 }
               />
               <Input
+                type="date"
                 className="h-12 rounded-2xl border border-slate-200 px-4"
-                placeholder="Preferred date"
                 value={bookingForm.preferredDate}
                 onChange={(e) =>
                   setBookingForm({
