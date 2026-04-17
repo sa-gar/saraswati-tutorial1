@@ -910,14 +910,7 @@ export default function HomePage() {
 
 
 
-            {/* <ReactQuill
-              value={blogForm.content}
-              onChange={(value) =>
-                setBlogForm({ ...blogForm, content: value })
-              }
-              theme="snow"
-            /> */}
-
+       
             <div className="flex items-center justify-between rounded-3xl bg-emerald-50 p-4 text-sm text-emerald-800">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4" />
