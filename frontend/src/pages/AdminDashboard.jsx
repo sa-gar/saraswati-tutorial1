@@ -193,6 +193,71 @@ export default function AdminDashboard() {
     );
   }, [tutors, search]);
 
+
+  const approveTutor = async (id) => {
+    const token = localStorage.getItem("adminToken");
+
+    if (!window.confirm("Approve this tutor?")) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/tutors/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          verified: true,
+          status: "approved",
+        }),
+      });
+
+      if (!res.ok) {
+        alert("Failed to approve tutor");
+        return;
+      }
+
+      alert("Tutor approved successfully ");
+      fetchData(); // refresh list
+
+    } catch (err) {
+      console.error(err);
+      alert("Error approving tutor");
+    }
+  };
+
+  const rejectTutor = async (id) => {
+    const token = localStorage.getItem("adminToken");
+
+    if (!window.confirm("Reject this tutor?")) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/tutors/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          verified: false,
+          status: "rejected",
+        }),
+      });
+
+      if (!res.ok) {
+        alert("Failed to reject tutor");
+        return;
+      }
+
+      alert("Tutor rejected ");
+      fetchData();
+
+    } catch (err) {
+      console.error(err);
+      alert("Error rejecting tutor");
+    }
+  };
+
   return (
     <div className="mx-auto max-w-7xl px-6 py-10">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
@@ -385,8 +450,11 @@ export default function AdminDashboard() {
               <div className="flex items-center gap-4">
                 {t.photo ? (
                   <img
-                    src={t.photo}
+                    src={t.photo.replace("/upload/", "/upload/f_auto,q_auto,w_100/")}
                     alt={t.name}
+                    loading="lazy"
+                    width="100"
+                    height="100"
                     className="h-16 w-16 rounded-xl object-cover"
                   />
                 ) : (
@@ -399,16 +467,92 @@ export default function AdminDashboard() {
                   <p className="font-semibold">{t.name}</p>
                   <p>{t.subject}</p>
                   <p className="text-sm text-gray-500">{t.location}</p>
+                  <p><b>Experience:</b> {t.experience}</p>
+
+                  <p><b>Locations:</b> {t.locations?.join(", ")}</p>
+
+                  <p><b>Vehicle:</b> {t.hasVehicle}</p>
+
+                  <p><b>Timings:</b> {t.timings?.join(", ")}</p>
+
+                  {/* <p><b>Status:</b> {t.status}</p> */}
+
+
+                  <p>
+                    <b>Status:</b>{" "}
+                    {t.status === "approved" && (
+                      <span className="text-green-600 font-medium">Approved</span>
+                    )}
+                    {t.status === "rejected" && (
+                      <span className="text-red-600 font-medium">Rejected</span>
+                    )}
+                    {(t.status === "pending" || !t.status) && (
+                      <span className="text-yellow-600 font-medium">Pending</span>
+                    )}
+                  </p>
+                  <div className="mt-2 text-sm">
+                    <p className="font-medium">Documents:</p>
+
+                    {t.idProof && (
+                      <a
+                        href={t.idProof}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline block"
+                      >
+                        View ID Proof
+                      </a>
+                    )}
+
+                    {t.expCert && (
+                      <a
+                        href={t.expCert}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline block"
+                      >
+                        View Education Certificate
+                      </a>
+                    )}
+
+                    {t.otherDoc && (
+                      <a
+                        href={t.otherDoc}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline block"
+                      >
+                        View Experience Document
+                      </a>
+                    )}
+                  </div>
+
                 </div>
               </div>
-
               <div className="flex gap-2">
+
+
+                <button
+                  onClick={() => approveTutor(t._id)}
+                  className="rounded-lg bg-green-600 px-3 py-1 text-white"
+                >
+                  Approve
+                </button>
+
+                <button
+                  onClick={() => rejectTutor(t._id)}
+                  className="rounded-lg bg-red-600 px-3 py-1 text-white"
+                >
+                  Reject
+                </button>
+
                 <button
                   onClick={() => startEditTutor(t)}
                   className="rounded-lg bg-blue-600 px-3 py-1 text-white"
                 >
                   Edit
                 </button>
+
                 <button
                   onClick={() => deleteTutor(t._id)}
                   className="rounded-lg bg-red-500 px-3 py-1 text-white"
@@ -416,6 +560,7 @@ export default function AdminDashboard() {
                   Delete
                 </button>
               </div>
+
             </div>
           ))
         )}

@@ -129,6 +129,7 @@ function BlogCard({ blog, compact = false }) {
             <img
               src={blog.image}
               alt={blog.title}
+              loading="lazy"
               className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
             />
           </div>
@@ -288,6 +289,7 @@ export default function BlogPage() {
                         <img
                           src={featuredBlog.image}
                           alt={featuredBlog.title}
+                          loading="lazy"
                           className="h-full min-h-[320px] w-full object-cover"
                         />
                       ) : (

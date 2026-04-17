@@ -1,20 +1,37 @@
 import { useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
 export default function ThankYou() {
-  const navigate = useNavigate();
+
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const type = params.get("type");
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      navigate("/");
-    }, 3000);
+
+      let message = "";
+
+      //  Different messages
+      if (type === "tutor") {
+        message = "Hi, I have registered as a tutor. Please guide me for next steps.";
+      } else {
+        message = "Hi, I just submitted my enquiry for a tutor. Please assist me.";
+      }
+
+      window.location.href =
+        "https://wa.me/918904457689?text=" +
+        encodeURIComponent(message);
+
+    }, 2500);
 
     return () => clearTimeout(timer);
-  }, [navigate]);
+  }, [type]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-6">
       <div className="w-full max-w-lg rounded-3xl bg-white p-8 text-center shadow-sm ring-1 ring-slate-200">
+
         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-3xl">
           ✓
         </div>
@@ -24,21 +41,24 @@ export default function ThankYou() {
         </h1>
 
         <p className="mt-3 text-slate-600">
-          Your enquiry has been submitted successfully. Our team will contact you soon.
+          Your details have been submitted successfully.
         </p>
 
         <p className="mt-2 text-sm text-slate-500">
-          Redirecting to homepage in 3 seconds...
+          Redirecting you to WhatsApp...
         </p>
 
+        {/* Manual button */}
         <div className="mt-6">
-          <Link
-            to="/"
-            className="inline-flex rounded-2xl bg-slate-900 px-6 py-3 font-medium text-white"
+          <a
+            href={`https://wa.me/918904457689`}
+            target="_blank"
+            className="inline-flex rounded-2xl bg-green-600 px-6 py-3 font-medium text-white"
           >
-            Go to Homepage
-          </Link>
+            Open WhatsApp
+          </a>
         </div>
+
       </div>
     </div>
   );
