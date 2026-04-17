@@ -1,19 +1,32 @@
 import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 
 export default function ThankYou() {
 
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const type = params.get("type");
+
   useEffect(() => {
     const timer = setTimeout(() => {
-      const message = "Hi, I just submitted my details. Please assist me.";
+
+      let message = "";
+
+      //  Different messages
+      if (type === "tutor") {
+        message = "Hi, I have registered as a tutor. Please guide me for next steps.";
+      } else {
+        message = "Hi, I just submitted my enquiry for a tutor. Please assist me.";
+      }
 
       window.location.href =
-        "https://wa.me/message/VX2T7QEATZPRL1?text=" +
+        "https://wa.me/918904457689?text=" +
         encodeURIComponent(message);
 
-    }, 2500); // 2.5 sec delay
+    }, 2500);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [type]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-6">
@@ -35,10 +48,10 @@ export default function ThankYou() {
           Redirecting you to WhatsApp...
         </p>
 
-        {/* Optional manual button */}
+        {/* Manual button */}
         <div className="mt-6">
           <a
-            href="https://wa.me/message/VX2T7QEATZPRL1"
+            href={`https://wa.me/918904457689`}
             target="_blank"
             className="inline-flex rounded-2xl bg-green-600 px-6 py-3 font-medium text-white"
           >

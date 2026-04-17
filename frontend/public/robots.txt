@@ -2,8 +2,8 @@
 User-agent: *
 Allow: /
 
-Disallow: /admin
-Disallow: /blog-editor
+Disallow: /admin/
+Disallow: /blog-editor/
 Disallow: /api/
 
 Sitemap: https://saraswatitutorial.com/sitemap.xml

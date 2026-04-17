@@ -66,51 +66,7 @@ export default function TutorRegistration() {
         return null;
     };
 
-    //   const handleSubmit = async () => {
-    //   try {
-    //     // await axios.post(`${API_BASE}/tutors`, formData);
-
-    //     alert("Tutor Registered Successfully");
-
-    //     //  redirect (BEST UX)
-    //     navigate("/thank-you"); // better than home
-
-    //   } catch (err) {
-    //     console.error(err);
-    //     alert("Error saving tutor");
-    //   }
-    // };
-
-
-
-    //     const handleSubmit = async () => {
-    //   const error = validateForm();
-
-    //   if (error) {
-    //     alert(error);
-    //     return;
-    //   }
-
-    //   try {
-    //     const fd = new FormData();
-    //     fd.append("idProof", formData.idProof);
-    //     fd.append("expCert", formData.expCert);
-    //     if (formData.otherDoc) fd.append("otherDoc", formData.otherDoc);
-
-    //     const uploadRes = await axios.post(`${API_BASE}/upload`, fd);
-
-    //     await axios.post(`${API_BASE}/tutors`, {
-    //       ...formData,
-    //       documents: uploadRes.data,
-    //     });
-
-    //     navigate("/thank-you");
-    //   } catch (err) {
-    //     console.error(err);
-    //     alert("Something went wrong");
-    //   }
-    // };
-
+  
     const handleSubmit = async () => {
         const error = validateForm();
 
@@ -120,17 +76,31 @@ export default function TutorRegistration() {
         }
 
         try {
+            const fd = new FormData();
+
+            //  STEP 1: append files
+            if (formData.idProof) fd.append("idProof", formData.idProof);
+            if (formData.expCert) fd.append("expCert", formData.expCert);
+            if (formData.otherDoc) fd.append("otherDoc", formData.otherDoc);
+
+            //  STEP 1: upload to cloudinary
+            const uploadRes = await axios.post(`${API_BASE}/upload`, fd);
+
+            //  STEP 2: save tutor with document URLs
             await axios.post(`${API_BASE}/tutors`, {
                 ...formData,
-                documents: {},
+                idProof: uploadRes.data.idProof,
+                expCert: uploadRes.data.expCert,
+                otherDoc: uploadRes.data.otherDoc,
+                status: "pending",
             });
 
-            alert("Data saved successfully ");
+            alert("Tutor registered successfully");
             navigate("/thank-you");
 
         } catch (err) {
             console.error(err);
-            alert("Error saving tutor");
+            alert("Upload failed");
         }
     };
     const areas = [
