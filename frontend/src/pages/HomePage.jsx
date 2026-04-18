@@ -208,6 +208,7 @@ export default function HomePage() {
   const [bookingTutor, setBookingTutor] = useState(null);
   const [toast, setToast] = useState("");
   const [loading, setLoading] = useState(true);
+  const sliderRef = useRef(null);
   const [bookingForm, setBookingForm] = useState({
     learnerName: "",
     phone: "",
@@ -753,8 +754,7 @@ export default function HomePage() {
             <a href="#contact">Contact Us</a>
             <Link to="/blogs">Blog</Link>
             <Link to="/tutors/science">Science Tutors in Bangalore</Link>
-            <Link to="/tutors/maths">Maths Tutors in Bangalore</Link>
-            <Link to="/tutors/english">English Speaking Classes</Link>
+
           </div>
 
           <p className="text-sm text-slate-500">
@@ -907,9 +907,6 @@ export default function HomePage() {
                 }
               />
             </div>
-
-
-
             <ReactQuill
               value={blogForm.content}
               onChange={(value) =>
@@ -917,7 +914,6 @@ export default function HomePage() {
               }
               theme="snow"
             />
-
             <div className="flex items-center justify-between rounded-3xl bg-emerald-50 p-4 text-sm text-emerald-800">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4" />
