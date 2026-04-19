@@ -10,22 +10,21 @@ async function run() {
     await mongoose.connect(process.env.MONGO_URI);
 
     const email = "admin@gmail.com";
-    const password = "adityast1";
+    const newPassword = "adityast1"; // 👈 change here
 
-    const existing = await Admin.findOne({ email });
-    if (existing) {
-      console.log("Admin already exists");
+    const admin = await Admin.findOne({ email });
+
+    if (!admin) {
+      console.log("Admin not found");
       process.exit();
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    await Admin.create({
-      email,
-      password: hashedPassword
-    });
+    admin.password = hashedPassword;
+    await admin.save();
 
-    console.log("Admin created");
+    console.log("✅ Admin password updated successfully");
     process.exit();
   } catch (error) {
     console.error(error);
