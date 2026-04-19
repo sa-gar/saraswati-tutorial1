@@ -254,7 +254,8 @@ export default function HomePage() {
   }, [toast]);
 
   const filteredTutors = useMemo(() => {
-    return tutors.filter((tutor) => {
+  return [...tutors]
+    .filter((tutor) => {
       const q = query.toLowerCase();
 
       const matchesQuery =
@@ -273,9 +274,11 @@ export default function HomePage() {
       return (
         matchesQuery && matchesCategory && matchesVerified && matchesOnline
       );
+    })
+    .sort((a, b) => {
+      return new Date(a.createdAt) - new Date(b.createdAt);
     });
-  }, [tutors, query, selectedCategory, verifiedOnly, onlineOnly]);
-
+}, [tutors, query, selectedCategory, verifiedOnly, onlineOnly]);
   async function submitBooking() {
     if (!bookingTutor) return;
 
