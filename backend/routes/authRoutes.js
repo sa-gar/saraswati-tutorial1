@@ -1,7 +1,8 @@
 import express from "express";
-import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import Admin from "../models/Admin.js";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const router = express.Router();
 
@@ -9,23 +10,24 @@ router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const admin = await Admin.findOne({ email });
-    if (!admin) {
-      return res.status(400).json({ message: "Admin not found" });
-    }
+    const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
-    const ok = await bcrypt.compare(password, admin.password);
-    if (!ok) {
-      return res.status(400).json({ message: "Invalid password" });
+    if (email !== ADMIN_EMAIL || password !== ADMIN_PASSWORD) {
+      return res.status(401).json({ message: "Invalid admin credentials" });
     }
 
     const token = jwt.sign(
-      { id: admin._id, email: admin.email, role: "admin" },
+      { email, role: "admin" },
       process.env.JWT_SECRET || "secretkey",
       { expiresIn: "1d" }
     );
 
-    res.json({ token, email: admin.email });
+    res.json({
+      token,
+      email,
+      role: "admin",
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
