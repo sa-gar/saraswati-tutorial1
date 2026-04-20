@@ -14,68 +14,69 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// router.post("/", upload.single("image"), async (req, res) => {
-//   try {
-//     if (!req.file) {
-//       return res.status(400).json({ message: "No file uploaded" });
-//     }
+const uploadToCloudinary = async (file, folder) => {
+  const base64 = `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
 
-//     const base64 = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
+  const result = await cloudinary.uploader.upload(base64, {
+    folder,
+  });
 
-//     const result = await cloudinary.uploader.upload(base64, {
-//       folder: "saraswati-blogs",
-//     });
-
-//     res.json({ imageUrl: result.secure_url });
-//   } catch (error) {
-//     res.status(500).json({ message: error.message });
-//   }
-// });
+  return result.secure_url;
+};
 
 router.post(
   "/",
   upload.fields([
-    { name: "idProof", maxCount: 1 },
-    { name: "expCert", maxCount: 1 },
-    { name: "otherDoc", maxCount: 1 },
+    { name: "image", maxCount: 1 },     // blog image
+    { name: "idProof", maxCount: 1 },   // tutor doc
+    { name: "expCert", maxCount: 1 },   // tutor doc
+    { name: "otherDoc", maxCount: 1 },  // tutor doc
   ]),
   async (req, res) => {
     try {
-      const files = req.files;
-
-      if (!files || (!files.idProof && !files.expCert)) {
-        return res.status(400).json({ message: "Required files missing" });
-      }
-
-      const uploadToCloudinary = async (file) => {
-        const base64 = `data:${file.mimetype};base64,${file.buffer.toString("base64")}`;
-
-        const result = await cloudinary.uploader.upload(base64, {
-          folder: "saraswati-tutors",
-        });
-
-        return result.secure_url;
-      };
-
+      const files = req.files || {};
       const uploadedFiles = {};
 
-      if (files.idProof) {
-        uploadedFiles.idProof = await uploadToCloudinary(files.idProof[0]);
+      // BLOG IMAGE
+      if (files.image && files.image[0]) {
+        uploadedFiles.imageUrl = await uploadToCloudinary(
+          files.image[0],
+          "saraswati-blogs"
+        );
       }
 
-      if (files.expCert) {
-        uploadedFiles.expCert = await uploadToCloudinary(files.expCert[0]);
+      // TUTOR DOCS
+      if (files.idProof && files.idProof[0]) {
+        uploadedFiles.idProof = await uploadToCloudinary(
+          files.idProof[0],
+          "saraswati-tutors"
+        );
       }
 
-      if (files.otherDoc) {
-        uploadedFiles.otherDoc = await uploadToCloudinary(files.otherDoc[0]);
+      if (files.expCert && files.expCert[0]) {
+        uploadedFiles.expCert = await uploadToCloudinary(
+          files.expCert[0],
+          "saraswati-tutors"
+        );
+      }
+
+      if (files.otherDoc && files.otherDoc[0]) {
+        uploadedFiles.otherDoc = await uploadToCloudinary(
+          files.otherDoc[0],
+          "saraswati-tutors"
+        );
+      }
+
+      if (Object.keys(uploadedFiles).length === 0) {
+        return res.status(400).json({ message: "No valid files uploaded" });
       }
 
       res.json(uploadedFiles);
     } catch (error) {
-      console.error(error);
+      console.error("Upload error:", error);
       res.status(500).json({ message: error.message });
     }
   }
 );
+
 export default router;

@@ -272,7 +272,8 @@ const [blogForm, setBlogForm] = useState({
 
 
   const filteredTutors = useMemo(() => {
-    return tutors.filter((tutor) => {
+  return [...tutors]
+    .filter((tutor) => {
       const q = query.toLowerCase();
 
 
@@ -295,6 +296,9 @@ const [blogForm, setBlogForm] = useState({
       return (
         matchesQuery && matchesCategory && matchesVerified && matchesOnline
       );
+    })
+    .sort((a, b) => {
+      return new Date(a.createdAt) - new Date(b.createdAt);
     });
   }, [tutors, query, selectedCategory, verifiedOnly, onlineOnly]);
 
