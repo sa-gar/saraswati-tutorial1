@@ -1,7 +1,8 @@
 import express from "express";
 import Tutor from "../models/Tutor.js";
-
+import fetch from "node-fetch";
 const router = express.Router();
+
 
 // GET all tutors
 router.get("/", async (req, res) => {
@@ -13,14 +14,17 @@ router.get("/", async (req, res) => {
   }
 });
 
+
 // GET single tutor
 router.get("/:id", async (req, res) => {
   try {
     const tutor = await Tutor.findById(req.params.id);
 
+
     if (!tutor) {
       return res.status(404).json({ message: "Tutor not found" });
     }
+
 
     res.json(tutor);
   } catch (error) {
@@ -28,16 +32,40 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// POST tutor
+
+
+
 router.post("/", async (req, res) => {
   try {
     const tutor = new Tutor(req.body);
     const savedTutor = await tutor.save();
+
+
+    //  MAKE WEBHOOK CALL
+    await fetch("https://hook.us2.make.com/ueqga36bmu9es8i493rsbh42bo00rme6", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        type: "tutor",
+        name: savedTutor.name,
+        email: savedTutor.email,
+        phone: savedTutor.phone,
+        experience: savedTutor.experience,
+        location: savedTutor.locations,
+      }),
+    }).catch(console.error);
+
+
     res.status(201).json(savedTutor);
+
+
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
 });
+
 
 // UPDATE tutor
 router.put("/:id", async (req, res) => {
@@ -48,9 +76,11 @@ router.put("/:id", async (req, res) => {
       { new: true, runValidators: true }
     );
 
+
     if (!updatedTutor) {
       return res.status(404).json({ message: "Tutor not found" });
     }
+
 
     res.json(updatedTutor);
   } catch (error) {
@@ -58,14 +88,17 @@ router.put("/:id", async (req, res) => {
   }
 });
 
+
 // DELETE tutor
 router.delete("/:id", async (req, res) => {
   try {
     const deletedTutor = await Tutor.findByIdAndDelete(req.params.id);
 
+
     if (!deletedTutor) {
       return res.status(404).json({ message: "Tutor not found" });
     }
+
 
     res.json({ message: "Tutor deleted successfully" });
   } catch (error) {
@@ -73,4 +106,6 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
+
 export default router;
+

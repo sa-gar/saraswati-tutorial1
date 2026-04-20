@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
 
+
 export default function TutorRegistration() {
     const navigate = useNavigate();
     const [step, setStep] = useState(1);
@@ -14,17 +15,21 @@ export default function TutorRegistration() {
         hasOccupation: "",
         occupation: "",
 
+
         locations: [],
         hasVehicle: "",
         vehicleNumber: "",
+
 
         idProof: null,
         expCert: null,
         otherDoc: null,
 
+
         timings: [],
         agreement: false,
     });
+
 
     const handleMulti = (field, value) => {
         setFormData((prev) => {
@@ -43,60 +48,77 @@ export default function TutorRegistration() {
             return "Name must be at least 3 characters";
         }
 
+
         // Email
         if (!formData.email) {
             return "Email is required";
         }
+
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(formData.email)) {
             return "Enter a valid email address";
         }
 
+
         // Experience
         if (!formData.experience || formData.experience === "Select Experience") {
             return "Please select experience";
         }
+
 
         // Location
         if (!formData.locations || formData.locations.length === 0) {
             return "Select at least one location";
         }
 
+
         return null;
     };
 
-  
+
+
+
     const handleSubmit = async () => {
         const error = validateForm();
+
 
         if (error) {
             alert(error);
             return;
         }
 
+
         try {
             const fd = new FormData();
+
 
             //  STEP 1: append files
             if (formData.idProof) fd.append("idProof", formData.idProof);
             if (formData.expCert) fd.append("expCert", formData.expCert);
             if (formData.otherDoc) fd.append("otherDoc", formData.otherDoc);
 
+
             //  STEP 1: upload to cloudinary
             const uploadRes = await axios.post(`${API_BASE}/upload`, fd);
 
-            //  STEP 2: save tutor with document URLs
+
             await axios.post(`${API_BASE}/tutors`, {
                 ...formData,
-                idProof: uploadRes.data.idProof,
-                expCert: uploadRes.data.expCert,
-                otherDoc: uploadRes.data.otherDoc,
+
+
+                documents: {
+                    idProof: uploadRes.data.idProof || "",
+                    expCert: uploadRes.data.expCert || "",
+                    otherDoc: uploadRes.data.otherDoc || "",
+                },
+
+
                 status: "pending",
             });
-
             alert("Tutor registered successfully");
             navigate("/thank-you");
+
 
         } catch (err) {
             console.error(err);
@@ -126,17 +148,21 @@ export default function TutorRegistration() {
         "Kengeri"
     ];
 
+
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50 p-4">
             <div className="w-full max-w-3xl bg-white p-8 md:p-10 rounded-3xl shadow-xl border border-slate-200">
+
 
                 <h2 className="text-3xl md:text-4xl font-bold mb-2 text-center text-slate-900">
                     Tutor Registration
                 </h2>
 
+
                 <p className="text-center text-slate-500 mb-6">
                     Join our platform and start teaching students
                 </p>
+
 
                 {/*  Step Indicator */}
                 <div className="flex items-center justify-between mb-8">
@@ -153,6 +179,7 @@ export default function TutorRegistration() {
                     ))}
                 </div>
 
+
                 {step === 1 && (
                     <>
                         {/* NAME */}
@@ -164,6 +191,7 @@ export default function TutorRegistration() {
                             }
                         />
 
+
                         {/* EMAIL */}
                         <input
                             type="email"
@@ -173,6 +201,7 @@ export default function TutorRegistration() {
                                 setFormData({ ...formData, email: e.target.value })
                             }
                         />
+
 
                         {/* EXPERIENCE */}
                         <select
@@ -196,9 +225,11 @@ export default function TutorRegistration() {
                             <option>30+ years</option>
                         </select>
 
+
                         {/* NEXT BUTTON */}
                         <div className="flex justify-end mt-4">
                             <button
+
 
                                 className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-xl shadow transition"
                                 onClick={() => setStep(2)}
@@ -209,12 +240,14 @@ export default function TutorRegistration() {
                     </>
                 )}
 
+
                 {step === 2 && (
                     <>
                         {/*  OCCUPATION */}
                         <p className="mb-2 text-sm font-medium">
                             Have you worked or are you working in any school, college, or institute?
                         </p>
+
 
                         <div className="flex gap-2 mb-3">
                             <button
@@ -229,6 +262,7 @@ export default function TutorRegistration() {
                                 Yes
                             </button>
 
+
                             <button
                                 className={`px-4 py-2 rounded-lg ${formData.hasOccupation === "no"
                                     ? "bg-blue-600 text-white"
@@ -241,6 +275,7 @@ export default function TutorRegistration() {
                                 No
                             </button>
                         </div>
+
 
                         {/*  DROPDOWN + INPUT */}
                         {formData.hasOccupation === "yes" && (
@@ -262,6 +297,7 @@ export default function TutorRegistration() {
                                     <option value="Other">Other</option>
                                 </select>
 
+
                                 {/*  OTHER OCCUPATION */}
                                 {formData.occupation === "Other" && (
                                     <input
@@ -272,6 +308,9 @@ export default function TutorRegistration() {
                                         }
                                     />
                                 )}
+
+
+
 
 
 
@@ -286,8 +325,10 @@ export default function TutorRegistration() {
                             </>
                         )}
 
+
                         {/*  SEARCHABLE LOCATION */}
                         <p className="mb-2 font-medium">Select Locations Where You Can Teach</p>
+
 
                         <input
                             type="text"
@@ -296,6 +337,7 @@ export default function TutorRegistration() {
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                         />
+
 
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-y-auto border p-2 rounded-lg">
                             {areas
@@ -318,8 +360,12 @@ export default function TutorRegistration() {
 
 
 
+
+
+
                         {/*  VEHICLE */}
                         <p className="mt-4 mb-2">Vehicle Available?</p>
+
 
                         <div className="flex gap-2">
                             <button
@@ -334,6 +380,7 @@ export default function TutorRegistration() {
                                 Yes
                             </button>
 
+
                             <button
                                 className={`px-4 py-2 rounded-lg ${formData.hasVehicle === "no"
                                     ? "bg-blue-600 text-white"
@@ -347,6 +394,7 @@ export default function TutorRegistration() {
                             </button>
                         </div>
 
+
                         {formData.hasVehicle === "yes" && (
                             <input
                                 placeholder="Vehicle Number"
@@ -357,6 +405,7 @@ export default function TutorRegistration() {
                             />
                         )}
 
+
                         {/*  NAVIGATION */}
                         <div className="flex justify-between mt-6">
                             <button
@@ -365,6 +414,7 @@ export default function TutorRegistration() {
                             >
                                 ← Previous
                             </button>
+
 
                             <button
                                 className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-xl shadow transition" onClick={() => setStep(3)}
@@ -375,11 +425,13 @@ export default function TutorRegistration() {
                     </>
                 )}
 
+
                 {step === 3 && (
                     <>
                         {/*  DOCUMENT SECTION */}
                         <div className="mb-6">
                             <p className="font-semibold text-lg mb-3">Upload Documents</p>
+
 
                             <div className="space-y-4">
                                 {/* ID Proof */}
@@ -398,6 +450,7 @@ export default function TutorRegistration() {
                                             Click to upload (PDF, JPG, PNG)
                                         </p>
 
+
                                         {formData.idProof && (
                                             <p className="text-green-600 text-sm mt-2">
                                                 ✔ {formData.idProof.name}
@@ -405,6 +458,7 @@ export default function TutorRegistration() {
                                         )}
                                     </label>
                                 </div>
+
 
                                 {/* Experience */}
                                 <div className="border border-gray-200 rounded-xl p-4 bg-white shadow-sm hover:shadow-md transition">
@@ -422,6 +476,7 @@ export default function TutorRegistration() {
                                             Click to upload
                                         </p>
 
+
                                         {formData.expCert && (
                                             <p className="text-green-600 text-sm mt-2">
                                                 ✔ {formData.expCert.name}
@@ -429,6 +484,7 @@ export default function TutorRegistration() {
                                         )}
                                     </label>
                                 </div>
+
 
                                 {/* Other */}
                                 <div className="border border-gray-200 rounded-xl p-4 bg-white shadow-sm hover:shadow-md transition">
@@ -443,6 +499,7 @@ export default function TutorRegistration() {
                                     <label htmlFor="otherDoc" className="cursor-pointer">
                                         <p className="text-sm font-medium">Experience/Appraisal Document(Optional)</p>
 
+
                                         {formData.otherDoc && (
                                             <p className="text-green-600 text-sm mt-2">
                                                 ✔ {formData.otherDoc.name}
@@ -453,9 +510,11 @@ export default function TutorRegistration() {
                             </div>
                         </div>
 
+
                         {/*  TIMING SYSTEM */}
                         <div className="mb-6">
                             <p className="font-semibold text-lg mb-2">Select Available Timings</p>
+
 
                             {/* Morning */}
                             <p className="text-sm font-medium mb-2 text-gray-700">
@@ -477,6 +536,7 @@ export default function TutorRegistration() {
                                 ))}
                             </div>
 
+
                             {/* Evening */}
                             <p className="text-sm font-medium mt-4 mb-2 text-gray-700">
                                 Evening (4 PM – 8 PM)
@@ -497,6 +557,7 @@ export default function TutorRegistration() {
                                 ))}
                             </div>
 
+
                             {/* Selected timings */}
                             {formData.timings.length > 0 && (
                                 <p className="text-sm text-gray-600 mt-2">
@@ -504,6 +565,7 @@ export default function TutorRegistration() {
                                 </p>
                             )}
                         </div>
+
 
                         {/*  AGREEMENT */}
                         <div className="mb-6 p-4 border rounded-xl bg-gray-50">
@@ -516,11 +578,11 @@ export default function TutorRegistration() {
                                     }
                                 />
                                 <span>
-                                    Tutor needs to pay <b>32% commission for the first 2 months</b> to Saraswati Tutorials
-                                    for providing opportunities. This is applicable for each opportunity assigned.
+                                    I agree to pay a 35% Placement, Facilitation & Verification Fee for the first two months for each opportunity facilitated by Saraswati Tutorials.
                                 </span>
                             </label>
                         </div>
+
 
                         {/*  NAVIGATION */}
                         <div className="flex justify-between">
@@ -530,6 +592,7 @@ export default function TutorRegistration() {
                             >
                                 ← Previous
                             </button>
+
 
                             <button
                                 className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-6 py-3 rounded-xl shadow transition"
@@ -541,8 +604,11 @@ export default function TutorRegistration() {
                     </>
                 )}
 
+
             </div>
         </div>
     );
 
+
 }
+
