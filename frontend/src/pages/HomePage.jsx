@@ -269,7 +269,8 @@ export default function HomePage() {
 
 
   const filteredTutors = useMemo(() => {
-    return tutors.filter((tutor) => {
+  return [...tutors]
+    .filter((tutor) => {
       const q = query.toLowerCase();
 
 
@@ -292,6 +293,9 @@ export default function HomePage() {
       return (
         matchesQuery && matchesCategory && matchesVerified && matchesOnline
       );
+    })
+    .sort((a, b) => {
+      return new Date(a.createdAt) - new Date(b.createdAt);
     });
   }, [tutors, query, selectedCategory, verifiedOnly, onlineOnly]);
 
