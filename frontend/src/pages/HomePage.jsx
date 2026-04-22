@@ -28,7 +28,8 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
 import { Avatar, AvatarFallback } from "../components/ui/avatar";
-
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 
 const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
 
@@ -227,7 +228,9 @@ export default function HomePage() {
     preferredSlot: "",
     message: "",
   });
-
+const [blogForm, setBlogForm] = useState({
+  content: "",
+});
 
   // useEffect(() => {
   //   fetch(`${API_BASE}/tutors`)

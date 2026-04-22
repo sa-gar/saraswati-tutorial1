@@ -43,40 +43,59 @@ export default function TutorRegistration() {
         });
     };
     const validateForm = () => {
-        // Name
-        if (!formData.name || formData.name.trim().length < 3) {
-            return "Name must be at least 3 characters";
+  
+
+
+         if (!formData.agreement) {
+            return "You must agree to the terms";
         }
-
-
-        // Email
-        if (!formData.email) {
-            return "Email is required";
-        }
-
-
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(formData.email)) {
-            return "Enter a valid email address";
-        }
-
-
-        // Experience
-        if (!formData.experience || formData.experience === "Select Experience") {
-            return "Please select experience";
-        }
-
 
         // Location
         if (!formData.locations || formData.locations.length === 0) {
             return "Select at least one location";
         }
-
+        if (!formData.idProof) {
+            return "ID Proof is required";
+        }
+        if (!formData.expCert) {
+            return "Education Certificate is required";
+        }
 
         return null;
     };
 
+    const validateStep1 = () => {
+        if (!formData.name || formData.name.trim().length < 3) {
+            return "Name must be at least 3 characters";
+        }
 
+        if (!formData.email) {
+            return "Email is required";
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(formData.email)) {
+            return "Enter valid email";
+        }
+
+        if (!formData.experience || formData.experience === "Select Experience") {
+            return "Select experience";
+        }
+
+        return null;
+    };
+
+    const validateStep2 = () => {
+        if (!formData.locations.length) {
+            return "Select at least one location";
+        }
+
+        if (formData.hasVehicle === "yes" && !formData.vehicleNumber) {
+            return "Enter vehicle number";
+        }
+
+        return null;
+    };
 
 
     const handleSubmit = async () => {
@@ -125,6 +144,7 @@ export default function TutorRegistration() {
             alert("Upload failed");
         }
     };
+
     const areas = [
         "Indiranagar",
         "Whitefield",
@@ -186,6 +206,7 @@ export default function TutorRegistration() {
                         <input
                             placeholder="Name (as per ID)"
                             className="w-full border border-gray-300 p-3 rounded-lg mb-3 focus:ring-2 focus:ring-blue-500"
+                            value={formData.name}
                             onChange={(e) =>
                                 setFormData({ ...formData, name: e.target.value })
                             }
@@ -197,6 +218,7 @@ export default function TutorRegistration() {
                             type="email"
                             placeholder="Email ID"
                             className="w-full border border-gray-300 p-3 rounded-lg mb-3 focus:ring-2 focus:ring-blue-500"
+                          
                             onChange={(e) =>
                                 setFormData({ ...formData, email: e.target.value })
                             }
@@ -206,6 +228,7 @@ export default function TutorRegistration() {
                         {/* EXPERIENCE */}
                         <select
                             className="w-full border border-gray-300 p-3 rounded-lg mb-3"
+                            value={formData.experience}
                             onChange={(e) =>
                                 setFormData({ ...formData, experience: e.target.value })
                             }
@@ -232,7 +255,15 @@ export default function TutorRegistration() {
 
 
                                 className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-xl shadow transition"
-                                onClick={() => setStep(2)}
+
+                                onClick={() => {
+                                    const error = validateStep1();
+                                    if (error) {
+                                        alert(error);
+                                        return;
+                                    }
+                                    setStep(2);
+                                }}
                             >
                                 Next →
                             </button>
@@ -309,15 +340,11 @@ export default function TutorRegistration() {
                                     />
                                 )}
 
-
-
-
-
-
                                 {/*  ORGANIZATION (IMPORTANT) */}
                                 <input
                                     placeholder="Organization / Company Name"
                                     className="w-full border p-3 rounded-lg"
+                                    value={formData.organization}
                                     onChange={(e) =>
                                         setFormData({ ...formData, organization: e.target.value })
                                     }
@@ -417,7 +444,14 @@ export default function TutorRegistration() {
 
 
                             <button
-                                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-xl shadow transition" onClick={() => setStep(3)}
+                                className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-xl shadow transition" onClick={() => {
+                                    const error = validateStep2();
+                                    if (error) {
+                                        alert(error);
+                                        return;
+                                    }
+                                    setStep(3);
+                                }}
                             >
                                 Next →
                             </button>
