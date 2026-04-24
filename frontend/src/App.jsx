@@ -1,4 +1,4 @@
- 
+
 import { Routes, Route, Navigate } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import HomePage from "./pages/HomePage";
@@ -14,16 +14,16 @@ import BlogLogin from "./pages/BlogLogin";
 import AdminBlogEditor from "./pages/AdminBlogEditor";
 import CategoryPage from "./pages/CategoryPage";
 import CoursePage from "./pages/CoursePage";
+import SubCategoryPage from "./pages/SubCategoryPage";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Disclaimer from "./pages/Disclaimer";
-
+import TermsConditions from "./pages/TermsAndConditions";
 
 // 🔐 Admin Protected Route
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem("adminToken");
   return token ? children : <Navigate to="/admin-login" replace />;
 }
-
 
 //  Blog Editor Protected Route
 function BlogProtectedRoute({ children }) {
@@ -76,8 +76,10 @@ export default function App() {
           />
 
 
-          <Route path="/tutors/:category" element={<CategoryPage />} />
-          <Route path="/course/:slug" element={<CoursePage />} />
+          <Route path="/courses/:category" element={<CategoryPage />} />
+          <Route path="/courses/:main/:sub" element={<SubCategoryPage />} />
+          <Route path="/courses/:main/:sub/:course" element={<CoursePage />} />
+          <Route path="/terms-conditions" element={<TermsConditions />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/disclaimer" element={<Disclaimer />} />
           {/* <Route path="*" element={<Navigate to="/" />} /> */}

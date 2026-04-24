@@ -30,6 +30,7 @@ import { Badge } from "../components/ui/badge";
 import { Avatar, AvatarFallback } from "../components/ui/avatar";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
+import { Helmet } from "react-helmet-async";
 
 const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
 
@@ -228,9 +229,9 @@ export default function HomePage() {
     preferredSlot: "",
     message: "",
   });
-const [blogForm, setBlogForm] = useState({
-  content: "",
-});
+  const [blogForm, setBlogForm] = useState({
+    content: "",
+  });
 
   // useEffect(() => {
   //   fetch(`${API_BASE}/tutors`)
@@ -272,34 +273,34 @@ const [blogForm, setBlogForm] = useState({
 
 
   const filteredTutors = useMemo(() => {
-  return [...tutors]
-    .filter((tutor) => {
-      const q = query.toLowerCase();
+    return [...tutors]
+      .filter((tutor) => {
+        const q = query.toLowerCase();
 
 
-      const matchesQuery =
-        tutor.name?.toLowerCase().includes(q) ||
-        tutor.subject?.toLowerCase().includes(q) ||
-        tutor.location?.toLowerCase().includes(q) ||
-        tutor.category?.toLowerCase().includes(q);
+        const matchesQuery =
+          tutor.name?.toLowerCase().includes(q) ||
+          tutor.subject?.toLowerCase().includes(q) ||
+          tutor.location?.toLowerCase().includes(q) ||
+          tutor.category?.toLowerCase().includes(q);
 
 
-      const matchesCategory =
-        selectedCategory === "All" || tutor.category === selectedCategory;
+        const matchesCategory =
+          selectedCategory === "All" || tutor.category === selectedCategory;
 
 
-      const matchesVerified = !verifiedOnly || tutor.verified;
-      const matchesOnline =
-        !onlineOnly || (tutor.mode || "").toLowerCase().includes("online");
+        const matchesVerified = !verifiedOnly || tutor.verified;
+        const matchesOnline =
+          !onlineOnly || (tutor.mode || "").toLowerCase().includes("online");
 
 
-      return (
-        matchesQuery && matchesCategory && matchesVerified && matchesOnline
-      );
-    })
-    .sort((a, b) => {
-      return new Date(a.createdAt) - new Date(b.createdAt);
-    });
+        return (
+          matchesQuery && matchesCategory && matchesVerified && matchesOnline
+        );
+      })
+      .sort((a, b) => {
+        return new Date(a.createdAt) - new Date(b.createdAt);
+      });
   }, [tutors, query, selectedCategory, verifiedOnly, onlineOnly]);
 
 
@@ -352,6 +353,16 @@ const [blogForm, setBlogForm] = useState({
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
+      <Helmet>
+        <title>
+          Private Home Tutors near me in Bangalore | Saraswati Tutorials (6th–12th-Graduation)
+        </title>
+
+        <meta
+          name="description"
+          content="Hire patient, experienced, background-verified home tutors near you in Bangalore for Classes 6–12 and Graduation. Book a free demo today."
+        />
+      </Helmet>
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div>
@@ -463,12 +474,11 @@ const [blogForm, setBlogForm] = useState({
 
 
             <h1 className="max-w-2xl text-5xl font-bold tracking-tight text-white md:text-6xl">
-              Best Home Tutors in Bangalore – Saraswati Tutorial
+              Private Home Tutors near you in Bangalore
             </h1>
-            <p className="mt-5 max-w-xl text-lg leading-8 text-slate-200">
-              Discover verified tutors, compare profiles, and book a demo
-              session for your child or yourself — all in one professional
-              learning platform.
+            <p className="mt-3 text-slate-200">
+              Hire experienced, background-verified private home tutors near you in Bangalore
+              for Classes 6–12, competitive exams, and graduation subjects.
             </p>
 
 
@@ -636,30 +646,31 @@ const [blogForm, setBlogForm] = useState({
 
 
         <div className="mt-10">
-          <h2 className="text-2xl font-semibold">Popular Tutors in Bangalore</h2>
-
+          <h2 className="text-2xl font-semibold">
+            Popular Courses in Bangalore
+          </h2>
 
           <div className="mt-4 flex flex-col gap-2">
 
-
-            <Link to="/tutors/science" className="text-blue-600 hover:underline">
-              Science Tutors in Bangalore
+            <Link to="/courses/school-tuition/class-9-10/maths">
+              Class 10 Maths Tuition in Bangalore
             </Link>
 
-
-            <Link to="/tutors/maths" className="text-blue-600 hover:underline">
-              Maths Tutors in Bangalore
+            <Link to="/courses/school-tuition/class-9-10/science">
+              Class 10 Science Tuition in Bangalore
             </Link>
 
-
-            <Link to="/tutors/english" className="text-blue-600 hover:underline">
-              English Speaking Classes in Bangalore
+            <Link to="/courses/competitive-exams/jee/physics">
+              JEE Physics Coaching in Bangalore
             </Link>
 
+            <Link to="/courses/skills/communication/spoken-english">
+              Spoken English Classes in Bangalore
+            </Link>
 
           </div>
-        </div>
 
+        </div>
 
       </section>
 
@@ -668,14 +679,21 @@ const [blogForm, setBlogForm] = useState({
         <div className="mx-auto grid max-w-7xl gap-10 px-6 md:grid-cols-2">
           <div>
 
-
             <SectionTitle
               eyebrow="About us"
               title="Best Home Tuition Services in Bangalore"
               subtitle="Saraswati Tutorial helps students connect with experienced and verified home tutors in Bangalore for all subjects and skill development."
             />
-          </div>
 
+            {/* ✅ SEO paragraph (ADDED HERE - correct position) */}
+            <p className="mt-4 text-slate-600">
+              Saraswati Tutorials provides the best home tuitions in Bangalore with experienced
+              and verified tuition teachers. If you are looking for a private tutor near me or
+              an affordable home tutor in BTM Layout, we connect students with the right tutors
+              for personalized learning and academic success.
+            </p>
+
+          </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="rounded-3xl bg-slate-50 p-6">
@@ -683,33 +701,27 @@ const [blogForm, setBlogForm] = useState({
                 Verified Tutors
               </h3>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                We aim to connect learners with genuine, qualified, and
-                committed educators.
+                We aim to connect learners with genuine, qualified, and committed educators.
               </p>
             </div>
-
 
             <div className="rounded-3xl bg-slate-50 p-6">
               <h3 className="text-lg font-semibold text-slate-900">
                 Flexible Learning
               </h3>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Online, offline, and home tuition options to suit every
-                family’s needs.
+                Online, offline, and home tuition options to suit every family’s needs.
               </p>
             </div>
-
 
             <div className="rounded-3xl bg-slate-50 p-6">
               <h3 className="text-lg font-semibold text-slate-900">
                 Multi-Subject Support
               </h3>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                From school academics to programming, spoken English, fitness,
-                and soft skills.
+                From school academics to programming, spoken English, fitness, and soft skills.
               </p>
             </div>
-
 
             <div className="rounded-3xl bg-slate-50 p-6">
               <h3 className="text-lg font-semibold text-slate-900">
@@ -726,13 +738,16 @@ const [blogForm, setBlogForm] = useState({
 
       <section id="contact" className="mx-auto max-w-7xl px-6 py-16">
         <div className="grid gap-8 md:grid-cols-2">
+
           <div className="rounded-[32px] bg-slate-900 p-8 text-white shadow-xl">
             <h2 className="text-3xl font-bold">Contact Us</h2>
-            <p className="mt-3 text-slate-300">
-              Reach out for tutor assistance, parent enquiries, demo support,
-              or business collaboration.
-            </p>
 
+            {/* ✅ SEO paragraph (ADDED HERE - correct position) */}
+            <p className="mt-3 text-slate-300">
+              Looking for a tuition teacher or private tutor near you in Bangalore?
+              Saraswati Tutorials offers affordable home tutors in BTM Layout and across the city.
+              Contact us today to find the best home tuition for your needs.
+            </p>
 
             <div className="mt-8 space-y-4">
               <div className="flex items-center gap-3">
@@ -750,7 +765,6 @@ const [blogForm, setBlogForm] = useState({
               </div>
             </div>
 
-
             <iframe
               src="https://www.google.com/maps?q=Bangalore&output=embed"
               width="100%"
@@ -758,7 +772,6 @@ const [blogForm, setBlogForm] = useState({
               style={{ border: 0, marginTop: "16px" }}
               loading="lazy"
             ></iframe>
-
 
             <div className="mt-8 flex gap-4">
               <a href="#" className="rounded-full bg-white/10 p-3">
@@ -770,16 +783,14 @@ const [blogForm, setBlogForm] = useState({
             </div>
           </div>
 
-
+          {/* RIGHT SIDE SAME (NO CHANGE) */}
           <div className="rounded-[32px] bg-white p-8 shadow-sm ring-1 ring-slate-200">
             <h3 className="text-2xl font-semibold text-slate-900">
               Need help finding the right tutor?
             </h3>
             <p className="mt-3 text-slate-600">
-              Tell us your requirement and our team will guide you to the best
-              tutor option.
+              Tell us your requirement and our team will guide you to the best tutor option.
             </p>
-
 
             <div className="mt-6">
               <Link
@@ -790,12 +801,9 @@ const [blogForm, setBlogForm] = useState({
               </Link>
             </div>
 
-
             <div className="mt-8 grid gap-4 sm:grid-cols-2">
               <div className="rounded-2xl bg-slate-50 p-4">
-                <h4 className="font-semibold text-slate-900">
-                  Quick Response
-                </h4>
+                <h4 className="font-semibold text-slate-900">Quick Response</h4>
                 <p className="mt-1 text-sm text-slate-600">
                   We try to respond to enquiries as quickly as possible.
                 </p>
@@ -808,6 +816,7 @@ const [blogForm, setBlogForm] = useState({
               </div>
             </div>
           </div>
+
         </div>
       </section>
 
@@ -830,9 +839,10 @@ const [blogForm, setBlogForm] = useState({
             <a href="#about">About Us</a>
             <a href="#contact">Contact Us</a>
             <Link to="/blogs">Blog</Link>
-            <Link to="/tutors/science">Science Tutors in Bangalore</Link>
-            <Link to="/tutors/maths">Maths Tutors in Bangalore</Link>
-            <Link to="/tutors/english">English Speaking Classes in Bangalore</Link>
+            <Link to="/courses/school-tuition">School Tuition</Link>
+            <Link to="/courses/competitive-exams">Competitive Exams</Link>
+            <Link to="/courses/skills">Skill Courses</Link>
+            <Link to="/terms-conditions">Terms & Conditions</Link>
             <Link to="/privacy-policy">Privacy Policy</Link>
             <Link to="/disclaimer">Disclaimer</Link>
 

@@ -1,6 +1,7 @@
 import express from "express";
 import Tutor from "../models/Tutor.js";
 import fetch from "node-fetch";
+import { createLead } from "../utils/odooService.js";
 const router = express.Router();
 
 
@@ -37,35 +38,49 @@ router.get("/:id", async (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
-    const tutor = new Tutor(req.body);
+    // console.log("Incoming Request:", req.body);
+
+    // console.log("FULL DATA TO ODOO:", {
+    //   ...req.body,
+    //   userType: "tutor"
+    // });
+
+    let odooRes = null;
+
+    try {
+
+      odooRes = await createLead({
+        name: req.body.name || "",
+        email: req.body.email || "",
+        phone: req.body.phone || "",
+
+        userType: "tutor", // or "parent"
+
+        // address / location
+        locations: req.body.locations || [],
+      });
+
+      // console.log("Odoo Response:", odooRes);
+
+    } catch (err) {
+      // console.error(" Odoo Error:", err.message);
+    }
+
+    //  Save with Odoo ID
+    const tutor = new Tutor({
+      ...req.body,
+      odooLeadId: odooRes,
+    });
+
     const savedTutor = await tutor.save();
-
-
-    //  MAKE WEBHOOK CALL
-    await fetch("https://hook.us2.make.com/ueqga36bmu9es8i493rsbh42bo00rme6", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        type: "tutor",
-        name: savedTutor.name,
-        email: savedTutor.email,
-        phone: savedTutor.phone,
-        experience: savedTutor.experience,
-        location: savedTutor.locations,
-      }),
-    }).catch(console.error);
-
 
     res.status(201).json(savedTutor);
 
-
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    // // console.error(" Server Error:", error.message);
+    res.status(500).json({ message: "Server error" });
   }
 });
-
 
 // UPDATE tutor
 router.put("/:id", async (req, res) => {
