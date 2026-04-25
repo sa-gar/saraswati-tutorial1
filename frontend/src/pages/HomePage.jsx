@@ -370,7 +370,7 @@ export default function HomePage() {
           <div>
             <div className="flex items-center gap-3">
   <img
-    src="/frontend/public/logo.png"
+    src="/public/logo.png"
     alt="Saraswati Tutorial Logo"
     className="h-10 w-10 rounded-xl object-contain"
   />
