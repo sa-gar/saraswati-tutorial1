@@ -25,7 +25,7 @@ export default function TutorRegistration() {
         idProof: null,
         expCert: null,
         otherDoc: null,
-
+        photo: null,
 
         timings: [],
         agreement: false,
@@ -61,6 +61,9 @@ export default function TutorRegistration() {
         }
         if (!formData.expCert) {
             return "Education Certificate is required";
+        }
+        if (!formData.photo) {
+            return "Profile photo is required";
         }
 
         return null;
@@ -160,7 +163,7 @@ export default function TutorRegistration() {
             if (formData.idProof) fd.append("idProof", formData.idProof);
             if (formData.expCert) fd.append("expCert", formData.expCert);
             if (formData.otherDoc) fd.append("otherDoc", formData.otherDoc);
-
+            if (formData.photo) fd.append("photo", formData.photo);
 
             //  STEP 1: upload to cloudinary
             const uploadRes = await axios.post(`${API_BASE}/upload`, fd);
@@ -168,6 +171,7 @@ export default function TutorRegistration() {
 
             await axios.post(`${API_BASE}/tutors`, {
                 ...formData,
+                photo: uploadRes.data.photo || "",
 
 
                 documents: {
@@ -529,6 +533,33 @@ export default function TutorRegistration() {
 
                 {step === 3 && (
                     <>
+                        <div className={`border rounded-xl p-4 mb-6 transition 
+  ${!formData.photo ? "border-red-300" : "border-green-400 bg-green-50"}`}>
+
+                            <input
+                                type="file"
+                                className="hidden"
+                                id="photo"
+                                accept="image/*"
+                                onChange={(e) =>
+                                    setFormData({ ...formData, photo: e.target.files[0] })
+                                }
+                            />
+
+                            <label htmlFor="photo" className="cursor-pointer block">
+                                <p className="text-sm font-medium">Profile Photo (Required)</p>
+
+                                {formData.photo ? (
+                                    <p className="text-green-600 text-sm mt-2">
+                                        ✔ {formData.photo.name}
+                                    </p>
+                                ) : (
+                                    <p className="text-red-500 text-sm mt-2">
+                                        Required
+                                    </p>
+                                )}
+                            </label>
+                        </div>
                         {/* DOCUMENT SECTION */}
                         <div className="mb-6">
                             <p className="font-semibold text-lg mb-3">Upload Documents</p>

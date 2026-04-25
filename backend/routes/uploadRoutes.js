@@ -31,6 +31,7 @@ router.post(
     { name: "idProof", maxCount: 1 },   // tutor doc
     { name: "expCert", maxCount: 1 },   // tutor doc
     { name: "otherDoc", maxCount: 1 },  // tutor doc
+    { name: "photo", maxCount: 1 },     // tutor photo
   ]),
   async (req, res) => {
     try {
@@ -64,6 +65,13 @@ router.post(
         uploadedFiles.otherDoc = await uploadToCloudinary(
           files.otherDoc[0],
           "saraswati-tutors"
+        );
+      }
+      // PROFILE PHOTO
+      if (files.photo && files.photo[0]) {
+        uploadedFiles.photo = await uploadToCloudinary(
+          files.photo[0],
+          "saraswati-tutors/profile"   // 
         );
       }
 
