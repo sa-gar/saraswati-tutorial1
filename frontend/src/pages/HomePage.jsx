@@ -114,6 +114,8 @@ function TutorCard({ tutor, onViewProfile, onBook, swipeMode = false }) {
                   src={tutor.photo}
                   alt={tutor.name}
                   loading="lazy"
+                  width="64"
+                  height="64"
                   className="h-16 w-16 rounded-2xl object-cover"
                 />
               ) : (
@@ -355,12 +357,12 @@ export default function HomePage() {
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <Helmet>
         <title>
-          Private Home Tutors near me in Bangalore | Saraswati Tutorials (6th–12th-Graduation)
+          Private Home Tutors near me in Bangalore | Saraswati Tutorials
         </title>
 
         <meta
           name="description"
-          content="Hire patient, experienced, background-verified home tutors near you in Bangalore for Classes 6–12 and Graduation. Book a free demo today."
+          content="Hire patient, experienced, background-verified home tutors in Bangalore for Classes 6–12 and graduation."
         />
       </Helmet>
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
@@ -401,7 +403,11 @@ export default function HomePage() {
           </nav>
 
 
-          <button onClick={() => setMenuOpen(true)} className="md:hidden">
+          <button
+            onClick={() => setMenuOpen(true)}
+            className="md:hidden text-2xl"
+            aria-label="Open navigation menu"
+          >
             ☰
           </button>
         </div>
@@ -418,7 +424,9 @@ export default function HomePage() {
           >
             <div className="mb-6 flex items-center justify-between">
               <h2 className="text-xl font-bold">Menu</h2>
-              <button onClick={() => setMenuOpen(false)}>✕</button>
+              <button onClick={() => setMenuOpen(false)} aria-label="Close menu">
+                ✕
+              </button>
             </div>
 
 
@@ -519,6 +527,7 @@ export default function HomePage() {
               <a
                 href="#tutors"
                 className="rounded-2xl border border-white/30 px-6 py-3 font-medium text-white"
+                aria-label="Browse tutors"
               >
                 Browse Tutors
               </a>
@@ -603,12 +612,14 @@ export default function HomePage() {
               <button
                 onClick={() => scrollTutors("left")}
                 className="rounded-full border border-slate-300 bg-white p-3 shadow-sm"
+                aria-label="Scroll left"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
               <button
                 onClick={() => scrollTutors("right")}
                 className="rounded-full border border-slate-300 bg-white p-3 shadow-sm"
+                aria-label="Scroll right"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
@@ -766,6 +777,7 @@ export default function HomePage() {
             </div>
 
             <iframe
+              title="Google Map Location"
               src="https://www.google.com/maps?q=Bangalore&output=embed"
               width="100%"
               height="200"
@@ -870,8 +882,8 @@ export default function HomePage() {
                   src={selectedTutor.photo}
                   alt={selectedTutor.name}
                   loading="lazy"
-                  width="100"
-                  height="100"
+                  width="64"
+                  height="64"
                   className="h-16 w-16 rounded-2xl object-cover"
                 />
               ) : (
@@ -938,10 +950,10 @@ export default function HomePage() {
                   setBookingTutor(selectedTutor);
                   setSelectedTutor(null);
                 }}
+                aria-label={`Book demo with ${selectedTutor?.name || "tutor"}`}
               >
                 Book demo
               </Button>
-
 
             </div>
           </div>
@@ -1027,12 +1039,15 @@ export default function HomePage() {
               <Button
                 className="rounded-2xl bg-slate-900 px-4 py-3 text-white"
                 onClick={submitBooking}
+                aria-label="Confirm tutor booking"
               >
                 Confirm booking
               </Button>
+
               <Button
                 className="rounded-2xl border border-slate-300 px-4 py-3"
                 onClick={() => setBookingTutor(null)}
+                aria-label="Cancel booking"
               >
                 Cancel
               </Button>
