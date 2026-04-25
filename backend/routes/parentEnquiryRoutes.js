@@ -1,7 +1,7 @@
 import express from "express";
 import fetch from "node-fetch";
 import ParentEnquiry from "../models/ParentEnquiry.js";
-
+import { createLead } from "../utils/odooService.js";
 
 const router = express.Router();
 
@@ -20,14 +20,58 @@ router.get("/", async (req, res) => {
 // POST
 router.post("/", async (req, res) => {
   try {
-    const enquiry = new ParentEnquiry(req.body);
+    console.log("Parent Request:", req.body);
+
+    //  STEP 1: Send to Odoo
+    let odooRes = null;
+
+    try {
+      odooRes = await createLead({
+        name: req.body.parentName,
+        email: req.body.email,
+        phone: req.body.phone,
+
+        userType: "parent",
+
+        //  location
+        address: `${req.body.area}, ${req.body.pincode}`,
+
+        //  important details
+        description: `
+Parent Lead
+
+Student: ${req.body.wards?.[0]?.wardName}
+Class: ${req.body.wards?.[0]?.classGrade}
+Subjects: ${req.body.wards?.[0]?.subjectsNeeded?.join(", ")}
+
+Mode: ${req.body.preferredMode}
+Time: ${req.body.preferredTime}
+Days: ${req.body.preferredDays?.join(", ")}
+
+Location: ${req.body.area}
+        `,
+      });
+
+      console.log("Odoo Parent Lead:", odooRes);
+
+    } catch (err) {
+      console.error("Odoo Error:", err.message);
+    }
+
+    //  STEP 2: Save in DB
+    const enquiry = new ParentEnquiry({
+      ...req.body,
+      odooLeadId: odooRes,
+    });
+
     const saved = await enquiry.save();
+
     res.status(201).json(saved);
+
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
 });
-
 
 export default router;
 

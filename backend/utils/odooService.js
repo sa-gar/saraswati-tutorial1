@@ -118,7 +118,7 @@ Address: ${Array.isArray(data.locations)
   `,
     };
 
-    // console.log("📤 Sending to Odoo:", leadPayload);
+    // console.log("Sending to Odoo:", leadPayload);
 
     // STEP 3: CREATE LEAD
     const leadId = await callOdoo("object", "execute_kw", [
