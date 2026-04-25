@@ -75,7 +75,7 @@ export default function App() {
               </BlogProtectedRoute>
             }
           />
-
+<Route path="/testimonials" element={<Testimonials />} />
 
           <Route path="/courses/:category" element={<CategoryPage />} />
           <Route path="/courses/:main/:sub" element={<SubCategoryPage />} />
