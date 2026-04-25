@@ -18,6 +18,7 @@ import SubCategoryPage from "./pages/SubCategoryPage";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Disclaimer from "./pages/Disclaimer";
 import TermsConditions from "./pages/TermsAndConditions";
+import Testimonials from "./pages/Testimonials";
 
 // 🔐 Admin Protected Route
 function ProtectedRoute({ children }) {
