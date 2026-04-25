@@ -368,13 +368,17 @@ export default function HomePage() {
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
+  <img
+    src="/frontend/public/logo.png"
+    alt="Saraswati Tutorial Logo"
+    className="h-10 w-10 rounded-xl object-contain"
+  />
 
-
-              <h1 className="text-xl font-bold text-slate-900">
-                Saraswati Tutorial
-              </h1>
-            </div>
+  <h1 className="text-xl font-bold text-slate-900">
+    Saraswati Tutorial
+  </h1>
+</div>
           </div>
 
 
