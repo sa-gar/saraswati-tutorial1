@@ -854,6 +854,7 @@ export default function HomePage() {
             <a href="#tutors">Tutors</a>
             <a href="#about">About Us</a>
             <a href="#contact">Contact Us</a>
+<Link to="/testimonials">Testimonials</Link>
             <Link to="/blogs">Blog</Link>
             <Link to="/courses/school-tuition">School Tuition</Link>
             <Link to="/courses/competitive-exams">Competitive Exams</Link>
