@@ -38,32 +38,29 @@ router.get("/:id", async (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
-    // console.log("Incoming Request:", req.body);
-
-    // console.log("FULL DATA TO ODOO:", {
-    //   ...req.body,
-    //   userType: "tutor"
-    // });
+ 
 
     let odooRes = null;
 
     try {
 
-      odooRes = await createLead({
-        name: req.body.name || "",
-        email: req.body.email || "",
-        phone: req.body.phone || "",
-
-        userType: "tutor", // or "parent"
-
-        // address / location
-        locations: req.body.locations || [],
-      });
-
-      // console.log("Odoo Response:", odooRes);
+   odooRes = await createLead({
+  name: req.body.name || "",
+  email: req.body.email || "",
+  phone: req.body.phone || "",
+  userType: "tutor",
+ vehicleNumber: req.body.vehicleNumber || "",
+  experience: req.body.experience || "",
+  hasVehicle: req.body.hasVehicle === "yes",
+  hasOccupation: req.body.hasOccupation === "yes",
+  occupation: req.body.occupation || "",
+  photo: req.body.photo || "",
+});
+// console.log("PHOTO FROM FRONTEND:", req.body.photo);
+    
 
     } catch (err) {
-      // console.error(" Odoo Error:", err.message);
+      // console.error("Odoo Error in createLead:", err.message);
     }
 
     //  Save with Odoo ID

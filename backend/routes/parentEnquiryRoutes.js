@@ -20,42 +20,24 @@ router.get("/", async (req, res) => {
 // POST
 router.post("/", async (req, res) => {
   try {
-    console.log("Parent Request:", req.body);
+    // console.log("Parent Request:", req.body);
 
     //  STEP 1: Send to Odoo
     let odooRes = null;
 
     try {
       odooRes = await createLead({
-        name: req.body.parentName,
-        email: req.body.email,
-        phone: req.body.phone,
-
-        userType: "parent",
-
-        //  location
-        address: `${req.body.area}, ${req.body.pincode}`,
-
-        //  important details
-        description: `
-Parent Lead
-
-Student: ${req.body.wards?.[0]?.wardName}
-Class: ${req.body.wards?.[0]?.classGrade}
-Subjects: ${req.body.wards?.[0]?.subjectsNeeded?.join(", ")}
-
-Mode: ${req.body.preferredMode}
-Time: ${req.body.preferredTime}
-Days: ${req.body.preferredDays?.join(", ")}
-
-Location: ${req.body.area}
-        `,
+        name: req.body.parentName || "",
+        email: req.body.email || "",
+        phone: req.body.phone || "",
+        userType: "parent",   
+        classGrade: req.body.classGrade || "",   
       });
 
-      console.log("Odoo Parent Lead:", odooRes);
+      //  console.log("Odoo Parent Lead:", odooRes);
 
     } catch (err) {
-      console.error("Odoo Error:", err.message);
+      // console.error("Odoo Error:", err.message);
     }
 
     //  STEP 2: Save in DB

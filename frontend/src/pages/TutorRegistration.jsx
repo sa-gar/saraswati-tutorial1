@@ -16,17 +16,14 @@ export default function TutorRegistration() {
         hasOccupation: "",
         occupation: "",
         email: "",
-
+        phone: "",
         locations: [],
         hasVehicle: "",
         vehicleNumber: "",
-
-
         idProof: null,
         expCert: null,
         otherDoc: null,
         photo: null,
-
         timings: [],
         agreement: false,
     });
@@ -105,7 +102,11 @@ export default function TutorRegistration() {
         if (name === "name") {
             if (!value || value.trim().length < 3) return "Invalid name";
         }
-
+        if (name === "phone") {
+            if (!value) return "Phone number required";
+            const phoneRegex = /^\d{10}$/;
+            if (!phoneRegex.test(value)) return "Invalid phone number";
+        }
         if (name === "email") {
             if (!value) return "Email required";
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -270,6 +271,26 @@ export default function TutorRegistration() {
                             />
                             {touched.name && errors.name && (
                                 <p className="text-red-500 text-sm mt-1">{errors.name}</p>
+                            )}
+                        </div>
+
+                        <div className="mb-4">
+                            <label className="block mb-1 text-sm font-medium text-gray-700">
+                                Phone Number <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                name="phone"
+                                type="tel"
+                                placeholder="Phone Number"
+                                value={formData.phone}
+                                onChange={handleChange}
+                                onBlur={handleBlur}
+                                className={`w-full border p-3 rounded-lg 
+        ${getInputClass("phone")} 
+        focus:outline-none transition`}
+                            />
+                            {touched.phone && errors.phone && (
+                                <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
                             )}
                         </div>
 
