@@ -26,101 +26,83 @@ async function callOdoo(service, method, args) {
 
   const data = await res.json();
   if (data.error) {
-    // console.error("Odoo FULL ERROR:", JSON.stringify(data.error, null, 2));
     throw new Error(data.error.message);
   }
   return data.result;
 }
 
-// export async function createLead(data) {
-//   try {
-//     //  STEP 1: LOGIN → GET UID
-//     const uid = await callOdoo("common", "login", [
-//       DB,
-//       USERNAME,
-//       PASSWORD,
-//     ]);
+async function imageUrlToBase64(url) {
+  try {
+    const res = await fetch(url);
+    const buffer = await res.arrayBuffer();
 
-//     console.log(" UID:", uid);
+    const contentType = res.headers.get("content-type"); // dynamic
 
-//     //  अगर uid false आया → login failed
-//     if (!uid) {
-//       throw new Error("Odoo login failed");
-//     }
+    const base64 = Buffer.from(buffer).toString("base64");
 
-//     //  STEP 2: CREATE LEAD
-//     const leadId = await callOdoo("object", "execute_kw", [
-//       DB,
-//       uid,
-//       PASSWORD,
-//       "crm.lead",
-//       "create",
-//       [
-//         {
-//           name: data.name,
-//           contact_name: data.name,
-//           phone: data.phone || "9999999999",
-//           email_from: data.email,
-//           x_user_type: data.userType || "tutor",
-//         },
-//       ],
-//     ]);
-
-//     console.log(" Lead Created ID:", leadId);
-
-//     return leadId;
-
-//   } catch (err) {
-//     console.error(" Odoo Error:", err.message);
-//     throw err;
-//   }
-// }
+    return `data:${contentType};base64,${base64}`;
+  } catch (err) {
+    // // console.error("Image conversion error:", err.message);
+    return "";
+  }
+}
 
 export async function createLead(data) {
   try {
-    // STEP 1: LOGIN
+    // // console.log("PHOTO URL:", data.photo);
     const uid = await callOdoo("common", "login", [
       DB,
       USERNAME,
       PASSWORD,
     ]);
 
-    // console.log("UID:", uid);
-
     if (!uid) {
       throw new Error("Odoo login failed");
     }
+    let imageBase64 = "";
 
-    //  STEP 2: BUILD FULL PAYLOAD
-    const leadPayload = {
-      name: `${data.name}`,
-      contact_name: data.name,
-      phone: data.phone || "",
-      email_from: data.email || "",
+    //  convert only if image present
+    if (data.photo) {
+      imageBase64 = await imageUrlToBase64(data.photo);
+        // console.log(" BASE64 LENGTH:", imageBase64?.length);
+    }
 
-      //  REQUIRED BY CLIENT
-      x_user_type: data.userType || "tutor",
+    let leadPayload = {};
 
-      //  ADDRESS (use location as address)
-      street: Array.isArray(data.locations)
-        ? data.locations.join(", ")
-        : data.address || "",
 
-      //  CLEAN DESCRIPTION (optional but useful)
-      description: `
-Lead Type: ${data.userType}
-Phone: ${data.phone}
-Email: ${data.email}
-Address: ${Array.isArray(data.locations)
-          ? data.locations.join(", ")
-          : "-"
-        }
-  `,
-    };
+    if (data.userType === "tutor") {
 
-    // console.log("Sending to Odoo:", leadPayload);
+      leadPayload = {
+        name: data.name,
+        contact_name: data.name,
+        phone: data.phone || "",
+        email_from: data.email || "",
+        x_studio_type: "Tutor",
+        x_studio_experience: data.experience || "",
+        x_studio_hasoccupation: data.hasOccupation,
+        x_studio_occupation: data.occupation || "",
+        x_studio_has_vehicle: data.hasVehicle,
+        x_studio_vehicle_no: data.vehicleNumber || "",
+        x_studio_source_1: "Website",
+        x_studio_profile_image: imageBase64,
+      };
+      // console.log("LEAD PHOTO:", data.photo);
+    } else if (data.userType === "parent") {
 
-    // STEP 3: CREATE LEAD
+      leadPayload = {
+        name: `${data.name}`,
+        contact_name: data.name,
+        phone: data.phone || "",
+        email_from: data.email || "",
+        x_studio_type: "Parent",
+        x_studio_grade_1: data.classGrade || "",
+        x_studio_source_1: "Website",
+
+      };
+    }
+    // // console.log(" ODOO PAYLOAD IMAGE:", imageBase64 ? "YES" : "NO");
+
+    //  CREATE LEAD
     const leadId = await callOdoo("object", "execute_kw", [
       DB,
       uid,
@@ -130,12 +112,9 @@ Address: ${Array.isArray(data.locations)
       [leadPayload],
     ]);
 
-    // console.log(" Lead Created ID:", leadId);
-
     return leadId;
 
   } catch (err) {
-    // console.error(" Odoo Error:", err.message);
     throw err;
   }
 }
