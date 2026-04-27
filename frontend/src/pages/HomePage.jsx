@@ -693,17 +693,15 @@ export default function HomePage() {
             <SectionTitle
               eyebrow="About us"
               title="Best Home Tuition Services in Bangalore"
-              subtitle="Saraswati Tutorial helps students connect with experienced and verified home tutors in Bangalore for all subjects and skill development."
+              // subtitle="Saraswati Tutorial helps students connect with experienced and verified home tutors in Bangalore for all subjects and skill development."
             />
 
             {/* ✅ SEO paragraph (ADDED HERE - correct position) */}
             <p className="mt-4 text-slate-600">
-              Saraswati Tutorials provides the best home tuitions in Bangalore with experienced
-              and verified tuition teachers. If you are looking for a private tutor near me or
-              an affordable home tutor in BTM Layout, we connect students with the right tutors
-              for personalized learning and academic success.
+              Hire patient, experienced, background-verified home tutors in Bangalore
+              for Classes 6–12 and graduation. Saraswati Tutorials helps students
+              find the right private tutors near them for better academic results.
             </p>
-
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">

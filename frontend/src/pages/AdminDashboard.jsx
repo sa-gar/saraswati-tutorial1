@@ -531,22 +531,17 @@ export default function AdminDashboard() {
 
                 <div>
                   <p className="font-semibold"><b>Name: </b>{t.name}</p>
-                  <p className="text-sm text-gray-600"><b>Email: </b>{t.email}</p>
-
-                  <p><b>Occupation:</b> {t.hasOccupation === "yes" ? t.occupation : "No"}</p>
+                  <p><b>Email: </b>{t.email}</p>
+                  <p><b>Phone: </b>{t.phone}</p>
+                  <p><b>HasOccupation:</b> {t.hasOccupation === "yes" ? t.occupation : "No"}</p>
 
                   {t.organization && (
                     <p><b>Organization:</b> {t.organization}</p>
                   )}
 
-                  {/* {t.vehicleNumber && (
-                    <p><b>Vehicle Number:</b> {t.vehicleNumber}</p>
-                  )} */}
-                  {/* <p>{t.subject}</p>
-                  <p className="text-sm text-gray-500">{t.location}</p> */}
                  
                  <p><b>Experience:</b> {t.experience}</p>
-                  <p><b>Locations:</b> {t.locations?.join(", ")}</p>
+                  <p><b>Prefered Locations:</b> {t.locations?.join(", ")}</p>
                   <p>
                     <b>Vehicle:</b>{" "}
                     {t.hasVehicle === "yes"
