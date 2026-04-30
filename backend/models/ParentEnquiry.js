@@ -18,6 +18,7 @@ const wardSchema = new mongoose.Schema(
 
 const parentEnquirySchema = new mongoose.Schema(
   {
+    studentName: { type: String, required: true, trim: true },  
     parentName: { type: String, required: true, trim: true },
     phone: { type: String, required: true, trim: true },
     email: { type: String, default: "", trim: true },

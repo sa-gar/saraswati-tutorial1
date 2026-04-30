@@ -14,6 +14,7 @@ const initialWard = {
 };
 
 const initialForm = {
+  studentName: "",
   parentName: "",
   phone: "",
   email: "",
@@ -127,7 +128,7 @@ const occupationTypeOptions = [
 
 export default function ParentEnquiryForm() {
   const navigate = useNavigate();
-const [step, setStep] = useState(1);
+  const [step, setStep] = useState(1);
   const [form, setForm] = useState(initialForm);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
@@ -155,15 +156,15 @@ const [step, setStep] = useState(1);
     updatedWards[index][name] = value;
     setForm((prev) => ({ ...prev, wards: updatedWards }));
   };
-const handleSubjectsChange = (wardIndex, e) => {
-  const selected = Array.from(e.target.selectedOptions, (opt) => opt.value);
+  const handleSubjectsChange = (wardIndex, e) => {
+    const selected = Array.from(e.target.selectedOptions, (opt) => opt.value);
 
-  setForm((prev) => {
-    const updated = [...prev.wards];
-    updated[wardIndex].subjectsNeeded = selected;
-    return { ...prev, wards: updated };
-  });
-};
+    setForm((prev) => {
+      const updated = [...prev.wards];
+      updated[wardIndex].subjectsNeeded = selected;
+      return { ...prev, wards: updated };
+    });
+  };
   const addWard = () => {
     setForm((prev) => ({
       ...prev,
@@ -179,13 +180,13 @@ const handleSubjectsChange = (wardIndex, e) => {
 
   const validateStep = () => {
     if (step === 1) {
-     return form.wards.every(
-  (w) =>
-    w.wardName &&
-    w.classGrade &&
-    Array.isArray(w.subjectsNeeded) &&
-    w.subjectsNeeded.length > 0
-);
+      return form.wards.every(
+        (w) =>
+          w.wardName &&
+          w.classGrade &&
+          Array.isArray(w.subjectsNeeded) &&
+          w.subjectsNeeded.length > 0
+      );
     }
 
     if (step === 2) {
@@ -216,44 +217,44 @@ const handleSubjectsChange = (wardIndex, e) => {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setSubmitting(true);
-  setMessage("");
+    e.preventDefault();
+    setSubmitting(true);
+    setMessage("");
 
-  try {
-    const payload = {
-      ...form,
-      wards: form.wards.map((ward) => ({
-  wardName: ward.wardName,
-  schoolName: ward.schoolName,
-  classGrade: ward.classGrade,
-  subjectsNeeded: ward.subjectsNeeded,
-  specialNeeds: ward.specialNeeds,
-})),
-    };
+    try {
+      const payload = {
+        ...form,
+        wards: form.wards.map((ward) => ({
+          wardName: ward.wardName,
+          schoolName: ward.schoolName,
+          classGrade: ward.classGrade,
+          subjectsNeeded: ward.subjectsNeeded,
+          specialNeeds: ward.specialNeeds,
+        })),
+      };
 
-    const res = await fetch(`${API_BASE}/parent-enquiries`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
+      const res = await fetch(`${API_BASE}/parent-enquiries`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (!res.ok) {
-      throw new Error(data.message || "Submission failed");
+      if (!res.ok) {
+        throw new Error(data.message || "Submission failed");
+      }
+
+      setForm(initialForm);
+      navigate("/thank-you");
+    } catch (error) {
+      setMessage(error.message || "Something went wrong.");
+    } finally {
+      setSubmitting(false);
     }
-
-    setForm(initialForm);
-    navigate("/thank-you");
-  } catch (error) {
-    setMessage(error.message || "Something went wrong.");
-  } finally {
-    setSubmitting(false);
-  }
-};
+  };
 
   return (
     <div className="mx-auto max-w-5xl rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200 md:p-8">
@@ -304,77 +305,77 @@ const handleSubjectsChange = (wardIndex, e) => {
                       </button>
                     )}
                   </div>
-<div className="grid gap-4 md:grid-cols-2">
-  <Input
-    label="Ward Name"
-    name="wardName"
-    value={ward.wardName}
-    onChange={(e) => handleWardChange(index, e)}
-    required
-  />
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <Input
+                      label="Ward Name"
+                      name="wardName"
+                      value={ward.wardName}
+                      onChange={(e) => handleWardChange(index, e)}
+                      required
+                    />
 
-  <SearchableInput
-    label="School Name"
-    name="schoolName"
-    value={ward.schoolName}
-    onChange={(e) => handleWardChange(index, e)}
-    options={schoolOptions}
-    listId={`schools-${index}`}
-    placeholder="Search or select school"
-  />
+                    <SearchableInput
+                      label="School Name"
+                      name="schoolName"
+                      value={ward.schoolName}
+                      onChange={(e) => handleWardChange(index, e)}
+                      options={schoolOptions}
+                      listId={`schools-${index}`}
+                      placeholder="Search or select school"
+                    />
 
-  <SearchableInput
-    label="Class"
-    name="classGrade"
-    value={ward.classGrade}
-    onChange={(e) => handleWardChange(index, e)}
-    options={classOptions}
-    listId={`classes-${index}`}
-    placeholder="Search or select class"
-    required
-  />
+                    <SearchableInput
+                      label="Class"
+                      name="classGrade"
+                      value={ward.classGrade}
+                      onChange={(e) => handleWardChange(index, e)}
+                      options={classOptions}
+                      listId={`classes-${index}`}
+                      placeholder="Search or select class"
+                      required
+                    />
 
-  <div className="md:col-span-2">
-  <label className="mb-2 block text-sm font-medium text-slate-700">
-    Subjects Required (Select multiple)
-  </label>
+                    <div className="md:col-span-2">
+                      <label className="mb-2 block text-sm font-medium text-slate-700">
+                        Subjects Required (Select multiple)
+                      </label>
 
-  <select
-    multiple
-    value={ward.subjectsNeeded}
-    onChange={(e) => handleSubjectsChange(index, e)}
-    className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none"
-  >
-    {subjectOptions.map((subject) => (
-      <option key={subject} value={subject}>
-        {subject}
-      </option>
-    ))}
-  </select>
+                      <select
+                        multiple
+                        value={ward.subjectsNeeded}
+                        onChange={(e) => handleSubjectsChange(index, e)}
+                        className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none"
+                      >
+                        {subjectOptions.map((subject) => (
+                          <option key={subject} value={subject}>
+                            {subject}
+                          </option>
+                        ))}
+                      </select>
 
-  <p className="mt-2 text-xs text-slate-500">
-    Hold Ctrl (Windows) or Cmd (Mac) to select multiple
-  </p>
+                      <p className="mt-2 text-xs text-slate-500">
+                        Hold Ctrl (Windows) or Cmd (Mac) to select multiple
+                      </p>
 
-  {ward.subjectsNeeded.length > 0 && (
-    <p className="mt-2 text-sm text-slate-600">
-      Selected: {ward.subjectsNeeded.join(", ")}
-    </p>
-  )}
-</div>
+                      {ward.subjectsNeeded.length > 0 && (
+                        <p className="mt-2 text-sm text-slate-600">
+                          Selected: {ward.subjectsNeeded.join(", ")}
+                        </p>
+                      )}
+                    </div>
 
-  <div className="md:col-span-2">
-    <TextArea
-      label="Special Learning Needs / Notes"
-      name="specialNeeds"
-      value={ward.specialNeeds}
-      onChange={(e) => handleWardChange(index, e)}
-    />
-  </div>
-</div>
+                    <div className="md:col-span-2">
+                      <TextArea
+                        label="Special Learning Needs / Notes"
+                        name="specialNeeds"
+                        value={ward.specialNeeds}
+                        onChange={(e) => handleWardChange(index, e)}
+                      />
+                    </div>
+                  </div>
 
-                    
-                 
+
+
                 </div>
               ))}
             </div>
@@ -433,11 +434,10 @@ const handleSubjectsChange = (wardIndex, e) => {
                       type="button"
                       key={day}
                       onClick={() => handleDayToggle(day)}
-                      className={`rounded-full px-4 py-2 text-sm ${
-                        active
+                      className={`rounded-full px-4 py-2 text-sm ${active
                           ? "bg-slate-900 text-white"
                           : "bg-slate-100 text-slate-700"
-                      }`}
+                        }`}
                     >
                       {day}
                     </button>
@@ -455,6 +455,13 @@ const handleSubjectsChange = (wardIndex, e) => {
             </h2>
 
             <div className="grid gap-4 md:grid-cols-2">
+              <Input
+                label="Student Name"
+                name="studentName"
+                value={form.studentName}
+                onChange={handleChange}
+                required
+              />
               <Input
                 label="Parent / Guardian Name"
                 name="parentName"
@@ -560,13 +567,12 @@ const handleSubjectsChange = (wardIndex, e) => {
 function StepBox({ active, done, title }) {
   return (
     <div
-      className={`rounded-2xl border p-4 text-center text-sm font-medium ${
-        active
+      className={`rounded-2xl border p-4 text-center text-sm font-medium ${active
           ? "border-slate-900 bg-slate-900 text-white"
           : done
-          ? "border-emerald-500 bg-emerald-50 text-emerald-700"
-          : "border-slate-200 bg-white text-slate-600"
-      }`}
+            ? "border-emerald-500 bg-emerald-50 text-emerald-700"
+            : "border-slate-200 bg-white text-slate-600"
+        }`}
     >
       {title}
     </div>
