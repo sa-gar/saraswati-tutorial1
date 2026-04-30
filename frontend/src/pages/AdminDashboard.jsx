@@ -382,6 +382,9 @@ export default function AdminDashboard() {
                 <b>Parent:</b> {p.parentName || p.name}
               </p>
               <p>
+                <b>Student:</b> {p.studentName}
+              </p>
+              <p>
                 <b>Phone:</b> {p.phone}
               </p>
               <p>

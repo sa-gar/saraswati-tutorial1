@@ -2,7 +2,7 @@ import express from "express";
 import fetch from "node-fetch";
 import ParentEnquiry from "../models/ParentEnquiry.js";
 import { createLead } from "../utils/odooService.js";
-
+import { updateLead } from "../utils/odooService.js";
 const router = express.Router();
 
 
@@ -20,27 +20,28 @@ router.get("/", async (req, res) => {
 // POST
 router.post("/", async (req, res) => {
   try {
-    // console.log("Parent Request:", req.body);
-
-    //  STEP 1: Send to Odoo
     let odooRes = null;
 
     try {
-      odooRes = await createLead({
-        name: req.body.parentName || "",
-        email: req.body.email || "",
-        phone: req.body.phone || "",
-        userType: "parent",   
-        classGrade: req.body.classGrade || "",   
-      });
+      // odooRes = await createLead({
+      //   name: req.body.parentName || "",
+      //   studentName : req.body.studentName || "",
+      //   email: req.body.email || "",
+      //   phone: req.body.phone || "",
+      //   userType: "parent",   
 
-      //  console.log("Odoo Parent Lead:", odooRes);
+      // });
+
+      odooRes = await createLead({
+        ...req.body,
+        userType: "parent",
+      });
+      // console.log("Odoo Parent Lead:", odooRes);
 
     } catch (err) {
       // console.error("Odoo Error:", err.message);
     }
 
-    //  STEP 2: Save in DB
     const enquiry = new ParentEnquiry({
       ...req.body,
       odooLeadId: odooRes,
@@ -52,6 +53,26 @@ router.post("/", async (req, res) => {
 
   } catch (error) {
     res.status(400).json({ message: error.message });
+  }
+});
+
+router.get("/confirm", async (req, res) => {
+  try {
+    const leadId = req.query.lead;
+
+    // console.log("Lead confirmed:", leadId);
+
+    await updateLead(leadId, {
+      x_studio_response_status: "Yes",
+    });
+
+    res.send("Thank you! Your interest is confirmed.");
+
+  } catch (err) {
+    // console.error(" Confirm Error:", err.message);
+    // console.error(" FULL ODOO ERROR:");
+    // console.error(err);
+    res.send(" Something went wrong");
   }
 });
 

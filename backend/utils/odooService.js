@@ -64,7 +64,7 @@ export async function createLead(data) {
     //  convert only if image present
     if (data.photo) {
       imageBase64 = await imageUrlToBase64(data.photo);
-        // console.log(" BASE64 LENGTH:", imageBase64?.length);
+      // console.log(" BASE64 LENGTH:", imageBase64?.length);
     }
 
     let leadPayload = {};
@@ -84,20 +84,28 @@ export async function createLead(data) {
         x_studio_has_vehicle: data.hasVehicle,
         x_studio_vehicle_no: data.vehicleNumber || "",
         x_studio_source_1: "Website",
-        x_studio_profile_image: imageBase64,
+        // x_studio_profile_image: imageBase64,
       };
       // console.log("LEAD PHOTO:", data.photo);
     } else if (data.userType === "parent") {
 
+      const ward = data.wards?.[0] || {};
+
       leadPayload = {
-        name: `${data.name}`,
-        contact_name: data.name,
+        name: data.parentName || "",
+
+        contact_name: data.parentName || "",
+        x_studio_parent_name : data.parentName || "",
         phone: data.phone || "",
         email_from: data.email || "",
+        x_studio_student_name: data.studentName || "",
         x_studio_type: "Parent",
-        x_studio_grade_1: data.classGrade || "",
         x_studio_source_1: "Website",
-
+        x_studio_class: ward.classGrade || "",
+        x_studio_ward_name: ward.wardName || "",
+        x_studio_subjects_intrested: (ward.subjectsNeeded || []).join(", "),
+        x_studio_preferred_timings: data.preferredTime || "",
+        x_studio_locality: data.area || "",
       };
     }
     // // console.log(" ODOO PAYLOAD IMAGE:", imageBase64 ? "YES" : "NO");
@@ -117,4 +125,27 @@ export async function createLead(data) {
   } catch (err) {
     throw err;
   }
+}
+
+export async function updateLead(leadId, values) {
+  const uid = await callOdoo("common", "login", [
+    DB,
+    USERNAME,
+    PASSWORD,
+  ]);
+
+  if (!uid) {
+    throw new Error("Odoo login failed");
+  }
+
+  await callOdoo("object", "execute_kw", [
+    DB,
+    uid,
+    PASSWORD,
+    "crm.lead",
+    "write",
+    [[parseInt(leadId)], values],
+  ]);
+
+  return true;
 }
