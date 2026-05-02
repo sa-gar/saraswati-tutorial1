@@ -307,7 +307,7 @@ export default function ParentEnquiryForm() {
                   </div>
                   <div className="grid gap-4 md:grid-cols-2">
                     <Input
-                      label="Ward Name"
+                      label="Student Name"
                       name="wardName"
                       value={ward.wardName}
                       onChange={(e) => handleWardChange(index, e)}
