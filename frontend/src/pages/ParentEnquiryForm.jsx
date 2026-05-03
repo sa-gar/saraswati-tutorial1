@@ -358,11 +358,6 @@ export default function ParentEnquiryForm() {
                       placeholder="Search or select class"
                       required
                     />
-
-                    <div className="md:col-span-2">
-                      <label className="mb-2 block text-sm font-medium text-slate-700">
-                        Subjects Required (Select multiple)
-                      </label>
 <div>
   <label className="mb-2 block text-sm font-medium text-slate-700">
     Curriculum
@@ -382,6 +377,12 @@ export default function ParentEnquiryForm() {
     ))}
   </select>
 </div>
+
+                    <div className="md:col-span-2">
+                      <label className="mb-2 block text-sm font-medium text-slate-700">
+                        Subjects Required (Select multiple)
+                      </label>
+
 
                       <select
                         multiple
