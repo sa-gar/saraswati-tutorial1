@@ -455,13 +455,7 @@ export default function ParentEnquiryForm() {
             </h2>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <Input
-                label="Student Name"
-                name="studentName"
-                value={form.studentName}
-                onChange={handleChange}
-                required
-              />
+              
               <Input
                 label="Parent / Guardian Name"
                 name="parentName"
