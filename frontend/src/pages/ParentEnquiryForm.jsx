@@ -57,6 +57,20 @@ const classOptions = [
   "Class 12",
   "PUC 1",
   "PUC 2",
+  "BBA",
+  "B.com",
+  "Engineering & Technology (BE/BTech)",
+  "Diploma",
+  "BCA & MCA",
+  "Competitive Exams",
+  "Science (BSc)",
+  "Arts & Humanities (BA)",
+  "B.Pharma",
+  "Commerce & Management",
+  "BA LLB (Hons)",
+  "BArch",
+  "Coding / Programming",
+  "Spoken Language / Soft Skills",
 ];
 
 const subjectOptions = [
