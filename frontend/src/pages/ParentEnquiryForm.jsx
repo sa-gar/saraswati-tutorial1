@@ -15,7 +15,6 @@ const initialWard = {
 };
 
 const initialForm = {
-  studentName: "",
   parentName: "",
   phone: "",
   email: "",
