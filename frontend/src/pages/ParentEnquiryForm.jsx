@@ -9,6 +9,7 @@ const initialWard = {
   wardName: "",
   schoolName: "",
   classGrade: "",
+  curriculum: "",
   subjectsNeeded: [],
   specialNeeds: "",
 };
@@ -72,7 +73,16 @@ const classOptions = [
   "Coding / Programming",
   "Spoken Language / Soft Skills",
 ];
-
+const curriculumOptions = [
+  "IB",
+  "IGCSE",
+  "ICSE",
+  "NIOS",
+  "CBSE",
+  "ISC",
+  "Level A1 & A2",
+  "PUC",
+];
 const subjectOptions = [
   "Mathematics",
   "Science",
@@ -353,6 +363,25 @@ export default function ParentEnquiryForm() {
                       <label className="mb-2 block text-sm font-medium text-slate-700">
                         Subjects Required (Select multiple)
                       </label>
+<div>
+  <label className="mb-2 block text-sm font-medium text-slate-700">
+    Curriculum
+  </label>
+
+  <select
+    name="curriculum"
+    value={ward.curriculum}
+    onChange={(e) => handleWardChange(index, e)}
+    className="h-12 w-full rounded-2xl border border-slate-200 px-4 outline-none"
+  >
+    <option value="">Select Curriculum</option>
+    {curriculumOptions.map((item) => (
+      <option key={item} value={item}>
+        {item}
+      </option>
+    ))}
+  </select>
+</div>
 
                       <select
                         multiple
