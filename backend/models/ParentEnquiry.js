@@ -2,12 +2,13 @@ import mongoose from "mongoose";
 
 const wardSchema = new mongoose.Schema(
   {
-    wardName: { type: String, required: true, trim: true },
+    // wardName: { type: String, required: true, trim: true },
+    studentName : { type: String, required: true, trim: true },
     schoolName: { type: String, default: "", trim: true },
     classGrade: { type: String, required: true, trim: true },
 curriculum: { type: String, default: "", trim: true },
    subjectsNeeded: {
-  type: [String],   // ✅ array of strings
+  type: [String],   //  array of strings
   required: true,
   default: []
 },
@@ -19,7 +20,7 @@ curriculum: { type: String, default: "", trim: true },
 
 const parentEnquirySchema = new mongoose.Schema(
   {
-      
+    // studentName: { type: String, required: true, trim: true },  
     parentName: { type: String, required: true, trim: true },
     phone: { type: String, required: true, trim: true },
     email: { type: String, default: "", trim: true },

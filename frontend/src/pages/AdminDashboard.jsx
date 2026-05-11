@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 
-const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
+// const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
+const API_BASE = "http://localhost:5000/api"
 
 
 export default function AdminDashboard() {
@@ -304,6 +305,28 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleDelete = async (id) => {
+    try {
+
+      const res = await fetch(
+        `${API_BASE}/parent-enquiries/${id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (res.ok) {
+
+        setParentEnquiries((prev) =>
+          prev.filter((item) => item._id !== id)
+        );
+
+      }
+
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-10">
@@ -381,9 +404,9 @@ export default function AdminDashboard() {
               <p>
                 <b>Parent:</b> {p.parentName || p.name}
               </p>
-              <p>
+              {/* <p>
                 <b>Student:</b> {p.studentName}
-              </p>
+              </p> */}
               <p>
                 <b>Phone:</b> {p.phone}
               </p>
@@ -418,8 +441,11 @@ export default function AdminDashboard() {
                 <p className="font-semibold">Wards:</p>
                 {p.wards?.map((ward, index) => (
                   <div key={index} className="mt-2 rounded-lg bg-slate-50 p-3">
-                    <p>
+                    {/* <p>
                       <b>Ward Name:</b> {ward.wardName || ward.fullName}
+                    </p> */}
+                    <p>
+                      <b>Student Name:</b> {ward.studentName || ward.fullName}
                     </p>
                     <p>
                       <b>School:</b> {ward.schoolName}
@@ -439,9 +465,22 @@ export default function AdminDashboard() {
                     <p>
                       <b>Special Notes:</b> {ward.specialNeeds}
                     </p>
+                
                   </div>
+
                 ))}
               </div>
+
+                  <button
+                      onClick={() => {
+                        if (window.confirm("Delete this enquiry?")) {
+                          handleDelete(p._id);
+                        }
+                      }}
+                      className="mt-4 rounded bg-red-500 px-4 py-2 text-white"
+                    >
+                      Delete
+                    </button>
             </div>
           ))
         )}
@@ -545,8 +584,8 @@ export default function AdminDashboard() {
                     <p><b>Organization:</b> {t.organization}</p>
                   )}
 
-                 
-                 <p><b>Experience:</b> {t.experience}</p>
+
+                  <p><b>Experience:</b> {t.experience}</p>
                   <p><b>Prefered Locations:</b> {t.locations?.join(", ")}</p>
                   <p>
                     <b>Vehicle:</b>{" "}

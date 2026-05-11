@@ -23,15 +23,6 @@ router.post("/", async (req, res) => {
     let odooRes = null;
 
     try {
-      // odooRes = await createLead({
-      //   name: req.body.parentName || "",
-      //   studentName : req.body.studentName || "",
-      //   email: req.body.email || "",
-      //   phone: req.body.phone || "",
-      //   userType: "parent",   
-
-      // });
-
       odooRes = await createLead({
         ...req.body,
         userType: "parent",
@@ -76,5 +67,25 @@ router.get("/confirm", async (req, res) => {
   }
 });
 
+router.delete("/:id", async (req, res) => {
+  try {
+    const enquiry = await ParentEnquiry.findByIdAndDelete(req.params.id);
+
+    if (!enquiry) {
+      return res.status(404).json({
+        message: "Enquiry not found",
+      });
+    }
+
+    res.json({
+      message: "Enquiry deleted successfully",
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+});
 export default router;
 

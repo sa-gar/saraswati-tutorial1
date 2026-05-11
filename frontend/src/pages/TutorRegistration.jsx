@@ -182,7 +182,7 @@ export default function TutorRegistration() {
             if (formData.otherDoc) fd.append("otherDoc", formData.otherDoc);
             if (formData.photo) fd.append("photo", formData.photo);
 
-            // 🔴 IMPORTANT: timeout add
+            //  IMPORTANT: timeout add
             const uploadRes = await axios.post(`${API_BASE}/upload`, fd, {
                 timeout: 20000,
             });
@@ -615,7 +615,7 @@ export default function TutorRegistration() {
                                         );
                                     })}
 
-                                    {/* ❌ Empty state */}
+                                    {/*  Empty state */}
                                     {Object.values(areaGroups)
                                         .flat()
                                         .filter((a) =>
@@ -628,7 +628,7 @@ export default function TutorRegistration() {
 
                                 </div>
 
-                                {/* ⚠️ Error */}
+                                {/*  Error */}
                                 {touched.locations && formData.locations.length === 0 && (
                                     <p className="text-red-500 text-sm mt-2">
                                         Select at least one location
@@ -706,7 +706,7 @@ export default function TutorRegistration() {
                                     type="file"
                                     className="hidden"
                                     id="photo"
-                                    accept="image/*"
+                                    accept=".png,.jpg,.jpeg,.heic"
                                     onChange={(e) =>
                                         setFormData({ ...formData, photo: e.target.files[0] })
                                     }
@@ -739,6 +739,7 @@ export default function TutorRegistration() {
                                             type="file"
                                             className="hidden"
                                             id="idProof"
+                                            accept=".png,.jpg,.jpeg,.heic"
                                             onChange={(e) =>
                                                 setFormData({ ...formData, idProof: e.target.files[0] })
                                             }
@@ -747,7 +748,7 @@ export default function TutorRegistration() {
                                         <label htmlFor="idProof" className="cursor-pointer block">
                                             <p className="text-sm font-medium">ID Proof (Required)</p>
                                             <p className="text-xs text-gray-500 mt-1">
-                                                Click to upload (PDF, JPG, PNG)
+                                                Click to upload (JPG, JPEG, PNG)
                                             </p>
 
                                             {formData.idProof ? (
@@ -770,6 +771,7 @@ export default function TutorRegistration() {
                                             type="file"
                                             className="hidden"
                                             id="expCert"
+                                            accept=".png,.jpg,.jpeg,.heic"
                                             onChange={(e) =>
                                                 setFormData({ ...formData, expCert: e.target.files[0] })
                                             }
@@ -798,6 +800,7 @@ export default function TutorRegistration() {
                                             type="file"
                                             className="hidden"
                                             id="otherDoc"
+                                            accept=".png,.jpg,.jpeg,.heic"
                                             onChange={(e) =>
                                                 setFormData({ ...formData, otherDoc: e.target.files[0] })
                                             }
