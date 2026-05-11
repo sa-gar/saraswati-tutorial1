@@ -453,6 +453,9 @@ export default function AdminDashboard() {
                     <p>
                       <b>Class:</b> {ward.classGrade}
                     </p>
+<p>
+  <b>Curriculum:</b> {ward.curriculum || "Not provided"}
+</p>
                     <p>
                       <b>Subjects:</b>{" "}
                       {Array.isArray(ward.subjectsNeeded)
