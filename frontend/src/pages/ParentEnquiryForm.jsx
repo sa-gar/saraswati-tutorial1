@@ -6,7 +6,8 @@ const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
 //  const API_BASE = "http://localhost:5000/api"
 
 const initialWard = {
-  wardName: "",
+  // wardName: "",
+  studentName: "",
   schoolName: "",
   classGrade: "",
   subjectsNeeded: [],
@@ -14,7 +15,7 @@ const initialWard = {
 };
 
 const initialForm = {
-  studentName: "",
+  // studentName: "",
   parentName: "",
   phone: "",
   email: "",
@@ -182,7 +183,7 @@ export default function ParentEnquiryForm() {
     if (step === 1) {
       return form.wards.every(
         (w) =>
-          w.wardName &&
+          
           w.classGrade &&
           Array.isArray(w.subjectsNeeded) &&
           w.subjectsNeeded.length > 0
@@ -225,7 +226,8 @@ export default function ParentEnquiryForm() {
       const payload = {
         ...form,
         wards: form.wards.map((ward) => ({
-          wardName: ward.wardName,
+          // wardName: ward.wardName,
+          studentName: ward.studentName,
           schoolName: ward.schoolName,
           classGrade: ward.classGrade,
           subjectsNeeded: ward.subjectsNeeded,
@@ -306,10 +308,18 @@ export default function ParentEnquiryForm() {
                     )}
                   </div>
                   <div className="grid gap-4 md:grid-cols-2">
-                    <Input
+                    {/* <Input
                       label="Ward Name"
                       name="wardName"
                       value={ward.wardName}
+                      onChange={(e) => handleWardChange(index, e)}
+                      required
+                    /> */}
+
+                    <Input
+                      label="Student Name"
+                      name="studentName"
+                      value={ward.studentName}
                       onChange={(e) => handleWardChange(index, e)}
                       required
                     />
@@ -455,13 +465,13 @@ export default function ParentEnquiryForm() {
             </h2>
 
             <div className="grid gap-4 md:grid-cols-2">
-              <Input
+              {/* <Input
                 label="Student Name"
                 name="studentName"
                 value={form.studentName}
                 onChange={handleChange}
                 required
-              />
+              /> */}
               <Input
                 label="Parent / Guardian Name"
                 name="parentName"
