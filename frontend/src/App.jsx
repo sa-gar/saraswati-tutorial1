@@ -18,6 +18,7 @@ import SubCategoryPage from "./pages/SubCategoryPage";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Disclaimer from "./pages/Disclaimer";
 import TermsConditions from "./pages/TermsAndConditions";
+import Testimonials from "./pages/Testimonials";
 
 // 🔐 Admin Protected Route
 function ProtectedRoute({ children }) {
@@ -74,7 +75,7 @@ export default function App() {
               </BlogProtectedRoute>
             }
           />
-
+<Route path="/testimonials" element={<Testimonials />} />
 
           <Route path="/courses/:category" element={<CategoryPage />} />
           <Route path="/courses/:main/:sub" element={<SubCategoryPage />} />

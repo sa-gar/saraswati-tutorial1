@@ -10,6 +10,7 @@ const initialWard = {
   studentName: "",
   schoolName: "",
   classGrade: "",
+  curriculum: "",
   subjectsNeeded: [],
   specialNeeds: "",
 };
@@ -58,8 +59,31 @@ const classOptions = [
   "Class 12",
   "PUC 1",
   "PUC 2",
+  "BBA",
+  "B.com",
+  "Engineering & Technology (BE/BTech)",
+  "Diploma",
+  "BCA & MCA",
+  "Competitive Exams",
+  "Science (BSc)",
+  "Arts & Humanities (BA)",
+  "B.Pharma",
+  "Commerce & Management",
+  "BA LLB (Hons)",
+  "BArch",
+  "Coding / Programming",
+  "Spoken Language / Soft Skills",
 ];
-
+const curriculumOptions = [
+  "IB",
+  "IGCSE",
+  "ICSE",
+  "NIOS",
+  "CBSE",
+  "ISC",
+  "Level A1 & A2",
+  "PUC",
+];
 const subjectOptions = [
   "Mathematics",
   "Science",
@@ -344,11 +368,31 @@ export default function ParentEnquiryForm() {
                       placeholder="Search or select class"
                       required
                     />
+<div>
+  <label className="mb-2 block text-sm font-medium text-slate-700">
+    Curriculum
+  </label>
+
+  <select
+    name="curriculum"
+    value={ward.curriculum}
+    onChange={(e) => handleWardChange(index, e)}
+    className="h-12 w-full rounded-2xl border border-slate-200 px-4 outline-none"
+  >
+    <option value="">Select Curriculum</option>
+    {curriculumOptions.map((item) => (
+      <option key={item} value={item}>
+        {item}
+      </option>
+    ))}
+  </select>
+</div>
 
                     <div className="md:col-span-2">
                       <label className="mb-2 block text-sm font-medium text-slate-700">
                         Subjects Required (Select multiple)
                       </label>
+
 
                       <select
                         multiple
