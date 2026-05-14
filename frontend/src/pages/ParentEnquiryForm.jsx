@@ -450,7 +450,7 @@ export default function ParentEnquiryForm() {
                 name="preferredMode"
                 value={form.preferredMode}
                 onChange={handleChange}
-                options={["Online", "Offline", "Home Tuition", "Any"]}
+                options={["Online/one to one sessions", "Home Tuition/impersonal/Offline"]}
                 required
               />
 
