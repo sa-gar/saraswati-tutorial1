@@ -6,7 +6,7 @@ const wardSchema = new mongoose.Schema(
     studentName : { type: String, required: true, trim: true },
     schoolName: { type: String, default: "", trim: true },
     classGrade: { type: String, required: true, trim: true },
-curriculum: { type: String, default: "", trim: true },
+curriculum: { type: String, required: true, trim: true },
    subjectsNeeded: {
   type: [String],   //  array of strings
   required: true,

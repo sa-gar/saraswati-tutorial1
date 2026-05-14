@@ -373,19 +373,20 @@ export default function ParentEnquiryForm() {
     Curriculum
   </label>
 
-  <select
-    name="curriculum"
-    value={ward.curriculum}
-    onChange={(e) => handleWardChange(index, e)}
-    className="h-12 w-full rounded-2xl border border-slate-200 px-4 outline-none"
-  >
-    <option value="">Select Curriculum</option>
-    {curriculumOptions.map((item) => (
-      <option key={item} value={item}>
-        {item}
-      </option>
-    ))}
-  </select>
+ <select
+  name="curriculum"
+  value={ward.curriculum}
+  onChange={(e) => handleWardChange(index, e)}
+  required
+  className="h-12 w-full rounded-2xl border border-slate-200 px-4 outline-none"
+>
+  <option value="">Select Curriculum</option>
+  {curriculumOptions.map((item) => (
+    <option key={item} value={item}>
+      {item}
+    </option>
+  ))}
+</select>
 </div>
 
                     <div className="md:col-span-2">
@@ -532,13 +533,7 @@ export default function ParentEnquiryForm() {
                 required
               />
 
-              <Input
-                label="Email Address"
-                name="email"
-                type="email"
-                value={form.email}
-                onChange={handleChange}
-              />
+              
 
               <Select
                 label="Occupation"
@@ -549,15 +544,7 @@ export default function ParentEnquiryForm() {
                 required
               />
 
-              {form.occupation && (
-                <Select
-                  label="Occupation Type"
-                  name="occupationType"
-                  value={form.occupationType}
-                  onChange={handleChange}
-                  options={occupationTypeOptions}
-                />
-              )}
+             
 
               <Input
                 label="Area / Locality"
@@ -567,13 +554,7 @@ export default function ParentEnquiryForm() {
                 required
               />
 
-              <Input
-                label="PIN Code"
-                name="pincode"
-                value={form.pincode}
-                onChange={handleChange}
-                required
-              />
+            
             </div>
           </section>
         )}
