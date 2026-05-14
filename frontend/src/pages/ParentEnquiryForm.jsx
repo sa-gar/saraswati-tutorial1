@@ -28,9 +28,10 @@ const initialForm = {
   preferredMode: "",
   preferredDays: [],
   preferredTime: "",
+  classDuration: "",
   wards: [{ ...initialWard }],
 };
-
+const classDurationOptions = ["1 hr", "1.5 hr", "2 hr"];
 const dayOptions = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const occupationOptions = [
   "Working Professional",
@@ -476,6 +477,33 @@ export default function ParentEnquiryForm() {
                 />
               </div>
             </div>
+            <div className="mt-6">
+  <label className="mb-3 block text-sm font-semibold text-slate-700">
+    Class Duration
+  </label>
+
+  <div className="flex flex-wrap gap-2">
+    {classDurationOptions.map((duration) => (
+      <button
+        type="button"
+        key={duration}
+        onClick={() =>
+          setForm({
+            ...form,
+            classDuration: duration,
+          })
+        }
+        className={`rounded-full px-4 py-2 text-sm ${
+          form.classDuration === duration
+            ? "bg-blue-600 text-white"
+            : "bg-slate-100 text-slate-700"
+        }`}
+      >
+        {duration}
+      </button>
+    ))}
+  </div>
+</div>
 
             <div className="mt-4">
               <label className="mb-2 block text-sm font-medium text-slate-700">

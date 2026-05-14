@@ -433,6 +433,9 @@ export default function AdminDashboard() {
                 <b>Preferred Time:</b> {p.preferredTime}
               </p>
               <p>
+  <b>Class Duration:</b> {p.classDuration || "Not provided"}
+</p>
+              <p>
                 <b>Preferred Days:</b> {p.preferredDays?.join(", ")}
               </p>
 
