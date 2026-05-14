@@ -1,103 +1,72 @@
 import React from "react";
 import { Link, useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-
-const courseData = {
-  "class-10-science": {
-    title: "Class 10 Science Coaching in Bangalore",
-    h1: "Class 10 Science Best Coaching Institute",
-    description:
-      "Find the best Class 10 Science coaching in Bangalore with expert tutors. Book demo classes and improve your performance.",
-  },
-  "maths-tutor-bangalore": {
-    title: "Maths Tutor in Bangalore",
-    h1: "Best Maths Coaching Institute in Bangalore",
-    description:
-      "Get the best maths tutor in Bangalore with personalized coaching and flexible learning options.",
-  },
-  "english-speaking-bangalore": {
-    title: "Spoken English Classes in Bangalore",
-    h1: "Best English Speaking Coaching in Bangalore",
-    description:
-      "Join top English speaking classes in Bangalore and improve communication skills with expert trainers.",
-  },
-};
+import courseStructure from "../data/courseData";
 
 export default function CoursePage() {
-  const { slug } = useParams();
-  const course = courseData[slug];
+  const { main, sub, course } = useParams();
 
-  // ✅ Category mapping (IMPORTANT FIX)
-  const categoryMap = {
-    "class-10-science": "science",
-    "maths-tutor-bangalore": "maths",
-    "english-speaking-bangalore": "english",
-  };
+  const mainCategory = courseStructure[main];
+  const subCategory = mainCategory?.subcategories[sub];
+  const courseData = subCategory?.courses.find(
+    (c) => c.slug === course
+  );
 
-  const category = categoryMap[slug];
-
-  // ✅ Format name
-  const formattedName = slug
-    ?.replaceAll("-", " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
-
-  if (!course) {
+  if (!courseData) {
     return <div className="p-10 text-center">Page Not Found</div>;
   }
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-16">
 
-      {/* ✅ Breadcrumb (FIXED) */}
+      {/* ✅ Breadcrumb */}
       <div className="text-sm text-slate-500 mb-4">
-        <Link to="/" className="hover:underline">Home</Link> {" / "}
-        <Link to={`/tutors/${category}`} className="hover:underline">
-          {category.charAt(0).toUpperCase() + category.slice(1)} Tutors
-        </Link>{" / "}
-        <span>{formattedName}</span>
+        <Link to="/">Home</Link> {" / "}
+        <Link to={`/courses/${main}`}>{mainCategory.name}</Link> {" / "}
+        <Link to={`/courses/${main}/${sub}`}>{subCategory.name}</Link> {" / "}
+        <span>{courseData.name}</span>
       </div>
 
-      {/* ✅ SEO META */}
+      {/* ✅ SEO */}
       <Helmet>
-        <title>{course.title} | Saraswati Tutorial</title>
-        <meta name="description" content={course.description} />
+        <title>
+          {courseData.seoTitle || `${courseData.name} in Bangalore`}
+        </title>
+        <meta
+          name="description"
+          content={
+            courseData.seoDesc ||
+            `Best ${courseData.name} in Bangalore with expert tutors. Book free demo today.`
+          }
+        />
       </Helmet>
 
       {/* ✅ H1 */}
       <h1 className="text-3xl md:text-4xl font-bold text-slate-900">
-        {course.h1}
+        {courseData.name}
       </h1>
 
       {/* ✅ Intro */}
       <p className="mt-4 text-slate-600">
-        {course.description}
+        Join the best {courseData.name} in Bangalore with experienced tutors and personalized learning.
       </p>
 
-      {/* ✅ Section 1 */}
+      {/* ✅ Sections */}
       <h2 className="mt-10 text-2xl font-semibold">
-        Why Choose Us for {course.title}?
+        Why Choose Us for {courseData.name}?
       </h2>
       <ul className="mt-4 list-disc pl-6 text-slate-600">
-        <li>Experienced and verified tutors</li>
-        <li>Flexible home & online classes</li>
+        <li>Experienced tutors</li>
+        <li>1-on-1 attention</li>
+        <li>Flexible timings</li>
         <li>Affordable pricing</li>
-        <li>Personalized attention</li>
       </ul>
 
-      {/* ✅ Section 2 */}
       <h2 className="mt-10 text-2xl font-semibold">
-        {course.title} Syllabus & Fees
+        {courseData.name} Fees & Syllabus
       </h2>
       <p className="mt-4 text-slate-600">
         Complete syllabus coverage with affordable fees starting from ₹300/hr.
-      </p>
-
-      {/* ✅ Section 3 */}
-      <h2 className="mt-10 text-2xl font-semibold">
-        Success Stories
-      </h2>
-      <p className="mt-4 text-slate-600">
-        Many students have improved their performance with our expert tutors.
       </p>
 
       {/* ✅ CTA */}

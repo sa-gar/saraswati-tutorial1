@@ -1,3 +1,4 @@
+
 import { Routes, Route, Navigate } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import HomePage from "./pages/HomePage";
@@ -13,6 +14,11 @@ import BlogLogin from "./pages/BlogLogin";
 import AdminBlogEditor from "./pages/AdminBlogEditor";
 import CategoryPage from "./pages/CategoryPage";
 import CoursePage from "./pages/CoursePage";
+import SubCategoryPage from "./pages/SubCategoryPage";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import Disclaimer from "./pages/Disclaimer";
+import TermsConditions from "./pages/TermsAndConditions";
+import Testimonials from "./pages/Testimonials";
 
 // 🔐 Admin Protected Route
 function ProtectedRoute({ children }) {
@@ -20,17 +26,19 @@ function ProtectedRoute({ children }) {
   return token ? children : <Navigate to="/admin-login" replace />;
 }
 
-// 🔐 Blog Editor Protected Route
+//  Blog Editor Protected Route
 function BlogProtectedRoute({ children }) {
   const token = localStorage.getItem("blogEditorToken");
   return token ? children : <Navigate to="/blog-login" replace />;
 }
+
 
 export default function App() {
   return (
     <HelmetProvider>
       <div className="min-h-screen bg-slate-50">
         <Routes>
+
 
           {/* Public Pages */}
           <Route path="/" element={<HomePage />} />
@@ -42,8 +50,10 @@ export default function App() {
           {/* Admin Login */}
           <Route path="/admin-login" element={<AdminLogin />} />
 
+
           {/* Blog Editor Login */}
           <Route path="/blog-login" element={<BlogLogin />} />
+
 
           {/* Admin Dashboard */}
           <Route
@@ -55,6 +65,7 @@ export default function App() {
             }
           />
 
+
           {/* Blog Editor Page (separate system) */}
           <Route
             path="/admin/blogs"
@@ -64,10 +75,14 @@ export default function App() {
               </BlogProtectedRoute>
             }
           />
-          
-          <Route path="/tutors/:category" element={<CategoryPage />} />
-          <Route path="/course/:slug" element={<CoursePage />} />
+<Route path="/testimonials" element={<Testimonials />} />
 
+          <Route path="/courses/:category" element={<CategoryPage />} />
+          <Route path="/courses/:main/:sub" element={<SubCategoryPage />} />
+          <Route path="/courses/:main/:sub/:course" element={<CoursePage />} />
+          <Route path="/terms-conditions" element={<TermsConditions />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/disclaimer" element={<Disclaimer />} />
           {/* <Route path="*" element={<Navigate to="/" />} /> */}
           <Route path="*" element={<h1>404 - Page Not Found</h1>} />
         </Routes>
@@ -75,3 +90,4 @@ export default function App() {
     </HelmetProvider>
   );
 }
+

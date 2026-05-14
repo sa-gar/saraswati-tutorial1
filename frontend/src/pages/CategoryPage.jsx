@@ -1,48 +1,14 @@
 import React from "react";
 import { Link, useParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-
-const categoryData = {
-  science: {
-    title: "Science Tutors in Bangalore",
-    description:
-      "Find the best science tutors in Bangalore for Class 6 to 12 with expert guidance and personalized learning.",
-    courses: [
-      {
-        name: "Class 10 Science Coaching in Bangalore",
-        slug: "class-10-science",
-      },
-    ],
-  },
-  maths: {
-    title: "Maths Tutors in Bangalore",
-    description:
-      "Top maths tutors in Bangalore for all classes with personalized coaching and affordable pricing.",
-    courses: [
-      {
-        name: "Maths Tutor in Bangalore",
-        slug: "maths-tutor-bangalore",
-      },
-    ],
-  },
-  english: {
-    title: "English Speaking Classes in Bangalore",
-    description:
-      "Improve your communication skills with the best English speaking classes in Bangalore.",
-    courses: [
-      {
-        name: "English Speaking Classes in Bangalore",
-        slug: "english-speaking-bangalore",
-      },
-    ],
-  },
-};
+import courseStructure from "../data/courseData";
 
 export default function CategoryPage() {
   const { category } = useParams();
-  const data = categoryData[category];
 
-  if (!data) {
+  const mainCategory = courseStructure[category];
+
+  if (!mainCategory) {
     return <div className="p-10 text-center">Category Not Found</div>;
   }
 
@@ -51,40 +17,41 @@ export default function CategoryPage() {
 
       {/* ✅ SEO */}
       <Helmet>
-        <title>{data.title} | Saraswati Tutorial</title>
-        <meta name="description" content={data.description} />
+        <title>{mainCategory.name} in Bangalore | Saraswati Tutorial</title>
+        <meta
+          name="description"
+          content={
+            mainCategory.description ||
+            `Best ${mainCategory.name} in Bangalore with expert tutors. Book free demo today.`
+          }
+        />
       </Helmet>
 
       {/* ✅ Breadcrumb */}
       <div className="text-sm text-slate-500 mb-4">
         <Link to="/" className="hover:underline">Home</Link> {" / "}
-        <span>{data.title}</span>
+        <span>{mainCategory.name}</span>
       </div>
 
       {/* ✅ H1 */}
       <h1 className="text-3xl md:text-4xl font-bold text-slate-900">
-        {data.title}
+        {mainCategory.name}
       </h1>
 
-      {/* ✅ Description */}
-      <p className="mt-4 text-slate-600">
-        {data.description}
-      </p>
-
-      {/* ✅ Courses List */}
+      {/* ✅ Subcategories */}
       <div className="mt-8 flex flex-col gap-4">
-        {data.courses.map((course) => (
+        {Object.entries(mainCategory.subcategories).map(([key, sub]) => (
           <Link
-            key={course.slug}
-            to={`/course/${course.slug}`}
+            key={key}
+            to={`/courses/${category}/${key}`}
             className="text-blue-600 font-medium hover:underline"
           >
-            {course.name}
+            {sub.name}
           </Link>
         ))}
       </div>
 
-      {/* ✅ CTA (SEO + Conversion boost) */}
+      {/* ✅ CTA */}
       <div className="mt-10">
         <Link
           to="/parent-enquiry"

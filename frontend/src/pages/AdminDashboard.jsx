@@ -1,10 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+
 const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
+// const API_BASE = "http://localhost:5000/api"
+
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
+
 
   const [enquiries, setEnquiries] = useState([]);
   const [parentEnquiries, setParentEnquiries] = useState([]);
@@ -12,6 +16,7 @@ export default function AdminDashboard() {
   const [tutors, setTutors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+
 
   const [editingTutor, setEditingTutor] = useState(null);
   const [editForm, setEditForm] = useState({
@@ -28,6 +33,7 @@ export default function AdminDashboard() {
     mode: "",
   });
 
+
   const [showAddForm, setShowAddForm] = useState(false);
   const [newTutor, setNewTutor] = useState({
     name: "",
@@ -43,11 +49,13 @@ export default function AdminDashboard() {
     mode: "",
   });
 
+
   function handleLogout() {
     localStorage.removeItem("adminToken");
     localStorage.removeItem("adminEmail");
     navigate("/admin-login");
   }
+
 
   const fetchData = async () => {
     setLoading(true);
@@ -59,12 +67,14 @@ export default function AdminDashboard() {
         fetch(`${API_BASE}/tutors`),
       ]);
 
+
       const [eData, peData, bData, tData] = await Promise.all([
         eRes.json(),
         peRes.json(),
         bRes.json(),
         tRes.json(),
       ]);
+
 
       setEnquiries(Array.isArray(eData) ? eData : []);
       setParentEnquiries(Array.isArray(peData) ? peData : []);
@@ -76,13 +86,16 @@ export default function AdminDashboard() {
     setLoading(false);
   };
 
+
   useEffect(() => {
     fetchData();
   }, []);
 
+
   const deleteTutor = async (id) => {
     const token = localStorage.getItem("adminToken");
     if (!window.confirm("Delete this tutor?")) return;
+
 
     try {
       const res = await fetch(`${API_BASE}/tutors/${id}`, {
@@ -92,10 +105,12 @@ export default function AdminDashboard() {
         },
       });
 
+
       if (!res.ok) {
         alert("Failed to delete tutor");
         return;
       }
+
 
       fetchData();
     } catch (error) {
@@ -103,6 +118,7 @@ export default function AdminDashboard() {
       alert("Failed to delete tutor");
     }
   };
+
 
   const startEditTutor = (tutor) => {
     setEditingTutor(tutor);
@@ -121,8 +137,10 @@ export default function AdminDashboard() {
     });
   };
 
+
   const saveTutorEdit = async () => {
     const token = localStorage.getItem("adminToken");
+
 
     try {
       const res = await fetch(`${API_BASE}/tutors/${editingTutor._id}`, {
@@ -133,6 +151,7 @@ export default function AdminDashboard() {
         },
         body: JSON.stringify(editForm),
       });
+
 
       if (res.ok) {
         setEditingTutor(null);
@@ -146,8 +165,10 @@ export default function AdminDashboard() {
     }
   };
 
+
   const createTutor = async () => {
     const token = localStorage.getItem("adminToken");
+
 
     try {
       const res = await fetch(`${API_BASE}/tutors`, {
@@ -158,6 +179,7 @@ export default function AdminDashboard() {
         },
         body: JSON.stringify(newTutor),
       });
+
 
       if (res.ok) {
         setShowAddForm(false);
@@ -185,6 +207,7 @@ export default function AdminDashboard() {
     }
   };
 
+
   const filteredTutors = useMemo(() => {
     return tutors.filter((t) =>
       t.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -194,10 +217,14 @@ export default function AdminDashboard() {
   }, [tutors, search]);
 
 
+
+
   const approveTutor = async (id) => {
     const token = localStorage.getItem("adminToken");
 
+
     if (!window.confirm("Approve this tutor?")) return;
+
 
     try {
       const res = await fetch(`${API_BASE}/tutors/${id}`, {
@@ -212,13 +239,16 @@ export default function AdminDashboard() {
         }),
       });
 
+
       if (!res.ok) {
         alert("Failed to approve tutor");
         return;
       }
 
+
       alert("Tutor approved successfully ");
       fetchData(); // refresh list
+
 
     } catch (err) {
       console.error(err);
@@ -226,10 +256,23 @@ export default function AdminDashboard() {
     }
   };
 
+
   const rejectTutor = async (id) => {
     const token = localStorage.getItem("adminToken");
 
+
+    // NEW (comment input)
+    const comment = prompt("Enter rejection reason:");
+
+
+    if (!comment) {
+      alert("Rejection reason is required");
+      return;
+    }
+
+
     if (!window.confirm("Reject this tutor?")) return;
+
 
     try {
       const res = await fetch(`${API_BASE}/tutors/${id}`, {
@@ -241,16 +284,20 @@ export default function AdminDashboard() {
         body: JSON.stringify({
           verified: false,
           status: "rejected",
+          adminComment: comment, //  important
         }),
       });
+
 
       if (!res.ok) {
         alert("Failed to reject tutor");
         return;
       }
 
-      alert("Tutor rejected ");
+
+      alert("Tutor rejected with comment");
       fetchData();
+
 
     } catch (err) {
       console.error(err);
@@ -258,10 +305,34 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleDelete = async (id) => {
+    try {
+
+      const res = await fetch(
+        `${API_BASE}/parent-enquiries/${id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (res.ok) {
+
+        setParentEnquiries((prev) =>
+          prev.filter((item) => item._id !== id)
+        );
+
+      }
+
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
   return (
     <div className="mx-auto max-w-7xl px-6 py-10">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-3xl font-bold text-slate-900">Admin Dashboard</h1>
+
 
         <div className="flex flex-wrap gap-3">
           <button
@@ -271,12 +342,14 @@ export default function AdminDashboard() {
             + Add Tutor
           </button>
 
+
           <button
             onClick={fetchData}
             className="rounded-xl bg-black px-4 py-2 text-white"
           >
             Refresh
           </button>
+
 
           <button
             onClick={handleLogout}
@@ -287,21 +360,25 @@ export default function AdminDashboard() {
         </div>
       </div>
 
+
       <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-4">
         <div className="rounded-xl bg-white p-5 text-center shadow">
           <h3 className="text-sm text-gray-500">Tutors</h3>
           <p className="text-2xl font-bold">{tutors.length}</p>
         </div>
 
+
         <div className="rounded-xl bg-white p-5 text-center shadow">
           <h3 className="text-sm text-gray-500">Enquiries</h3>
           <p className="text-2xl font-bold">{enquiries.length}</p>
         </div>
 
+
         <div className="rounded-xl bg-white p-5 text-center shadow">
           <h3 className="text-sm text-gray-500">Parent Enquiries</h3>
           <p className="text-2xl font-bold">{parentEnquiries.length}</p>
         </div>
+
 
         <div className="rounded-xl bg-white p-5 text-center shadow">
           <h3 className="text-sm text-gray-500">Bookings</h3>
@@ -309,12 +386,15 @@ export default function AdminDashboard() {
         </div>
       </div>
 
+
       {loading && <p className="mb-6">Loading data...</p>}
+
 
       <section className="mb-10">
         <h2 className="mb-4 text-xl font-semibold text-slate-900">
           Parent Enquiries
         </h2>
+
 
         {parentEnquiries.length === 0 ? (
           <p className="text-gray-500">No parent enquiries yet.</p>
@@ -324,6 +404,9 @@ export default function AdminDashboard() {
               <p>
                 <b>Parent:</b> {p.parentName || p.name}
               </p>
+              {/* <p>
+                <b>Student:</b> {p.studentName}
+              </p> */}
               <p>
                 <b>Phone:</b> {p.phone}
               </p>
@@ -350,15 +433,22 @@ export default function AdminDashboard() {
                 <b>Preferred Time:</b> {p.preferredTime}
               </p>
               <p>
+  <b>Class Duration:</b> {p.classDuration || "Not provided"}
+</p>
+              <p>
                 <b>Preferred Days:</b> {p.preferredDays?.join(", ")}
               </p>
+
 
               <div className="mt-3">
                 <p className="font-semibold">Wards:</p>
                 {p.wards?.map((ward, index) => (
                   <div key={index} className="mt-2 rounded-lg bg-slate-50 p-3">
-                    <p>
+                    {/* <p>
                       <b>Ward Name:</b> {ward.wardName || ward.fullName}
+                    </p> */}
+                    <p>
+                      <b>Student Name:</b> {ward.studentName || ward.fullName}
                     </p>
                     <p>
                       <b>School:</b> {ward.schoolName}
@@ -366,6 +456,9 @@ export default function AdminDashboard() {
                     <p>
                       <b>Class:</b> {ward.classGrade}
                     </p>
+<p>
+  <b>Curriculum:</b> {ward.curriculum || "Not provided"}
+</p>
                     <p>
                       <b>Subjects:</b>{" "}
                       {Array.isArray(ward.subjectsNeeded)
@@ -375,18 +468,33 @@ export default function AdminDashboard() {
                     <p>
                       <b>Special Notes:</b> {ward.specialNeeds}
                     </p>
+                
                   </div>
+
                 ))}
               </div>
+
+                  <button
+                      onClick={() => {
+                        if (window.confirm("Delete this enquiry?")) {
+                          handleDelete(p._id);
+                        }
+                      }}
+                      className="mt-4 rounded bg-red-500 px-4 py-2 text-white"
+                    >
+                      Delete
+                    </button>
             </div>
           ))
         )}
       </section>
 
+
       <section className="mb-10">
         <h2 className="mb-4 text-xl font-semibold text-slate-900">
           Enquiries
         </h2>
+
 
         {enquiries.length === 0 ? (
           <p className="text-gray-500">No enquiries yet.</p>
@@ -405,10 +513,12 @@ export default function AdminDashboard() {
         )}
       </section>
 
+
       <section className="mb-10">
         <h2 className="mb-4 text-xl font-semibold text-slate-900">
           Bookings
         </h2>
+
 
         {bookings.length === 0 ? (
           <p className="text-gray-500">No bookings yet.</p>
@@ -429,8 +539,10 @@ export default function AdminDashboard() {
         )}
       </section>
 
+
       <section>
         <h2 className="mb-4 text-xl font-semibold text-slate-900">Tutors</h2>
+
 
         <input
           placeholder="Search tutors..."
@@ -438,6 +550,7 @@ export default function AdminDashboard() {
           onChange={(e) => setSearch(e.target.value)}
           className="mb-4 w-full rounded-xl border px-4 py-2"
         />
+
 
         {tutors.length === 0 ? (
           <p className="text-gray-500">No tutors yet.</p>
@@ -463,21 +576,28 @@ export default function AdminDashboard() {
                   </div>
                 )}
 
+
                 <div>
-                  <p className="font-semibold">{t.name}</p>
-                  <p>{t.subject}</p>
-                  <p className="text-sm text-gray-500">{t.location}</p>
+                  <p className="font-semibold"><b>Name: </b>{t.name}</p>
+                  <p><b>Email: </b>{t.email}</p>
+                  <p><b>Phone: </b>{t.phone}</p>
+                  <p><b>HasOccupation:</b> {t.hasOccupation === "yes" ? t.occupation : "No"}</p>
+
+                  {t.organization && (
+                    <p><b>Organization:</b> {t.organization}</p>
+                  )}
+
+
                   <p><b>Experience:</b> {t.experience}</p>
-
-                  <p><b>Locations:</b> {t.locations?.join(", ")}</p>
-
-                  <p><b>Vehicle:</b> {t.hasVehicle}</p>
+                  <p><b>Prefered Locations:</b> {t.locations?.join(", ")}</p>
+                  <p>
+                    <b>Vehicle:</b>{" "}
+                    {t.hasVehicle === "yes"
+                      ? `Yes (${t.vehicleNumber || "No number"})`
+                      : "No"}
+                  </p>
 
                   <p><b>Timings:</b> {t.timings?.join(", ")}</p>
-
-                  {/* <p><b>Status:</b> {t.status}</p> */}
-
-
                   <p>
                     <b>Status:</b>{" "}
                     {t.status === "approved" && (
@@ -490,46 +610,71 @@ export default function AdminDashboard() {
                       <span className="text-yellow-600 font-medium">Pending</span>
                     )}
                   </p>
-                  <div className="mt-2 text-sm">
-                    <p className="font-medium">Documents:</p>
+                  <div className="mt-3">
+                    <p className="font-semibold text-slate-700 mb-2">Documents</p>
 
-                    {t.idProof && (
-                      <a
-                        href={t.idProof}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 underline block"
-                      >
-                        View ID Proof
-                      </a>
-                    )}
 
-                    {t.expCert && (
-                      <a
-                        href={t.expCert}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 underline block"
-                      >
-                        View Education Certificate
-                      </a>
-                    )}
+                    <div className="flex flex-wrap gap-2">
 
-                    {t.otherDoc && (
-                      <a
-                        href={t.otherDoc}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 underline block"
-                      >
-                        View Experience Document
-                      </a>
-                    )}
+
+                      {/* ID Proof */}
+                      {t.documents?.idProof ? (
+                        <a
+                          href={t.documents.idProof}
+                          target="_blank"
+                          className="px-3 py-1.5 text-xs rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition"
+                        >
+                          📄 ID Proof
+                        </a>
+                      ) : (
+                        <span className="px-3 py-1.5 text-xs rounded-lg bg-red-50 text-red-600">
+                          📄 ID Proof (Not uploaded)
+                        </span>
+                      )}
+
+
+                      {/* Education */}
+                      {t.documents?.expCert ? (
+                        <a
+                          href={t.documents.expCert}
+                          target="_blank"
+                          className="px-3 py-1.5 text-xs rounded-lg bg-green-50 text-green-700 hover:bg-green-100 transition"
+                        >
+                          🎓 Education
+                        </a>
+                      ) : (
+                        <span className="px-3 py-1.5 text-xs rounded-lg bg-red-50 text-red-600">
+                          🎓 Education (Not uploaded)
+                        </span>
+                      )}
+
+
+                      {/* Experience */}
+                      {t.documents?.otherDoc ? (
+                        <a
+                          href={t.documents.otherDoc}
+                          target="_blank"
+                          className="px-3 py-1.5 text-xs rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 transition"
+                        >
+                          📑 Experience
+                        </a>
+                      ) : (
+                        <span className="px-3 py-1.5 text-xs rounded-lg bg-red-50 text-red-600">
+                          📑 Experience (Not uploaded)
+                        </span>
+                      )}
+
+
+                    </div>
                   </div>
-
                 </div>
+
               </div>
+
+
               <div className="flex gap-2">
+
+
 
 
                 <button
@@ -539,6 +684,7 @@ export default function AdminDashboard() {
                   Approve
                 </button>
 
+
                 <button
                   onClick={() => rejectTutor(t._id)}
                   className="rounded-lg bg-red-600 px-3 py-1 text-white"
@@ -546,12 +692,14 @@ export default function AdminDashboard() {
                   Reject
                 </button>
 
+
                 <button
                   onClick={() => startEditTutor(t)}
                   className="rounded-lg bg-blue-600 px-3 py-1 text-white"
                 >
                   Edit
                 </button>
+
 
                 <button
                   onClick={() => deleteTutor(t._id)}
@@ -561,15 +709,18 @@ export default function AdminDashboard() {
                 </button>
               </div>
 
+
             </div>
           ))
         )}
       </section>
 
+
       {editingTutor && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl">
             <h2 className="mb-4 text-2xl font-bold">Edit Tutor</h2>
+
 
             <div className="grid gap-4 md:grid-cols-2">
               <input
@@ -638,6 +789,7 @@ export default function AdminDashboard() {
               />
             </div>
 
+
             <textarea
               className="mt-4 min-h-[120px] w-full rounded-xl border px-4 py-3"
               placeholder="About"
@@ -646,6 +798,7 @@ export default function AdminDashboard() {
                 setEditForm({ ...editForm, about: e.target.value })
               }
             />
+
 
             <div className="mt-6 flex gap-3">
               <button
@@ -665,10 +818,12 @@ export default function AdminDashboard() {
         </div>
       )}
 
+
       {showAddForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl">
             <h2 className="mb-4 text-2xl font-bold">Add Tutor</h2>
+
 
             <div className="grid gap-4 md:grid-cols-2">
               <input
@@ -737,6 +892,7 @@ export default function AdminDashboard() {
               />
             </div>
 
+
             <textarea
               className="mt-4 w-full rounded-xl border px-4 py-3"
               placeholder="About"
@@ -745,6 +901,7 @@ export default function AdminDashboard() {
                 setNewTutor({ ...newTutor, about: e.target.value })
               }
             />
+
 
             <div className="mt-6 flex gap-3">
               <button
@@ -766,3 +923,4 @@ export default function AdminDashboard() {
     </div>
   );
 }
+
