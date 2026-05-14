@@ -30,7 +30,7 @@ const parentEnquirySchema = new mongoose.Schema(
     occupationType: { type: String, default: "", trim: true },
 
     area: { type: String, required: true, trim: true },
-    pincode: { type: String, required: true, trim: true },
+   
 
     preferredMode: { type: String, default: "", trim: true },
     preferredGender: { type: String, default: "", trim: true },
