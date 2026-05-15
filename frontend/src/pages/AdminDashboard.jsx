@@ -17,7 +17,8 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 
-
+  const [showParents, setShowParents] = useState(true);
+  const [showTutors, setShowTutors] = useState(true);
   const [editingTutor, setEditingTutor] = useState(null);
   const [editForm, setEditForm] = useState({
     name: "",
@@ -389,8 +390,25 @@ export default function AdminDashboard() {
 
       {loading && <p className="mb-6">Loading data...</p>}
 
+      <div className="mb-6 flex flex-wrap gap-3">
+        <button
+          onClick={() => setShowParents(!showParents)}
+          className="rounded-xl bg-blue-600 px-4 py-2 text-white"
+        >
+          {showParents ? "Hide Parent Enquiries" : "Show Parent Enquiries"}
+        </button>
 
-      <section className="mb-10">
+        <button
+          onClick={() => setShowTutors(!showTutors)}
+          className="rounded-xl bg-purple-600 px-4 py-2 text-white"
+        >
+          {showTutors ? "Hide Tutors" : "Show Tutors"}
+        </button>
+      </div>
+      
+     {
+      showParents && (
+         <section className="mb-10">
         <h2 className="mb-4 text-xl font-semibold text-slate-900">
           Parent Enquiries
         </h2>
@@ -453,9 +471,9 @@ export default function AdminDashboard() {
                     <p>
                       <b>Class:</b> {ward.classGrade}
                     </p>
-<p>
-  <b>Curriculum:</b> {ward.curriculum || "Not provided"}
-</p>
+                    <p>
+                      <b>Curriculum:</b> {ward.curriculum || "Not provided"}
+                    </p>
                     <p>
                       <b>Subjects:</b>{" "}
                       {Array.isArray(ward.subjectsNeeded)
@@ -465,26 +483,28 @@ export default function AdminDashboard() {
                     <p>
                       <b>Special Notes:</b> {ward.specialNeeds}
                     </p>
-                
+
                   </div>
 
                 ))}
               </div>
 
-                  <button
-                      onClick={() => {
-                        if (window.confirm("Delete this enquiry?")) {
-                          handleDelete(p._id);
-                        }
-                      }}
-                      className="mt-4 rounded bg-red-500 px-4 py-2 text-white"
-                    >
-                      Delete
-                    </button>
+              <button
+                onClick={() => {
+                  if (window.confirm("Delete this enquiry?")) {
+                    handleDelete(p._id);
+                  }
+                }}
+                className="mt-4 rounded bg-red-500 px-4 py-2 text-white"
+              >
+                Delete
+              </button>
             </div>
           ))
         )}
       </section>
+      )
+     }
 
 
       <section className="mb-10">
@@ -537,7 +557,9 @@ export default function AdminDashboard() {
       </section>
 
 
-      <section>
+    {
+      showTutors && (
+          <section>
         <h2 className="mb-4 text-xl font-semibold text-slate-900">Tutors</h2>
 
 
@@ -711,6 +733,8 @@ export default function AdminDashboard() {
           ))
         )}
       </section>
+      )
+    }
 
 
       {editingTutor && (
