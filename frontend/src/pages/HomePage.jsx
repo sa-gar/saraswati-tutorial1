@@ -32,7 +32,10 @@ import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import { Helmet } from "react-helmet-async";
 
+
 const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
+
+
 
 
 const categories = [
@@ -43,6 +46,8 @@ const categories = [
   { name: "Fitness Trainers", icon: Dumbbell },
   { name: "Soft Skills", icon: HeartHandshake },
 ];
+
+
 
 
 function SectionTitle({ eyebrow, title, subtitle }) {
@@ -62,6 +67,8 @@ function SectionTitle({ eyebrow, title, subtitle }) {
     </div>
   );
 }
+
+
 
 
 function Modal({ open, onClose, title, children }) {
@@ -98,6 +105,8 @@ function Modal({ open, onClose, title, children }) {
 }
 
 
+
+
 function TutorCard({ tutor, onViewProfile, onBook, swipeMode = false }) {
   return (
     <motion.div
@@ -127,6 +136,8 @@ function TutorCard({ tutor, onViewProfile, onBook, swipeMode = false }) {
               )}
 
 
+
+
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <h3 className="truncate text-lg font-semibold text-slate-900">
@@ -144,6 +155,8 @@ function TutorCard({ tutor, onViewProfile, onBook, swipeMode = false }) {
             </div>
 
 
+
+
             <div className="rounded-2xl bg-slate-50 px-3 py-2 text-right">
               <div className="text-sm font-semibold text-slate-900">
                 ₹{tutor.price || 0}/hr
@@ -153,11 +166,15 @@ function TutorCard({ tutor, onViewProfile, onBook, swipeMode = false }) {
           </div>
 
 
+
+
           <p className="mt-4 text-sm leading-6 text-slate-600">
             {tutor.tagline ||
               tutor.about ||
               "Experienced tutor available for personalized learning support."}
           </p>
+
+
 
 
           <div className="mt-4 flex flex-wrap gap-2">
@@ -170,6 +187,8 @@ function TutorCard({ tutor, onViewProfile, onBook, swipeMode = false }) {
               </Badge>
             ))}
           </div>
+
+
 
 
           <div className="mt-5 grid grid-cols-2 gap-3 text-sm text-slate-600">
@@ -191,6 +210,7 @@ function TutorCard({ tutor, onViewProfile, onBook, swipeMode = false }) {
             </div>
           </div>
 
+
           <div className="mt-6 flex gap-3">
             <Button
               className="flex-1 rounded-2xl bg-slate-900 px-4 py-3 text-white"
@@ -210,6 +230,8 @@ function TutorCard({ tutor, onViewProfile, onBook, swipeMode = false }) {
     </motion.div>
   );
 }
+
+
 
 
 export default function HomePage() {
@@ -235,6 +257,7 @@ export default function HomePage() {
     content: "",
   });
 
+
   // useEffect(() => {
   //   fetch(`${API_BASE}/tutors`)
   //     .then((res) => res.json())
@@ -257,6 +280,8 @@ export default function HomePage() {
         );
 
 
+
+
         setTutors(approvedTutors);
         setLoading(false);
       })
@@ -267,6 +292,8 @@ export default function HomePage() {
   }, []);
 
 
+
+
   useEffect(() => {
     if (!toast) return;
     const timer = setTimeout(() => setToast(""), 2200);
@@ -274,10 +301,14 @@ export default function HomePage() {
   }, [toast]);
 
 
+
+
   const filteredTutors = useMemo(() => {
     return [...tutors]
       .filter((tutor) => {
         const q = query.toLowerCase();
+
+
 
 
         const matchesQuery =
@@ -287,13 +318,19 @@ export default function HomePage() {
           tutor.category?.toLowerCase().includes(q);
 
 
+
+
         const matchesCategory =
           selectedCategory === "All" || tutor.category === selectedCategory;
+
+
 
 
         const matchesVerified = !verifiedOnly || tutor.verified;
         const matchesOnline =
           !onlineOnly || (tutor.mode || "").toLowerCase().includes("online");
+
+
 
 
         return (
@@ -306,8 +343,12 @@ export default function HomePage() {
   }, [tutors, query, selectedCategory, verifiedOnly, onlineOnly]);
 
 
+
+
   async function submitBooking() {
     if (!bookingTutor) return;
+
+
 
 
     const payload = {
@@ -315,6 +356,8 @@ export default function HomePage() {
       tutorName: bookingTutor.name,
       ...bookingForm,
     };
+
+
 
 
     try {
@@ -325,6 +368,8 @@ export default function HomePage() {
         },
         body: JSON.stringify(payload),
       });
+
+
 
 
       if (res.ok) {
@@ -346,11 +391,15 @@ export default function HomePage() {
   }
 
 
+
+
   function scrollTutors(direction) {
     if (!sliderRef.current) return;
     const amount = direction === "left" ? -320 : 320;
     sliderRef.current.scrollBy({ left: amount, behavior: "smooth" });
   }
+
+
 
 
   return (
@@ -360,6 +409,7 @@ export default function HomePage() {
           Private Home Tutors near me in Bangalore | Saraswati Tutorials
         </title>
 
+
         <meta
           name="description"
           content="Hire patient, experienced, background-verified home tutors in Bangalore for Classes 6–12 and graduation."
@@ -368,18 +418,21 @@ export default function HomePage() {
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div>
-        <div className="flex items-center gap-3">
-  <img
-    src="/logo.png"
-    alt="Saraswati Tutorial Logo"
-    className="h-14 w-14 rounded-xl object-contain"
-  />
+            <div className="flex items-center gap-3">
+              <img
+                src="/logo.png"
+                alt="Saraswati Tutorial Logo"
+                className="h-14 w-14 rounded-xl object-contain"
+              />
 
-  <h1 className="text-xl font-bold text-slate-900">
-    Saraswati Tutorial
-  </h1>
-</div>
+
+              <div className="text-xl font-bold text-slate-900">
+                Saraswati Tutorial
+              </div>
+            </div>
           </div>
+
+
 
 
           <nav className="hidden items-center gap-8 md:flex">
@@ -389,22 +442,57 @@ export default function HomePage() {
             <a href="#contact">Contact</a>
 
 
+
+
             <Link to="/blogs">Blog</Link>
+
+
 
 
             <Link
               to="/parent-enquiry"
-              className="rounded-xl bg-slate-900 px-4 py-2 text-white"
+              className="
+    rounded-xl
+    bg-slate-900
+    px-5
+    py-2.5
+    text-white
+    font-semibold
+    shadow-[0_0_15px_rgba(15,23,42,0.35)]
+    transition-all
+    duration-300
+    hover:scale-105
+    hover:shadow-[0_0_25px_rgba(15,23,42,0.55)]
+    hover:bg-black
+  "
             >
               Book Demo
             </Link>
             <Link
               to="/tutor-register"
-              className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-4 py-2 text-white transition"
+              className="
+    rounded-xl
+    bg-gradient-to-r
+    from-blue-600
+    to-indigo-600
+    px-5
+    py-2.5
+    text-white
+    font-semibold
+    shadow-lg
+    transition-all
+    duration-300
+    hover:from-blue-700
+    hover:to-indigo-700
+    hover:scale-105
+    hover:shadow-2xl
+  "
             >
               Become a Tutor
             </Link>
           </nav>
+
+
 
 
           <button
@@ -416,6 +504,8 @@ export default function HomePage() {
           </button>
         </div>
       </header>
+
+
 
 
       <AnimatePresence>
@@ -434,6 +524,8 @@ export default function HomePage() {
             </div>
 
 
+
+
             <div className="flex flex-col gap-6 text-lg">
               <a href="#home" onClick={() => setMenuOpen(false)}>
                 Home
@@ -449,6 +541,8 @@ export default function HomePage() {
               </a>
 
 
+
+
               <Link to="/blogs" onClick={() => setMenuOpen(false)}>
                 Blog
               </Link>
@@ -457,21 +551,59 @@ export default function HomePage() {
               <Link
                 to="/parent-enquiry"
                 onClick={() => setMenuOpen(false)}
-                className="rounded-xl bg-black px-5 py-3 text-center text-white"
+                className="
+    rounded-xl
+    bg-black
+    px-5
+    py-3
+    text-center
+    text-white
+    font-semibold
+    shadow-md
+    transition-all
+    duration-300
+    hover:scale-[1.03]
+    hover:bg-slate-900
+    hover:shadow-xl
+  "
               >
                 Book Demo
               </Link>
+
+
               <Link
                 to="/tutor-register"
                 onClick={() => setMenuOpen(false)}
-                className="w-full rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-5 py-3 text-center text-white transition"
+                className="
+    w-full
+    rounded-xl
+    bg-gradient-to-r
+    from-blue-600
+    to-indigo-600
+    px-5
+    py-3
+    text-center
+    text-white
+    font-semibold
+    shadow-lg
+    transition-all
+    duration-300
+    hover:from-blue-700
+    hover:to-indigo-700
+    hover:scale-[1.03]
+    hover:shadow-2xl
+  "
               >
                 Become a Tutor
               </Link>
+
+
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+
+
 
 
       <section
@@ -485,6 +617,8 @@ export default function HomePage() {
             </Badge>
 
 
+
+
             <h1 className="max-w-2xl text-5xl font-bold tracking-tight text-white md:text-6xl">
               Private Home Tutors near you in Bangalore
             </h1>
@@ -492,6 +626,8 @@ export default function HomePage() {
               Hire experienced, background-verified private home tutors near you in Bangalore
               for Classes 6–12, competitive exams, and graduation subjects.
             </p>
+
+
 
 
             <div className="mt-8 rounded-[28px] bg-white p-4 shadow-xl">
@@ -505,6 +641,8 @@ export default function HomePage() {
                     placeholder="Search subject, tutor, or location"
                   />
                 </div>
+
+
 
 
                 <select
@@ -521,22 +659,26 @@ export default function HomePage() {
             </div>
 
 
+
+
             <div className="mt-6 flex flex-wrap gap-4">
               <Link
                 to="/parent-enquiry"
                 className="rounded-2xl bg-white px-6 py-3 font-medium text-slate-900 shadow"
               >
-                Book Free Demo
+               Book Free Demo Class
               </Link>
               <a
                 href="#tutors"
                 className="rounded-2xl border border-white/30 px-6 py-3 font-medium text-white"
                 aria-label="Browse tutors"
               >
-                Browse Tutors
+                Find Tutors
               </a>
             </div>
           </div>
+
+
 
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -566,17 +708,25 @@ export default function HomePage() {
       </section>
 
 
+
+
       <section id="tutors" className="mx-auto max-w-7xl px-6 py-16">
         <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <SectionTitle
             eyebrow="Our tutors"
 
 
+
+
             title="Best Home Tutors in Bangalore"
             subtitle="Find experienced and verified home tutors in Bangalore by subject, location, and expertise."
 
 
+
+
           />
+
+
 
 
           <div className="flex gap-3">
@@ -590,6 +740,8 @@ export default function HomePage() {
             </label>
 
 
+
+
             <label className="flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm ring-1 ring-slate-200">
               <input
                 type="checkbox"
@@ -600,6 +752,8 @@ export default function HomePage() {
             </label>
           </div>
         </div>
+
+
 
 
         {loading ? (
@@ -630,6 +784,8 @@ export default function HomePage() {
             </div>
 
 
+
+
             <div
               ref={sliderRef}
               className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4 scroll-smooth lg:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -646,6 +802,8 @@ export default function HomePage() {
             </div>
 
 
+
+
             <div className="hidden gap-6 xl:grid xl:grid-cols-2">
               {filteredTutors.map((tutor) => (
                 <TutorCard
@@ -660,53 +818,104 @@ export default function HomePage() {
         )}
 
 
+
+
         <div className="mt-10">
           <h2 className="text-2xl font-semibold">
             Popular Courses in Bangalore
           </h2>
 
+
           <div className="mt-4 flex flex-col gap-2">
+
 
             <Link to="/courses/school-tuition/class-9-10/maths">
               Class 10 Maths Tuition in Bangalore
             </Link>
 
+
             <Link to="/courses/school-tuition/class-9-10/science">
               Class 10 Science Tuition in Bangalore
             </Link>
+
 
             <Link to="/courses/competitive-exams/jee/physics">
               JEE Physics Coaching in Bangalore
             </Link>
 
+
             <Link to="/courses/skills/communication/spoken-english">
               Spoken English Classes in Bangalore
             </Link>
 
+
           </div>
 
+
+        </div>
+        <div className="mt-10 flex flex-wrap gap-4">
+          <Link
+            to="/parent-enquiry"
+            className="
+      rounded-2xl
+      bg-slate-900
+      px-6
+      py-3
+      font-semibold
+      text-white
+      transition-all
+      duration-300
+      hover:scale-105
+    "
+          >
+            Book Free Demo Class
+          </Link>
+
+
+          <Link
+            to="/tutor-register"
+            className="
+      rounded-2xl
+      border
+      border-slate-300
+      px-6
+      py-3
+      font-semibold
+      transition-all
+      duration-300
+      hover:bg-slate-100
+    "
+          >
+            Become a Tutor
+          </Link>
         </div>
 
+
       </section>
+
+
 
 
       <section id="about" className="bg-white py-16">
         <div className="mx-auto grid max-w-7xl gap-10 px-6 md:grid-cols-2">
           <div>
 
+
             <SectionTitle
               eyebrow="About us"
               title="Best Home Tuition Services in Bangalore"
-              // subtitle="Saraswati Tutorial helps students connect with experienced and verified home tutors in Bangalore for all subjects and skill development."
+            // subtitle="Saraswati Tutorial helps students connect with experienced and verified home tutors in Bangalore for all subjects and skill development."
             />
 
-            {/* ✅ SEO paragraph (ADDED HERE - correct position) */}
+
+            {/* SEO paragraph (ADDED HERE - correct position) */}
             <p className="mt-4 text-slate-600">
               Hire patient, experienced, background-verified home tutors in Bangalore
               for Classes 6–12 and graduation. Saraswati Tutorials helps students
               find the right private tutors near them for better academic results.
             </p>
           </div>
+
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="rounded-3xl bg-slate-50 p-6">
@@ -718,6 +927,7 @@ export default function HomePage() {
               </p>
             </div>
 
+
             <div className="rounded-3xl bg-slate-50 p-6">
               <h3 className="text-lg font-semibold text-slate-900">
                 Flexible Learning
@@ -726,6 +936,7 @@ export default function HomePage() {
                 Online, offline, and home tuition options to suit every family’s needs.
               </p>
             </div>
+
 
             <div className="rounded-3xl bg-slate-50 p-6">
               <h3 className="text-lg font-semibold text-slate-900">
@@ -736,6 +947,7 @@ export default function HomePage() {
               </p>
             </div>
 
+
             <div className="rounded-3xl bg-slate-50 p-6">
               <h3 className="text-lg font-semibold text-slate-900">
                 Parent-Friendly Process
@@ -744,16 +956,41 @@ export default function HomePage() {
                 Easy enquiry flow, demo booking, and direct tutor coordination.
               </p>
             </div>
+
+
+            <div className="mt-8">
+              <Link
+                to="/parent-enquiry"
+                className="
+      inline-flex
+      rounded-2xl
+      bg-slate-900
+      px-6
+      py-3
+      font-semibold
+      text-white
+      transition-all
+      duration-300
+      hover:scale-105
+    "
+              >
+                Find the Right Tutor Today
+              </Link>
+            </div>
           </div>
         </div>
       </section>
 
 
+
+
       <section id="contact" className="mx-auto max-w-7xl px-6 py-16">
         <div className="grid gap-8 md:grid-cols-2">
 
+
           <div className="rounded-[32px] bg-slate-900 p-8 text-white shadow-xl">
             <h2 className="text-3xl font-bold">Contact Us</h2>
+
 
             {/* ✅ SEO paragraph (ADDED HERE - correct position) */}
             <p className="mt-3 text-slate-300">
@@ -761,6 +998,7 @@ export default function HomePage() {
               Saraswati Tutorials offers affordable home tutors in BTM Layout and across the city.
               Contact us today to find the best home tuition for your needs.
             </p>
+
 
             <div className="mt-8 space-y-4">
               <div className="flex items-center gap-3">
@@ -778,6 +1016,7 @@ export default function HomePage() {
               </div>
             </div>
 
+
             <iframe
               title="Google Map Location"
               src="https://www.google.com/maps?q=Bangalore&output=embed"
@@ -786,6 +1025,7 @@ export default function HomePage() {
               style={{ border: 0, marginTop: "16px" }}
               loading="lazy"
             ></iframe>
+
 
             <div className="mt-8 flex gap-4">
               <a href="#" className="rounded-full bg-white/10 p-3">
@@ -797,6 +1037,7 @@ export default function HomePage() {
             </div>
           </div>
 
+
           {/* RIGHT SIDE SAME (NO CHANGE) */}
           <div className="rounded-[32px] bg-white p-8 shadow-sm ring-1 ring-slate-200">
             <h3 className="text-2xl font-semibold text-slate-900">
@@ -806,6 +1047,7 @@ export default function HomePage() {
               Tell us your requirement and our team will guide you to the best tutor option.
             </p>
 
+
             <div className="mt-6">
               <Link
                 to="/parent-enquiry"
@@ -814,6 +1056,7 @@ export default function HomePage() {
                 Open Parent Enquiry Form
               </Link>
             </div>
+
 
             <div className="mt-8 grid gap-4 sm:grid-cols-2">
               <div className="rounded-2xl bg-slate-50 p-4">
@@ -831,8 +1074,11 @@ export default function HomePage() {
             </div>
           </div>
 
+
         </div>
       </section>
+
+
 
 
       <footer className="border-t border-slate-200 bg-white">
@@ -847,12 +1093,14 @@ export default function HomePage() {
           </div>
 
 
+
+
           <div className="flex flex-wrap gap-6 text-sm text-slate-600">
             <a href="#home">Home</a>
             <a href="#tutors">Tutors</a>
             <a href="#about">About Us</a>
             <a href="#contact">Contact Us</a>
-<Link to="/testimonials">Testimonials</Link>
+            <Link to="/testimonials">Testimonials</Link>
             <Link to="/blogs">Blog</Link>
             <Link to="/courses/school-tuition">School Tuition</Link>
             <Link to="/courses/competitive-exams">Competitive Exams</Link>
@@ -861,7 +1109,10 @@ export default function HomePage() {
             <Link to="/privacy-policy">Privacy Policy</Link>
             <Link to="/disclaimer">Disclaimer</Link>
 
+
           </div>
+
+
 
 
           <p className="text-sm text-slate-500">
@@ -869,7 +1120,35 @@ export default function HomePage() {
             reserved.
           </p>
         </div>
+        <a
+          href="https://wa.me/918904457689"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="
+    fixed
+    bottom-5
+    left-5
+    z-50
+    flex
+    items-center
+    gap-2
+    rounded-full
+    bg-green-500
+    px-5
+    py-3
+    text-white
+    shadow-2xl
+    transition-all
+    duration-300
+    hover:scale-105
+    hover:bg-green-600
+  "
+        >
+          WhatsApp
+        </a>
       </footer>
+
+
 
 
       <Modal
@@ -901,6 +1180,8 @@ export default function HomePage() {
               )}
 
 
+
+
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <h4 className="text-2xl font-semibold text-slate-900">
@@ -919,9 +1200,13 @@ export default function HomePage() {
             </div>
 
 
+
+
             <p className="text-sm leading-7 text-slate-600">
               {selectedTutor.about}
             </p>
+
+
 
 
             <div className="grid gap-4 sm:grid-cols-3">
@@ -946,6 +1231,8 @@ export default function HomePage() {
             </div>
 
 
+
+
             <div className="flex gap-3">
               <Button
                 className="rounded-2xl bg-slate-900 px-4 py-3 text-white"
@@ -958,10 +1245,13 @@ export default function HomePage() {
                 Book demo
               </Button>
 
+
             </div>
           </div>
         ) : null}
       </Modal>
+
+
 
 
       <Modal
@@ -977,6 +1267,8 @@ export default function HomePage() {
                 {bookingTutor.subject} • ₹{bookingTutor.price || 0}/hr
               </p>
             </div>
+
+
 
 
             <div className="grid gap-4 md:grid-cols-2">
@@ -1038,6 +1330,8 @@ export default function HomePage() {
             </div>
 
 
+
+
             <div className="flex gap-3">
               <Button
                 className="rounded-2xl bg-slate-900 px-4 py-3 text-white"
@@ -1046,6 +1340,7 @@ export default function HomePage() {
               >
                 Confirm booking
               </Button>
+
 
               <Button
                 className="rounded-2xl border border-slate-300 px-4 py-3"
@@ -1058,6 +1353,8 @@ export default function HomePage() {
           </div>
         ) : null}
       </Modal>
+
+
 
 
       <AnimatePresence>
@@ -1075,4 +1372,8 @@ export default function HomePage() {
     </div>
   );
 }
+
+
+
+
 
