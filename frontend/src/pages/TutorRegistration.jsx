@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-
+import imageCompression from "browser-image-compression";
 const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
 
 // const API_BASE = "http://localhost:5000/api";
@@ -156,7 +156,7 @@ export default function TutorRegistration() {
     };
 
     const handleSubmit = async () => {
-        if (loading) return; //  prevent double click
+        if (loading) return;
 
         const error = validateForm();
 
@@ -168,6 +168,7 @@ export default function TutorRegistration() {
                 experience: true,
                 locations: true,
             });
+
             alert(error);
             return;
         }
@@ -175,37 +176,74 @@ export default function TutorRegistration() {
         try {
             setLoading(true);
 
+            // ONLY PHOTO COMPRESS
+            const compressImage = async (file) => {
+                if (!file) return null;
+
+                const options = {
+                    maxSizeMB: 1,
+                    maxWidthOrHeight: 1200,
+                    useWebWorker: true,
+                };
+
+                return await imageCompression(file, options);
+            };
+
+            // COMPRESS ONLY PROFILE PHOTO
+            const compressedPhoto = await compressImage(formData.photo);
+
             const fd = new FormData();
 
-            if (formData.idProof) fd.append("idProof", formData.idProof);
-            if (formData.expCert) fd.append("expCert", formData.expCert);
-            if (formData.otherDoc) fd.append("otherDoc", formData.otherDoc);
-            if (formData.photo) fd.append("photo", formData.photo);
+            // NORMAL FILES
+            if (formData.idProof) {
+                fd.append("idProof", formData.idProof);
+            }
 
-            //  IMPORTANT: timeout add
-            const uploadRes = await axios.post(`${API_BASE}/upload`, fd, {
-                timeout: 20000,
-            });
+            if (formData.expCert) {
+                fd.append("expCert", formData.expCert);
+            }
+
+            if (formData.otherDoc) {
+                fd.append("otherDoc", formData.otherDoc);
+            }
+
+            // COMPRESSED PHOTO
+            if (compressedPhoto) {
+                fd.append("photo", compressedPhoto);
+            }
+
+            // UPLOAD
+            const uploadRes = await axios.post(
+                `${API_BASE}/upload`,
+                fd,
+                {
+                    timeout: 60000,
+                    headers: {
+                        "Content-Type": "multipart/form-data",
+                    },
+                }
+            );
 
             if (!uploadRes.data) {
                 throw new Error("Upload failed (no response)");
             }
 
+            // SAVE TUTOR
             await axios.post(`${API_BASE}/tutors`, {
                 ...formData,
+
                 photo: uploadRes.data.photo || "",
+
                 documents: {
                     idProof: uploadRes.data.idProof || "",
                     expCert: uploadRes.data.expCert || "",
                     otherDoc: uploadRes.data.otherDoc || "",
                 },
+
                 status: "pending",
             });
 
-            // smooth UX
-            setTimeout(() => {
-                navigate("/thank-you");
-            }, 500);
+            navigate("/thank-you");
 
         } catch (err) {
             console.error("FULL ERROR:", err);
@@ -213,7 +251,7 @@ export default function TutorRegistration() {
             alert(
                 err?.response?.data?.message ||
                 err.message ||
-                "Upload failed. Try smaller files or better internet."
+                "Upload failed. Try again."
             );
         } finally {
             setLoading(false);
