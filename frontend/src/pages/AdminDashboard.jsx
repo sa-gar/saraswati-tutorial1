@@ -1,55 +1,66 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-
 const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
-// const API_BASE = "http://localhost:5000/api"
+// const API_BASE = "http://localhost:5000/api";
 
+const emptyTutor = {
+  name: "",
+  subject: "",
+  qualification: "",
+  location: "",
+  experience: "",
+  price: "",
+  about: "",
+  photo: "",
+  phone: "",
+  category: "",
+  mode: "",
+};
+
+function getClassDuration(parentEnquiry) {
+  return (
+    parentEnquiry?.classDuration ||
+    parentEnquiry?.duration ||
+    parentEnquiry?.preferredClassDuration ||
+    parentEnquiry?.tuitionDuration ||
+    parentEnquiry?.preference?.classDuration ||
+    parentEnquiry?.preferences?.classDuration ||
+    "Not provided"
+  );
+}
+
+function getPreferredDays(days) {
+  if (Array.isArray(days) && days.length > 0) return days.join(", ");
+  if (typeof days === "string" && days.trim()) return days;
+  return "Not provided";
+}
+
+function getSubjects(subjects) {
+  if (Array.isArray(subjects) && subjects.length > 0) return subjects.join(", ");
+  if (typeof subjects === "string" && subjects.trim()) return subjects;
+  return "Not provided";
+}
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
-
 
   const [enquiries, setEnquiries] = useState([]);
   const [parentEnquiries, setParentEnquiries] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [tutors, setTutors] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 
   const [showParents, setShowParents] = useState(true);
   const [showTutors, setShowTutors] = useState(true);
-  const [editingTutor, setEditingTutor] = useState(null);
-  const [editForm, setEditForm] = useState({
-    name: "",
-    subject: "",
-    qualification: "",
-    location: "",
-    experience: "",
-    price: "",
-    about: "",
-    photo: "",
-    phone: "",
-    category: "",
-    mode: "",
-  });
 
+  const [editingTutor, setEditingTutor] = useState(null);
+  const [editForm, setEditForm] = useState(emptyTutor);
 
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newTutor, setNewTutor] = useState({
-    name: "",
-    subject: "",
-    qualification: "",
-    location: "",
-    experience: "",
-    price: "",
-    about: "",
-    photo: "",
-    phone: "",
-    category: "",
-    mode: "",
-  });
-
+  const [newTutor, setNewTutor] = useState(emptyTutor);
 
   function handleLogout() {
     localStorage.removeItem("adminToken");
@@ -57,9 +68,9 @@ export default function AdminDashboard() {
     navigate("/admin-login");
   }
 
-
   const fetchData = async () => {
     setLoading(true);
+
     try {
       const [eRes, peRes, bRes, tRes] = await Promise.all([
         fetch(`${API_BASE}/enquiries`),
@@ -68,7 +79,6 @@ export default function AdminDashboard() {
         fetch(`${API_BASE}/tutors`),
       ]);
 
-
       const [eData, peData, bData, tData] = await Promise.all([
         eRes.json(),
         peRes.json(),
@@ -76,27 +86,42 @@ export default function AdminDashboard() {
         tRes.json(),
       ]);
 
-
       setEnquiries(Array.isArray(eData) ? eData : []);
       setParentEnquiries(Array.isArray(peData) ? peData : []);
       setBookings(Array.isArray(bData) ? bData : []);
       setTutors(Array.isArray(tData) ? tData : []);
     } catch (err) {
       console.error("Dashboard fetch error:", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
-
 
   useEffect(() => {
     fetchData();
   }, []);
 
+  const filteredTutors = useMemo(() => {
+    const query = search.toLowerCase();
+
+    return tutors.filter(
+      (t) =>
+        t.name?.toLowerCase().includes(query) ||
+        t.subject?.toLowerCase().includes(query) ||
+        t.location?.toLowerCase().includes(query) ||
+        t.email?.toLowerCase().includes(query) ||
+        t.phone?.toLowerCase().includes(query)
+    );
+  }, [tutors, search]);
+
+  const pendingTutors = tutors.filter((t) => !t.status || t.status === "pending").length;
+  const approvedTutors = tutors.filter((t) => t.status === "approved").length;
+  const rejectedTutors = tutors.filter((t) => t.status === "rejected").length;
 
   const deleteTutor = async (id) => {
     const token = localStorage.getItem("adminToken");
-    if (!window.confirm("Delete this tutor?")) return;
 
+    if (!window.confirm("Delete this tutor?")) return;
 
     try {
       const res = await fetch(`${API_BASE}/tutors/${id}`, {
@@ -106,12 +131,10 @@ export default function AdminDashboard() {
         },
       });
 
-
       if (!res.ok) {
         alert("Failed to delete tutor");
         return;
       }
-
 
       fetchData();
     } catch (error) {
@@ -119,7 +142,6 @@ export default function AdminDashboard() {
       alert("Failed to delete tutor");
     }
   };
-
 
   const startEditTutor = (tutor) => {
     setEditingTutor(tutor);
@@ -138,10 +160,8 @@ export default function AdminDashboard() {
     });
   };
 
-
   const saveTutorEdit = async () => {
     const token = localStorage.getItem("adminToken");
-
 
     try {
       const res = await fetch(`${API_BASE}/tutors/${editingTutor._id}`, {
@@ -152,7 +172,6 @@ export default function AdminDashboard() {
         },
         body: JSON.stringify(editForm),
       });
-
 
       if (res.ok) {
         setEditingTutor(null);
@@ -166,10 +185,8 @@ export default function AdminDashboard() {
     }
   };
 
-
   const createTutor = async () => {
     const token = localStorage.getItem("adminToken");
-
 
     try {
       const res = await fetch(`${API_BASE}/tutors`, {
@@ -181,22 +198,9 @@ export default function AdminDashboard() {
         body: JSON.stringify(newTutor),
       });
 
-
       if (res.ok) {
         setShowAddForm(false);
-        setNewTutor({
-          name: "",
-          subject: "",
-          qualification: "",
-          location: "",
-          experience: "",
-          price: "",
-          about: "",
-          photo: "",
-          phone: "",
-          category: "",
-          mode: "",
-        });
+        setNewTutor(emptyTutor);
         fetchData();
       } else {
         const data = await res.json();
@@ -208,24 +212,10 @@ export default function AdminDashboard() {
     }
   };
 
-
-  const filteredTutors = useMemo(() => {
-    return tutors.filter((t) =>
-      t.name?.toLowerCase().includes(search.toLowerCase()) ||
-      t.subject?.toLowerCase().includes(search.toLowerCase()) ||
-      t.location?.toLowerCase().includes(search.toLowerCase())
-    );
-  }, [tutors, search]);
-
-
-
-
   const approveTutor = async (id) => {
     const token = localStorage.getItem("adminToken");
 
-
     if (!window.confirm("Approve this tutor?")) return;
-
 
     try {
       const res = await fetch(`${API_BASE}/tutors/${id}`, {
@@ -240,40 +230,29 @@ export default function AdminDashboard() {
         }),
       });
 
-
       if (!res.ok) {
         alert("Failed to approve tutor");
         return;
       }
 
-
-      alert("Tutor approved successfully ");
-      fetchData(); // refresh list
-
-
+      alert("Tutor approved successfully");
+      fetchData();
     } catch (err) {
       console.error(err);
       alert("Error approving tutor");
     }
   };
 
-
   const rejectTutor = async (id) => {
     const token = localStorage.getItem("adminToken");
-
-
-    // NEW (comment input)
     const comment = prompt("Enter rejection reason:");
-
 
     if (!comment) {
       alert("Rejection reason is required");
       return;
     }
 
-
     if (!window.confirm("Reject this tutor?")) return;
-
 
     try {
       const res = await fetch(`${API_BASE}/tutors/${id}`, {
@@ -285,666 +264,639 @@ export default function AdminDashboard() {
         body: JSON.stringify({
           verified: false,
           status: "rejected",
-          adminComment: comment, //  important
+          adminComment: comment,
         }),
       });
-
 
       if (!res.ok) {
         alert("Failed to reject tutor");
         return;
       }
 
-
       alert("Tutor rejected with comment");
       fetchData();
-
-
     } catch (err) {
       console.error(err);
       alert("Error rejecting tutor");
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDeleteParentEnquiry = async (id) => {
     try {
-
-      const res = await fetch(
-        `${API_BASE}/parent-enquiries/${id}`,
-        {
-          method: "DELETE",
-        }
-      );
+      const res = await fetch(`${API_BASE}/parent-enquiries/${id}`, {
+        method: "DELETE",
+      });
 
       if (res.ok) {
-
-        setParentEnquiries((prev) =>
-          prev.filter((item) => item._id !== id)
-        );
-
+        setParentEnquiries((prev) => prev.filter((item) => item._id !== id));
       }
-
     } catch (err) {
       console.log(err);
     }
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-10">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-3xl font-bold text-slate-900">Admin Dashboard</h1>
-
-
-        <div className="flex flex-wrap gap-3">
-          <button
-            onClick={() => setShowAddForm(true)}
-            className="rounded-xl bg-green-600 px-4 py-2 text-white"
-          >
-            + Add Tutor
-          </button>
-
-
-          <button
-            onClick={fetchData}
-            className="rounded-xl bg-black px-4 py-2 text-white"
-          >
-            Refresh
-          </button>
-
-
-          <button
-            onClick={handleLogout}
-            className="rounded-xl bg-red-600 px-4 py-2 text-white"
-          >
-            Logout
-          </button>
-        </div>
-      </div>
-
-
-      <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-4">
-        <div className="rounded-xl bg-white p-5 text-center shadow">
-          <h3 className="text-sm text-gray-500">Tutors</h3>
-          <p className="text-2xl font-bold">{tutors.length}</p>
-        </div>
-
-
-        <div className="rounded-xl bg-white p-5 text-center shadow">
-          <h3 className="text-sm text-gray-500">Enquiries</h3>
-          <p className="text-2xl font-bold">{enquiries.length}</p>
-        </div>
-
-
-        <div className="rounded-xl bg-white p-5 text-center shadow">
-          <h3 className="text-sm text-gray-500">Parent Enquiries</h3>
-          <p className="text-2xl font-bold">{parentEnquiries.length}</p>
-        </div>
-
-
-        <div className="rounded-xl bg-white p-5 text-center shadow">
-          <h3 className="text-sm text-gray-500">Bookings</h3>
-          <p className="text-2xl font-bold">{bookings.length}</p>
-        </div>
-      </div>
-
-
-      {loading && <p className="mb-6">Loading data...</p>}
-
-      <div className="mb-6 flex flex-wrap gap-3">
-        <button
-          onClick={() => setShowParents(!showParents)}
-          className="rounded-xl bg-blue-600 px-4 py-2 text-white"
-        >
-          {showParents ? "Hide Parent Enquiries" : "Show Parent Enquiries"}
-        </button>
-
-        <button
-          onClick={() => setShowTutors(!showTutors)}
-          className="rounded-xl bg-purple-600 px-4 py-2 text-white"
-        >
-          {showTutors ? "Hide Tutors" : "Show Tutors"}
-        </button>
-      </div>
-      
-     {
-      showParents && (
-         <section className="mb-10">
-        <h2 className="mb-4 text-xl font-semibold text-slate-900">
-          Parent Enquiries
-        </h2>
-
-
-        {parentEnquiries.length === 0 ? (
-          <p className="text-gray-500">No parent enquiries yet.</p>
-        ) : (
-          parentEnquiries.map((p) => (
-            <div key={p._id} className="mb-4 rounded-xl bg-white p-4 shadow">
-              <p>
-                <b>Parent:</b> {p.parentName || p.name}
+    <div className="min-h-screen bg-slate-100">
+      <div className="mx-auto max-w-7xl px-4 py-8 md:px-6 md:py-10">
+        <div className="mb-8 overflow-hidden rounded-[2rem] bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 p-6 text-white shadow-2xl md:p-8">
+          <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
+            <div>
+              <p className="mb-2 text-sm font-semibold uppercase tracking-[0.25em] text-blue-300">
+                Admin Control Center
               </p>
-              {/* <p>
-                <b>Student:</b> {p.studentName}
-              </p> */}
-              <p>
-                <b>Phone:</b> {p.phone}
+              <h1 className="text-3xl font-black tracking-tight md:text-5xl">
+                Saraswati Tutorial Dashboard
+              </h1>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300 md:text-base">
+                Manage parent enquiries, tutors, bookings, approvals, and lead data from one clean dashboard.
               </p>
-              <p>
-                <b>Email:</b> {p.email}
-              </p>
-              <p>
-                <b>Occupation:</b> {p.occupation}
-                {p.occupationType ? ` (${p.occupationType})` : ""}
-              </p>
-              <p>
-                <b>Area:</b> {p.area}
-              </p>
-              <p>
-                <b>PIN Code:</b> {p.pincode}
-              </p>
-              <p>
-                <b>Preferred Mode:</b> {p.preferredMode}
-              </p>
-              <p>
-                <b>Preferred Gender:</b> {p.preferredGender}
-              </p>
-              <p>
-                <b>Preferred Time:</b> {p.preferredTime}
-              </p>
-              <p>
-  <b>Class Duration:</b> {p.classDuration || "Not provided"}
-</p>
-              <p>
-                <b>Preferred Days:</b> {p.preferredDays?.join(", ")}
-              </p>
+            </div>
 
-
-              <div className="mt-3">
-                <p className="font-semibold">Wards:</p>
-                {p.wards?.map((ward, index) => (
-                  <div key={index} className="mt-2 rounded-lg bg-slate-50 p-3">
-                    {/* <p>
-                      <b>Ward Name:</b> {ward.wardName || ward.fullName}
-                    </p> */}
-                    <p>
-                      <b>Student Name:</b> {ward.studentName || ward.fullName}
-                    </p>
-                    <p>
-                      <b>School:</b> {ward.schoolName}
-                    </p>
-                    <p>
-                      <b>Class:</b> {ward.classGrade}
-                    </p>
-                    <p>
-                      <b>Curriculum:</b> {ward.curriculum || "Not provided"}
-                    </p>
-                    <p>
-                      <b>Subjects:</b>{" "}
-                      {Array.isArray(ward.subjectsNeeded)
-                        ? ward.subjectsNeeded.join(", ")
-                        : ward.subjectsNeeded}
-                    </p>
-                    <p>
-                      <b>Special Notes:</b> {ward.specialNeeds}
-                    </p>
-
-                  </div>
-
-                ))}
-              </div>
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={() => setShowAddForm(true)}
+                className="rounded-2xl bg-emerald-500 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-600"
+              >
+                + Add Tutor
+              </button>
 
               <button
-                onClick={() => {
-                  if (window.confirm("Delete this enquiry?")) {
-                    handleDelete(p._id);
-                  }
-                }}
-                className="mt-4 rounded bg-red-500 px-4 py-2 text-white"
+                onClick={fetchData}
+                className="rounded-2xl bg-white/10 px-5 py-3 text-sm font-bold text-white ring-1 ring-white/20 transition hover:bg-white/20"
               >
-                Delete
+                Refresh
+              </button>
+
+              <button
+                onClick={handleLogout}
+                className="rounded-2xl bg-red-500 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-red-500/20 transition hover:bg-red-600"
+              >
+                Logout
               </button>
             </div>
-          ))
+          </div>
+        </div>
+
+        {loading && (
+          <div className="mb-6 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm font-medium text-blue-700">
+            Loading latest dashboard data...
+          </div>
         )}
-      </section>
-      )
-     }
 
+        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard title="Total Tutors" value={tutors.length} subtitle={`${approvedTutors} approved`} />
+          <StatCard title="Parent Enquiries" value={parentEnquiries.length} subtitle="Detailed parent leads" />
+          <StatCard title="General Enquiries" value={enquiries.length} subtitle="Website enquiries" />
+          <StatCard title="Bookings" value={bookings.length} subtitle="Scheduled sessions" />
+        </div>
 
-      <section className="mb-10">
-        <h2 className="mb-4 text-xl font-semibold text-slate-900">
-          Enquiries
-        </h2>
+        <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
+          <MiniStat title="Pending Tutors" value={pendingTutors} color="yellow" />
+          <MiniStat title="Approved Tutors" value={approvedTutors} color="green" />
+          <MiniStat title="Rejected Tutors" value={rejectedTutors} color="red" />
+        </div>
 
+        <div className="mb-8 flex flex-wrap gap-3 rounded-3xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
+          <button
+            onClick={() => setShowParents(!showParents)}
+            className={`rounded-2xl px-5 py-3 text-sm font-bold transition ${
+              showParents
+                ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
+                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+            }`}
+          >
+            {showParents ? "Hide Parent Enquiries" : "Show Parent Enquiries"}
+          </button>
 
-        {enquiries.length === 0 ? (
-          <p className="text-gray-500">No enquiries yet.</p>
-        ) : (
-          enquiries.map((e) => (
-            <div key={e._id} className="mb-3 rounded-xl bg-white p-4 shadow">
-              <p>
-                <b>{e.parentName || e.name}</b> → {e.studentName}
-              </p>
-              <p>
-                {e.phone} | {e.email}
-              </p>
-              <p>{e.subjectNeeded || e.subject}</p>
-            </div>
-          ))
-        )}
-      </section>
+          <button
+            onClick={() => setShowTutors(!showTutors)}
+            className={`rounded-2xl px-5 py-3 text-sm font-bold transition ${
+              showTutors
+                ? "bg-purple-600 text-white shadow-lg shadow-purple-600/20"
+                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+            }`}
+          >
+            {showTutors ? "Hide Tutors" : "Show Tutors"}
+          </button>
+        </div>
 
+        {showParents && (
+          <section className="mb-10">
+            <SectionHeader
+              title="Parent Enquiries"
+              subtitle="Detailed parent requirements, student details, preferences, and class duration."
+            />
 
-      <section className="mb-10">
-        <h2 className="mb-4 text-xl font-semibold text-slate-900">
-          Bookings
-        </h2>
+            {parentEnquiries.length === 0 ? (
+              <EmptyState text="No parent enquiries yet." />
+            ) : (
+              <div className="grid gap-5">
+                {parentEnquiries.map((p) => (
+                  <div
+                    key={p._id}
+                    className="overflow-hidden rounded-[1.75rem] bg-white shadow-sm ring-1 ring-slate-200 transition hover:shadow-xl"
+                  >
+                    <div className="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white p-5">
+                      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
+                        <div>
+                          <h3 className="text-xl font-black text-slate-900">
+                            {p.parentName || p.name || "Unnamed Parent"}
+                          </h3>
+                          <p className="mt-1 text-sm text-slate-500">
+                            Parent enquiry lead
+                          </p>
+                        </div>
 
+                        <div className="flex flex-wrap gap-2">
+                          <Badge text={p.preferredMode || "Mode not provided"} color="blue" />
+                          <Badge text={`Duration: ${getClassDuration(p)}`} color="emerald" />
+                        </div>
+                      </div>
+                    </div>
 
-        {bookings.length === 0 ? (
-          <p className="text-gray-500">No bookings yet.</p>
-        ) : (
-          bookings.map((b) => (
-            <div key={b._id} className="mb-3 rounded-xl bg-white p-4 shadow">
-              <p>
-                <b>{b.tutorName}</b>
-              </p>
-              <p>
-                {b.learnerName} | {b.phone}
-              </p>
-              <p>
-                {b.preferredDate} - {b.preferredSlot}
-              </p>
-            </div>
-          ))
-        )}
-      </section>
+                    <div className="grid gap-5 p-5 lg:grid-cols-3">
+                      <div className="rounded-2xl bg-slate-50 p-4">
+                        <h4 className="mb-3 text-sm font-black uppercase tracking-wide text-slate-500">
+                          Parent Details
+                        </h4>
 
+                        <InfoRow label="Phone" value={p.phone} />
+                        <InfoRow label="Email" value={p.email} />
+                        <InfoRow
+                          label="Occupation"
+                          value={`${p.occupation || "Not provided"}${
+                            p.occupationType ? ` (${p.occupationType})` : ""
+                          }`}
+                        />
+                        <InfoRow label="Area" value={p.area} />
+                        <InfoRow label="PIN Code" value={p.pincode} />
+                      </div>
 
-    {
-      showTutors && (
-          <section>
-        <h2 className="mb-4 text-xl font-semibold text-slate-900">Tutors</h2>
+                      <div className="rounded-2xl bg-slate-50 p-4">
+                        <h4 className="mb-3 text-sm font-black uppercase tracking-wide text-slate-500">
+                          Tutor Preference
+                        </h4>
 
+                        <InfoRow label="Preferred Mode" value={p.preferredMode} />
+                        <InfoRow label="Preferred Gender" value={p.preferredGender} />
+                        <InfoRow label="Preferred Time" value={p.preferredTime} />
+                        <InfoRow label="Class Duration" value={getClassDuration(p)} />
+                        <InfoRow label="Preferred Days" value={getPreferredDays(p.preferredDays)} />
+                      </div>
 
-        <input
-          placeholder="Search tutors..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="mb-4 w-full rounded-xl border px-4 py-2"
-        />
+                      <div className="rounded-2xl bg-slate-50 p-4">
+                        <h4 className="mb-3 text-sm font-black uppercase tracking-wide text-slate-500">
+                          Dynamic Occupation Info
+                        </h4>
 
+                        <InfoRow label="Business Name" value={p.businessName} />
+                        <InfoRow label="Company Name" value={p.companyName} />
+                        <InfoRow label="Job Title" value={p.jobTitle} />
+                        <InfoRow label="Profession Type" value={p.professionType} />
+                        <InfoRow label="Other Occupation" value={p.otherOccupation} />
+                      </div>
+                    </div>
 
-        {tutors.length === 0 ? (
-          <p className="text-gray-500">No tutors yet.</p>
-        ) : (
-          filteredTutors.map((t) => (
-            <div
-              key={t._id}
-              className="mb-3 flex flex-col justify-between gap-4 rounded-xl bg-white p-4 shadow md:flex-row md:items-center"
-            >
-              <div className="flex items-center gap-4">
-                {t.photo ? (
-                  <img
-                    src={t.photo.replace("/upload/", "/upload/f_auto,q_auto,w_100/")}
-                    alt={t.name}
-                    loading="lazy"
-                    width="100"
-                    height="100"
-                    className="h-16 w-16 rounded-xl object-cover"
-                  />
-                ) : (
-                  <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-slate-100 text-slate-500">
-                    No Image
-                  </div>
-                )}
+                    <div className="px-5 pb-5">
+                      <h4 className="mb-3 text-sm font-black uppercase tracking-wide text-slate-500">
+                        Students / Wards
+                      </h4>
 
+                      <div className="grid gap-3 md:grid-cols-2">
+                        {p.wards?.length ? (
+                          p.wards.map((ward, index) => (
+                            <div
+                              key={index}
+                              className="rounded-2xl border border-slate-200 bg-white p-4"
+                            >
+                              <div className="mb-3 flex items-center justify-between">
+                                <h5 className="font-black text-slate-900">
+                                  Student {index + 1}
+                                </h5>
+                                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
+                                  {ward.classGrade || "Class NA"}
+                                </span>
+                              </div>
 
-                <div>
-                  <p className="font-semibold"><b>Name: </b>{t.name}</p>
-                  <p><b>Email: </b>{t.email}</p>
-                  <p><b>Phone: </b>{t.phone}</p>
-                  <p><b>HasOccupation:</b> {t.hasOccupation === "yes" ? t.occupation : "No"}</p>
+                              <InfoRow label="Student Name" value={ward.studentName || ward.fullName} />
+                              <InfoRow label="School" value={ward.schoolName} />
+                              <InfoRow label="Class" value={ward.classGrade} />
+                              <InfoRow label="Curriculum" value={ward.curriculum} />
+                              <InfoRow label="Subjects" value={getSubjects(ward.subjectsNeeded)} />
+                              <InfoRow label="Special Notes" value={ward.specialNeeds} />
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-sm text-slate-500">No ward data available.</p>
+                        )}
+                      </div>
 
-                  {t.organization && (
-                    <p><b>Organization:</b> {t.organization}</p>
-                  )}
-
-
-                  <p><b>Experience:</b> {t.experience}</p>
-                  <p><b>Prefered Locations:</b> {t.locations?.join(", ")}</p>
-                  <p>
-                    <b>Vehicle:</b>{" "}
-                    {t.hasVehicle === "yes"
-                      ? `Yes (${t.vehicleNumber || "No number"})`
-                      : "No"}
-                  </p>
-
-                  <p><b>Timings:</b> {t.timings?.join(", ")}</p>
-                  <p>
-                    <b>Status:</b>{" "}
-                    {t.status === "approved" && (
-                      <span className="text-green-600 font-medium">Approved</span>
-                    )}
-                    {t.status === "rejected" && (
-                      <span className="text-red-600 font-medium">Rejected</span>
-                    )}
-                    {(t.status === "pending" || !t.status) && (
-                      <span className="text-yellow-600 font-medium">Pending</span>
-                    )}
-                  </p>
-                  <div className="mt-3">
-                    <p className="font-semibold text-slate-700 mb-2">Documents</p>
-
-
-                    <div className="flex flex-wrap gap-2">
-
-
-                      {/* ID Proof */}
-                      {t.documents?.idProof ? (
-                        <a
-                          href={t.documents.idProof}
-                          target="_blank"
-                          className="px-3 py-1.5 text-xs rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition"
-                        >
-                          📄 ID Proof
-                        </a>
-                      ) : (
-                        <span className="px-3 py-1.5 text-xs rounded-lg bg-red-50 text-red-600">
-                          📄 ID Proof (Not uploaded)
-                        </span>
-                      )}
-
-
-                      {/* Education */}
-                      {t.documents?.expCert ? (
-                        <a
-                          href={t.documents.expCert}
-                          target="_blank"
-                          className="px-3 py-1.5 text-xs rounded-lg bg-green-50 text-green-700 hover:bg-green-100 transition"
-                        >
-                          🎓 Education
-                        </a>
-                      ) : (
-                        <span className="px-3 py-1.5 text-xs rounded-lg bg-red-50 text-red-600">
-                          🎓 Education (Not uploaded)
-                        </span>
-                      )}
-
-
-                      {/* Experience */}
-                      {t.documents?.otherDoc ? (
-                        <a
-                          href={t.documents.otherDoc}
-                          target="_blank"
-                          className="px-3 py-1.5 text-xs rounded-lg bg-purple-50 text-purple-700 hover:bg-purple-100 transition"
-                        >
-                          📑 Experience
-                        </a>
-                      ) : (
-                        <span className="px-3 py-1.5 text-xs rounded-lg bg-red-50 text-red-600">
-                          📑 Experience (Not uploaded)
-                        </span>
-                      )}
-
-
+                      <button
+                        onClick={() => {
+                          if (window.confirm("Delete this enquiry?")) {
+                            handleDeleteParentEnquiry(p._id);
+                          }
+                        }}
+                        className="mt-5 rounded-2xl bg-red-500 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-red-500/20 transition hover:bg-red-600"
+                      >
+                        Delete Enquiry
+                      </button>
                     </div>
                   </div>
-                </div>
-
+                ))}
               </div>
-
-
-              <div className="flex gap-2">
-
-
-
-
-                <button
-                  onClick={() => approveTutor(t._id)}
-                  className="rounded-lg bg-green-600 px-3 py-1 text-white"
-                >
-                  Approve
-                </button>
-
-
-                <button
-                  onClick={() => rejectTutor(t._id)}
-                  className="rounded-lg bg-red-600 px-3 py-1 text-white"
-                >
-                  Reject
-                </button>
-
-
-                <button
-                  onClick={() => startEditTutor(t)}
-                  className="rounded-lg bg-blue-600 px-3 py-1 text-white"
-                >
-                  Edit
-                </button>
-
-
-                <button
-                  onClick={() => deleteTutor(t._id)}
-                  className="rounded-lg bg-red-500 px-3 py-1 text-white"
-                >
-                  Delete
-                </button>
-              </div>
-
-
-            </div>
-          ))
+            )}
+          </section>
         )}
-      </section>
-      )
-    }
 
+        <section className="mb-10">
+          <SectionHeader title="Enquiries" subtitle="General website enquiries." />
 
-      {editingTutor && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl">
-            <h2 className="mb-4 text-2xl font-bold">Edit Tutor</h2>
-
-
+          {enquiries.length === 0 ? (
+            <EmptyState text="No enquiries yet." />
+          ) : (
             <div className="grid gap-4 md:grid-cols-2">
-              <input
-                className="rounded-xl border px-4 py-3"
-                placeholder="Name"
-                value={editForm.name}
-                onChange={(e) =>
-                  setEditForm({ ...editForm, name: e.target.value })
-                }
-              />
-              <input
-                className="rounded-xl border px-4 py-3"
-                placeholder="Subject"
-                value={editForm.subject}
-                onChange={(e) =>
-                  setEditForm({ ...editForm, subject: e.target.value })
-                }
-              />
-              <input
-                className="rounded-xl border px-4 py-3"
-                placeholder="Qualification"
-                value={editForm.qualification}
-                onChange={(e) =>
-                  setEditForm({ ...editForm, qualification: e.target.value })
-                }
-              />
-              <input
-                className="rounded-xl border px-4 py-3"
-                placeholder="Location"
-                value={editForm.location}
-                onChange={(e) =>
-                  setEditForm({ ...editForm, location: e.target.value })
-                }
-              />
-              <input
-                className="rounded-xl border px-4 py-3"
-                placeholder="Experience"
-                value={editForm.experience}
-                onChange={(e) =>
-                  setEditForm({ ...editForm, experience: e.target.value })
-                }
-              />
-              <input
-                className="rounded-xl border px-4 py-3"
-                placeholder="Price"
-                value={editForm.price}
-                onChange={(e) =>
-                  setEditForm({ ...editForm, price: e.target.value })
-                }
-              />
-              <input
-                className="rounded-xl border px-4 py-3 md:col-span-2"
-                placeholder="Phone"
-                value={editForm.phone}
-                onChange={(e) =>
-                  setEditForm({ ...editForm, phone: e.target.value })
-                }
-              />
-              <input
-                className="rounded-xl border px-4 py-3 md:col-span-2"
-                placeholder="Photo URL"
-                value={editForm.photo}
-                onChange={(e) =>
-                  setEditForm({ ...editForm, photo: e.target.value })
-                }
-              />
+              {enquiries.map((e) => (
+                <div key={e._id} className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+                  <p className="text-lg font-black text-slate-900">
+                    {e.parentName || e.name || "Unnamed"}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Student: {e.studentName || "Not provided"}
+                  </p>
+                  <p className="mt-3 text-sm text-slate-700">
+                    {e.phone || "No phone"} | {e.email || "No email"}
+                  </p>
+                  <p className="mt-2 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
+                    {e.subjectNeeded || e.subject || "Subject not provided"}
+                  </p>
+                </div>
+              ))}
             </div>
+          )}
+        </section>
 
+        <section className="mb-10">
+          <SectionHeader title="Bookings" subtitle="Student booking requests." />
 
-            <textarea
-              className="mt-4 min-h-[120px] w-full rounded-xl border px-4 py-3"
-              placeholder="About"
-              value={editForm.about}
-              onChange={(e) =>
-                setEditForm({ ...editForm, about: e.target.value })
-              }
-            />
-
-
-            <div className="mt-6 flex gap-3">
-              <button
-                onClick={saveTutorEdit}
-                className="rounded-xl bg-black px-5 py-3 text-white"
-              >
-                Save Changes
-              </button>
-              <button
-                onClick={() => setEditingTutor(null)}
-                className="rounded-xl border px-5 py-3"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-
-      {showAddForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl">
-            <h2 className="mb-4 text-2xl font-bold">Add Tutor</h2>
-
-
+          {bookings.length === 0 ? (
+            <EmptyState text="No bookings yet." />
+          ) : (
             <div className="grid gap-4 md:grid-cols-2">
+              {bookings.map((b) => (
+                <div key={b._id} className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+                  <p className="text-lg font-black text-slate-900">
+                    {b.tutorName || "Tutor not provided"}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-600">
+                    {b.learnerName || "Learner not provided"} | {b.phone || "No phone"}
+                  </p>
+                  <p className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
+                    {b.preferredDate || "Date not provided"} - {b.preferredSlot || "Slot not provided"}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {showTutors && (
+          <section>
+            <SectionHeader title="Tutors" subtitle="Approve, reject, edit, and manage tutors." />
+
+            <div className="mb-5 rounded-3xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
               <input
-                className="rounded-xl border px-4 py-3"
-                placeholder="Name"
-                value={newTutor.name}
-                onChange={(e) =>
-                  setNewTutor({ ...newTutor, name: e.target.value })
-                }
-              />
-              <input
-                className="rounded-xl border px-4 py-3"
-                placeholder="Subject"
-                value={newTutor.subject}
-                onChange={(e) =>
-                  setNewTutor({ ...newTutor, subject: e.target.value })
-                }
-              />
-              <input
-                className="rounded-xl border px-4 py-3"
-                placeholder="Qualification"
-                value={newTutor.qualification}
-                onChange={(e) =>
-                  setNewTutor({ ...newTutor, qualification: e.target.value })
-                }
-              />
-              <input
-                className="rounded-xl border px-4 py-3"
-                placeholder="Location"
-                value={newTutor.location}
-                onChange={(e) =>
-                  setNewTutor({ ...newTutor, location: e.target.value })
-                }
-              />
-              <input
-                className="rounded-xl border px-4 py-3"
-                placeholder="Experience"
-                value={newTutor.experience}
-                onChange={(e) =>
-                  setNewTutor({ ...newTutor, experience: e.target.value })
-                }
-              />
-              <input
-                className="rounded-xl border px-4 py-3"
-                placeholder="Price"
-                value={newTutor.price}
-                onChange={(e) =>
-                  setNewTutor({ ...newTutor, price: e.target.value })
-                }
-              />
-              <input
-                className="rounded-xl border px-4 py-3"
-                placeholder="Phone Number"
-                value={newTutor.phone}
-                onChange={(e) =>
-                  setNewTutor({ ...newTutor, phone: e.target.value })
-                }
-              />
-              <input
-                className="rounded-xl border px-4 py-3 md:col-span-2"
-                placeholder="Image URL (photo)"
-                value={newTutor.photo}
-                onChange={(e) =>
-                  setNewTutor({ ...newTutor, photo: e.target.value })
-                }
+                placeholder="Search tutors by name, subject, location, email, or phone..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="h-12 w-full rounded-2xl border border-slate-200 px-4 outline-none transition focus:border-slate-900"
               />
             </div>
 
+            {tutors.length === 0 ? (
+              <EmptyState text="No tutors yet." />
+            ) : (
+              <div className="grid gap-5">
+                {filteredTutors.map((t) => (
+                  <div
+                    key={t._id}
+                    className="rounded-[1.75rem] bg-white p-5 shadow-sm ring-1 ring-slate-200 transition hover:shadow-xl"
+                  >
+                    <div className="flex flex-col justify-between gap-5 lg:flex-row">
+                      <div className="flex flex-col gap-5 sm:flex-row">
+                        {t.photo ? (
+                          <img
+                            src={t.photo.replace("/upload/", "/upload/f_auto,q_auto,w_180/")}
+                            alt={t.name}
+                            loading="lazy"
+                            className="h-28 w-28 rounded-3xl object-cover ring-1 ring-slate-200"
+                          />
+                        ) : (
+                          <div className="flex h-28 w-28 items-center justify-center rounded-3xl bg-slate-100 text-sm font-bold text-slate-500">
+                            No Image
+                          </div>
+                        )}
 
-            <textarea
-              className="mt-4 w-full rounded-xl border px-4 py-3"
-              placeholder="About"
-              value={newTutor.about}
-              onChange={(e) =>
-                setNewTutor({ ...newTutor, about: e.target.value })
-              }
-            />
+                        <div>
+                          <div className="mb-2 flex flex-wrap items-center gap-2">
+                            <h3 className="text-xl font-black text-slate-900">
+                              {t.name || "Unnamed Tutor"}
+                            </h3>
 
+                            {t.status === "approved" && <Badge text="Approved" color="emerald" />}
+                            {t.status === "rejected" && <Badge text="Rejected" color="red" />}
+                            {(!t.status || t.status === "pending") && <Badge text="Pending" color="yellow" />}
+                          </div>
 
-            <div className="mt-6 flex gap-3">
-              <button
-                onClick={createTutor}
-                className="rounded-xl bg-black px-5 py-3 text-white"
-              >
-                Add Tutor
-              </button>
-              <button
-                onClick={() => setShowAddForm(false)}
-                className="rounded-xl border px-5 py-3"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                          <div className="grid gap-x-8 gap-y-2 text-sm text-slate-700 md:grid-cols-2">
+                            <InfoRow label="Email" value={t.email} />
+                            <InfoRow label="Phone" value={t.phone} />
+                            <InfoRow
+                              label="Occupation"
+                              value={t.hasOccupation === "yes" ? t.occupation : "No"}
+                            />
+                            <InfoRow label="Organization" value={t.organization} />
+                            <InfoRow label="Experience" value={t.experience} />
+                            <InfoRow label="Preferred Locations" value={t.locations?.join(", ")} />
+                            <InfoRow
+                              label="Vehicle"
+                              value={
+                                t.hasVehicle === "yes"
+                                  ? `Yes (${t.vehicleNumber || "No number"})`
+                                  : "No"
+                              }
+                            />
+                            <InfoRow label="Timings" value={t.timings?.join(", ")} />
+                          </div>
+
+                          <div className="mt-4">
+                            <p className="mb-2 text-sm font-black uppercase tracking-wide text-slate-500">
+                              Documents
+                            </p>
+
+                            <div className="flex flex-wrap gap-2">
+                              <DocumentLink href={t.documents?.idProof} label="ID Proof" />
+                              <DocumentLink href={t.documents?.expCert} label="Education" />
+                              <DocumentLink href={t.documents?.otherDoc} label="Experience" />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap items-start gap-2 lg:flex-col">
+                        <button
+                          onClick={() => approveTutor(t._id)}
+                          className="rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-emerald-700"
+                        >
+                          Approve
+                        </button>
+
+                        <button
+                          onClick={() => rejectTutor(t._id)}
+                          className="rounded-2xl bg-red-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-red-700"
+                        >
+                          Reject
+                        </button>
+
+                        <button
+                          onClick={() => startEditTutor(t)}
+                          className="rounded-2xl bg-blue-600 px-4 py-2 text-sm font-bold text-white transition hover:bg-blue-700"
+                        >
+                          Edit
+                        </button>
+
+                        <button
+                          onClick={() => deleteTutor(t._id)}
+                          className="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-bold text-white transition hover:bg-black"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+
+        {editingTutor && (
+          <TutorModal
+            title="Edit Tutor"
+            form={editForm}
+            setForm={setEditForm}
+            primaryText="Save Changes"
+            onPrimary={saveTutorEdit}
+            onClose={() => setEditingTutor(null)}
+          />
+        )}
+
+        {showAddForm && (
+          <TutorModal
+            title="Add Tutor"
+            form={newTutor}
+            setForm={setNewTutor}
+            primaryText="Add Tutor"
+            onPrimary={createTutor}
+            onClose={() => setShowAddForm(false)}
+          />
+        )}
+      </div>
     </div>
   );
 }
 
+function StatCard({ title, value, subtitle }) {
+  return (
+    <div className="rounded-[1.5rem] bg-white p-5 shadow-sm ring-1 ring-slate-200 transition hover:-translate-y-1 hover:shadow-xl">
+      <p className="text-sm font-bold text-slate-500">{title}</p>
+      <p className="mt-2 text-4xl font-black text-slate-900">{value}</p>
+      <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
+    </div>
+  );
+}
+
+function MiniStat({ title, value, color }) {
+  const colors = {
+    yellow: "bg-yellow-50 text-yellow-700 ring-yellow-100",
+    green: "bg-emerald-50 text-emerald-700 ring-emerald-100",
+    red: "bg-red-50 text-red-700 ring-red-100",
+  };
+
+  return (
+    <div className={`rounded-3xl p-5 ring-1 ${colors[color]}`}>
+      <p className="text-sm font-bold">{title}</p>
+      <p className="mt-2 text-3xl font-black">{value}</p>
+    </div>
+  );
+}
+
+function SectionHeader({ title, subtitle }) {
+  return (
+    <div className="mb-5">
+      <h2 className="text-2xl font-black tracking-tight text-slate-900">
+        {title}
+      </h2>
+      {subtitle && <p className="mt-1 text-sm text-slate-500">{subtitle}</p>}
+    </div>
+  );
+}
+
+function EmptyState({ text }) {
+  return (
+    <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-500">
+      {text}
+    </div>
+  );
+}
+
+function InfoRow({ label, value }) {
+  return (
+    <p className="text-sm leading-6">
+      <span className="font-bold text-slate-800">{label}: </span>
+      <span className="text-slate-600">
+        {value || value === 0 ? value : "Not provided"}
+      </span>
+    </p>
+  );
+}
+
+function Badge({ text, color = "slate" }) {
+  const colors = {
+    blue: "bg-blue-50 text-blue-700 ring-blue-100",
+    emerald: "bg-emerald-50 text-emerald-700 ring-emerald-100",
+    red: "bg-red-50 text-red-700 ring-red-100",
+    yellow: "bg-yellow-50 text-yellow-700 ring-yellow-100",
+    slate: "bg-slate-100 text-slate-700 ring-slate-200",
+  };
+
+  return (
+    <span className={`rounded-full px-3 py-1 text-xs font-black ring-1 ${colors[color]}`}>
+      {text}
+    </span>
+  );
+}
+
+function DocumentLink({ href, label }) {
+  if (!href) {
+    return (
+      <span className="rounded-xl bg-red-50 px-3 py-2 text-xs font-bold text-red-600">
+        {label} Not Uploaded
+      </span>
+    );
+  }
+
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      className="rounded-xl bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700 transition hover:bg-blue-100"
+    >
+      {label}
+    </a>
+  );
+}
+
+function TutorModal({ title, form, setForm, primaryText, onPrimary, onClose }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
+      <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-[2rem] bg-white p-6 shadow-2xl">
+        <div className="mb-5 flex items-center justify-between">
+          <h2 className="text-2xl font-black text-slate-900">{title}</h2>
+
+          <button
+            onClick={onClose}
+            className="rounded-full bg-slate-100 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-200"
+          >
+            Close
+          </button>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <ModalInput
+            placeholder="Name"
+            value={form.name}
+            onChange={(value) => setForm({ ...form, name: value })}
+          />
+
+          <ModalInput
+            placeholder="Subject"
+            value={form.subject}
+            onChange={(value) => setForm({ ...form, subject: value })}
+          />
+
+          <ModalInput
+            placeholder="Qualification"
+            value={form.qualification}
+            onChange={(value) => setForm({ ...form, qualification: value })}
+          />
+
+          <ModalInput
+            placeholder="Location"
+            value={form.location}
+            onChange={(value) => setForm({ ...form, location: value })}
+          />
+
+          <ModalInput
+            placeholder="Experience"
+            value={form.experience}
+            onChange={(value) => setForm({ ...form, experience: value })}
+          />
+
+          <ModalInput
+            placeholder="Price"
+            value={form.price}
+            onChange={(value) => setForm({ ...form, price: value })}
+          />
+
+          <ModalInput
+            placeholder="Phone Number"
+            value={form.phone}
+            onChange={(value) => setForm({ ...form, phone: value })}
+          />
+
+          <ModalInput
+            placeholder="Image URL"
+            value={form.photo}
+            onChange={(value) => setForm({ ...form, photo: value })}
+          />
+        </div>
+
+        <textarea
+          className="mt-4 min-h-[120px] w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-slate-900"
+          placeholder="About"
+          value={form.about}
+          onChange={(e) => setForm({ ...form, about: e.target.value })}
+        />
+
+        <div className="mt-6 flex gap-3">
+          <button
+            onClick={onPrimary}
+            className="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-bold text-white hover:bg-black"
+          >
+            {primaryText}
+          </button>
+
+          <button
+            onClick={onClose}
+            className="rounded-2xl border border-slate-300 px-5 py-3 text-sm font-bold text-slate-700 hover:bg-slate-50"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ModalInput({ value, onChange, placeholder }) {
+  return (
+    <input
+      className="h-12 rounded-2xl border border-slate-200 px-4 outline-none transition focus:border-slate-900"
+      placeholder={placeholder}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    />
+  );
+}
