@@ -1,38 +1,33 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
-export default function ThankYou() {
+const PARENT_WHATSAPP_LINK = "https://wa.me/message/VX2T7QEATZPRL1";
+const TUTOR_WHATSAPP_LINK = "https://wa.me/message/TI4DOHTXZTLGD1";
 
+export default function ThankYou() {
   const location = useLocation();
+
   const params = new URLSearchParams(location.search);
   const type = params.get("type");
 
+  const isTutor = type === "tutor";
+
+  const whatsappLink = isTutor
+    ? TUTOR_WHATSAPP_LINK
+    : PARENT_WHATSAPP_LINK;
+
   useEffect(() => {
     const timer = setTimeout(() => {
-
-      let message = "";
-
-      //  Different messages
-      if (type === "tutor") {
-        message = "Hi, I have registered as a tutor. Please guide me for next steps.";
-      } else {
-        message = "Hi, I just submitted my enquiry for a tutor. Please assist me.";
-      }
-
-      window.location.href =
-        "https://wa.me/message/VX2T7QEATZPRL1" +
-        encodeURIComponent(message);
-
+      window.location.href = whatsappLink;
     }, 2500);
 
     return () => clearTimeout(timer);
-  }, [type]);
+  }, [whatsappLink]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-6">
       <div className="w-full max-w-lg rounded-3xl bg-white p-8 text-center shadow-sm ring-1 ring-slate-200">
-
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-3xl">
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-3xl text-emerald-700">
           ✓
         </div>
 
@@ -48,17 +43,16 @@ export default function ThankYou() {
           Redirecting you to WhatsApp...
         </p>
 
-        {/* Manual button */}
         <div className="mt-6">
           <a
-            href={`https://wa.me/918904457689`}
+            href={whatsappLink}
             target="_blank"
-            className="inline-flex rounded-2xl bg-green-600 px-6 py-3 font-medium text-white"
+            rel="noopener noreferrer"
+            className="inline-flex rounded-2xl bg-green-600 px-6 py-3 font-medium text-white transition hover:bg-green-700"
           >
             Open WhatsApp
           </a>
         </div>
-
       </div>
     </div>
   );
