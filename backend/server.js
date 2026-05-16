@@ -23,10 +23,20 @@ app.use(cors());
 app.use(express.json());
 app.use(compression());
 // Health check
+
+app.get("/api/health", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Server is healthy",
+    uptime: process.uptime(),
+    timestamp: new Date(),
+  });
+});
+
 app.get("/s/:shortId", (req, res) => {
   const { shortId } = req.params;
 
-  // 🔥 Hardcoded mapping (test)
+  //  Hardcoded mapping (test)
   const links = {
   abc123: "https://saraswati-tutorials.odoo.com/sign/document/mail/2/0d0ea973-17e1-4b9d-ba88-d45a7ad21f3",
 };
