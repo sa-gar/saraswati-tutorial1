@@ -155,12 +155,37 @@ export default function TutorRegistration() {
             : "border-green-500 focus:ring-green-500";
     };
 
+    const uploadSingleFile = async (fieldName, file) => {
+
+        if (!file) return {};
+
+        const fd = new FormData();
+
+        fd.append(fieldName, file);
+
+        const res = await axios.post(
+            `${API_BASE}/upload`,
+            fd,
+            {
+                timeout: 120000,
+
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            }
+        );
+
+        return res.data;
+    };
+
     const handleSubmit = async () => {
+
         if (loading) return;
 
         const error = validateForm();
 
         if (error) {
+
             setTouched({
                 name: true,
                 email: true,
@@ -174,6 +199,7 @@ export default function TutorRegistration() {
         }
 
         try {
+
             setLoading(true);
 
             const MAX_SIZE = 8 * 1024 * 1024;
@@ -196,8 +222,9 @@ export default function TutorRegistration() {
                 }
             }
 
-            // ONLY PHOTO COMPRESS
+            // IMAGE COMPRESS
             const compressImage = async (file) => {
+
                 if (!file) return null;
 
                 const options = {
@@ -208,12 +235,16 @@ export default function TutorRegistration() {
                 };
 
                 try {
+
                     return await imageCompression(file, options);
+
                 } catch {
+
                     return file;
                 }
             };
 
+            // COMPRESS FILES
             const compressedPhoto = await compressImage(formData.photo);
 
             const compressedId = await compressImage(formData.idProof);
@@ -222,98 +253,84 @@ export default function TutorRegistration() {
 
             const compressedOther = await compressImage(formData.otherDoc);
 
-            const fd = new FormData();
+            // SAFE FILE CONVERSION
+            const photoFile = compressedPhoto
+                ? new File(
+                    [compressedPhoto],
+                    "photo.jpg",
+                    {
+                        type: compressedPhoto.type || "image/jpeg",
+                    }
+                )
+                : null;
 
-            // PHOTO
-            if (compressedPhoto) {
+            const idFile = compressedId
+                ? new File(
+                    [compressedId],
+                    "idproof.jpg",
+                    {
+                        type: compressedId.type || "image/jpeg",
+                    }
+                )
+                : null;
 
-                fd.append(
-                    "photo",
-                    new File(
-                        [compressedPhoto],
-                        "photo.jpg",
-                        {
-                            type: compressedPhoto.type || "image/jpeg",
-                        }
-                    )
-                );
-            }
+            const certFile = compressedCert
+                ? new File(
+                    [compressedCert],
+                    "certificate.jpg",
+                    {
+                        type: compressedCert.type || "image/jpeg",
+                    }
+                )
+                : null;
 
-            // ID PROOF
-            if (compressedId) {
+            const otherFile = compressedOther
+                ? new File(
+                    [compressedOther],
+                    "otherdoc.jpg",
+                    {
+                        type: compressedOther.type || "image/jpeg",
+                    }
+                )
+                : null;
 
-                fd.append(
-                    "idProof",
-                    new File(
-                        [compressedId],
-                        "idproof.jpg",
-                        {
-                            type: compressedId.type || "image/jpeg",
-                        }
-                    )
-                );
-            }
-
-            // CERTIFICATE
-            if (compressedCert) {
-
-                fd.append(
-                    "expCert",
-                    new File(
-                        [compressedCert],
-                        "certificate.jpg",
-                        {
-                            type: compressedCert.type || "image/jpeg",
-                        }
-                    )
-                );
-            }
-
-            // OTHER DOC
-            if (compressedOther) {
-
-                fd.append(
-                    "otherDoc",
-                    new File(
-                        [compressedOther],
-                        "otherdoc.jpg",
-                        {
-                            type: compressedOther.type || "image/jpeg",
-                        }
-                    )
-                );
-            }
-
-
-
-
-
-            // UPLOAD
-            const uploadRes = await axios.post(
-                `${API_BASE}/upload`,
-                fd,
-                {
-                    timeout: 120000,
-                    headers: {
-                        "Content-Type": "multipart/form-data",
-                    },
-                }
+            // SINGLE FILE UPLOADS
+            const photoRes = await uploadSingleFile(
+                "photo",
+                photoFile
             );
 
-            if (!uploadRes.data) {
-                throw new Error("Upload failed (no response)");
+            const idRes = await uploadSingleFile(
+                "idProof",
+                idFile
+            );
+
+            const certRes = await uploadSingleFile(
+                "expCert",
+                certFile
+            );
+
+            let otherRes = {};
+
+            if (otherFile) {
+
+                otherRes = await uploadSingleFile(
+                    "otherDoc",
+                    otherFile
+                );
             }
 
             // SAVE TUTOR
             await axios.post(`${API_BASE}/tutors`, {
+
                 ...formData,
 
-                photo: uploadRes.data.photo || "",
+                photo: photoRes.photo || "",
 
                 documents: {
-                    idProof: uploadRes.data.idProof || "",
-                    expCert: uploadRes.data.expCert || "",
-                    otherDoc: uploadRes.data.otherDoc || "",
+                    idProof: idRes.idProof || "",
+                    expCert: certRes.expCert || "",
+                    otherDoc: otherRes.otherDoc || "",
                 },
 
                 status: "pending",
@@ -322,6 +339,7 @@ export default function TutorRegistration() {
             navigate("/thank-you");
 
         } catch (err) {
+
             console.error("FULL ERROR:", err);
 
             alert(
@@ -329,7 +347,9 @@ export default function TutorRegistration() {
                 err.message ||
                 "Upload failed. Try again."
             );
+
         } finally {
+
             setLoading(false);
         }
     };
@@ -1108,54 +1128,31 @@ export default function TutorRegistration() {
                                     <li>
                                         ID Proof:
                                         {formData.idProof ? (
-                                            <div className="mt-2">
-                                                {formData.idProof.type.startsWith("image/") ? (
-                                                    <img
-                                                        src={URL.createObjectURL(formData.idProof)}
-                                                        className="w-20 h-20 object-cover rounded border"
-                                                    />
-                                                ) : (
-                                                    <button
-                                                        className="text-blue-600 underline text-sm"
-                                                        onClick={() =>
-                                                            window.open(URL.createObjectURL(formData.idProof))
-                                                        }
-                                                    >
-                                                        View File
-                                                    </button>
-                                                )}
-                                            </div>
+                                            <span className="text-green-600 ml-2">
+                                                ✔ {formData.idProof.name}
+                                            </span>
                                         ) : (
-                                            <span className="text-red-500 ml-2">Not uploaded</span>
+                                            <span className="text-red-500 ml-2">
+                                                Not uploaded
+                                            </span>
                                         )}
                                     </li>
 
                                     <li>
                                         Certificate:
                                         {formData.expCert ? (
-                                            <div className="mt-2">
-                                                {formData.expCert.type.startsWith("image/") ? (
-                                                    <img
-                                                        src={URL.createObjectURL(formData.expCert)}
-                                                        className="w-20 h-20 object-cover rounded border"
-                                                    />
-                                                ) : (
-                                                    <button
-                                                        className="text-blue-600 underline text-sm"
-                                                        onClick={() =>
-                                                            window.open(URL.createObjectURL(formData.expCert))
-                                                        }
-                                                    >
-                                                        View File
-                                                    </button>
-                                                )}
-                                            </div>
+                                            <span className="text-green-600 ml-2">
+                                                ✔ {formData.expCert.name}
+                                            </span>
                                         ) : (
-                                            <span className="text-red-500 ml-2">Not uploaded</span>
+                                            <span className="text-red-500 ml-2">
+                                                Not uploaded
+                                            </span>
                                         )}
                                     </li>
 
                                 </ul>
+
                             </div>
 
                             <div className="flex justify-between">
