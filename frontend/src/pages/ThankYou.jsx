@@ -20,7 +20,7 @@ export default function ThankYou() {
       }
 
       window.location.href =
-        "https://wa.me/message/VX2T7QEATZPRL1" +
+        "https://wa.me/message/918904457689" +
         encodeURIComponent(message);
 
     }, 2500);
