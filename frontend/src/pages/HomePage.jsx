@@ -405,7 +405,7 @@ export default function HomePage() {
         );
       })
       .sort(
-        (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
+        (a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0)
       );
   }, [tutors, query, selectedCategory, verifiedOnly, onlineOnly]);
 
@@ -758,7 +758,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="tutors" className="mx-auto max-w-7xl px-5 py-16 md:px-6 md:py-20">
+      <section
+        id="tutors"
+        className="mx-auto max-w-7xl px-5 py-16 md:px-6 md:py-20"
+      >
         <div className="mb-8 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
           <SectionTitle
             eyebrow="Our tutors"
@@ -857,12 +860,12 @@ export default function HomePage() {
           />
 
           <div className="mt-10 grid gap-5 md:grid-cols-3">
-            {processSteps.map((step, index) => {
-              const Icon = step.icon;
+            {processSteps.map((stepItem, index) => {
+              const Icon = stepItem.icon;
 
               return (
                 <motion.div
-                  key={step.title}
+                  key={stepItem.title}
                   whileHover={{ y: -6 }}
                   className="rounded-[2rem] border border-slate-200 bg-slate-50 p-6 transition hover:bg-white hover:shadow-2xl hover:shadow-slate-200"
                 >
@@ -877,11 +880,11 @@ export default function HomePage() {
                   </div>
 
                   <h3 className="text-xl font-black text-slate-950">
-                    {step.title}
+                    {stepItem.title}
                   </h3>
 
                   <p className="mt-3 text-sm leading-7 text-slate-600">
-                    {step.description}
+                    {stepItem.description}
                   </p>
                 </motion.div>
               );
@@ -982,7 +985,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section id="contact" className="mx-auto max-w-7xl px-5 py-16 md:px-6 md:py-20">
+      <section
+        id="contact"
+        className="mx-auto max-w-7xl px-5 py-16 md:px-6 md:py-20"
+      >
         <div className="grid gap-6 md:grid-cols-[0.95fr_1.05fr]">
           <div className="overflow-hidden rounded-[2.5rem] bg-slate-950 p-8 text-white shadow-2xl">
             <p className="mb-3 text-xs font-black uppercase tracking-[0.25em] text-blue-300">
