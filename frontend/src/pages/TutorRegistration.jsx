@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-
+import imageCompression from "browser-image-compression";
 const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
 
 // const API_BASE = "http://localhost:5000/api";
@@ -156,7 +156,7 @@ export default function TutorRegistration() {
     };
 
     const handleSubmit = async () => {
-        if (loading) return; //  prevent double click
+        if (loading) return;
 
         const error = validateForm();
 
@@ -168,6 +168,7 @@ export default function TutorRegistration() {
                 experience: true,
                 locations: true,
             });
+
             alert(error);
             return;
         }
@@ -175,37 +176,150 @@ export default function TutorRegistration() {
         try {
             setLoading(true);
 
+            const MAX_SIZE = 8 * 1024 * 1024;
+
+            const filesToCheck = [
+                formData.photo,
+                formData.idProof,
+                formData.expCert,
+                formData.otherDoc,
+            ];
+
+            for (const file of filesToCheck) {
+
+                if (file && file.size > MAX_SIZE) {
+
+                    alert("Each image should be under 8MB");
+
+                    setLoading(false);
+                    return;
+                }
+            }
+
+            // ONLY PHOTO COMPRESS
+            const compressImage = async (file) => {
+                if (!file) return null;
+
+                const options = {
+                    maxSizeMB: 0.8,
+                    maxWidthOrHeight: 1200,
+                    useWebWorker: true,
+                    initialQuality: 0.7,
+                };
+
+                try {
+                    return await imageCompression(file, options);
+                } catch {
+                    return file;
+                }
+            };
+
+            const compressedPhoto = await compressImage(formData.photo);
+
+            const compressedId = await compressImage(formData.idProof);
+
+            const compressedCert = await compressImage(formData.expCert);
+
+            const compressedOther = await compressImage(formData.otherDoc);
+
             const fd = new FormData();
 
-            if (formData.idProof) fd.append("idProof", formData.idProof);
-            if (formData.expCert) fd.append("expCert", formData.expCert);
-            if (formData.otherDoc) fd.append("otherDoc", formData.otherDoc);
-            if (formData.photo) fd.append("photo", formData.photo);
+            // PHOTO
+            if (compressedPhoto) {
 
-            //  IMPORTANT: timeout add
-            const uploadRes = await axios.post(`${API_BASE}/upload`, fd, {
-                timeout: 20000,
-            });
+                fd.append(
+                    "photo",
+                    new File(
+                        [compressedPhoto],
+                        "photo.jpg",
+                        {
+                            type: compressedPhoto.type || "image/jpeg",
+                        }
+                    )
+                );
+            }
+
+            // ID PROOF
+            if (compressedId) {
+
+                fd.append(
+                    "idProof",
+                    new File(
+                        [compressedId],
+                        "idproof.jpg",
+                        {
+                            type: compressedId.type || "image/jpeg",
+                        }
+                    )
+                );
+            }
+
+            // CERTIFICATE
+            if (compressedCert) {
+
+                fd.append(
+                    "expCert",
+                    new File(
+                        [compressedCert],
+                        "certificate.jpg",
+                        {
+                            type: compressedCert.type || "image/jpeg",
+                        }
+                    )
+                );
+            }
+
+            // OTHER DOC
+            if (compressedOther) {
+
+                fd.append(
+                    "otherDoc",
+                    new File(
+                        [compressedOther],
+                        "otherdoc.jpg",
+                        {
+                            type: compressedOther.type || "image/jpeg",
+                        }
+                    )
+                );
+            }
+
+
+
+
+
+            // UPLOAD
+            const uploadRes = await axios.post(
+                `${API_BASE}/upload`,
+                fd,
+                {
+                    timeout: 120000,
+                    headers: {
+                        "Content-Type": "multipart/form-data",
+                    },
+                }
+            );
 
             if (!uploadRes.data) {
                 throw new Error("Upload failed (no response)");
             }
 
+            // SAVE TUTOR
             await axios.post(`${API_BASE}/tutors`, {
                 ...formData,
+
                 photo: uploadRes.data.photo || "",
+
                 documents: {
                     idProof: uploadRes.data.idProof || "",
                     expCert: uploadRes.data.expCert || "",
                     otherDoc: uploadRes.data.otherDoc || "",
                 },
+
                 status: "pending",
             });
 
-            // smooth UX
-            setTimeout(() => {
-                navigate("/thank-you");
-            }, 500);
+            navigate("/thank-you");
 
         } catch (err) {
             console.error("FULL ERROR:", err);
@@ -213,7 +327,7 @@ export default function TutorRegistration() {
             alert(
                 err?.response?.data?.message ||
                 err.message ||
-                "Upload failed. Try smaller files or better internet."
+                "Upload failed. Try again."
             );
         } finally {
             setLoading(false);
@@ -287,7 +401,7 @@ export default function TutorRegistration() {
 
                     <p className="font-semibold">Submitting your details...</p>
                     <p className="text-sm text-gray-500 mt-1">
-                        Please wait (5–10 sec)
+                        Uploading documents securely...
                     </p>
                 </div>
             </div>
@@ -706,7 +820,7 @@ export default function TutorRegistration() {
                                     type="file"
                                     className="hidden"
                                     id="photo"
-                                    accept=".png,.jpg,.jpeg,.heic"
+                                    accept="image/*"
                                     onChange={(e) =>
                                         setFormData({ ...formData, photo: e.target.files[0] })
                                     }
@@ -739,7 +853,7 @@ export default function TutorRegistration() {
                                             type="file"
                                             className="hidden"
                                             id="idProof"
-                                            accept=".png,.jpg,.jpeg,.heic"
+                                            accept="image/*"
                                             onChange={(e) =>
                                                 setFormData({ ...formData, idProof: e.target.files[0] })
                                             }
@@ -771,7 +885,7 @@ export default function TutorRegistration() {
                                             type="file"
                                             className="hidden"
                                             id="expCert"
-                                            accept=".png,.jpg,.jpeg,.heic"
+                                            accept="image/*"
                                             onChange={(e) =>
                                                 setFormData({ ...formData, expCert: e.target.files[0] })
                                             }
@@ -800,7 +914,7 @@ export default function TutorRegistration() {
                                             type="file"
                                             className="hidden"
                                             id="otherDoc"
-                                            accept=".png,.jpg,.jpeg,.heic"
+                                            accept="image/*"
                                             onChange={(e) =>
                                                 setFormData({ ...formData, otherDoc: e.target.files[0] })
                                             }
@@ -1054,10 +1168,9 @@ export default function TutorRegistration() {
 
                                 <button
                                     className="bg-green-600 text-white px-6 py-3 rounded-xl"
-                                    onClick={handleSubmit}
+                                    onClick={handleSubmit} disabled={loading}
                                 >
-                                    Confirm & Submit
-                                </button>
+                                    {loading ? "Submitting..." : "Confirm & Submit"}                                </button>
                             </div>
 
                         </div>
