@@ -38,7 +38,7 @@ import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
 import { Avatar, AvatarFallback } from "../components/ui/avatar";
 import { Helmet } from "react-helmet-async";
-
+import ChatBot from "../components/ChatBot";
 const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
 
 const categories = [
@@ -1320,6 +1320,7 @@ export default function HomePage() {
           </motion.div>
         ) : null}
       </AnimatePresence>
+<ChatBot />
     </div>
   );
 }
