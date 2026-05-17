@@ -453,7 +453,7 @@ export default function TutorRegistration() {
         status: "pending",
       });
 
-      navigate("/thank-you");
+      navigate("/thank-you?type=tutor");
     } catch (err) {
       console.error("FULL ERROR:", err);
 
