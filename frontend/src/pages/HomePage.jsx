@@ -318,6 +318,12 @@ function TutorCard({ tutor, onViewProfile, onBook, swipeMode = false }) {
               >
                 Request Demo
               </Button>
+<Link
+  to="/payment"
+  className="inline-flex items-center rounded-2xl bg-green-600 px-6 py-4 font-black text-white shadow-xl shadow-green-900/20 transition hover:-translate-y-0.5 hover:bg-green-700"
+>
+  Pay for Demo Class
+</Link>
 
               <Button
                 className="flex-1 rounded-2xl border border-slate-200 bg-white px-4 py-3 font-bold text-slate-800 transition hover:bg-slate-50"
