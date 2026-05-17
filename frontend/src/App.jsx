@@ -50,6 +50,7 @@ export default function App() {
           <Route path="/tutor-register" element={<TutorRegistration />} />
           {/* Admin Login */}
           <Route path="/admin-login" element={<AdminLogin />} />
+<Route path="/payment" element={<PaymentPage />} />
 
 
           {/* Blog Editor Login */}
