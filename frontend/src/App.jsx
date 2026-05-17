@@ -9,6 +9,7 @@ import BlogPage from "./pages/BlogPage";
 import BlogDetail from "./pages/BlogDetail";
 import ThankYou from "./pages/ThankYou";
 import TutorRegistration from "./pages/TutorRegistration";
+import PaymentPage from "./pages/PaymentPage";
 // Blog separate system
 import BlogLogin from "./pages/BlogLogin";
 import AdminBlogEditor from "./pages/AdminBlogEditor";
