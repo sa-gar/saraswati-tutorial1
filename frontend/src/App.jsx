@@ -20,7 +20,8 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Disclaimer from "./pages/Disclaimer";
 import TermsConditions from "./pages/TermsAndConditions";
 import Testimonials from "./pages/Testimonials";
-
+import MumbaiPage from "./pages/MumbaiPage";
+import SubdomainRedirect from "./components/SubdomainRedirect";
 // 🔐 Admin Protected Route
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem("adminToken");
