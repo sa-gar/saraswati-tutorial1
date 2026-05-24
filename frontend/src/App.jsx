@@ -1,6 +1,6 @@
-
 import { Routes, Route, Navigate } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
+
 import HomePage from "./pages/HomePage";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminLogin from "./pages/AdminLogin";
@@ -10,7 +10,7 @@ import BlogDetail from "./pages/BlogDetail";
 import ThankYou from "./pages/ThankYou";
 import TutorRegistration from "./pages/TutorRegistration";
 import PaymentPage from "./pages/PaymentPage";
-// Blog separate system
+
 import BlogLogin from "./pages/BlogLogin";
 import AdminBlogEditor from "./pages/AdminBlogEditor";
 import CategoryPage from "./pages/CategoryPage";
@@ -21,42 +21,50 @@ import Disclaimer from "./pages/Disclaimer";
 import TermsConditions from "./pages/TermsAndConditions";
 import Testimonials from "./pages/Testimonials";
 import MumbaiPage from "./pages/MumbaiPage";
-import SubdomainRedirect from "./components/SubdomainRedirect";
-// 🔐 Admin Protected Route
+
+// Admin Protected Route
 function ProtectedRoute({ children }) {
   const token = localStorage.getItem("adminToken");
   return token ? children : <Navigate to="/admin-login" replace />;
 }
 
-//  Blog Editor Protected Route
+// Blog Editor Protected Route
 function BlogProtectedRoute({ children }) {
   const token = localStorage.getItem("blogEditorToken");
   return token ? children : <Navigate to="/blog-login" replace />;
 }
 
-
 export default function App() {
+  const host = window.location.hostname;
+
+  const isMumbaiSubdomain =
+    host === "mumbai.saraswatitutorial.com" ||
+    host.startsWith("mumbai.");
+
   return (
     <HelmetProvider>
       <div className="min-h-screen bg-slate-50">
         <Routes>
-
-
           {/* Public Pages */}
-          <Route path="/" element={<HomePage />} />
+          <Route
+            path="/"
+            element={isMumbaiSubdomain ? <MumbaiPage /> : <HomePage />}
+          />
+
+          <Route path="/mumbai" element={<MumbaiPage />} />
+
           <Route path="/blogs" element={<BlogPage />} />
           <Route path="/blogs/:slug" element={<BlogDetail />} />
           <Route path="/parent-enquiry" element={<ParentEnquiryForm />} />
           <Route path="/thank-you" element={<ThankYou />} />
           <Route path="/tutor-register" element={<TutorRegistration />} />
+          <Route path="/payment" element={<PaymentPage />} />
+
           {/* Admin Login */}
           <Route path="/admin-login" element={<AdminLogin />} />
-<Route path="/payment" element={<PaymentPage />} />
-
 
           {/* Blog Editor Login */}
           <Route path="/blog-login" element={<BlogLogin />} />
-
 
           {/* Admin Dashboard */}
           <Route
@@ -68,8 +76,7 @@ export default function App() {
             }
           />
 
-
-          {/* Blog Editor Page (separate system) */}
+          {/* Blog Editor Page */}
           <Route
             path="/admin/blogs"
             element={
@@ -78,20 +85,20 @@ export default function App() {
               </BlogProtectedRoute>
             }
           />
-<Route path="/testimonials" element={<Testimonials />} />
+
+          <Route path="/testimonials" element={<Testimonials />} />
 
           <Route path="/courses/:category" element={<CategoryPage />} />
           <Route path="/courses/:main/:sub" element={<SubCategoryPage />} />
           <Route path="/courses/:main/:sub/:course" element={<CoursePage />} />
+
           <Route path="/terms-conditions" element={<TermsConditions />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/disclaimer" element={<Disclaimer />} />
-          {/* <Route path="*" element={<Navigate to="/" />} /> */}
+
           <Route path="*" element={<h1>404 - Page Not Found</h1>} />
-<Route path="/mumbai" element={<MumbaiPage />} />
         </Routes>
       </div>
     </HelmetProvider>
   );
 }
-
