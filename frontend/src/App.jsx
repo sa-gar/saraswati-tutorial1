@@ -88,6 +88,7 @@ export default function App() {
           <Route path="/disclaimer" element={<Disclaimer />} />
           {/* <Route path="*" element={<Navigate to="/" />} /> */}
           <Route path="*" element={<h1>404 - Page Not Found</h1>} />
+<Route path="/mumbai" element={<MumbaiPage />} />
         </Routes>
       </div>
     </HelmetProvider>
