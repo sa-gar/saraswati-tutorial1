@@ -1,4 +1,4 @@
-# Saraswati Tutorial - Full Stack Platform
+# Saraswati Tutorial
 
 Welcome to the Saraswati Tutorial platform. This repository contains the source code for the main website, administrator controls, blog editors, and the specialized **Services Division subdomain** setup.
 
