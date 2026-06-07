@@ -28,6 +28,7 @@ const uploadToCloudinary = async (file, folder) => {
     "image/jpeg",
     "image/jpg",
     "image/png",
+    "application/pdf",
   ];
 
   if (!allowedTypes.includes(file.mimetype)) {

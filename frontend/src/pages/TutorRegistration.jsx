@@ -24,8 +24,7 @@ import {
   Loader2,
 } from "lucide-react";
 
-const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
-// const API_BASE = "http://localhost:5000/api";
+import { API_BASE } from "@/config";
 
 const initialFormData = {
   name: "",
@@ -957,7 +956,7 @@ export default function TutorRegistration() {
                     required
                     inputId="idProof"
                     file={formData.idProof}
-                    accept="image/*"
+                    accept="image/*,application/pdf"
                     onChange={(file) =>
                       setFormData((prev) => ({ ...prev, idProof: file }))
                     }
@@ -970,7 +969,7 @@ export default function TutorRegistration() {
                     required
                     inputId="expCert"
                     file={formData.expCert}
-                    accept="image/*"
+                    accept="image/*,application/pdf"
                     onChange={(file) =>
                       setFormData((prev) => ({ ...prev, expCert: file }))
                     }
@@ -982,7 +981,7 @@ export default function TutorRegistration() {
                     subtitle="Optional supporting document"
                     inputId="otherDoc"
                     file={formData.otherDoc}
-                    accept="image/*"
+                    accept="image/*,application/pdf"
                     onChange={(file) =>
                       setFormData((prev) => ({ ...prev, otherDoc: file }))
                     }

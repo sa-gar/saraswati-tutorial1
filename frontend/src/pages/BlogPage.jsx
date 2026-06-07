@@ -9,7 +9,7 @@ import {
   Tag,
 } from "lucide-react";
 
-const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
+import { API_BASE } from "@/config";
 
 const fallbackCategories = [
   "All",

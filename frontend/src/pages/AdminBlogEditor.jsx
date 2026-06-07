@@ -15,7 +15,7 @@ import {
   FileText,
 } from "lucide-react";
 
-const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
+import { API_BASE } from "@/config";
 
 function stripHtml(html = "") {
   return html.replace(/<[^>]+>/g, "").trim();
