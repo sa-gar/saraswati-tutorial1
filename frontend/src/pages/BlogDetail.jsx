@@ -13,7 +13,7 @@ import {
   Linkedin,
 } from "lucide-react";
 
-import { API_BASE } from "@/config";
+const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
 
 function stripHtml(html = "") {
   return html.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();

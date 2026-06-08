@@ -39,7 +39,7 @@ import { Badge } from "../components/ui/badge";
 import { Avatar, AvatarFallback } from "../components/ui/avatar";
 import { Helmet } from "react-helmet-async";
 import ChatBot from "../components/ChatBot";
-import { API_BASE } from "@/config";
+const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
 
 const categories = [
   {
@@ -340,19 +340,6 @@ function TutorCard({ tutor, onViewProfile, onBook, swipeMode = false }) {
 }
 
 export default function HomePage() {
-  const host = window.location.hostname;
-  const isServicesSubdomain =
-    host === "services.saraswatitutorial.com" ||
-    host.startsWith("services.");
-
-  const servicesUrl = host === "localhost" || host === "127.0.0.1"
-    ? "http://services.localhost:5173"
-    : "https://services.saraswatitutorial.com";
-
-  const mainUrl = host === "localhost" || host === "127.0.0.1"
-    ? "http://localhost:5173"
-    : "https://saraswatitutorial.com";
-
   const [query, setQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [verifiedOnly, setVerifiedOnly] = useState(false);
@@ -480,88 +467,13 @@ export default function HomePage() {
     <div className="min-h-screen bg-slate-50 text-slate-950">
       <Helmet>
         <title>
-          {isServicesSubdomain
-            ? "Premium Home Tuition Service Division | Saraswati Tutorials"
-            : "Private Home Tutors near me in Bangalore | Saraswati Tutorials"}
+          Private Home Tutors near me in Bangalore | Saraswati Tutorials
         </title>
 
         <meta
           name="description"
-          content={isServicesSubdomain
-            ? "Contact Saraswati Tutorials' Service Division for premium home tutor matching across Bangalore and surrounding areas."
-            : "Hire patient, experienced, background-verified home tutors in Bangalore for Classes 6–12, graduation, competitive exams, and skills."}
+          content="Hire patient, experienced, background-verified home tutors in Bangalore for Classes 6–12, graduation, competitive exams, and skills."
         />
-
-        {/* Dynamic SEO Schemas */}
-        {isServicesSubdomain ? (
-          <script type="application/ld+json">
-            {JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "LocalBusiness",
-              "name": "Saraswati Tutorial - Service Division",
-              "image": "https://saraswatitutorial.com/logo.png",
-              "url": "https://services.saraswatitutorial.com",
-              "telephone": "+91 9041157689",
-              "areaServed": [
-                {
-                  "@type": "AdministrativeArea",
-                  "name": "Bangalore"
-                },
-                {
-                  "@type": "AdministrativeArea",
-                  "name": "Bangalore Rural"
-                }
-              ],
-              "description": "Premium home tuition matching services in Bangalore and surrounding areas.",
-              "address": {
-                "@type": "PostalAddress",
-                "addressLocality": "Bangalore",
-                "addressCountry": "India"
-              }
-            })}
-          </script>
-        ) : (
-          <>
-            <script type="application/ld+json">
-              {JSON.stringify({
-                "@context": "https://schema.org",
-                "@type": "LocalBusiness",
-                "name": "Saraswati Tutorial",
-                "image": "https://saraswatitutorial.com/logo.png",
-                "url": "https://saraswatitutorial.com",
-                "telephone": "+91 8904457689",
-                "address": {
-                  "@type": "PostalAddress",
-                  "addressLocality": "Bangalore",
-                  "addressCountry": "India"
-                }
-              })}
-            </script>
-            <script type="application/ld+json">
-              {JSON.stringify({
-                "@context": "https://schema.org",
-                "@type": "EducationalOrganization",
-                "name": "Saraswati Tutorials",
-                "url": "https://saraswatitutorial.com",
-                "logo": "https://saraswatitutorial.com/logo.png",
-                "sameAs": [
-                  "https://www.facebook.com/",
-                  "https://www.instagram.com/"
-                ],
-                "address": {
-                  "@type": "PostalAddress",
-                  "addressLocality": "Bangalore",
-                  "addressCountry": "India"
-                },
-                "contactPoint": {
-                  "@type": "ContactPoint",
-                  "telephone": "+91 8904457689",
-                  "contactType": "customer support"
-                }
-              })}
-            </script>
-          </>
-        )}
       </Helmet>
 
       <header className="sticky top-0 z-40 border-b border-white/40 bg-white/85 backdrop-blur-xl">
@@ -596,27 +508,12 @@ export default function HomePage() {
             <a href="#about" className="hover:text-slate-950">
               About
             </a>
-            {isServicesSubdomain ? (
-              <Link to="/contact" className="hover:text-slate-950">
-                Contact
-              </Link>
-            ) : (
-              <a href="#contact" className="hover:text-slate-950">
-                Contact
-              </a>
-            )}
+            <a href="#contact" className="hover:text-slate-950">
+              Contact
+            </a>
             <Link to="/blogs" className="hover:text-slate-950">
               Blog
             </Link>
-            {isServicesSubdomain ? (
-              <a href={mainUrl} className="text-indigo-600 hover:text-indigo-700">
-                Main Website
-              </a>
-            ) : (
-              <a href={servicesUrl} className="text-blue-600 hover:text-blue-700">
-                Service Division
-              </a>
-            )}
           </nav>
 
           <div className="hidden items-center gap-3 md:flex">
@@ -675,30 +572,16 @@ export default function HomePage() {
 
             <div className="flex flex-col gap-4 text-lg font-bold text-slate-800">
               {["home", "tutors", "process", "about", "contact"].map(
-                (item) => {
-                  if (item === "contact" && isServicesSubdomain) {
-                    return (
-                      <Link
-                        key={item}
-                        to="/contact"
-                        onClick={() => setMenuOpen(false)}
-                        className="rounded-2xl bg-slate-50 px-5 py-4 capitalize"
-                      >
-                        Contact
-                      </Link>
-                    );
-                  }
-                  return (
-                    <a
-                      key={item}
-                      href={`#${item}`}
-                      onClick={() => setMenuOpen(false)}
-                      className="rounded-2xl bg-slate-50 px-5 py-4 capitalize"
-                    >
-                      {item === "process" ? "How it works" : item}
-                    </a>
-                  );
-                }
+                (item) => (
+                  <a
+                    key={item}
+                    href={`#${item}`}
+                    onClick={() => setMenuOpen(false)}
+                    className="rounded-2xl bg-slate-50 px-5 py-4 capitalize"
+                  >
+                    {item === "process" ? "How it works" : item}
+                  </a>
+                )
               )}
 
               <Link
@@ -1129,18 +1012,9 @@ export default function HomePage() {
             </p>
 
             <div className="mt-8 space-y-4">
-              <ContactRow
-                icon={Phone}
-                text={isServicesSubdomain ? "+91 9041157689" : "+91 8904457689 / +91 9041157689"}
-              />
-              <ContactRow
-                icon={Mail}
-                text={isServicesSubdomain ? "services@saraswatitutorial.com" : "support@saraswatitutorial.com"}
-              />
-              <ContactRow
-                icon={MapPin}
-                text={isServicesSubdomain ? "Bangalore + nearby areas" : "Bengaluru, Karnataka"}
-              />
+              <ContactRow icon={Phone} text="+91 8904457689 / +91 9041157689" />
+              <ContactRow icon={Mail} text="support@saraswatitutorial.com" />
+              <ContactRow icon={MapPin} text="Bengaluru, Karnataka" />
             </div>
 
             <div className="mt-8 flex gap-4">
@@ -1199,16 +1073,14 @@ export default function HomePage() {
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
 
-            {!isServicesSubdomain && (
-              <iframe
-                title="Google Map Location"
-                src="https://www.google.com/maps?q=Bangalore&output=embed"
-                width="100%"
-                height="210"
-                className="mt-8 rounded-3xl border-0"
-                loading="lazy"
-              />
-            )}
+            <iframe
+              title="Google Map Location"
+              src="https://www.google.com/maps?q=Bangalore&output=embed"
+              width="100%"
+              height="210"
+              className="mt-8 rounded-3xl border-0"
+              loading="lazy"
+            />
           </div>
         </div>
       </section>
@@ -1228,21 +1100,12 @@ export default function HomePage() {
             <a href="#home">Home</a>
             <a href="#tutors">Tutors</a>
             <a href="#about">About Us</a>
-            {isServicesSubdomain ? (
-              <Link to="/contact">Contact Us</Link>
-            ) : (
-              <a href="#contact">Contact Us</a>
-            )}
+            <a href="#contact">Contact Us</a>
             <Link to="/testimonials">Testimonials</Link>
             <Link to="/blogs">Blog</Link>
             <Link to="/terms-conditions">Terms</Link>
             <Link to="/privacy-policy">Privacy</Link>
             <Link to="/disclaimer">Disclaimer</Link>
-            {isServicesSubdomain ? (
-              <a href={mainUrl} className="hover:text-slate-950 font-bold text-indigo-600">Main Website</a>
-            ) : (
-              <a href={servicesUrl} className="hover:text-slate-950 font-bold text-blue-600">Service Division</a>
-            )}
           </div>
 
           <p className="text-sm text-slate-500">
@@ -1251,7 +1114,7 @@ export default function HomePage() {
         </div>
 
         <a
-          href={isServicesSubdomain ? "https://wa.me/919041157689" : "https://wa.me/918904457689"}
+          href="https://wa.me/918904457689"
           target="_blank"
           rel="noopener noreferrer"
           className="fixed bottom-5 left-5 z-50 inline-flex items-center gap-2 rounded-full bg-green-500 px-5 py-3 font-black text-white shadow-2xl transition hover:scale-105 hover:bg-green-600"

@@ -21,7 +21,6 @@ import Disclaimer from "./pages/Disclaimer";
 import TermsConditions from "./pages/TermsAndConditions";
 import Testimonials from "./pages/Testimonials";
 import MumbaiPage from "./pages/MumbaiPage";
-import ServicesContactPage from "./pages/ServicesContactPage";
 
 // Admin Protected Route
 function ProtectedRoute({ children }) {
@@ -42,10 +41,6 @@ export default function App() {
     host === "mumbai.saraswatitutorial.com" ||
     host.startsWith("mumbai.");
 
-  const isServicesSubdomain =
-    host === "services.saraswatitutorial.com" ||
-    host.startsWith("services.");
-
   return (
     <HelmetProvider>
       <div className="min-h-screen bg-slate-50">
@@ -57,7 +52,6 @@ export default function App() {
           />
 
           <Route path="/mumbai" element={<MumbaiPage />} />
-          <Route path="/contact" element={<ServicesContactPage />} />
 
           <Route path="/blogs" element={<BlogPage />} />
           <Route path="/blogs/:slug" element={<BlogDetail />} />
