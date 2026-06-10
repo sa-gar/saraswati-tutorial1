@@ -243,7 +243,7 @@ const parentEnquirySchema = new mongoose.Schema(
   default: "New Lead",
 },
       default: "New",
-    },
+    
   },
   { timestamps: true }
 );
