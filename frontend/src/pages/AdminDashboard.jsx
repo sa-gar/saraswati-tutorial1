@@ -2,7 +2,25 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
-// const API_BASE = "http://localhost:5000/api";
+
+const LEAD_STATUSES = [
+  "New Lead",
+  "Fees Finalized",
+  "Demo Scheduled",
+  "Feedback Pending",
+  "Won",
+  "Lost",
+];
+
+const FILTER_OPTIONS = [
+  "All Leads",
+  "New Lead",
+  "Fees Finalized",
+  "Demo Scheduled",
+  "Feedback Pending",
+  "Won",
+  "Lost",
+];
 
 const emptyTutor = {
   name: "",
@@ -17,6 +35,36 @@ const emptyTutor = {
   category: "",
   mode: "",
 };
+
+function normalizeLeadStatus(status) {
+  if (!status || status === "New") return "New Lead";
+  if (status === "Contacted") return "Fees Finalized";
+  if (status === "Assigned") return "Demo Scheduled";
+  if (status === "Closed") return "Won";
+  return status;
+}
+
+function formatSubmittedDate(value) {
+  if (!value) return "Not available";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return "Not available";
+
+  const datePart = date.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+
+  const timePart = date.toLocaleTimeString("en-IN", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+
+  return `${datePart} | ${timePart}`;
+}
 
 function getClassDuration(parentEnquiry) {
   return (
@@ -42,6 +90,82 @@ function getSubjects(subjects) {
   return "Not provided";
 }
 
+function isOnlineLead(parentEnquiry) {
+  return String(parentEnquiry?.preferredMode || "")
+    .toLowerCase()
+    .includes("online");
+}
+
+function getLeadLocation(parentEnquiry) {
+  return (
+    parentEnquiry?.area ||
+    parentEnquiry?.location ||
+    parentEnquiry?.locality ||
+    "Location not provided"
+  );
+}
+
+function buildSearchText(parentEnquiry) {
+  const wardTexts =
+    parentEnquiry?.wards?.map((ward) =>
+      [
+        ward.studentName,
+        ward.fullName,
+        ward.schoolName,
+        ward.classGrade,
+        ward.curriculum,
+        Array.isArray(ward.subjectsNeeded)
+          ? ward.subjectsNeeded.join(" ")
+          : ward.subjectsNeeded,
+      ]
+        .filter(Boolean)
+        .join(" ")
+    ) || [];
+
+  return [
+    parentEnquiry.parentName,
+    parentEnquiry.name,
+    parentEnquiry.phone,
+    parentEnquiry.email,
+    parentEnquiry.area,
+    parentEnquiry.pincode,
+    parentEnquiry.preferredMode,
+    parentEnquiry.preferredGender,
+    parentEnquiry.preferredTime,
+    getClassDuration(parentEnquiry),
+    ...wardTexts,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
+function buildSuggestionValues(parentEnquiries) {
+  const values = [];
+
+  parentEnquiries.forEach((p) => {
+    values.push(p.parentName, p.name, p.phone, p.area, p.pincode);
+
+    p.wards?.forEach((ward) => {
+      values.push(
+        ward.studentName,
+        ward.fullName,
+        ward.schoolName,
+        ward.classGrade,
+        ward.curriculum
+      );
+
+      if (Array.isArray(ward.subjectsNeeded)) {
+        values.push(...ward.subjectsNeeded);
+      } else {
+        values.push(ward.subjectsNeeded);
+      }
+    });
+  });
+
+  return [...new Set(values.filter(Boolean).map((v) => String(v).trim()))];
+}
+
 export default function AdminDashboard() {
   const navigate = useNavigate();
 
@@ -52,6 +176,8 @@ export default function AdminDashboard() {
 
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [leadFilter, setLeadFilter] = useState("All Leads");
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const [showParents, setShowParents] = useState(true);
   const [showTutors, setShowTutors] = useState(true);
@@ -101,22 +227,78 @@ export default function AdminDashboard() {
     fetchData();
   }, []);
 
-  const filteredTutors = useMemo(() => {
-    const query = search.toLowerCase();
+  const suggestionValues = useMemo(() => {
+    return buildSuggestionValues(parentEnquiries);
+  }, [parentEnquiries]);
 
+  const suggestions = useMemo(() => {
+    const q = search.trim().toLowerCase();
+
+    if (!q) return [];
+
+    return suggestionValues
+      .filter((value) => value.toLowerCase().includes(q))
+      .slice(0, 8);
+  }, [search, suggestionValues]);
+
+  const filteredParentEnquiries = useMemo(() => {
+    const q = search.trim().toLowerCase();
+
+    return parentEnquiries.filter((parentEnquiry) => {
+      const status = normalizeLeadStatus(parentEnquiry.status);
+
+      const matchesFilter =
+        leadFilter === "All Leads" || status === leadFilter;
+
+      const matchesSearch = !q || buildSearchText(parentEnquiry).includes(q);
+
+      return matchesFilter && matchesSearch;
+    });
+  }, [parentEnquiries, search, leadFilter]);
+
+  const filteredTutors = useMemo(() => {
     return tutors.filter(
       (t) =>
-        t.name?.toLowerCase().includes(query) ||
-        t.subject?.toLowerCase().includes(query) ||
-        t.location?.toLowerCase().includes(query) ||
-        t.email?.toLowerCase().includes(query) ||
-        t.phone?.toLowerCase().includes(query)
+        t.name?.toLowerCase().includes(search.toLowerCase()) ||
+        t.subject?.toLowerCase().includes(search.toLowerCase()) ||
+        t.location?.toLowerCase().includes(search.toLowerCase()) ||
+        t.email?.toLowerCase().includes(search.toLowerCase()) ||
+        t.phone?.toLowerCase().includes(search.toLowerCase())
     );
   }, [tutors, search]);
 
-  const pendingTutors = tutors.filter((t) => !t.status || t.status === "pending").length;
+  const pendingTutors = tutors.filter(
+    (t) => !t.status || t.status === "pending"
+  ).length;
+
   const approvedTutors = tutors.filter((t) => t.status === "approved").length;
   const rejectedTutors = tutors.filter((t) => t.status === "rejected").length;
+
+  const updateLeadStatus = async (id, status) => {
+    try {
+      const res = await fetch(`${API_BASE}/parent-enquiries/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status }),
+      });
+
+      if (!res.ok) {
+        alert("Failed to update lead status");
+        return;
+      }
+
+      const updated = await res.json();
+
+      setParentEnquiries((prev) =>
+        prev.map((item) => (item._id === id ? updated : item))
+      );
+    } catch (error) {
+      console.error(error);
+      alert("Failed to update lead status");
+    }
+  };
 
   const deleteTutor = async (id) => {
     const token = localStorage.getItem("adminToken");
@@ -304,11 +486,14 @@ export default function AdminDashboard() {
               <p className="mb-2 text-sm font-semibold uppercase tracking-[0.25em] text-blue-300">
                 Admin Control Center
               </p>
+
               <h1 className="text-3xl font-black tracking-tight md:text-5xl">
                 Saraswati Tutorial Dashboard
               </h1>
+
               <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300 md:text-base">
-                Manage parent enquiries, tutors, bookings, approvals, and lead data from one clean dashboard.
+                Manage parent leads, tutor approvals, bookings, search, filters,
+                and lead pipeline from one dashboard.
               </p>
             </div>
 
@@ -344,10 +529,29 @@ export default function AdminDashboard() {
         )}
 
         <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard title="Total Tutors" value={tutors.length} subtitle={`${approvedTutors} approved`} />
-          <StatCard title="Parent Enquiries" value={parentEnquiries.length} subtitle="Detailed parent leads" />
-          <StatCard title="General Enquiries" value={enquiries.length} subtitle="Website enquiries" />
-          <StatCard title="Bookings" value={bookings.length} subtitle="Scheduled sessions" />
+          <StatCard
+            title="Total Tutors"
+            value={tutors.length}
+            subtitle={`${approvedTutors} approved`}
+          />
+
+          <StatCard
+            title="Parent Leads"
+            value={parentEnquiries.length}
+            subtitle={`${filteredParentEnquiries.length} visible`}
+          />
+
+          <StatCard
+            title="General Enquiries"
+            value={enquiries.length}
+            subtitle="Website enquiries"
+          />
+
+          <StatCard
+            title="Bookings"
+            value={bookings.length}
+            subtitle="Scheduled sessions"
+          />
         </div>
 
         <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -356,154 +560,263 @@ export default function AdminDashboard() {
           <MiniStat title="Rejected Tutors" value={rejectedTutors} color="red" />
         </div>
 
-        <div className="mb-8 flex flex-wrap gap-3 rounded-3xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
-          <button
-            onClick={() => setShowParents(!showParents)}
-            className={`rounded-2xl px-5 py-3 text-sm font-bold transition ${
-              showParents
-                ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
-                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-            }`}
-          >
-            {showParents ? "Hide Parent Enquiries" : "Show Parent Enquiries"}
-          </button>
+        <div className="mb-8 rounded-[2rem] bg-white p-4 shadow-sm ring-1 ring-slate-200">
+          <div className="grid gap-3 md:grid-cols-[1fr_240px_auto_auto]">
+            <div className="relative">
+              <input
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setShowSuggestions(true);
+                }}
+                onFocus={() => setShowSuggestions(true)}
+                onBlur={() => {
+                  setTimeout(() => setShowSuggestions(false), 200);
+                }}
+                placeholder="Search parent, student, phone, area, subject, school..."
+                className="h-12 w-full rounded-2xl border border-slate-200 px-4 text-sm font-semibold outline-none transition focus:border-slate-900"
+              />
 
-          <button
-            onClick={() => setShowTutors(!showTutors)}
-            className={`rounded-2xl px-5 py-3 text-sm font-bold transition ${
-              showTutors
-                ? "bg-purple-600 text-white shadow-lg shadow-purple-600/20"
-                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-            }`}
-          >
-            {showTutors ? "Hide Tutors" : "Show Tutors"}
-          </button>
+              {showSuggestions && suggestions.length > 0 && (
+                <div className="absolute left-0 right-0 top-14 z-30 overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-slate-200">
+                  {suggestions.map((suggestion) => (
+                    <button
+                      key={suggestion}
+                      type="button"
+                      onMouseDown={() => {
+                        setSearch(suggestion);
+                        setShowSuggestions(false);
+                      }}
+                      className="block w-full px-4 py-3 text-left text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <select
+              value={leadFilter}
+              onChange={(e) => setLeadFilter(e.target.value)}
+              className="h-12 rounded-2xl border border-slate-200 px-4 text-sm font-bold text-slate-700 outline-none"
+            >
+              {FILTER_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+
+            <button
+              onClick={() => setShowParents(!showParents)}
+              className={`rounded-2xl px-5 py-3 text-sm font-bold transition ${
+                showParents
+                  ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
+                  : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+              }`}
+            >
+              {showParents ? "Hide Parent Leads" : "Show Parent Leads"}
+            </button>
+
+            <button
+              onClick={() => setShowTutors(!showTutors)}
+              className={`rounded-2xl px-5 py-3 text-sm font-bold transition ${
+                showTutors
+                  ? "bg-purple-600 text-white shadow-lg shadow-purple-600/20"
+                  : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+              }`}
+            >
+              {showTutors ? "Hide Tutors" : "Show Tutors"}
+            </button>
+          </div>
         </div>
 
         {showParents && (
           <section className="mb-10">
             <SectionHeader
-              title="Parent Enquiries"
-              subtitle="Detailed parent requirements, student details, preferences, and class duration."
+              title="Parent Leads"
+              subtitle="Search, filter, and track every parent enquiry through the admission pipeline."
             />
 
-            {parentEnquiries.length === 0 ? (
-              <EmptyState text="No parent enquiries yet." />
+            {filteredParentEnquiries.length === 0 ? (
+              <EmptyState text="No parent leads found for this search or filter." />
             ) : (
               <div className="grid gap-5">
-                {parentEnquiries.map((p) => (
-                  <div
-                    key={p._id}
-                    className="overflow-hidden rounded-[1.75rem] bg-white shadow-sm ring-1 ring-slate-200 transition hover:shadow-xl"
-                  >
-                    <div className="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white p-5">
-                      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
-                        <div>
-                          <h3 className="text-xl font-black text-slate-900">
-                            {p.parentName || p.name || "Unnamed Parent"}
-                          </h3>
-                          <p className="mt-1 text-sm text-slate-500">
-                            Parent enquiry lead
-                          </p>
-                        </div>
+                {filteredParentEnquiries.map((p) => {
+                  const currentStatus = normalizeLeadStatus(p.status);
+                  const submittedAt = formatSubmittedDate(p.createdAt);
+                  const online = isOnlineLead(p);
+                  const leadLocation = getLeadLocation(p);
 
-                        <div className="flex flex-wrap gap-2">
-                          <Badge text={p.preferredMode || "Mode not provided"} color="blue" />
-                          <Badge text={`Duration: ${getClassDuration(p)}`} color="emerald" />
-                        </div>
-                      </div>
-                    </div>
+                  return (
+                    <div
+                      key={p._id}
+                      className="overflow-hidden rounded-[1.75rem] bg-white shadow-sm ring-1 ring-slate-200 transition hover:shadow-xl"
+                    >
+                      <div className="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white p-5">
+                        <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
+                          <div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <h3 className="text-xl font-black text-slate-900">
+                                {p.parentName || p.name || "Unnamed Parent"}
+                              </h3>
 
-                    <div className="grid gap-5 p-5 lg:grid-cols-3">
-                      <div className="rounded-2xl bg-slate-50 p-4">
-                        <h4 className="mb-3 text-sm font-black uppercase tracking-wide text-slate-500">
-                          Parent Details
-                        </h4>
+                              <Badge
+                                text={currentStatus}
+                                color={getStatusColor(currentStatus)}
+                              />
 
-                        <InfoRow label="Phone" value={p.phone} />
-                        <InfoRow label="Email" value={p.email} />
-                        <InfoRow
-                          label="Occupation"
-                          value={`${p.occupation || "Not provided"}${
-                            p.occupationType ? ` (${p.occupationType})` : ""
-                          }`}
-                        />
-                        <InfoRow label="Area" value={p.area} />
-                        <InfoRow label="PIN Code" value={p.pincode} />
-                      </div>
+                              {online && <Badge text="Online" color="blue" />}
 
-                      <div className="rounded-2xl bg-slate-50 p-4">
-                        <h4 className="mb-3 text-sm font-black uppercase tracking-wide text-slate-500">
-                          Tutor Preference
-                        </h4>
-
-                        <InfoRow label="Preferred Mode" value={p.preferredMode} />
-                        <InfoRow label="Preferred Gender" value={p.preferredGender} />
-                        <InfoRow label="Preferred Time" value={p.preferredTime} />
-                        <InfoRow label="Class Duration" value={getClassDuration(p)} />
-                        <InfoRow label="Preferred Days" value={getPreferredDays(p.preferredDays)} />
-                      </div>
-
-                      <div className="rounded-2xl bg-slate-50 p-4">
-                        <h4 className="mb-3 text-sm font-black uppercase tracking-wide text-slate-500">
-                          Dynamic Occupation Info
-                        </h4>
-
-                        <InfoRow label="Business Name" value={p.businessName} />
-                        <InfoRow label="Company Name" value={p.companyName} />
-                        <InfoRow label="Job Title" value={p.jobTitle} />
-                        <InfoRow label="Profession Type" value={p.professionType} />
-                        <InfoRow label="Other Occupation" value={p.otherOccupation} />
-                      </div>
-                    </div>
-
-                    <div className="px-5 pb-5">
-                      <h4 className="mb-3 text-sm font-black uppercase tracking-wide text-slate-500">
-                        Students / Wards
-                      </h4>
-
-                      <div className="grid gap-3 md:grid-cols-2">
-                        {p.wards?.length ? (
-                          p.wards.map((ward, index) => (
-                            <div
-                              key={index}
-                              className="rounded-2xl border border-slate-200 bg-white p-4"
-                            >
-                              <div className="mb-3 flex items-center justify-between">
-                                <h5 className="font-black text-slate-900">
-                                  Student {index + 1}
-                                </h5>
-                                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
-                                  {ward.classGrade || "Class NA"}
-                                </span>
-                              </div>
-
-                              <InfoRow label="Student Name" value={ward.studentName || ward.fullName} />
-                              <InfoRow label="School" value={ward.schoolName} />
-                              <InfoRow label="Class" value={ward.classGrade} />
-                              <InfoRow label="Curriculum" value={ward.curriculum} />
-                              <InfoRow label="Subjects" value={getSubjects(ward.subjectsNeeded)} />
-                              <InfoRow label="Special Notes" value={ward.specialNeeds} />
+                              {!online && (
+                                <Badge text={leadLocation} color="slate" />
+                              )}
                             </div>
-                          ))
-                        ) : (
-                          <p className="text-sm text-slate-500">No ward data available.</p>
-                        )}
+
+                            <p className="mt-2 text-sm font-semibold text-slate-500">
+                              Submitted: {submittedAt}
+                            </p>
+                          </div>
+
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                            <select
+                              value={currentStatus}
+                              onChange={(e) =>
+                                updateLeadStatus(p._id, e.target.value)
+                              }
+                              className="h-11 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 outline-none"
+                            >
+                              {LEAD_STATUSES.map((status) => (
+                                <option key={status} value={status}>
+                                  {status}
+                                </option>
+                              ))}
+                            </select>
+
+                            <button
+                              onClick={() => {
+                                if (window.confirm("Delete this enquiry?")) {
+                                  handleDeleteParentEnquiry(p._id);
+                                }
+                              }}
+                              className="h-11 rounded-2xl bg-red-500 px-4 text-sm font-bold text-white transition hover:bg-red-600"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
                       </div>
 
-                      <button
-                        onClick={() => {
-                          if (window.confirm("Delete this enquiry?")) {
-                            handleDeleteParentEnquiry(p._id);
-                          }
-                        }}
-                        className="mt-5 rounded-2xl bg-red-500 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-red-500/20 transition hover:bg-red-600"
-                      >
-                        Delete Enquiry
-                      </button>
+                      <div className="grid gap-5 p-5 lg:grid-cols-3">
+                        <div className="rounded-2xl bg-slate-50 p-4">
+                          <h4 className="mb-3 text-sm font-black uppercase tracking-wide text-slate-500">
+                            Parent Details
+                          </h4>
+
+                          <InfoRow label="Phone" value={p.phone} />
+                          <InfoRow label="Email" value={p.email} />
+                          <InfoRow
+                            label="Occupation"
+                            value={`${p.occupation || "Not provided"}${
+                              p.occupationType ? ` (${p.occupationType})` : ""
+                            }`}
+                          />
+                          <InfoRow label="Area" value={p.area} />
+                          <InfoRow label="PIN Code" value={p.pincode} />
+                        </div>
+
+                        <div className="rounded-2xl bg-slate-50 p-4">
+                          <h4 className="mb-3 text-sm font-black uppercase tracking-wide text-slate-500">
+                            Tutor Preference
+                          </h4>
+
+                          <InfoRow label="Preferred Mode" value={p.preferredMode} />
+                          <InfoRow
+                            label="Preferred Gender"
+                            value={p.preferredGender}
+                          />
+                          <InfoRow label="Preferred Time" value={p.preferredTime} />
+                          <InfoRow
+                            label="Class Duration"
+                            value={getClassDuration(p)}
+                          />
+                          <InfoRow
+                            label="Preferred Days"
+                            value={getPreferredDays(p.preferredDays)}
+                          />
+                        </div>
+
+                        <div className="rounded-2xl bg-slate-50 p-4">
+                          <h4 className="mb-3 text-sm font-black uppercase tracking-wide text-slate-500">
+                            Dynamic Occupation Info
+                          </h4>
+
+                          <InfoRow label="Business Name" value={p.businessName} />
+                          <InfoRow label="Company Name" value={p.companyName} />
+                          <InfoRow label="Job Title" value={p.jobTitle} />
+                          <InfoRow
+                            label="Profession Type"
+                            value={p.professionType}
+                          />
+                          <InfoRow
+                            label="Other Occupation"
+                            value={p.otherOccupation}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="px-5 pb-5">
+                        <h4 className="mb-3 text-sm font-black uppercase tracking-wide text-slate-500">
+                          Students / Wards
+                        </h4>
+
+                        <div className="grid gap-3 md:grid-cols-2">
+                          {p.wards?.length ? (
+                            p.wards.map((ward, index) => (
+                              <div
+                                key={index}
+                                className="rounded-2xl border border-slate-200 bg-white p-4"
+                              >
+                                <div className="mb-3 flex items-center justify-between">
+                                  <h5 className="font-black text-slate-900">
+                                    Student {index + 1}
+                                  </h5>
+                                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
+                                    {ward.classGrade || "Class NA"}
+                                  </span>
+                                </div>
+
+                                <InfoRow
+                                  label="Student Name"
+                                  value={ward.studentName || ward.fullName}
+                                />
+                                <InfoRow label="School" value={ward.schoolName} />
+                                <InfoRow label="Class" value={ward.classGrade} />
+                                <InfoRow
+                                  label="Curriculum"
+                                  value={ward.curriculum}
+                                />
+                                <InfoRow
+                                  label="Subjects"
+                                  value={getSubjects(ward.subjectsNeeded)}
+                                />
+                                <InfoRow
+                                  label="Special Notes"
+                                  value={ward.specialNeeds}
+                                />
+                              </div>
+                            ))
+                          ) : (
+                            <p className="text-sm text-slate-500">
+                              No ward data available.
+                            </p>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </section>
@@ -517,7 +830,10 @@ export default function AdminDashboard() {
           ) : (
             <div className="grid gap-4 md:grid-cols-2">
               {enquiries.map((e) => (
-                <div key={e._id} className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+                <div
+                  key={e._id}
+                  className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200"
+                >
                   <p className="text-lg font-black text-slate-900">
                     {e.parentName || e.name || "Unnamed"}
                   </p>
@@ -544,15 +860,20 @@ export default function AdminDashboard() {
           ) : (
             <div className="grid gap-4 md:grid-cols-2">
               {bookings.map((b) => (
-                <div key={b._id} className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+                <div
+                  key={b._id}
+                  className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200"
+                >
                   <p className="text-lg font-black text-slate-900">
                     {b.tutorName || "Tutor not provided"}
                   </p>
                   <p className="mt-1 text-sm text-slate-600">
-                    {b.learnerName || "Learner not provided"} | {b.phone || "No phone"}
+                    {b.learnerName || "Learner not provided"} |{" "}
+                    {b.phone || "No phone"}
                   </p>
                   <p className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
-                    {b.preferredDate || "Date not provided"} - {b.preferredSlot || "Slot not provided"}
+                    {b.preferredDate || "Date not provided"} -{" "}
+                    {b.preferredSlot || "Slot not provided"}
                   </p>
                 </div>
               ))}
@@ -562,16 +883,10 @@ export default function AdminDashboard() {
 
         {showTutors && (
           <section>
-            <SectionHeader title="Tutors" subtitle="Approve, reject, edit, and manage tutors." />
-
-            <div className="mb-5 rounded-3xl bg-white p-4 shadow-sm ring-1 ring-slate-200">
-              <input
-                placeholder="Search tutors by name, subject, location, email, or phone..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="h-12 w-full rounded-2xl border border-slate-200 px-4 outline-none transition focus:border-slate-900"
-              />
-            </div>
+            <SectionHeader
+              title="Tutors"
+              subtitle="Approve, reject, edit, and manage tutors."
+            />
 
             {tutors.length === 0 ? (
               <EmptyState text="No tutors yet." />
@@ -586,7 +901,10 @@ export default function AdminDashboard() {
                       <div className="flex flex-col gap-5 sm:flex-row">
                         {t.photo ? (
                           <img
-                            src={t.photo.replace("/upload/", "/upload/f_auto,q_auto,w_180/")}
+                            src={t.photo.replace(
+                              "/upload/",
+                              "/upload/f_auto,q_auto,w_180/"
+                            )}
                             alt={t.name}
                             loading="lazy"
                             className="h-28 w-28 rounded-3xl object-cover ring-1 ring-slate-200"
@@ -603,9 +921,15 @@ export default function AdminDashboard() {
                               {t.name || "Unnamed Tutor"}
                             </h3>
 
-                            {t.status === "approved" && <Badge text="Approved" color="emerald" />}
-                            {t.status === "rejected" && <Badge text="Rejected" color="red" />}
-                            {(!t.status || t.status === "pending") && <Badge text="Pending" color="yellow" />}
+                            {t.status === "approved" && (
+                              <Badge text="Approved" color="emerald" />
+                            )}
+                            {t.status === "rejected" && (
+                              <Badge text="Rejected" color="red" />
+                            )}
+                            {(!t.status || t.status === "pending") && (
+                              <Badge text="Pending" color="yellow" />
+                            )}
                           </div>
 
                           <div className="grid gap-x-8 gap-y-2 text-sm text-slate-700 md:grid-cols-2">
@@ -613,11 +937,16 @@ export default function AdminDashboard() {
                             <InfoRow label="Phone" value={t.phone} />
                             <InfoRow
                               label="Occupation"
-                              value={t.hasOccupation === "yes" ? t.occupation : "No"}
+                              value={
+                                t.hasOccupation === "yes" ? t.occupation : "No"
+                              }
                             />
                             <InfoRow label="Organization" value={t.organization} />
                             <InfoRow label="Experience" value={t.experience} />
-                            <InfoRow label="Preferred Locations" value={t.locations?.join(", ")} />
+                            <InfoRow
+                              label="Preferred Locations"
+                              value={t.locations?.join(", ")}
+                            />
                             <InfoRow
                               label="Vehicle"
                               value={
@@ -626,7 +955,10 @@ export default function AdminDashboard() {
                                   : "No"
                               }
                             />
-                            <InfoRow label="Timings" value={t.timings?.join(", ")} />
+                            <InfoRow
+                              label="Timings"
+                              value={t.timings?.join(", ")}
+                            />
                           </div>
 
                           <div className="mt-4">
@@ -635,9 +967,18 @@ export default function AdminDashboard() {
                             </p>
 
                             <div className="flex flex-wrap gap-2">
-                              <DocumentLink href={t.documents?.idProof} label="ID Proof" />
-                              <DocumentLink href={t.documents?.expCert} label="Education" />
-                              <DocumentLink href={t.documents?.otherDoc} label="Experience" />
+                              <DocumentLink
+                                href={t.documents?.idProof}
+                                label="ID Proof"
+                              />
+                              <DocumentLink
+                                href={t.documents?.expCert}
+                                label="Education"
+                              />
+                              <DocumentLink
+                                href={t.documents?.otherDoc}
+                                label="Experience"
+                              />
                             </div>
                           </div>
                         </div>
@@ -706,6 +1047,16 @@ export default function AdminDashboard() {
   );
 }
 
+function getStatusColor(status) {
+  if (status === "New Lead") return "blue";
+  if (status === "Fees Finalized") return "purple";
+  if (status === "Demo Scheduled") return "yellow";
+  if (status === "Feedback Pending") return "orange";
+  if (status === "Won") return "emerald";
+  if (status === "Lost") return "red";
+  return "slate";
+}
+
 function StatCard({ title, value, subtitle }) {
   return (
     <div className="rounded-[1.5rem] bg-white p-5 shadow-sm ring-1 ring-slate-200 transition hover:-translate-y-1 hover:shadow-xl">
@@ -764,6 +1115,8 @@ function InfoRow({ label, value }) {
 function Badge({ text, color = "slate" }) {
   const colors = {
     blue: "bg-blue-50 text-blue-700 ring-blue-100",
+    purple: "bg-purple-50 text-purple-700 ring-purple-100",
+    orange: "bg-orange-50 text-orange-700 ring-orange-100",
     emerald: "bg-emerald-50 text-emerald-700 ring-emerald-100",
     red: "bg-red-50 text-red-700 ring-red-100",
     yellow: "bg-yellow-50 text-yellow-700 ring-yellow-100",
@@ -771,7 +1124,11 @@ function Badge({ text, color = "slate" }) {
   };
 
   return (
-    <span className={`rounded-full px-3 py-1 text-xs font-black ring-1 ${colors[color]}`}>
+    <span
+      className={`rounded-full px-3 py-1 text-xs font-black ring-1 ${
+        colors[color] || colors.slate
+      }`}
+    >
       {text}
     </span>
   );
