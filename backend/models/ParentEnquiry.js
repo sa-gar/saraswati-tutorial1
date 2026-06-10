@@ -231,8 +231,17 @@ const parentEnquirySchema = new mongoose.Schema(
     },
 
     status: {
-      type: String,
-      enum: ["New", "Contacted", "Assigned", "Closed"],
+  type: String,
+  enum: [
+    "New Lead",
+    "Fees Finalized",
+    "Demo Scheduled",
+    "Feedback Pending",
+    "Won",
+    "Lost",
+  ],
+  default: "New Lead",
+},
       default: "New",
     },
   },
