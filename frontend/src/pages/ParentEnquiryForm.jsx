@@ -140,7 +140,7 @@ const subjectOptions = [
   "Spoken English",
 ];
 
-const schoolOptions = [
+const bangaloreSchoolOptions = [
   "The International School Bangalore",
   "Inventure Academy",
   "Mallya Aditi International School",
@@ -173,6 +173,26 @@ const schoolOptions = [
   "Sri Kumaran Children's Home",
 ];
 
+const mumbaiSchoolOptions = [
+  "Dhirubhai Ambani International School",
+  "The Cathedral & John Connon School",
+  "Aditya Birla World Academy",
+  "Jamnabai Narsee School",
+  "Bombay Scottish School",
+  "Campillion School",
+  "Arya Vidya Mandir",
+  "Podar International School",
+  "Smt. Sulochanadevi Singhania School",
+  "Gems Genesis International School",
+  "Oberoi International School",
+  "Hiranandani Foundation School",
+  "Singhania School Thane",
+  "Ryan International School, Malad",
+  "Vibgyor High School, Goregaon",
+  "Billabong High International School",
+  "Lilavatibai Podar High School",
+];
+
 const preferredModeOptions = [
   "Online / One-to-One Tuition",
   "Home Tuition / In-Person",
@@ -180,6 +200,13 @@ const preferredModeOptions = [
 
 export default function ParentEnquiryForm() {
   const navigate = useNavigate();
+
+  const host = window.location.hostname;
+  const isMumbai =
+    host.startsWith("mumbai.") ||
+    localStorage.getItem("userLocation") === "Mumbai";
+
+  const schoolOptions = isMumbai ? mumbaiSchoolOptions : bangaloreSchoolOptions;
 
   const [step, setStep] = useState(1);
   const [form, setForm] = useState(initialForm);
@@ -479,6 +506,7 @@ export default function ParentEnquiryForm() {
   const buildPayload = () => {
     return {
       ...form,
+      area: `${form.area}, ${isMumbai ? "Mumbai" : "Bangalore"}`,
       wards: form.wards.map((ward) => ({
         studentName: ward.studentName,
         schoolName: ward.schoolName,

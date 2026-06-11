@@ -3,6 +3,14 @@ import { Link } from "react-router-dom";
 import { MessageCircle, X, Send, Bot } from "lucide-react";
 
 export default function ChatBot() {
+  const host = window.location.hostname;
+  const isMumbai =
+    host.startsWith("mumbai.") ||
+    localStorage.getItem("userLocation") === "Mumbai";
+  const whatsappUrl = isMumbai
+    ? "https://wa.me/919041157689"
+    : "https://wa.me/918904457689";
+
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([
     {
@@ -107,7 +115,7 @@ export default function ChatBot() {
         [
           {
             label: "Open WhatsApp",
-            href: "https://wa.me/918904457689",
+            href: whatsappUrl,
           },
         ]
       );
@@ -190,7 +198,7 @@ export default function ChatBot() {
         [
           {
             label: "Open WhatsApp",
-            href: "https://wa.me/918904457689",
+            href: whatsappUrl,
           },
         ]
       );

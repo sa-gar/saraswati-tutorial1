@@ -109,7 +109,7 @@ const timingGroups = {
   "Evening 4 PM – 8 PM": ["4-5 PM", "5-6 PM", "6-7 PM", "7-8 PM"],
 };
 
-const areaGroups = {
+const bangaloreAreaGroups = {
   "East Bangalore": [
     "Whitefield",
     "Marathahalli",
@@ -168,8 +168,73 @@ const areaGroups = {
   ],
 };
 
+const mumbaiAreaGroups = {
+  "South Mumbai": [
+    "Colaba",
+    "Cuffe Parade",
+    "Nariman Point",
+    "Marine Drive",
+    "Dadar",
+    "Prabhadevi",
+    "Worli",
+    "Lower Parel",
+    "Byculla",
+    "Mazagaon",
+  ],
+  "Western Suburbs": [
+    "Bandra",
+    "Khar",
+    "Santacruz",
+    "Vile Parle",
+    "Andheri",
+    "Jogeshwari",
+    "Goregaon",
+    "Malad",
+    "Kandivali",
+    "Borivali",
+    "Dahisar",
+  ],
+  "Eastern Suburbs": [
+    "Kurla",
+    "Ghatkopar",
+    "Vikhroli",
+    "Kanjurmarg",
+    "Bhandup",
+    "Mulund",
+    "Chembur",
+    "Govandi",
+    "Mankhurd",
+    "Powai",
+  ],
+  "Thane Region": [
+    "Thane West",
+    "Thane East",
+    "Ghodbunder Road",
+    "Kalwa",
+    "Mumbra",
+  ],
+  "Navi Mumbai": [
+    "Vashi",
+    "Koparkhairane",
+    "Ghansoli",
+    "Airoli",
+    "Nerul",
+    "Belapur",
+    "Kharghar",
+    "Panvel",
+    "Seawoods",
+  ],
+};
+
 export default function TutorRegistration() {
   const navigate = useNavigate();
+
+  const host = window.location.hostname;
+  const isMumbai =
+    host.startsWith("mumbai.") ||
+    localStorage.getItem("userLocation") === "Mumbai";
+
+  const areaGroups = isMumbai ? mumbaiAreaGroups : bangaloreAreaGroups;
 
   const [step, setStep] = useState(1);
   const [search, setSearch] = useState("");
@@ -178,7 +243,7 @@ export default function TutorRegistration() {
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [previewPhoto, setPreviewPhoto] = useState(null);
-  const [openGroup, setOpenGroup] = useState("East Bangalore");
+  const [openGroup, setOpenGroup] = useState(isMumbai ? "Western Suburbs" : "East Bangalore");
 
   useEffect(() => {
     if (!formData.photo) {
@@ -444,6 +509,7 @@ export default function TutorRegistration() {
 
       await axios.post(`${API_BASE}/tutors`, {
         ...formData,
+        locations: formData.locations.map((loc) => `${loc}, ${isMumbai ? "Mumbai" : "Bangalore"}`),
         photo: photoRes.photo || "",
         documents: {
           idProof: idRes.idProof || "",

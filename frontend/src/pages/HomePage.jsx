@@ -339,6 +339,72 @@ function TutorCard({ tutor, onViewProfile, onBook, swipeMode = false }) {
   );
 }
 
+const handleLocationRedirect = (city) => {
+  localStorage.setItem("userLocation", city);
+  const currentHost = window.location.hostname;
+  
+  if (city === "Mumbai") {
+    if (currentHost.includes("localhost")) {
+      window.location.href = "/mumbai";
+    } else {
+      window.location.href = "https://mumbai.saraswatitutorial.com/";
+    }
+  } else {
+    if (currentHost.includes("localhost")) {
+      window.location.href = "/";
+    } else {
+      window.location.href = "https://saraswatitutorial.com/";
+    }
+  }
+};
+
+function LocationDropdown({ activeCity }) {
+  const [open, setOpen] = useState(false);
+  
+  return (
+    <div className="relative z-50">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-2 rounded-full bg-slate-100 px-3.5 py-2 text-xs font-black text-slate-700 hover:bg-slate-200 transition ring-1 ring-slate-200/50"
+      >
+        <MapPin className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+        <span>{activeCity}</span>
+        <span className="text-[9px] opacity-60">▼</span>
+      </button>
+      
+      {open && (
+        <div className="absolute left-0 mt-2 w-32 rounded-2xl bg-white p-1.5 shadow-xl ring-1 ring-slate-200">
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              handleLocationRedirect("Bangalore");
+            }}
+            className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-bold transition hover:bg-slate-50 ${
+              activeCity === "Bangalore" ? "text-blue-600 bg-blue-50/50" : "text-slate-700"
+            }`}
+          >
+            Bangalore
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              handleLocationRedirect("Mumbai");
+            }}
+            className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-bold transition hover:bg-slate-50 ${
+              activeCity === "Mumbai" ? "text-blue-600 bg-blue-50/50" : "text-slate-700"
+            }`}
+          >
+            Mumbai
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function HomePage() {
   const [query, setQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -478,22 +544,26 @@ export default function HomePage() {
 
       <header className="sticky top-0 z-40 border-b border-white/40 bg-white/85 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-3 md:px-6">
-          <Link to="/" className="flex items-center gap-3">
-            <img
-              src="/logo.png"
-              alt="Saraswati Tutorial Logo"
-              className="h-12 w-12 rounded-2xl object-contain shadow-sm"
-            />
+          <div className="flex items-center gap-4">
+            <Link to="/" className="flex items-center gap-3">
+              <img
+                src="/logo.png"
+                alt="Saraswati Tutorial Logo"
+                className="h-12 w-12 rounded-2xl object-contain shadow-sm"
+              />
 
-            <div>
-              <div className="text-lg font-black tracking-tight text-slate-950 md:text-xl">
-                Saraswati Tutorial
+              <div>
+                <div className="text-lg font-black tracking-tight text-slate-950 md:text-xl">
+                  Saraswati Tutorial
+                </div>
+                <div className="hidden text-xs font-semibold text-slate-500 sm:block">
+                  Home tutors
+                </div>
               </div>
-              <div className="hidden text-xs font-semibold text-slate-500 sm:block">
-                Home tutors in Bangalore
-              </div>
-            </div>
-          </Link>
+            </Link>
+
+            <LocationDropdown activeCity="Bangalore" />
+          </div>
 
           <nav className="hidden items-center gap-7 text-sm font-bold text-slate-700 md:flex">
             <a href="#home" className="hover:text-slate-950">
@@ -552,13 +622,13 @@ export default function HomePage() {
             className="fixed inset-0 z-50 bg-white p-6"
           >
             <div className="mb-8 flex items-center justify-between">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4">
                 <img
                   src="/logo.png"
                   alt="Saraswati Tutorial Logo"
                   className="h-12 w-12 rounded-2xl object-contain"
                 />
-                <h2 className="text-xl font-black">Menu</h2>
+                <LocationDropdown activeCity="Bangalore" />
               </div>
 
               <button

@@ -1,55 +1,939 @@
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
+import { motion, AnimatePresence } from "framer-motion";
+import ChatBot from "../components/ChatBot";
+import {
+  Star,
+  MapPin,
+  ShieldCheck,
+  CheckCircle2,
+  Clock,
+  BookOpen,
+  CreditCard,
+  Sparkles,
+  ChevronDown,
+  ChevronUp,
+  ArrowRight,
+  Phone,
+  Mail,
+  Menu,
+  X,
+  Award,
+  HelpCircle,
+  Users,
+  Check,
+  MessageCircle
+} from "lucide-react";
 
-export default function MumbaiPage() {
+const handleLocationRedirect = (city) => {
+  localStorage.setItem("userLocation", city);
+  const currentHost = window.location.hostname;
+  
+  if (city === "Mumbai") {
+    if (currentHost.includes("localhost")) {
+      window.location.href = "/mumbai";
+    } else {
+      window.location.href = "https://mumbai.saraswatitutorial.com/";
+    }
+  } else {
+    if (currentHost.includes("localhost")) {
+      window.location.href = "/";
+    } else {
+      window.location.href = "https://saraswatitutorial.com/";
+    }
+  }
+};
+
+function LocationDropdown({ activeCity }) {
+  const [open, setOpen] = useState(false);
+  
   return (
-    <div className="min-h-screen bg-slate-50 px-6 py-16">
-      <div className="mx-auto max-w-6xl">
-        <div className="rounded-[2.5rem] bg-slate-950 p-8 text-white shadow-2xl md:p-12">
-          <p className="mb-3 text-sm font-black uppercase tracking-[0.25em] text-blue-300">
-            Saraswati Tutorials Mumbai
-          </p>
-
-          <h1 className="max-w-3xl text-4xl font-black tracking-tight md:text-6xl">
-            Home Tutors in Mumbai
-          </h1>
-
-          <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-300">
-            Find experienced home tutors in Mumbai for school tuition, college
-            subjects, competitive exams, spoken English, and skill-based learning.
-          </p>
-
-          <div className="mt-8 flex flex-wrap gap-4">
-            <Link
-              to="/parent-enquiry"
-              className="rounded-2xl bg-white px-6 py-4 font-black text-slate-950"
-            >
-              Book Free Demo Class
-            </Link>
-
-            <Link
-              to="/tutor-register"
-              className="rounded-2xl border border-white/25 px-6 py-4 font-black text-white"
-            >
-              Become a Tutor
-            </Link>
-          </div>
+    <div className="relative z-50">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-2 rounded-full bg-slate-100 px-3.5 py-2 text-xs font-black text-slate-700 hover:bg-slate-200 transition ring-1 ring-slate-200/50"
+      >
+        <MapPin className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+        <span>{activeCity}</span>
+        <span className="text-[9px] opacity-60">▼</span>
+      </button>
+      
+      {open && (
+        <div className="absolute left-0 mt-2 w-32 rounded-2xl bg-white p-1.5 shadow-xl ring-1 ring-slate-200">
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              handleLocationRedirect("Bangalore");
+            }}
+            className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-bold transition hover:bg-slate-50 ${
+              activeCity === "Bangalore" ? "text-blue-600 bg-blue-50/50" : "text-slate-700"
+            }`}
+          >
+            Bangalore
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              handleLocationRedirect("Mumbai");
+            }}
+            className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-bold transition hover:bg-slate-50 ${
+              activeCity === "Mumbai" ? "text-blue-600 bg-blue-50/50" : "text-slate-700"
+            }`}
+          >
+            Mumbai
+          </button>
         </div>
-
-        <div className="mt-8 grid gap-5 md:grid-cols-3">
-          <Card title="School Tuition" text="Class 1 to 12 tutors for all major boards." />
-          <Card title="Home Tuition" text="One-to-one learning support at home." />
-          <Card title="Online Tuition" text="Flexible online tutoring support." />
-        </div>
-      </div>
+      )}
     </div>
   );
 }
 
-function Card({ title, text }) {
+export default function MumbaiPage() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [activeFaq, setActiveFaq] = useState(null);
+
+  const toggleFaq = (index) => {
+    setActiveFaq(activeFaq === index ? null : index);
+  };
+
+  // 5 exact FAQs
+  const faqs = [
+    {
+      q: "Do you provide home tuition across all areas of Mumbai?",
+      a: "Yes, Saraswati Tutorials provides home tuition services across major areas of Mumbai including Andheri, Bandra, Powai, Borivali, Thane, Navi Mumbai and nearby locations."
+    },
+    {
+      q: "Which boards do your tutors cover?",
+      a: "Our tutors teach students from CBSE, ICSE, IGCSE, IB and Maharashtra State Board for Classes 6 to 12."
+    },
+    {
+      q: "Is online tuition also available?",
+      a: "Yes, we provide both home tuition and live online tuition classes with personalized one-to-one teaching support."
+    },
+    {
+      q: "Can I book a demo class before hiring a tutor?",
+      a: "Yes, parents can request a free demo class to evaluate the teaching style and subject expertise of the tutor."
+    },
+    {
+      q: "Which subjects are available for tuition in Mumbai?",
+      a: "We provide tuition for Maths, Science, Physics, Chemistry, Biology, English, Accounts, Economics and other major subjects."
+    }
+  ];
+
+  // FAQ Schema JSON-LD
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqs.map((faq) => ({
+      "@type": "Question",
+      "name": faq.q,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": faq.a
+      }
+    }))
+  };
+
+  // Local Business / Educational Organization Schema
+  const localBusinessSchema = {
+    "@context": "https://schema.org",
+    "@type": "EducationalOrganization",
+    "name": "Saraswati Tutorials",
+    "url": "https://mumbai.saraswatitutorial.com/",
+    "logo": "https://mumbai.saraswatitutorial.com/logo.png",
+    "description": "Looking for home tuition in Mumbai? Saraswati Tutorials provides expert home tutors for CBSE, ICSE, IGCSE, IB & Maharashtra State Board students from Class 6 to 12 across Mumbai.",
+    "telephone": "+91 9041157689",
+    "email": "services@saraswatitutorial.com",
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Mumbai",
+      "addressRegion": "Maharashtra",
+      "addressCountry": "IN"
+    },
+    "areaServed": {
+      "@type": "AdministrativeArea",
+      "name": "Mumbai"
+    },
+    "serviceType": "Home Tuition",
+    "provider": {
+      "@type": "LocalBusiness",
+      "name": "Saraswati Tutorials",
+      "url": "https://mumbai.saraswatitutorial.com/"
+    }
+  };
+
+  const whyChooseUs = [
+    { title: "Verified & Experienced Tutors", desc: "All our tutors undergo strict background checks and academic evaluations.", icon: ShieldCheck },
+    { title: "One-to-One Personalized Classes", desc: "Customized attention mapping to your child's learning pace.", icon: Users },
+    { title: "Home & Online Tuition Available", desc: "Flexible modes—learn offline at home or online via live interactive classes.", icon: Award },
+    { title: "Regular Tests & Progress Tracking", desc: "Periodic examinations and feedback reports provided to parents.", icon: CheckCircle2 },
+    { title: "Flexible Timings", desc: "Sessions scheduled around your child's school and daily routine.", icon: Clock },
+    { title: "Tutors for All Major Boards", desc: "Expert syllabus mapping for CBSE, ICSE, IGCSE, IB, and State Board.", icon: BookOpen },
+    { title: "Affordable Fee Structure", desc: "High-quality academic support customized to fit family budgets.", icon: CreditCard },
+    { title: "Free Demo Class Available", desc: "Book a trial class with no commitment to test compatibility.", icon: Sparkles }
+  ];
+
+  const schoolSubjects = [
+    { title: "Mathematics Tuition", desc: "Master algebra, calculus, and geometry with step-by-step guidance from expert maths home tutors in Mumbai." },
+    { title: "Science Tuition", desc: "Build a strong foundation in physics, chemistry, and biology for classes 6 to 10 with interactive home tutoring." },
+    { title: "Physics Tuition", desc: "Simplify complex equations, mechanics, and electricity concepts for board exams and competitive entrance tests." },
+    { title: "Chemistry Tuition", desc: "Understand chemical equations, periodic tables, organic chemistry, and reactions with clear personal guidance." },
+    { title: "Biology Tuition", desc: "Excel in life sciences, anatomy, and plant physiology with detailed diagrams, memory aids, and expert tutoring." },
+    { title: "English Tuition", desc: "Improve grammar, literature understanding, essays, and communication skills with patient native educators." },
+    { title: "Hindi Tuition", desc: "Enhance vocabulary, grammar rules, script writing, and comprehension scores with professional Hindi tutors." },
+    { title: "Social Science Tuition", desc: "Score high in history, geography, civics, and economics with structured note-taking and concept maps." },
+  ];
+
+  const commerceSubjects = [
+    { title: "Accounts Tuition", desc: "Demystify ledger entries, balance sheets, and financial statements for class 11, 12, and college levels." },
+    { title: "Economics Tuition", desc: "Analyze micro and macroeconomics principles, supply-demand curves, and statistics with expert assistance." },
+    { title: "Business Studies Tuition", desc: "Understand business operations, management theories, case studies, and trade practices with home tuition." }
+  ];
+
+  const boards = [
+    { name: "CBSE Board", desc: "Comprehensive coverage of the NCERT curriculum, focusing on board exam preparation, daily practice papers, and thorough revision for classes 6 to 12." },
+    { name: "ICSE Board", desc: "Rigorous focus on the detailed ICSE/ISC syllabus, enhancing conceptual depth in science and mathematics, literature understanding, and mock tests." },
+    { name: "IGCSE Board", desc: "International curriculum support focusing on analytical skills, exam patterns, past paper practice, and concept application for Cambridge assessments." },
+    { name: "IB Board", desc: "In-depth guidance for IB Diploma and MYP programmes, assisting with Internal Assessments (IAs), Extended Essays (EE), and advanced concept mastery." },
+    { name: "Maharashtra State Board", desc: "Aligned syllabus support for SSC and HSC exams, highlighting textbook exercises, board-pattern tests, and high-yield scoring topics." }
+  ];
+
+  const classesList = [
+    { title: "Class 6 Home Tuition", desc: "Strengthening basics in Maths, Science, and English to transition smoothly to secondary levels." },
+    { title: "Class 7 Home Tuition", desc: "Developing analytical and problem-solving skills for growing academic curriculums." },
+    { title: "Class 8 Home Tuition", desc: "Focusing on conceptual depth to prepare a solid launchpad for high school boards." },
+    { title: "Class 9 Home Tuition", desc: "Crucial concept building mapping directly to class 10 boards and foundation exams." },
+    { title: "Class 10 Home Tuition", desc: "Rigorous mock tests, revision cycles, and board paper solving to secure top grades." },
+    { title: "Class 11 Home Tuition", desc: "Specialized guidance for Science (PCM/B) and Commerce streams during the board transition." },
+    { title: "Class 12 Home Tuition", desc: "Dedicated syllabus completion, revision, and practice to score maximum percentages." }
+  ];
+
+  const areas = [
+    "Andheri", "Bandra", "Powai", "Dadar", "Borivali", 
+    "Kandivali", "Malad", "Goregaon", "Thane", "Navi Mumbai", 
+    "Chembur", "Vashi", "Ghatkopar", "Mulund", "Colaba"
+  ];
+
+  const testimonials = [
+    {
+      name: "Mrs. Ritu Sharma",
+      location: "Andheri",
+      role: "Parent of Class 10 CBSE Student",
+      text: "Saraswati Tutorials helped my son improve his Class 10 CBSE Math score from 65% to 92%. The tutor from Andheri was extremely patient and focused on solving past papers."
+    },
+    {
+      name: "Mr. Anil Mehta",
+      location: "Powai",
+      role: "Parent of IB Physics Student",
+      text: "Finding a quality IB Physics tutor in Powai was a major challenge. The tutor recommended by Saraswati Tutorials has been outstanding. Conceptual clarity has improved drastically."
+    },
+    {
+      name: "Mrs. Deepa Kulkarni",
+      location: "Thane",
+      role: "Parent of Class 12 HSC Student",
+      text: "My daughter was struggling with Maharashtra State Board Chemistry for Class 12. The home tutor from Thane cleared her basics and regularly conducted test series. Highly recommended!"
+    }
+  ];
+
+  const steps = [
+    { title: "Submit Requirement", desc: "Share your child's class, board, subjects, location, and budget with us." },
+    { title: "Tutor Shortlisting", desc: "Our team selects the most suitable and experienced tutors for your requirements." },
+    { title: "Free Demo Class", desc: "Evaluate the teacher's style and chemistry with a free, no-obligation demo class." },
+    { title: "Start Learning", desc: "Begin classes at home or online with scheduled progress reviews." }
+  ];
+
+  // Update FAQ Schema mainEntity specifically for index 0 to match exactly
+  const updatedFaqSchema = {
+    ...faqSchema,
+    mainEntity: faqSchema.mainEntity.map((item, idx) => {
+      if (idx === 0) {
+        return {
+          ...item,
+          acceptedAnswer: {
+            "@type": "Answer",
+            "text": "Yes, Saraswati Tutorials provides home tuition services across major areas of Mumbai."
+          }
+        };
+      }
+      return item;
+    })
+  };
+
   return (
-    <div className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
-      <h3 className="text-xl font-black text-slate-900">{title}</h3>
-      <p className="mt-2 text-sm leading-6 text-slate-600">{text}</p>
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-blue-600 selection:text-white">
+      <Helmet>
+        <title>Home Tuition in Mumbai | Best Home Tutors for Class 6-12</title>
+        <meta
+          name="description"
+          content="Looking for home tuition in Mumbai? Saraswati Tutorials provides expert home tutors for CBSE, ICSE, IGCSE, IB & State Board students from Class 6 to 12 across Mumbai."
+        />
+        <link rel="canonical" href="https://mumbai.saraswatitutorial.com/" />
+        
+        {/* Schemas */}
+        <script type="application/ld+json">{JSON.stringify(updatedFaqSchema)}</script>
+        <script type="application/ld+json">{JSON.stringify(localBusinessSchema)}</script>
+      </Helmet>
+
+      {/* Glassmorphism Header */}
+      <header className="sticky top-0 z-50 border-b border-white/30 bg-white/80 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+          <div className="flex items-center gap-4">
+            <Link to="/" className="flex items-center gap-3">
+              <img
+                src="/logo.png"
+                alt="Saraswati Tutorial Logo"
+                className="h-10 w-10 rounded-xl object-contain shadow-sm"
+                onError={(e) => {
+                  e.target.src = "https://placehold.co/100x100?text=ST";
+                }}
+              />
+              <div>
+                <div className="text-lg font-black tracking-tight text-slate-950">
+                  Saraswati Tutorial
+                </div>
+                <div className="text-xs font-semibold text-slate-500">
+                  Home Tutor
+                </div>
+              </div>
+            </Link>
+
+            <LocationDropdown activeCity="Mumbai" />
+          </div>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden items-center gap-6 text-sm font-bold text-slate-700 lg:flex">
+            <a href="#home" className="transition hover:text-blue-600">Home</a>
+            <a href="#why-choose" className="transition hover:text-blue-600">Why Us</a>
+            <a href="#subjects" className="transition hover:text-blue-600">Subjects</a>
+            <a href="#boards" className="transition hover:text-blue-600">Boards</a>
+            <a href="#areas" className="transition hover:text-blue-600">Areas We Serve</a>
+            <a href="#faqs" className="transition hover:text-blue-600">FAQs</a>
+          </nav>
+
+          <div className="hidden items-center gap-3 lg:flex">
+            <Link
+              to="/parent-enquiry"
+              className="rounded-xl bg-slate-950 px-5 py-2.5 text-xs font-black text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-black"
+            >
+              Book Free Demo
+            </Link>
+            <Link
+              to="/tutor-register"
+              className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-xs font-black text-white shadow-lg transition hover:-translate-y-0.5"
+            >
+              Become a Tutor
+            </Link>
+          </div>
+
+          <button
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="rounded-xl border border-slate-200 bg-white p-2 text-slate-800 lg:hidden"
+            aria-label="Open Navigation Menu"
+          >
+            {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
+
+        {/* Mobile Navigation */}
+        <AnimatePresence>
+          {menuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="border-t border-slate-100 bg-white px-6 py-4 lg:hidden"
+            >
+              <div className="flex flex-col gap-4 text-base font-bold text-slate-800">
+                <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                  <span className="text-xs font-black uppercase text-slate-400">Select City:</span>
+                  <LocationDropdown activeCity="Mumbai" />
+                </div>
+                <a href="#home" onClick={() => setMenuOpen(false)} className="py-2">Home</a>
+                <a href="#why-choose" onClick={() => setMenuOpen(false)} className="py-2">Why Us</a>
+                <a href="#subjects" onClick={() => setMenuOpen(false)} className="py-2">Subjects</a>
+                <a href="#boards" onClick={() => setMenuOpen(false)} className="py-2">Boards</a>
+                <a href="#areas" onClick={() => setMenuOpen(false)} className="py-2">Areas We Serve</a>
+                <a href="#faqs" onClick={() => setMenuOpen(false)} className="py-2">FAQs</a>
+                <Link
+                  to="/parent-enquiry"
+                  onClick={() => setMenuOpen(false)}
+                  className="rounded-xl bg-slate-950 py-3 text-center text-white font-black"
+                >
+                  Book Free Demo
+                </Link>
+                <Link
+                  to="/tutor-register"
+                  onClick={() => setMenuOpen(false)}
+                  className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 py-3 text-center text-white font-black"
+                >
+                  Become a Tutor
+                </Link>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </header>
+
+      {/* Hero Section */}
+      <section
+        id="home"
+        className="relative overflow-hidden bg-[radial-gradient(circle_at_top_left,#3b82f622,transparent_35%),radial-gradient(circle_at_top_right,#6366f122,transparent_30%),linear-gradient(135deg,#020617,#0f172a_50%,#1e1b4b)] py-20 text-white md:py-32"
+      >
+        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-50 to-transparent" />
+
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="grid gap-12 lg:grid-cols-12 lg:items-center">
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="lg:col-span-7"
+            >
+              <span className="mb-6 inline-flex items-center gap-2 rounded-full bg-blue-500/10 px-4 py-1.5 text-xs font-bold text-blue-300 ring-1 ring-blue-500/25">
+                <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+                Premium Home & Online Tuition in Mumbai
+              </span>
+
+              <h1 className="text-4xl font-black tracking-tight text-white md:text-6xl lg:leading-tight">
+                Home Tuition in Mumbai for Class 6 to 12
+              </h1>
+
+              <p className="mt-6 text-lg leading-relaxed text-slate-300">
+                Expert home tutors and online classes for CBSE, ICSE, IGCSE, IB & State Board students across Mumbai. Personalized one-to-one tuition for Maths, Science, English and Commerce subjects.
+              </p>
+
+              <div className="mt-8 flex flex-wrap gap-4">
+                <Link
+                  to="/parent-enquiry"
+                  className="group inline-flex items-center gap-2 rounded-2xl bg-white px-7 py-4 font-black text-slate-950 shadow-xl shadow-blue-950/20 transition hover:-translate-y-0.5 hover:bg-slate-100"
+                >
+                  Book Free Demo Class
+                  <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+                </Link>
+
+                <Link
+                  to="/parent-enquiry"
+                  className="rounded-2xl border border-white/20 bg-white/5 px-7 py-4 font-black text-white backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/10"
+                >
+                  Hire a Home Tutor
+                </Link>
+              </div>
+
+              {/* Quick Stats Grid */}
+              <div className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-4">
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
+                  <div className="text-2xl font-black text-blue-400">50+</div>
+                  <div className="text-xs font-semibold text-slate-400">Verified Tutors</div>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
+                  <div className="text-2xl font-black text-blue-400">25+</div>
+                  <div className="text-xs font-semibold text-slate-400">Subjects Covered</div>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
+                  <div className="text-2xl font-black text-blue-400">All Boards</div>
+                  <div className="text-xs font-semibold text-slate-400">Comprehensive Syllabus</div>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
+                  <div className="text-2xl font-black text-blue-400">Free Trial</div>
+                  <div className="text-xs font-semibold text-slate-400">Demo Class</div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Quick Consultation Feature Panel */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="hidden lg:block lg:col-span-5"
+            >
+              <div className="rounded-[2.5rem] border border-white/10 bg-white/5 p-6 shadow-2xl backdrop-blur-xl">
+                <div className="rounded-[2rem] bg-white p-8 text-slate-900 shadow-2xl">
+                  <h3 className="text-2xl font-black text-slate-950">Parent Consultation</h3>
+                  <p className="mt-2 text-sm text-slate-500">
+                    Get in touch with our curriculum coordinator to discuss syllabus tracking, tutor preferences, and timings.
+                  </p>
+                  
+                  <div className="mt-6 space-y-4">
+                    <div className="flex items-center gap-3 rounded-2xl bg-slate-50 p-4">
+                      <Phone className="h-5 w-5 text-blue-600" />
+                      <div>
+                        <div className="text-xs font-bold text-slate-400">Call/WhatsApp</div>
+                        <div className="text-sm font-black text-slate-800">+91 9041157689</div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-3 rounded-2xl bg-slate-50 p-4">
+                      <Mail className="h-5 w-5 text-blue-600" />
+                      <div>
+                        <div className="text-xs font-bold text-slate-400">Email Address</div>
+                        <div className="text-sm font-black text-slate-800">services@saraswatitutorial.com</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Link
+                    to="/parent-enquiry"
+                    className="mt-6 flex h-12 w-full items-center justify-center rounded-2xl bg-slate-950 font-black text-white transition hover:bg-black"
+                  >
+                    Request Callback
+                  </Link>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* SEO Intro Section */}
+      <section className="mx-auto max-w-7xl px-6 py-16">
+        <div className="rounded-[2.5rem] border border-slate-200 bg-white p-8 shadow-sm md:p-12">
+          <div className="max-w-4xl">
+            <h2 className="text-xs font-black uppercase tracking-[0.2em] text-blue-600">Overview</h2>
+            <h3 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
+              Home Tuition in Mumbai for Class 6 to 12
+            </h3>
+            
+            <div className="mt-6 space-y-4 text-base leading-relaxed text-slate-600">
+              <p>
+                Saraswati Tutorials provides trusted and result-oriented home tuition in Mumbai for students from Class 6 to 12. We offer experienced private tutors for CBSE, ICSE, IGCSE, IB and Maharashtra State Board students across major areas of Mumbai including Andheri, Bandra, Powai, Borivali, Thane, Navi Mumbai and more. Our personalized one-to-one teaching approach helps students improve conceptual understanding, confidence and academic performance.
+              </p>
+              <p>
+                Whether your child needs help in Maths, Science, Physics, Chemistry, Biology, English or Commerce subjects, our expert tutors provide customized learning plans, regular assessments and dedicated doubt-solving support at home or online.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Why Choose Section */}
+      <section id="why-choose" className="bg-slate-100 py-16 md:py-24">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="text-center">
+            <p className="text-xs font-black uppercase tracking-[0.25em] text-blue-600">Core Benefits</p>
+            <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-5xl">
+              Why Parents Prefer Saraswati Tutorials in Mumbai
+            </h2>
+            <p className="mx-auto mt-4 max-w-2xl text-slate-600">
+              We stand apart through our student-first philosophy, matching children with vetted subject-matter experts who act as academic mentors.
+            </p>
+          </div>
+
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {whyChooseUs.map((item, idx) => {
+              const IconComp = item.icon;
+              return (
+                <motion.div
+                  whileHover={{ y: -5 }}
+                  transition={{ duration: 0.2 }}
+                  key={idx}
+                  className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200 transition hover:shadow-xl hover:shadow-slate-200/50"
+                >
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+                    <IconComp className="h-6 w-6" />
+                  </div>
+                  <h4 className="mt-5 text-lg font-black text-slate-950">{item.title}</h4>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-500">{item.desc}</p>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Subjects Section */}
+      <section id="subjects" className="mx-auto max-w-7xl px-6 py-16 md:py-24">
+        <div className="text-center">
+          <p className="text-xs font-black uppercase tracking-[0.25em] text-blue-600">Tuition Programs</p>
+          <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-5xl">
+            Subjects Available for Home Tuition in Mumbai
+          </h2>
+          <p className="mx-auto mt-4 max-w-2xl text-slate-600">
+            Comprehensive curriculum guidance covering science, mathematics, literature, and accounting.
+          </p>
+        </div>
+
+        <div className="mt-12 space-y-12">
+          {/* School Subjects */}
+          <div>
+            <h3 className="text-xl font-black text-slate-800 border-l-4 border-blue-600 pl-3 mb-6">
+              School Subjects
+            </h3>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {schoolSubjects.map((subj, idx) => (
+                <div
+                  key={idx}
+                  className="group rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:bg-slate-950 hover:text-white"
+                >
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 font-bold text-slate-800 transition group-hover:bg-white/10 group-hover:text-white">
+                    {idx + 1}
+                  </div>
+                  <h4 className="mt-5 text-xl font-black group-hover:text-white">{subj.title}</h4>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-500 group-hover:text-slate-300">
+                    {subj.desc}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Commerce Subjects */}
+          <div>
+            <h3 className="text-xl font-black text-slate-800 border-l-4 border-indigo-600 pl-3 mb-6">
+              Commerce Subjects
+            </h3>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {commerceSubjects.map((subj, idx) => (
+                <div
+                  key={idx}
+                  className="group rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:bg-slate-950 hover:text-white"
+                >
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 font-bold text-slate-800 transition group-hover:bg-white/10 group-hover:text-white">
+                    {idx + 1}
+                  </div>
+                  <h4 className="mt-5 text-xl font-black group-hover:text-white">{subj.title}</h4>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-500 group-hover:text-slate-300">
+                    {subj.desc}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Boards Section */}
+      <section id="boards" className="bg-slate-950 py-16 text-white md:py-24">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="text-center">
+            <p className="text-xs font-black uppercase tracking-[0.25em] text-blue-400">Board Coverage</p>
+            <h2 className="mt-2 text-3xl font-black tracking-tight text-white md:text-5xl">
+              Boards We Cover
+            </h2>
+            <p className="mx-auto mt-4 max-w-2xl text-slate-400">
+              Our teachers are thoroughly familiar with board assessment blueprints, question patterns, and formatting guidelines.
+            </p>
+          </div>
+
+          <div className="mt-12 grid gap-6 md:grid-cols-5">
+            {boards.map((board, idx) => (
+              <div
+                key={idx}
+                className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur"
+              >
+                <div className="text-xs font-bold text-blue-400 uppercase tracking-widest">Syllabus</div>
+                <h4 className="mt-2 text-xl font-black text-white">{board.name}</h4>
+                <p className="mt-3 text-xs leading-relaxed text-slate-400">{board.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Classes Section */}
+      <section className="mx-auto max-w-7xl px-6 py-16 md:py-24">
+        <div className="text-center">
+          <p className="text-xs font-black uppercase tracking-[0.25em] text-blue-600">Structured Modules</p>
+          <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-5xl">
+            Tuition Classes Available
+          </h2>
+          <p className="mx-auto mt-4 max-w-2xl text-slate-600">
+            Tailored grade-wise guidance designed to secure high scores and bolster conceptual foundations.
+          </p>
+        </div>
+
+        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {classesList.map((cls, idx) => (
+            <div
+              key={idx}
+              className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-lg"
+            >
+              <span className="inline-block rounded-lg bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
+                Secondary & High School
+              </span>
+              <h4 className="mt-4 text-lg font-black text-slate-950">{cls.title}</h4>
+              <p className="mt-2 text-xs leading-relaxed text-slate-500">{cls.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Areas We Serve */}
+      <section id="areas" className="bg-slate-100 py-16 md:py-24">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="text-center">
+            <p className="text-xs font-black uppercase tracking-[0.25em] text-blue-600">Locations</p>
+            <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-5xl">
+              Home Tuition Available Across Mumbai
+            </h2>
+            <p className="mx-auto mt-4 max-w-2xl text-slate-600">
+              Our network of verified home tutors reaches all major commercial and residential pockets in Mumbai.
+            </p>
+          </div>
+
+          <div className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
+            {areas.map((area, idx) => (
+              <div
+                key={idx}
+                className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4"
+              >
+                <MapPin className="h-4 w-4 text-blue-600 shrink-0" />
+                <span className="text-sm font-bold text-slate-800">{area}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="mx-auto mt-8 max-w-3xl text-center text-sm leading-relaxed text-slate-500">
+            <p>
+              Saraswati Tutorials has a widespread network of home tutors spanning across the entire Mumbai metropolitan region. Whether you live in South Mumbai, the Western Suburbs, the Eastern Suburbs, or neighboring areas like Thane and Navi Mumbai, we can match you with an experienced private tutor who can conduct offline classes at your residence. In addition to offline sessions, our tutors are equipped to offer highly engaging and interactive online live classes, providing flexibility for busy student schedules.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* How it Works */}
+      <section className="mx-auto max-w-7xl px-6 py-16 md:py-24">
+        <div className="text-center">
+          <p className="text-xs font-black uppercase tracking-[0.25em] text-blue-600">Process Flow</p>
+          <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-5xl">
+            How Our Tutor Matching Process Works
+          </h2>
+          <p className="mx-auto mt-4 max-w-2xl text-slate-600">
+            Four simple steps to match your child with their perfect private home tutor.
+          </p>
+        </div>
+
+        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {steps.map((step, idx) => (
+            <div key={idx} className="relative rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+              <div className="absolute -top-4 left-6 flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 font-black text-white shadow">
+                {idx + 1}
+              </div>
+              <h4 className="mt-4 text-lg font-black text-slate-950">{step.title}</h4>
+              <p className="mt-2 text-xs leading-relaxed text-slate-500">{step.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Parent Trust / Testimonials */}
+      <section className="bg-slate-950 py-16 text-white md:py-24">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="text-center">
+            <p className="text-xs font-black uppercase tracking-[0.25em] text-blue-400">Testimonials</p>
+            <h2 className="mt-2 text-3xl font-black tracking-tight text-white md:text-5xl">
+              Trusted by Parents Across Mumbai
+            </h2>
+            <p className="mx-auto mt-4 max-w-2xl text-slate-400">
+              We focus on conceptual clarity, academic improvement and personalized attention for every student. Our tutors regularly track student performance and help children become more confident in exams and school studies.
+            </p>
+          </div>
+
+          <div className="mt-12 grid gap-6 md:grid-cols-3">
+            {testimonials.map((t, idx) => (
+              <div key={idx} className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur">
+                <div className="flex gap-1">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
+                  ))}
+                </div>
+                <p className="mt-4 text-sm leading-relaxed text-slate-300">"{t.text}"</p>
+                <div className="mt-6 border-t border-white/10 pt-4">
+                  <div className="font-black text-white">{t.name}</div>
+                  <div className="text-xs text-slate-400">{t.role} ({t.location})</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section id="faqs" className="mx-auto max-w-4xl px-6 py-16 md:py-24">
+        <div className="text-center">
+          <p className="text-xs font-black uppercase tracking-[0.25em] text-blue-600">Questions</p>
+          <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-5xl">
+            Frequently Asked Questions
+          </h2>
+        </div>
+
+        <div className="mt-12 space-y-4">
+          {faqs.map((faq, idx) => {
+            const isOpen = activeFaq === idx;
+            return (
+              <div
+                key={idx}
+                className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition"
+              >
+                <button
+                  onClick={() => toggleFaq(idx)}
+                  className="flex w-full items-center justify-between px-6 py-5 text-left font-black text-slate-950 hover:bg-slate-50"
+                >
+                  <span>{faq.q}</span>
+                  {isOpen ? <ChevronUp className="h-5 w-5 text-blue-600" /> : <ChevronDown className="h-5 w-5 text-slate-400" />}
+                </button>
+
+                <AnimatePresence initial={false}>
+                  {isOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <div className="border-t border-slate-100 bg-slate-50 px-6 py-5 text-sm leading-relaxed text-slate-600">
+                        {faq.a}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Future SEO Directory Links */}
+      <section className="bg-slate-100 border-t border-slate-200 py-12">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="text-center">
+            <h4 className="text-xs font-black uppercase tracking-[0.25em] text-slate-500">
+              Future SEO Directories & Resources
+            </h4>
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <Link to="/home-tuition-in-andheri" className="rounded-full bg-white px-4 py-2 text-xs font-bold text-slate-600 ring-1 ring-slate-200 transition hover:bg-slate-50">
+                Home Tuition in Andheri
+              </Link>
+              <Link to="/home-tuition-in-bandra" className="rounded-full bg-white px-4 py-2 text-xs font-bold text-slate-600 ring-1 ring-slate-200 transition hover:bg-slate-50">
+                Home Tuition in Bandra
+              </Link>
+              <Link to="/home-tuition-in-powai" className="rounded-full bg-white px-4 py-2 text-xs font-bold text-slate-600 ring-1 ring-slate-200 transition hover:bg-slate-50">
+                Home Tuition in Powai
+              </Link>
+              <Link to="/home-tuition-in-thane" className="rounded-full bg-white px-4 py-2 text-xs font-bold text-slate-600 ring-1 ring-slate-200 transition hover:bg-slate-50">
+                Home Tuition in Thane
+              </Link>
+              <Link to="/maths-home-tuition-mumbai" className="rounded-full bg-white px-4 py-2 text-xs font-bold text-slate-600 ring-1 ring-slate-200 transition hover:bg-slate-50">
+                Maths Home Tuition Mumbai
+              </Link>
+              <Link to="/science-home-tuition-mumbai" className="rounded-full bg-white px-4 py-2 text-xs font-bold text-slate-600 ring-1 ring-slate-200 transition hover:bg-slate-50">
+                Science Home Tuition Mumbai
+              </Link>
+              <Link to="/cbse-home-tuition-mumbai" className="rounded-full bg-white px-4 py-2 text-xs font-bold text-slate-600 ring-1 ring-slate-200 transition hover:bg-slate-50">
+                CBSE Home Tuition Mumbai
+              </Link>
+              <Link to="/cbse-tuition-mumbai" className="rounded-full bg-white px-4 py-2 text-xs font-bold text-slate-600 ring-1 ring-slate-200 transition hover:bg-slate-50">
+                CBSE Tuition Mumbai
+              </Link>
+              <Link to="/class-10-home-tuition-mumbai" className="rounded-full bg-white px-4 py-2 text-xs font-bold text-slate-600 ring-1 ring-slate-200 transition hover:bg-slate-50">
+                Class 10 Home Tuition Mumbai
+              </Link>
+              <Link to="/class-12-home-tuition-mumbai" className="rounded-full bg-white px-4 py-2 text-xs font-bold text-slate-600 ring-1 ring-slate-200 transition hover:bg-slate-50">
+                Class 12 Home Tuition Mumbai
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="relative overflow-hidden bg-slate-950 py-20 text-white">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,#3b82f615,transparent_60%)]" />
+        <div className="relative mx-auto max-w-4xl px-6 text-center">
+          <h2 className="text-3xl font-black tracking-tight md:text-5xl">
+            Book a Free Demo Class Today
+          </h2>
+          <p className="mx-auto mt-4 max-w-2xl text-slate-400">
+            Get matched with experienced home tutors in Mumbai for your child’s academic needs.
+          </p>
+          <div className="mt-8">
+            <Link
+              to="/parent-enquiry"
+              className="inline-flex items-center gap-2 rounded-2xl bg-white px-8 py-4 font-black text-slate-950 shadow-xl transition hover:-translate-y-0.5 hover:bg-slate-100"
+            >
+              Enquire Now
+              <ArrowRight className="h-5 w-5" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-slate-200 bg-white py-12 text-slate-600">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="grid gap-8 md:grid-cols-4">
+            <div>
+              <div className="flex items-center gap-3">
+                <img
+                  src="/logo.png"
+                  alt="Saraswati Tutorial Logo"
+                  className="h-10 w-10 rounded-xl object-contain"
+                  onError={(e) => {
+                    e.target.src = "https://placehold.co/100x100?text=ST";
+                  }}
+                />
+                <span className="text-lg font-black text-slate-950">Saraswati Tutorial</span>
+              </div>
+              <p className="mt-4 text-sm leading-relaxed text-slate-500">
+                Expert tutoring services mapping local academic boards across Bangalore and Mumbai subdomains.
+              </p>
+            </div>
+
+            <div>
+              <h5 className="font-bold text-slate-900 uppercase tracking-wider text-xs">Direct Services</h5>
+              <ul className="mt-4 space-y-2 text-sm">
+                <li><Link to="/parent-enquiry" className="hover:text-blue-600">Parent Enquiry</Link></li>
+                <li><Link to="/tutor-register" className="hover:text-blue-600">Become a Tutor</Link></li>
+                <li><a href="https://saraswatitutorial.com/" className="hover:text-blue-600">Home Tuition Services</a></li>
+                <li><a href="https://saraswatitutorial.com/#tutors" className="hover:text-blue-600">Online Tuition</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <h5 className="font-bold text-slate-900 uppercase tracking-wider text-xs">Legal Details</h5>
+              <ul className="mt-4 space-y-2 text-sm">
+                <li><Link to="/terms-conditions" className="hover:text-blue-600">Terms & Conditions</Link></li>
+                <li><Link to="/privacy-policy" className="hover:text-blue-600">Privacy Policy</Link></li>
+                <li><Link to="/disclaimer" className="hover:text-blue-600">Disclaimer</Link></li>
+              </ul>
+            </div>
+
+            <div>
+              <h5 className="font-bold text-slate-900 uppercase tracking-wider text-xs">Support Contact</h5>
+              <ul className="mt-4 space-y-2 text-sm">
+                <li className="flex items-center gap-2">
+                  <Phone className="h-4 w-4 text-blue-600" />
+                  <span>+91 9041157689</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Mail className="h-4 w-4 text-blue-600" />
+                  <span>services@saraswatitutorial.com</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="mt-12 border-t border-slate-100 pt-6 text-center text-xs text-slate-400">
+            &copy; {new Date().getFullYear()} Saraswati Tutorials. All rights reserved.
+          </div>
+        </div>
+      </footer>
+
+      <a
+        href="https://wa.me/919041157689"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-5 left-5 z-50 inline-flex items-center gap-2 rounded-full bg-green-500 px-5 py-3 font-black text-white shadow-2xl transition hover:scale-105 hover:bg-green-600"
+      >
+        <MessageCircle className="h-5 w-5" />
+        WhatsApp
+      </a>
+
+      <ChatBot />
     </div>
   );
 }
