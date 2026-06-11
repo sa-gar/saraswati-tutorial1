@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { MessageCircle, X, Send, Bot } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function ChatBot() {
   const host = window.location.hostname;
@@ -220,13 +221,26 @@ export default function ChatBot() {
   return (
     <>
       {!open && (
-        <button
+        <motion.button
           onClick={() => setOpen(true)}
-          className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full bg-slate-950 px-5 py-4 font-bold text-white shadow-2xl transition hover:scale-105 hover:bg-black"
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1, y: [0, -6, 0] }}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          transition={{
+            y: {
+              duration: 4,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: 1
+            },
+            default: { duration: 0.3 }
+          }}
+          className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full border border-white/20 bg-slate-950 text-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] transition hover:bg-black"
+          aria-label="Open Chat"
         >
-          <MessageCircle className="h-5 w-5" />
-          Chat
-        </button>
+          <MessageCircle className="h-6 w-6" />
+        </motion.button>
       )}
 
       {open && (

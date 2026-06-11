@@ -31,7 +31,7 @@ const MotionLink = motion(Link);
 const handleLocationRedirect = (city) => {
   localStorage.setItem("userLocation", city);
   const currentHost = window.location.hostname;
-  
+
   if (city === "Mumbai") {
     if (currentHost.includes("localhost")) {
       window.location.href = "/mumbai";
@@ -49,7 +49,7 @@ const handleLocationRedirect = (city) => {
 
 function LocationDropdown({ activeCity }) {
   const [open, setOpen] = useState(false);
-  
+
   return (
     <div className="relative z-50">
       <motion.button
@@ -62,7 +62,7 @@ function LocationDropdown({ activeCity }) {
         <span>{activeCity}</span>
         <span className="text-[9px] opacity-60">▼</span>
       </motion.button>
-      
+
       {open && (
         <div className="absolute left-0 mt-2 w-32 rounded-2xl border border-white/40 bg-white/70 backdrop-blur-md p-1.5 shadow-xl ring-1 ring-slate-200/50">
           <motion.button
@@ -72,9 +72,8 @@ function LocationDropdown({ activeCity }) {
               setOpen(false);
               handleLocationRedirect("Bangalore");
             }}
-            className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-bold transition hover:bg-white/50 ${
-              activeCity === "Bangalore" ? "text-blue-600 bg-blue-50/50" : "text-slate-700"
-            }`}
+            className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-bold transition hover:bg-white/50 ${activeCity === "Bangalore" ? "text-blue-600 bg-blue-50/50" : "text-slate-700"
+              }`}
           >
             Bangalore
           </motion.button>
@@ -85,9 +84,8 @@ function LocationDropdown({ activeCity }) {
               setOpen(false);
               handleLocationRedirect("Mumbai");
             }}
-            className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-bold transition hover:bg-white/50 ${
-              activeCity === "Mumbai" ? "text-blue-600 bg-blue-50/50" : "text-slate-700"
-            }`}
+            className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-bold transition hover:bg-white/50 ${activeCity === "Mumbai" ? "text-blue-600 bg-blue-50/50" : "text-slate-700"
+              }`}
           >
             Mumbai
           </motion.button>
@@ -290,8 +288,8 @@ export default function MumbaiPage() {
   ];
 
   const areas = [
-    "Andheri", "Bandra", "Powai", "Dadar", "Borivali", 
-    "Kandivali", "Malad", "Goregaon", "Thane", "Navi Mumbai", 
+    "Andheri", "Bandra", "Powai", "Dadar", "Borivali",
+    "Kandivali", "Malad", "Goregaon", "Thane", "Navi Mumbai",
     "Chembur", "Vashi", "Ghatkopar", "Mulund", "Colaba"
   ];
 
@@ -319,7 +317,7 @@ export default function MumbaiPage() {
   const steps = [
     { title: "Submit Requirement", desc: "Share your child's class, board, subjects, location, and budget with us." },
     { title: "Tutor Shortlisting", desc: "Our team selects the most suitable and experienced tutors for your requirements." },
-    { title: "Free Demo Class", desc: "Evaluate the teacher's style and chemistry with a free, no-obligation demo class." },
+    { title: "Demo Class", desc: "Evaluate the teacher's style and chemistry with a free, no-obligation demo class." },
     { title: "Start Learning", desc: "Begin classes at home or online with scheduled progress reviews." }
   ];
 
@@ -349,7 +347,7 @@ export default function MumbaiPage() {
           content="Looking for home tuition in Mumbai? Saraswati Tutorials provides expert home tutors for CBSE, ICSE, IGCSE, IB & State Board students from Class 6 to 12 across Mumbai."
         />
         <link rel="canonical" href="https://mumbai.saraswatitutorial.com/" />
-        
+
         {/* Schemas */}
         <script type="application/ld+json">{JSON.stringify(updatedFaqSchema)}</script>
         <script type="application/ld+json">{JSON.stringify(localBusinessSchema)}</script>
@@ -551,7 +549,7 @@ export default function MumbaiPage() {
                   <p className="mt-2 text-xs text-slate-300">
                     Get in touch with our curriculum coordinator to discuss syllabus tracking, tutor preferences, and timings.
                   </p>
-                  
+
                   <div className="mt-6 space-y-3">
                     <div className="flex items-center gap-3 rounded-2xl bg-white/5 border border-white/10 p-3.5 backdrop-blur-sm">
                       <Phone className="h-5 w-5 text-blue-400" />
@@ -560,7 +558,7 @@ export default function MumbaiPage() {
                         <div className="text-sm font-black text-white">+91 9041157689</div>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center gap-3 rounded-2xl bg-white/5 border border-white/10 p-3.5 backdrop-blur-sm">
                       <Mail className="h-5 w-5 text-blue-400" />
                       <div>
@@ -593,7 +591,7 @@ export default function MumbaiPage() {
             <h3 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
               Home Tuition in Mumbai for Class 6 to 12
             </h3>
-            
+
             <div className="mt-6 space-y-4 text-base leading-relaxed text-slate-600">
               <p>
                 Saraswati Tutorials provides trusted and result-oriented home tuition in Mumbai for students from Class 6 to 12. We offer experienced private tutors for CBSE, ICSE, IGCSE, IB and Maharashtra State Board students across major areas of Mumbai including Andheri, Bandra, Powai, Borivali, Thane, Navi Mumbai and more. Our personalized one-to-one teaching approach helps students improve conceptual understanding, confidence and academic performance.
@@ -923,88 +921,7 @@ export default function MumbaiPage() {
         </div>
       </section>
 
-      {/* Future SEO Directory Links */}
-      <section className="border-t border-white/20 bg-white/20 backdrop-blur-md py-12">
-        <div className="mx-auto max-w-7xl px-6">
-          <div className="text-center">
-            <h4 className="text-xs font-black uppercase tracking-[0.25em] text-slate-500">
-              Find Home Tutors Near You
-            </h4>
-            <div className="mt-6 flex flex-wrap justify-center gap-3">
-              <MotionLink
-                to="/home-tuition-in-andheri"
-                whileTap={{ scale: 0.95, backgroundColor: "rgba(15, 23, 42, 0.1)", borderColor: "rgba(15, 23, 42, 0.3)" }}
-                className="rounded-full border border-white/50 bg-white/40 px-4 py-2 text-xs font-bold text-slate-700 backdrop-blur-sm transition hover:bg-white/60 hover:scale-105"
-              >
-                Home Tuition in Andheri
-              </MotionLink>
-              <MotionLink
-                to="/home-tuition-in-bandra"
-                whileTap={{ scale: 0.95, backgroundColor: "rgba(15, 23, 42, 0.1)", borderColor: "rgba(15, 23, 42, 0.3)" }}
-                className="rounded-full border border-white/50 bg-white/40 px-4 py-2 text-xs font-bold text-slate-700 backdrop-blur-sm transition hover:bg-white/60 hover:scale-105"
-              >
-                Home Tuition in Bandra
-              </MotionLink>
-              <MotionLink
-                to="/home-tuition-in-powai"
-                whileTap={{ scale: 0.95, backgroundColor: "rgba(15, 23, 42, 0.1)", borderColor: "rgba(15, 23, 42, 0.3)" }}
-                className="rounded-full border border-white/50 bg-white/40 px-4 py-2 text-xs font-bold text-slate-700 backdrop-blur-sm transition hover:bg-white/60 hover:scale-105"
-              >
-                Home Tuition in Powai
-              </MotionLink>
-              <MotionLink
-                to="/home-tuition-in-thane"
-                whileTap={{ scale: 0.95, backgroundColor: "rgba(15, 23, 42, 0.1)", borderColor: "rgba(15, 23, 42, 0.3)" }}
-                className="rounded-full border border-white/50 bg-white/40 px-4 py-2 text-xs font-bold text-slate-700 backdrop-blur-sm transition hover:bg-white/60 hover:scale-105"
-              >
-                Home Tuition in Thane
-              </MotionLink>
-              <MotionLink
-                to="/maths-home-tuition-mumbai"
-                whileTap={{ scale: 0.95, backgroundColor: "rgba(15, 23, 42, 0.1)", borderColor: "rgba(15, 23, 42, 0.3)" }}
-                className="rounded-full border border-white/50 bg-white/40 px-4 py-2 text-xs font-bold text-slate-700 backdrop-blur-sm transition hover:bg-white/60 hover:scale-105"
-              >
-                Maths Home Tuition Mumbai
-              </MotionLink>
-              <MotionLink
-                to="/science-home-tuition-mumbai"
-                whileTap={{ scale: 0.95, backgroundColor: "rgba(15, 23, 42, 0.1)", borderColor: "rgba(15, 23, 42, 0.3)" }}
-                className="rounded-full border border-white/50 bg-white/40 px-4 py-2 text-xs font-bold text-slate-700 backdrop-blur-sm transition hover:bg-white/60 hover:scale-105"
-              >
-                Science Home Tuition Mumbai
-              </MotionLink>
-              <MotionLink
-                to="/cbse-home-tuition-mumbai"
-                whileTap={{ scale: 0.95, backgroundColor: "rgba(15, 23, 42, 0.1)", borderColor: "rgba(15, 23, 42, 0.3)" }}
-                className="rounded-full border border-white/50 bg-white/40 px-4 py-2 text-xs font-bold text-slate-700 backdrop-blur-sm transition hover:bg-white/60 hover:scale-105"
-              >
-                CBSE Home Tuition Mumbai
-              </MotionLink>
-              <MotionLink
-                to="/cbse-tuition-mumbai"
-                whileTap={{ scale: 0.95, backgroundColor: "rgba(15, 23, 42, 0.1)", borderColor: "rgba(15, 23, 42, 0.3)" }}
-                className="rounded-full border border-white/50 bg-white/40 px-4 py-2 text-xs font-bold text-slate-700 backdrop-blur-sm transition hover:bg-white/60 hover:scale-105"
-              >
-                CBSE Tuition Mumbai
-              </MotionLink>
-              <MotionLink
-                to="/class-10-home-tuition-mumbai"
-                whileTap={{ scale: 0.95, backgroundColor: "rgba(15, 23, 42, 0.1)", borderColor: "rgba(15, 23, 42, 0.3)" }}
-                className="rounded-full border border-white/50 bg-white/40 px-4 py-2 text-xs font-bold text-slate-700 backdrop-blur-sm transition hover:bg-white/60 hover:scale-105"
-              >
-                Class 10 Home Tuition Mumbai
-              </MotionLink>
-              <MotionLink
-                to="/class-12-home-tuition-mumbai"
-                whileTap={{ scale: 0.95, backgroundColor: "rgba(15, 23, 42, 0.1)", borderColor: "rgba(15, 23, 42, 0.3)" }}
-                className="rounded-full border border-white/50 bg-white/40 px-4 py-2 text-xs font-bold text-slate-700 backdrop-blur-sm transition hover:bg-white/60 hover:scale-105"
-              >
-                Class 12 Home Tuition Mumbai
-              </MotionLink>
-            </div>
-          </div>
-        </div>
-      </section>
+
 
       {/* CTA Section */}
       <section className="relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 py-20 text-white border-t border-white/10">
@@ -1094,11 +1011,37 @@ export default function MumbaiPage() {
         href="https://wa.me/919041157689"
         target="_blank"
         rel="noopener noreferrer"
-        whileTap={{ scale: 0.95, backgroundColor: "rgba(34, 197, 94, 0.2)", borderColor: "rgba(34, 197, 94, 0.5)", color: "#22c55e" }}
-        className="fixed bottom-5 left-5 z-50 inline-flex items-center gap-2 rounded-full border border-transparent bg-green-500 px-5 py-3 font-black text-white shadow-2xl transition hover:scale-105 hover:bg-green-600"
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1, y: [0, -6, 0] }}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.95, backgroundColor: "rgba(37, 211, 102, 0.2)", borderColor: "rgba(37, 211, 102, 0.5)" }}
+        transition={{
+          y: {
+            duration: 4,
+            repeat: Infinity,
+            ease: "easeInOut"
+          },
+          default: { duration: 0.3 }
+        }}
+        className="group fixed bottom-6 left-6 z-50 flex h-14 w-14 items-center justify-center rounded-full border border-white/20 bg-[#25D366] shadow-[0_8px_30px_rgb(0,0,0,0.12)] transition hover:bg-[#128C7E]"
+        aria-label="Contact WhatsApp"
       >
-        <MessageCircle className="h-5 w-5" />
-        WhatsApp
+        <svg
+          className="h-8 w-8"
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          {/* White speech bubble background */}
+          <path
+            fill="white"
+            d="M12.004 2C6.48 2 2 6.48 2 12c0 2.17.69 4.19 1.86 5.86L2 22l4.27-1.13C7.9 21.58 9.9 22 12 22c5.52 0 10-4.48 10-10S17.52 2 12 2z"
+          />
+          {/* Phone handset inside (transitions green color on hover to match background) */}
+          <path
+            className="fill-[#25D366] transition-colors duration-200 group-hover:fill-[#128C7E]"
+            d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"
+          />
+        </svg>
       </motion.a>
 
       <ChatBot />
