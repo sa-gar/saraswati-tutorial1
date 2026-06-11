@@ -778,9 +778,6 @@ export default function MumbaiPage() {
                 />
               </div>
               <div className="p-6">
-                <span className="inline-block rounded-lg bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
-                  Secondary & High School
-                </span>
                 <h4 className="mt-4 text-lg font-black text-slate-950">{cls.title}</h4>
                 <p className="mt-2 text-xs leading-relaxed text-slate-500">{cls.desc}</p>
               </div>
