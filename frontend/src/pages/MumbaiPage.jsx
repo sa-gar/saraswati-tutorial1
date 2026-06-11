@@ -247,13 +247,41 @@ export default function MumbaiPage() {
   ];
 
   const classesList = [
-    { title: "Class 6 Home Tuition", desc: "Strengthening basics in Maths, Science, and English to transition smoothly to secondary levels." },
-    { title: "Class 7 Home Tuition", desc: "Developing analytical and problem-solving skills for growing academic curriculums." },
-    { title: "Class 8 Home Tuition", desc: "Focusing on conceptual depth to prepare a solid launchpad for high school boards." },
-    { title: "Class 9 Home Tuition", desc: "Crucial concept building mapping directly to class 10 boards and foundation exams." },
-    { title: "Class 10 Home Tuition", desc: "Rigorous mock tests, revision cycles, and board paper solving to secure top grades." },
-    { title: "Class 11 Home Tuition", desc: "Specialized guidance for Science (PCM/B) and Commerce streams during the board transition." },
-    { title: "Class 12 Home Tuition", desc: "Dedicated syllabus completion, revision, and practice to score maximum percentages." }
+    {
+      title: "Class 6 Home Tuition",
+      desc: "Strengthening basics in Maths, Science, and English to transition smoothly to secondary levels.",
+      image: "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?auto=format&fit=crop&q=80&w=400"
+    },
+    {
+      title: "Class 7 Home Tuition",
+      desc: "Developing analytical and problem-solving skills for growing academic curriculums.",
+      image: "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&q=80&w=400"
+    },
+    {
+      title: "Class 8 Home Tuition",
+      desc: "Focusing on conceptual depth to prepare a solid launchpad for high school boards.",
+      image: "https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&q=80&w=400"
+    },
+    {
+      title: "Class 9 Home Tuition",
+      desc: "Crucial concept building mapping directly to class 10 boards and foundation exams.",
+      image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=400"
+    },
+    {
+      title: "Class 10 Home Tuition",
+      desc: "Rigorous mock tests, revision cycles, and board paper solving to secure top grades.",
+      image: "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&q=80&w=400"
+    },
+    {
+      title: "Class 11 Home Tuition",
+      desc: "Specialized guidance for Science (PCM/B) and Commerce streams during the board transition.",
+      image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=400"
+    },
+    {
+      title: "Class 12 Home Tuition",
+      desc: "Dedicated syllabus completion, revision, and practice to score maximum percentages.",
+      image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=400"
+    }
   ];
 
   const areas = [
@@ -725,13 +753,23 @@ export default function MumbaiPage() {
           {classesList.map((cls, idx) => (
             <div
               key={idx}
-              className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:shadow-lg"
+              className="overflow-hidden group rounded-3xl border border-white/80 bg-white/50 backdrop-blur-md shadow-sm shadow-slate-100/40 transition hover:bg-white/80 hover:shadow-xl hover:scale-[1.02] duration-300"
             >
-              <span className="inline-block rounded-lg bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
-                Secondary & High School
-              </span>
-              <h4 className="mt-4 text-lg font-black text-slate-950">{cls.title}</h4>
-              <p className="mt-2 text-xs leading-relaxed text-slate-500">{cls.desc}</p>
+              <div className="h-32 w-full overflow-hidden">
+                <img
+                  src={cls.image}
+                  alt={cls.title}
+                  className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                  loading="lazy"
+                />
+              </div>
+              <div className="p-6">
+                <span className="inline-block rounded-lg bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
+                  Secondary & High School
+                </span>
+                <h4 className="mt-4 text-lg font-black text-slate-950">{cls.title}</h4>
+                <p className="mt-2 text-xs leading-relaxed text-slate-500">{cls.desc}</p>
+              </div>
             </div>
           ))}
         </div>
