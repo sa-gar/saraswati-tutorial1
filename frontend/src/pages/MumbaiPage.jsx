@@ -425,10 +425,10 @@ export default function MumbaiPage() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="border-t border-slate-100 bg-white px-6 py-4 lg:hidden"
+              className="border-t border-white/20 bg-white/80 backdrop-blur-lg px-6 py-4 lg:hidden shadow-xl"
             >
               <div className="flex flex-col gap-4 text-base font-bold text-slate-800">
-                <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                <div className="flex items-center justify-between py-2 border-b border-white/20">
                   <span className="text-xs font-black uppercase text-slate-400">Select City:</span>
                   <LocationDropdown activeCity="Mumbai" />
                 </div>
@@ -530,7 +530,7 @@ export default function MumbaiPage() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="hidden lg:block lg:col-span-5"
+              className="lg:col-span-5 w-full mt-10 lg:mt-0"
             >
               <div className="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-slate-900/60 p-4 shadow-2xl backdrop-blur-xl">
                 {/* Tuition realistic picture */}
@@ -736,7 +736,7 @@ export default function MumbaiPage() {
             </p>
           </div>
 
-          <div className="mt-12 grid gap-6 md:grid-cols-5">
+          <div className="mt-12 grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
             {boards.map((board, idx) => (
               <div
                 key={idx}
@@ -861,7 +861,7 @@ export default function MumbaiPage() {
             </p>
           </div>
 
-          <div className="mt-12 grid gap-6 md:grid-cols-3">
+          <div className="mt-12 grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
             {testimonials.map((t, idx) => (
               <div key={idx} className="rounded-3xl border border-white/10 bg-white/5 p-6 backdrop-blur-md transition hover:bg-white/10 hover:border-white/20 hover:scale-[1.02]">
                 <div className="flex gap-1">
