@@ -864,7 +864,7 @@ export default function MumbaiPage() {
                     <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
                   ))}
                 </div>
-                <p className="mt-4 text-sm leading-relaxed text-slate-300">"{t.text}"</p>
+                <p className="mt-4 text-sm leading-relaxed text-slate-300">{t.text}</p>
                 <div className="mt-6 border-t border-white/10 pt-4">
                   <div className="font-black text-white">{t.name}</div>
                   <div className="text-xs text-slate-400">{t.role} ({t.location})</div>
@@ -921,88 +921,7 @@ export default function MumbaiPage() {
         </div>
       </section>
 
-      {/* Future SEO Directory Links */}
-      <section className="border-t border-white/20 bg-white/20 backdrop-blur-md py-12">
-        <div className="mx-auto max-w-7xl px-6">
-          <div className="text-center">
-            <h4 className="text-xs font-black uppercase tracking-[0.25em] text-slate-500">
-              Find Home Tutors Near You
-            </h4>
-            <div className="mt-6 flex flex-wrap justify-center gap-3">
-              <MotionLink
-                to="/home-tuition-in-andheri"
-                whileTap={{ scale: 0.95, backgroundColor: "rgba(15, 23, 42, 0.1)", borderColor: "rgba(15, 23, 42, 0.3)" }}
-                className="rounded-full border border-white/50 bg-white/40 px-4 py-2 text-xs font-bold text-slate-700 backdrop-blur-sm transition hover:bg-white/60 hover:scale-105"
-              >
-                Home Tuition in Andheri
-              </MotionLink>
-              <MotionLink
-                to="/home-tuition-in-bandra"
-                whileTap={{ scale: 0.95, backgroundColor: "rgba(15, 23, 42, 0.1)", borderColor: "rgba(15, 23, 42, 0.3)" }}
-                className="rounded-full border border-white/50 bg-white/40 px-4 py-2 text-xs font-bold text-slate-700 backdrop-blur-sm transition hover:bg-white/60 hover:scale-105"
-              >
-                Home Tuition in Bandra
-              </MotionLink>
-              <MotionLink
-                to="/home-tuition-in-powai"
-                whileTap={{ scale: 0.95, backgroundColor: "rgba(15, 23, 42, 0.1)", borderColor: "rgba(15, 23, 42, 0.3)" }}
-                className="rounded-full border border-white/50 bg-white/40 px-4 py-2 text-xs font-bold text-slate-700 backdrop-blur-sm transition hover:bg-white/60 hover:scale-105"
-              >
-                Home Tuition in Powai
-              </MotionLink>
-              <MotionLink
-                to="/home-tuition-in-thane"
-                whileTap={{ scale: 0.95, backgroundColor: "rgba(15, 23, 42, 0.1)", borderColor: "rgba(15, 23, 42, 0.3)" }}
-                className="rounded-full border border-white/50 bg-white/40 px-4 py-2 text-xs font-bold text-slate-700 backdrop-blur-sm transition hover:bg-white/60 hover:scale-105"
-              >
-                Home Tuition in Thane
-              </MotionLink>
-              <MotionLink
-                to="/maths-home-tuition-mumbai"
-                whileTap={{ scale: 0.95, backgroundColor: "rgba(15, 23, 42, 0.1)", borderColor: "rgba(15, 23, 42, 0.3)" }}
-                className="rounded-full border border-white/50 bg-white/40 px-4 py-2 text-xs font-bold text-slate-700 backdrop-blur-sm transition hover:bg-white/60 hover:scale-105"
-              >
-                Maths Home Tuition Mumbai
-              </MotionLink>
-              <MotionLink
-                to="/science-home-tuition-mumbai"
-                whileTap={{ scale: 0.95, backgroundColor: "rgba(15, 23, 42, 0.1)", borderColor: "rgba(15, 23, 42, 0.3)" }}
-                className="rounded-full border border-white/50 bg-white/40 px-4 py-2 text-xs font-bold text-slate-700 backdrop-blur-sm transition hover:bg-white/60 hover:scale-105"
-              >
-                Science Home Tuition Mumbai
-              </MotionLink>
-              <MotionLink
-                to="/cbse-home-tuition-mumbai"
-                whileTap={{ scale: 0.95, backgroundColor: "rgba(15, 23, 42, 0.1)", borderColor: "rgba(15, 23, 42, 0.3)" }}
-                className="rounded-full border border-white/50 bg-white/40 px-4 py-2 text-xs font-bold text-slate-700 backdrop-blur-sm transition hover:bg-white/60 hover:scale-105"
-              >
-                CBSE Home Tuition Mumbai
-              </MotionLink>
-              <MotionLink
-                to="/cbse-tuition-mumbai"
-                whileTap={{ scale: 0.95, backgroundColor: "rgba(15, 23, 42, 0.1)", borderColor: "rgba(15, 23, 42, 0.3)" }}
-                className="rounded-full border border-white/50 bg-white/40 px-4 py-2 text-xs font-bold text-slate-700 backdrop-blur-sm transition hover:bg-white/60 hover:scale-105"
-              >
-                CBSE Tuition Mumbai
-              </MotionLink>
-              <MotionLink
-                to="/class-10-home-tuition-mumbai"
-                whileTap={{ scale: 0.95, backgroundColor: "rgba(15, 23, 42, 0.1)", borderColor: "rgba(15, 23, 42, 0.3)" }}
-                className="rounded-full border border-white/50 bg-white/40 px-4 py-2 text-xs font-bold text-slate-700 backdrop-blur-sm transition hover:bg-white/60 hover:scale-105"
-              >
-                Class 10 Home Tuition Mumbai
-              </MotionLink>
-              <MotionLink
-                to="/class-12-home-tuition-mumbai"
-                whileTap={{ scale: 0.95, backgroundColor: "rgba(15, 23, 42, 0.1)", borderColor: "rgba(15, 23, 42, 0.3)" }}
-                className="rounded-full border border-white/50 bg-white/40 px-4 py-2 text-xs font-bold text-slate-700 backdrop-blur-sm transition hover:bg-white/60 hover:scale-105"
-              >
-                Class 12 Home Tuition Mumbai
-              </MotionLink>
-            </div>
-          </div>
-        </div>
-      </section>
+
 
       {/* CTA Section */}
       <section className="relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 py-20 text-white border-t border-white/10">
