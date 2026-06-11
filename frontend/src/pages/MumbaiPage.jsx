@@ -178,20 +178,64 @@ export default function MumbaiPage() {
   ];
 
   const schoolSubjects = [
-    { title: "Mathematics Tuition", desc: "Master algebra, calculus, and geometry with step-by-step guidance from expert maths home tutors in Mumbai." },
-    { title: "Science Tuition", desc: "Build a strong foundation in physics, chemistry, and biology for classes 6 to 10 with interactive home tutoring." },
-    { title: "Physics Tuition", desc: "Simplify complex equations, mechanics, and electricity concepts for board exams and competitive entrance tests." },
-    { title: "Chemistry Tuition", desc: "Understand chemical equations, periodic tables, organic chemistry, and reactions with clear personal guidance." },
-    { title: "Biology Tuition", desc: "Excel in life sciences, anatomy, and plant physiology with detailed diagrams, memory aids, and expert tutoring." },
-    { title: "English Tuition", desc: "Improve grammar, literature understanding, essays, and communication skills with patient native educators." },
-    { title: "Hindi Tuition", desc: "Enhance vocabulary, grammar rules, script writing, and comprehension scores with professional Hindi tutors." },
-    { title: "Social Science Tuition", desc: "Score high in history, geography, civics, and economics with structured note-taking and concept maps." },
+    {
+      title: "Mathematics Tuition",
+      desc: "Master algebra, calculus, and geometry with step-by-step guidance from expert maths home tutors in Mumbai.",
+      image: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&q=80&w=600"
+    },
+    {
+      title: "Science Tuition",
+      desc: "Build a strong foundation in physics, chemistry, and biology for classes 6 to 10 with interactive home tutoring.",
+      image: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&q=80&w=600"
+    },
+    {
+      title: "Physics Tuition",
+      desc: "Simplify complex equations, mechanics, and electricity concepts for board exams and competitive entrance tests.",
+      image: "https://images.unsplash.com/photo-1507668077129-56e32842fceb?auto=format&fit=crop&q=80&w=600"
+    },
+    {
+      title: "Chemistry Tuition",
+      desc: "Understand chemical equations, periodic tables, organic chemistry, and reactions with clear personal guidance.",
+      image: "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&q=80&w=600"
+    },
+    {
+      title: "Biology Tuition",
+      desc: "Excel in life sciences, anatomy, and plant physiology with detailed diagrams, memory aids, and expert tutoring.",
+      image: "https://images.unsplash.com/photo-1532187643603-ba119ca4109e?auto=format&fit=crop&q=80&w=600"
+    },
+    {
+      title: "English Tuition",
+      desc: "Improve grammar, literature understanding, essays, and communication skills with patient native educators.",
+      image: "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&q=80&w=600"
+    },
+    {
+      title: "Hindi Tuition",
+      desc: "Enhance vocabulary, grammar rules, script writing, and comprehension scores with professional Hindi tutors.",
+      image: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&q=80&w=600"
+    },
+    {
+      title: "Social Science Tuition",
+      desc: "Score high in history, geography, civics, and economics with structured note-taking and concept maps.",
+      image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=600"
+    }
   ];
 
   const commerceSubjects = [
-    { title: "Accounts Tuition", desc: "Demystify ledger entries, balance sheets, and financial statements for class 11, 12, and college levels." },
-    { title: "Economics Tuition", desc: "Analyze micro and macroeconomics principles, supply-demand curves, and statistics with expert assistance." },
-    { title: "Business Studies Tuition", desc: "Understand business operations, management theories, case studies, and trade practices with home tuition." }
+    {
+      title: "Accounts Tuition",
+      desc: "Demystify ledger entries, balance sheets, and financial statements for class 11, 12, and college levels.",
+      image: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&q=80&w=600"
+    },
+    {
+      title: "Economics Tuition",
+      desc: "Analyze micro and macroeconomics principles, supply-demand curves, and statistics with expert assistance.",
+      image: "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&q=80&w=600"
+    },
+    {
+      title: "Business Studies Tuition",
+      desc: "Understand business operations, management theories, case studies, and trade practices with home tuition.",
+      image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=600"
+    }
   ];
 
   const boards = [
@@ -264,7 +308,7 @@ export default function MumbaiPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-blue-600 selection:text-white">
+    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,#eff6ff,transparent_50%),radial-gradient(ellipse_at_bottom,#f5f3ff,transparent_50%),linear-gradient(to_bottom,#f8fafc,#f1f5f9)] font-sans text-slate-900 selection:bg-blue-600 selection:text-white">
       <Helmet>
         <title>Home Tuition in Mumbai | Best Home Tutors for Class 6-12</title>
         <meta
@@ -279,7 +323,7 @@ export default function MumbaiPage() {
       </Helmet>
 
       {/* Glassmorphism Header */}
-      <header className="sticky top-0 z-50 border-b border-white/30 bg-white/80 backdrop-blur-xl">
+      <header className="sticky top-0 z-50 border-b border-white/20 bg-white/70 backdrop-blur-md shadow-[0_4px_30px_rgba(0,0,0,0.03)]">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-4">
             <Link to="/" className="flex items-center gap-3">
@@ -393,10 +437,7 @@ export default function MumbaiPage() {
               transition={{ duration: 0.6 }}
               className="lg:col-span-7"
             >
-              <span className="mb-6 inline-flex items-center gap-2 rounded-full bg-blue-500/10 px-4 py-1.5 text-xs font-bold text-blue-300 ring-1 ring-blue-500/25">
-                <Sparkles className="h-3.5 w-3.5 text-amber-400" />
-                Premium Home & Online Tuition in Mumbai
-              </span>
+
 
               <h1 className="text-4xl font-black tracking-tight text-white md:text-6xl lg:leading-tight">
                 Home Tuition in Mumbai for Class 6 to 12
@@ -444,43 +485,57 @@ export default function MumbaiPage() {
               </div>
             </motion.div>
 
-            {/* Quick Consultation Feature Panel */}
+            {/* Quick Consultation Feature Panel with Realistic Hero Image */}
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.6, delay: 0.1 }}
               className="hidden lg:block lg:col-span-5"
             >
-              <div className="rounded-[2.5rem] border border-white/10 bg-white/5 p-6 shadow-2xl backdrop-blur-xl">
-                <div className="rounded-[2rem] bg-white p-8 text-slate-900 shadow-2xl">
-                  <h3 className="text-2xl font-black text-slate-950">Parent Consultation</h3>
-                  <p className="mt-2 text-sm text-slate-500">
+              <div className="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-slate-900/60 p-4 shadow-2xl backdrop-blur-xl">
+                {/* Tuition realistic picture */}
+                <div className="relative h-60 w-full overflow-hidden rounded-[2rem] shadow-inner">
+                  <img
+                    src="/mumbai_tutor_hero.png"
+                    alt="Saraswati Home Tuition in Mumbai"
+                    className="h-full w-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
+                  <div className="absolute bottom-4 left-4 rounded-xl bg-blue-600/80 px-3.5 py-1.5 text-[10px] font-black tracking-wide text-white backdrop-blur">
+                    Verified Home Tutors
+                  </div>
+                </div>
+
+                <div className="mt-6 p-4">
+                  <h3 className="text-xl font-black text-white">Mumbai Parent Consultation</h3>
+                  <p className="mt-2 text-xs text-slate-300">
                     Get in touch with our curriculum coordinator to discuss syllabus tracking, tutor preferences, and timings.
                   </p>
                   
-                  <div className="mt-6 space-y-4">
-                    <div className="flex items-center gap-3 rounded-2xl bg-slate-50 p-4">
-                      <Phone className="h-5 w-5 text-blue-600" />
+                  <div className="mt-6 space-y-3">
+                    <div className="flex items-center gap-3 rounded-2xl bg-white/5 border border-white/10 p-3.5 backdrop-blur-sm">
+                      <Phone className="h-5 w-5 text-blue-400" />
                       <div>
-                        <div className="text-xs font-bold text-slate-400">Call/WhatsApp</div>
-                        <div className="text-sm font-black text-slate-800">+91 9041157689</div>
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Call / WhatsApp</div>
+                        <div className="text-sm font-black text-white">+91 9041157689</div>
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-3 rounded-2xl bg-slate-50 p-4">
-                      <Mail className="h-5 w-5 text-blue-600" />
+                    <div className="flex items-center gap-3 rounded-2xl bg-white/5 border border-white/10 p-3.5 backdrop-blur-sm">
+                      <Mail className="h-5 w-5 text-blue-400" />
                       <div>
-                        <div className="text-xs font-bold text-slate-400">Email Address</div>
-                        <div className="text-sm font-black text-slate-800">services@saraswatitutorial.com</div>
+                        <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Email Address</div>
+                        <div className="text-sm font-black text-white">services@saraswatitutorial.com</div>
                       </div>
                     </div>
                   </div>
 
                   <Link
                     to="/parent-enquiry"
-                    className="mt-6 flex h-12 w-full items-center justify-center rounded-2xl bg-slate-950 font-black text-white transition hover:bg-black"
+                    className="mt-6 flex h-13 w-full items-center justify-center gap-2 rounded-2xl bg-white text-sm font-black text-slate-950 transition hover:bg-slate-100"
                   >
-                    Request Callback
+                    Enquire Now
+                    <ArrowRight className="h-4 w-4" />
                   </Link>
                 </div>
               </div>
@@ -511,7 +566,7 @@ export default function MumbaiPage() {
       </section>
 
       {/* Why Choose Section */}
-      <section id="why-choose" className="bg-slate-100 py-16 md:py-24">
+      <section id="why-choose" className="bg-gradient-to-b from-slate-50 to-slate-100/50 py-16 md:py-24">
         <div className="mx-auto max-w-7xl px-6">
           <div className="text-center">
             <p className="text-xs font-black uppercase tracking-[0.25em] text-blue-600">Core Benefits</p>
@@ -531,7 +586,7 @@ export default function MumbaiPage() {
                   whileHover={{ y: -5 }}
                   transition={{ duration: 0.2 }}
                   key={idx}
-                  className="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200 transition hover:shadow-xl hover:shadow-slate-200/50"
+                  className="rounded-3xl border border-white/80 bg-white/60 backdrop-blur-md p-6 shadow-sm shadow-slate-100/50 transition hover:bg-white/85 hover:shadow-xl hover:shadow-slate-200/50"
                 >
                   <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
                     <IconComp className="h-6 w-6" />
@@ -567,15 +622,25 @@ export default function MumbaiPage() {
               {schoolSubjects.map((subj, idx) => (
                 <div
                   key={idx}
-                  className="group rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:bg-slate-950 hover:text-white"
+                  className="overflow-hidden group rounded-3xl border border-white/80 bg-white/50 backdrop-blur-md shadow-sm shadow-slate-100/40 transition hover:bg-white/80 hover:shadow-xl hover:scale-[1.02] duration-300"
                 >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 font-bold text-slate-800 transition group-hover:bg-white/10 group-hover:text-white">
-                    {idx + 1}
+                  <div className="h-44 w-full overflow-hidden">
+                    <img
+                      src={subj.image}
+                      alt={subj.title}
+                      className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                      loading="lazy"
+                    />
                   </div>
-                  <h4 className="mt-5 text-xl font-black group-hover:text-white">{subj.title}</h4>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-500 group-hover:text-slate-300">
-                    {subj.desc}
-                  </p>
+                  <div className="p-6">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 font-black text-blue-600 transition group-hover:bg-blue-100">
+                      {idx + 1}
+                    </div>
+                    <h4 className="mt-4 text-xl font-black text-slate-950">{subj.title}</h4>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-500">
+                      {subj.desc}
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
@@ -590,15 +655,25 @@ export default function MumbaiPage() {
               {commerceSubjects.map((subj, idx) => (
                 <div
                   key={idx}
-                  className="group rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:bg-slate-950 hover:text-white"
+                  className="overflow-hidden group rounded-3xl border border-white/80 bg-white/50 backdrop-blur-md shadow-sm shadow-slate-100/40 transition hover:bg-white/80 hover:shadow-xl hover:scale-[1.02] duration-300"
                 >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 font-bold text-slate-800 transition group-hover:bg-white/10 group-hover:text-white">
-                    {idx + 1}
+                  <div className="h-44 w-full overflow-hidden">
+                    <img
+                      src={subj.image}
+                      alt={subj.title}
+                      className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                      loading="lazy"
+                    />
                   </div>
-                  <h4 className="mt-5 text-xl font-black group-hover:text-white">{subj.title}</h4>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-500 group-hover:text-slate-300">
-                    {subj.desc}
-                  </p>
+                  <div className="p-6">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 font-black text-indigo-600 transition group-hover:bg-indigo-100">
+                      {idx + 1}
+                    </div>
+                    <h4 className="mt-4 text-xl font-black text-slate-950">{subj.title}</h4>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-500">
+                      {subj.desc}
+                    </p>
+                  </div>
                 </div>
               ))}
             </div>
