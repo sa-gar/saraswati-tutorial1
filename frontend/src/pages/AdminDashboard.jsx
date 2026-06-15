@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
-const EDUCATION_CERT_PASSWORD = "saraswati123";
+const EDUCATION_CERT_PASSWORD = "saraswati7250";
 
 const LEAD_STATUSES = [
   "New Lead",
