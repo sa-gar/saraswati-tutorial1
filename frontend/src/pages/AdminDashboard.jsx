@@ -1,11 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+<<<<<<< HEAD
 const API_BASE =
   window.location.hostname === "localhost" ||
   window.location.hostname === "127.0.0.1"
     ? "http://localhost:5000/api"
     : "https://saraswati-tutorial1-2.onrender.com/api";
+=======
+const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
+const EDUCATION_CERT_PASSWORD = "saraswati7250";
+>>>>>>> 8f142b29bf537008dd681b9eac78e44e8e54db5c
 
 const LEAD_STATUSES = [
   "New Lead",
@@ -184,7 +189,6 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [leadFilter, setLeadFilter] = useState("All Leads");
-  const [selectedCity, setSelectedCity] = useState("All Cities");
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   const [showParents, setShowParents] = useState(true);
@@ -260,124 +264,36 @@ export default function AdminDashboard() {
 
       const matchesSearch = !q || buildSearchText(parentEnquiry).includes(q);
 
+<<<<<<< HEAD
       const matchesCity =
         selectedCity === "All Cities" ||
         (selectedCity === "Mumbai" && String(parentEnquiry.address || parentEnquiry.area || "").toLowerCase().includes("mumbai")) ||
         (selectedCity === "Bangalore" && !String(parentEnquiry.address || parentEnquiry.area || "").toLowerCase().includes("mumbai"));
 
       return matchesFilter && matchesSearch && matchesCity;
+=======
+      return matchesFilter && matchesSearch;
+>>>>>>> 8f142b29bf537008dd681b9eac78e44e8e54db5c
     });
-  }, [parentEnquiries, search, leadFilter, selectedCity]);
+  }, [parentEnquiries, search, leadFilter]);
 
   const filteredTutors = useMemo(() => {
-    return tutors.filter((t) => {
-      const matchesSearch =
+    return tutors.filter(
+      (t) =>
         t.name?.toLowerCase().includes(search.toLowerCase()) ||
         t.subject?.toLowerCase().includes(search.toLowerCase()) ||
         t.location?.toLowerCase().includes(search.toLowerCase()) ||
         t.email?.toLowerCase().includes(search.toLowerCase()) ||
-        t.phone?.toLowerCase().includes(search.toLowerCase());
+        t.phone?.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [tutors, search]);
 
-      const matchesCity =
-        selectedCity === "All Cities" ||
-        (selectedCity === "Mumbai" && (
-          String(t.location || "").toLowerCase().includes("mumbai") ||
-          t.locations?.some(loc => String(loc || "").toLowerCase().includes("mumbai"))
-        )) ||
-        (selectedCity === "Bangalore" && !(
-          String(t.location || "").toLowerCase().includes("mumbai") ||
-          t.locations?.some(loc => String(loc || "").toLowerCase().includes("mumbai"))
-        ));
+  const pendingTutors = tutors.filter(
+    (t) => !t.status || t.status === "pending"
+  ).length;
 
-      return matchesSearch && matchesCity;
-    });
-  }, [tutors, search, selectedCity]);
-
-  const filteredBookings = useMemo(() => {
-    return bookings.filter((b) => {
-      const tutor = tutors.find(t => t._id === b.tutorId || t.name === b.tutorName);
-      if (!tutor) return true;
-
-      const isMumbaiTutor =
-        String(tutor.location || "").toLowerCase().includes("mumbai") ||
-        tutor.locations?.some(loc => String(loc || "").toLowerCase().includes("mumbai"));
-
-      if (selectedCity === "Mumbai") return isMumbaiTutor;
-      if (selectedCity === "Bangalore") return !isMumbaiTutor;
-      return true;
-    });
-  }, [bookings, tutors, selectedCity]);
-
-  const filteredEnquiries = useMemo(() => {
-    return enquiries.filter((e) => {
-      const messageOrSubj = String(e.message || "").toLowerCase() + " " + String(e.subjectNeeded || "").toLowerCase();
-      const isMumbaiEnquiry = messageOrSubj.includes("mumbai");
-      if (selectedCity === "Mumbai") return isMumbaiEnquiry;
-      if (selectedCity === "Bangalore") return !isMumbaiEnquiry;
-      return true;
-    });
-  }, [enquiries, selectedCity]);
-
-  const pendingTutors = tutors.filter((t) => {
-    const isPending = !t.status || t.status === "pending";
-    const matchesCity =
-      selectedCity === "All Cities" ||
-      (selectedCity === "Mumbai" && (
-        String(t.location || "").toLowerCase().includes("mumbai") ||
-        t.locations?.some(loc => String(loc || "").toLowerCase().includes("mumbai"))
-      )) ||
-      (selectedCity === "Bangalore" && !(
-        String(t.location || "").toLowerCase().includes("mumbai") ||
-        t.locations?.some(loc => String(loc || "").toLowerCase().includes("mumbai"))
-      ));
-    return isPending && matchesCity;
-  }).length;
-
-  const approvedTutors = tutors.filter((t) => {
-    const isApproved = t.status === "approved";
-    const matchesCity =
-      selectedCity === "All Cities" ||
-      (selectedCity === "Mumbai" && (
-        String(t.location || "").toLowerCase().includes("mumbai") ||
-        t.locations?.some(loc => String(loc || "").toLowerCase().includes("mumbai"))
-      )) ||
-      (selectedCity === "Bangalore" && !(
-        String(t.location || "").toLowerCase().includes("mumbai") ||
-        t.locations?.some(loc => String(loc || "").toLowerCase().includes("mumbai"))
-      ));
-    return isApproved && matchesCity;
-  }).length;
-
-  const rejectedTutors = tutors.filter((t) => {
-    const isRejected = t.status === "rejected";
-    const matchesCity =
-      selectedCity === "All Cities" ||
-      (selectedCity === "Mumbai" && (
-        String(t.location || "").toLowerCase().includes("mumbai") ||
-        t.locations?.some(loc => String(loc || "").toLowerCase().includes("mumbai"))
-      )) ||
-      (selectedCity === "Bangalore" && !(
-        String(t.location || "").toLowerCase().includes("mumbai") ||
-        t.locations?.some(loc => String(loc || "").toLowerCase().includes("mumbai"))
-      ));
-    return isRejected && matchesCity;
-  }).length;
-
-  const totalTutorsCount = useMemo(() => {
-    return tutors.filter((t) => {
-      const matchesCity =
-        selectedCity === "All Cities" ||
-        (selectedCity === "Mumbai" && (
-          String(t.location || "").toLowerCase().includes("mumbai") ||
-          t.locations?.some(loc => String(loc || "").toLowerCase().includes("mumbai"))
-        )) ||
-        (selectedCity === "Bangalore" && !(
-          String(t.location || "").toLowerCase().includes("mumbai") ||
-          t.locations?.some(loc => String(loc || "").toLowerCase().includes("mumbai"))
-        ));
-      return matchesCity;
-    }).length;
-  }, [tutors, selectedCity]);
+  const approvedTutors = tutors.filter((t) => t.status === "approved").length;
+  const rejectedTutors = tutors.filter((t) => t.status === "rejected").length;
 
   const updateLeadStatus = async (id, status) => {
     try {
@@ -636,25 +552,29 @@ export default function AdminDashboard() {
         <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
             title="Total Tutors"
-            value={totalTutorsCount}
+            value={tutors.length}
             subtitle={`${approvedTutors} approved`}
           />
 
           <StatCard
             title="Parent Leads"
+<<<<<<< HEAD
             value={parentEnquiries.filter(p => selectedCity === "All Cities" || (selectedCity === "Mumbai" && String(p.address || p.area || "").toLowerCase().includes("mumbai")) || (selectedCity === "Bangalore" && !String(p.address || p.area || "").toLowerCase().includes("mumbai"))).length}
+=======
+            value={parentEnquiries.length}
+>>>>>>> 8f142b29bf537008dd681b9eac78e44e8e54db5c
             subtitle={`${filteredParentEnquiries.length} visible`}
           />
 
           <StatCard
             title="General Enquiries"
-            value={filteredEnquiries.length}
+            value={enquiries.length}
             subtitle="Website enquiries"
           />
 
           <StatCard
             title="Bookings"
-            value={filteredBookings.length}
+            value={bookings.length}
             subtitle="Scheduled sessions"
           />
         </div>
@@ -666,7 +586,7 @@ export default function AdminDashboard() {
         </div>
 
         <div className="mb-8 rounded-[2rem] bg-white p-4 shadow-sm ring-1 ring-slate-200">
-          <div className="grid gap-3 md:grid-cols-[1fr_180px_180px_auto_auto]">
+          <div className="grid gap-3 md:grid-cols-[1fr_240px_auto_auto]">
             <div className="relative">
               <input
                 value={search}
@@ -700,16 +620,6 @@ export default function AdminDashboard() {
                 </div>
               )}
             </div>
-
-            <select
-              value={selectedCity}
-              onChange={(e) => setSelectedCity(e.target.value)}
-              className="h-12 rounded-2xl border border-slate-200 px-4 text-sm font-bold text-blue-700 bg-blue-50 outline-none hover:bg-blue-100 transition"
-            >
-              <option value="All Cities">All Cities</option>
-              <option value="Bangalore">Bangalore</option>
-              <option value="Mumbai">Mumbai</option>
-            </select>
 
             <select
               value={leadFilter}
@@ -948,11 +858,11 @@ export default function AdminDashboard() {
         <section className="mb-10">
           <SectionHeader title="Enquiries" subtitle="General website enquiries." />
 
-          {filteredEnquiries.length === 0 ? (
+          {enquiries.length === 0 ? (
             <EmptyState text="No enquiries yet." />
           ) : (
             <div className="grid gap-4 md:grid-cols-2">
-              {filteredEnquiries.map((e) => (
+              {enquiries.map((e) => (
                 <div
                   key={e._id}
                   className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200"
@@ -978,11 +888,11 @@ export default function AdminDashboard() {
         <section className="mb-10">
           <SectionHeader title="Bookings" subtitle="Student booking requests." />
 
-          {filteredBookings.length === 0 ? (
+          {bookings.length === 0 ? (
             <EmptyState text="No bookings yet." />
           ) : (
             <div className="grid gap-4 md:grid-cols-2">
-              {filteredBookings.map((b) => (
+              {bookings.map((b) => (
                 <div
                   key={b._id}
                   className="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-200"
@@ -1094,10 +1004,13 @@ export default function AdminDashboard() {
                                 href={t.documents?.idProof}
                                 label="ID Proof"
                               />
-                              <DocumentLink
+
+                              <ProtectedDocumentLink
                                 href={t.documents?.expCert}
                                 label="Education"
+                                password={EDUCATION_CERT_PASSWORD}
                               />
+
                               <DocumentLink
                                 href={t.documents?.otherDoc}
                                 label="Experience"
@@ -1275,6 +1188,41 @@ function DocumentLink({ href, label }) {
     >
       {label}
     </a>
+  );
+}
+
+function ProtectedDocumentLink({ href, label, password }) {
+  const handleOpen = () => {
+    if (!href) return;
+
+    const enteredPassword = window.prompt(
+      `Enter password to open ${label} certificate`
+    );
+
+    if (enteredPassword !== password) {
+      alert("Incorrect password. Access denied.");
+      return;
+    }
+
+    window.open(href, "_blank", "noopener,noreferrer");
+  };
+
+  if (!href) {
+    return (
+      <span className="rounded-xl bg-red-50 px-3 py-2 text-xs font-bold text-red-600">
+        {label} Not Uploaded
+      </span>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleOpen}
+      className="rounded-xl bg-purple-50 px-3 py-2 text-xs font-bold text-purple-700 transition hover:bg-purple-100"
+    >
+      🔒 {label}
+    </button>
   );
 }
 
