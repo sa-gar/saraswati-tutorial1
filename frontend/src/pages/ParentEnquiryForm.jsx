@@ -665,14 +665,13 @@ export default function ParentEnquiryForm() {
                         placeholder="Enter student name"
                       />
 
-                      <SearchableInput
+                      <SelectBox
                         label={requiredLabel("Class")}
                         name="classGrade"
                         value={ward.classGrade}
                         onChange={(e) => handleWardChange(index, e)}
                         options={classOptions}
-                        listId={`classes-${index}`}
-                        placeholder="Search or select class"
+                        placeholder="Select class"
                         error={errors[`wards.${index}.classGrade`]}
                       />
 
