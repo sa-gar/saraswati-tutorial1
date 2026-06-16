@@ -1,16 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-<<<<<<< HEAD
 const API_BASE =
   window.location.hostname === "localhost" ||
   window.location.hostname === "127.0.0.1"
     ? "http://localhost:5000/api"
     : "https://saraswati-tutorial1-2.onrender.com/api";
-=======
-const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
 const EDUCATION_CERT_PASSWORD = "saraswati7250";
->>>>>>> 8f142b29bf537008dd681b9eac78e44e8e54db5c
 
 const LEAD_STATUSES = [
   "New Lead",
@@ -264,16 +260,7 @@ export default function AdminDashboard() {
 
       const matchesSearch = !q || buildSearchText(parentEnquiry).includes(q);
 
-<<<<<<< HEAD
-      const matchesCity =
-        selectedCity === "All Cities" ||
-        (selectedCity === "Mumbai" && String(parentEnquiry.address || parentEnquiry.area || "").toLowerCase().includes("mumbai")) ||
-        (selectedCity === "Bangalore" && !String(parentEnquiry.address || parentEnquiry.area || "").toLowerCase().includes("mumbai"));
-
-      return matchesFilter && matchesSearch && matchesCity;
-=======
       return matchesFilter && matchesSearch;
->>>>>>> 8f142b29bf537008dd681b9eac78e44e8e54db5c
     });
   }, [parentEnquiries, search, leadFilter]);
 
@@ -558,11 +545,7 @@ export default function AdminDashboard() {
 
           <StatCard
             title="Parent Leads"
-<<<<<<< HEAD
-            value={parentEnquiries.filter(p => selectedCity === "All Cities" || (selectedCity === "Mumbai" && String(p.address || p.area || "").toLowerCase().includes("mumbai")) || (selectedCity === "Bangalore" && !String(p.address || p.area || "").toLowerCase().includes("mumbai"))).length}
-=======
             value={parentEnquiries.length}
->>>>>>> 8f142b29bf537008dd681b9eac78e44e8e54db5c
             subtitle={`${filteredParentEnquiries.length} visible`}
           />
 
