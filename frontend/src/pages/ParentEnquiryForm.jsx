@@ -689,14 +689,13 @@ export default function ParentEnquiryForm() {
                         </div>
                       )}
 
-                      <SearchableInput
+                      <Input
                         label={requiredLabel("School Name")}
+                        type="text"
                         name="schoolName"
                         value={ward.schoolName}
                         onChange={(e) => handleWardChange(index, e)}
-                        options={schoolOptions}
-                        listId={`schools-${index}`}
-                        placeholder="Search or select school"
+                        placeholder="Enter school name"
                         error={errors[`wards.${index}.schoolName`]}
                       />
 
