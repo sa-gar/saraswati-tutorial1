@@ -196,9 +196,12 @@ export default function ParentEnquiryForm() {
   const navigate = useNavigate();
 
   const host = window.location.hostname;
-  const isMumbai =
-    host.startsWith("mumbai.") ||
-    localStorage.getItem("userLocation") === "Mumbai";
+  let selectedCity = localStorage.getItem("userLocation") || "Bangalore";
+  if (host.startsWith("mumbai.")) {
+    selectedCity = "Mumbai";
+  }
+
+  const isMumbai = selectedCity === "Mumbai";
 
   const schoolOptions = isMumbai ? mumbaiSchoolOptions : bangaloreSchoolOptions;
 
@@ -431,10 +434,18 @@ export default function ParentEnquiryForm() {
   const buildPayload = () => {
     const formattedStart = formatTime12Hr(form.startTime);
     const formattedEnd = formatTime12Hr(form.endTime);
+
+    const citySuffixes = {
+      Bangalore: "Bangalore, Karnataka",
+      Mumbai: "Mumbai, Maharashtra",
+    };
+    const suffix = citySuffixes[selectedCity] || selectedCity;
+    const finalAddress = form.address.trim() ? `${form.address.trim()}, ${suffix}` : suffix;
+
     return {
       ...form,
       preferredTime: `${formattedStart} - ${formattedEnd}`,
-      address: `${form.address}, ${isMumbai ? "Mumbai" : "Bangalore"}`,
+      address: finalAddress,
       wards: form.wards.map((ward) => ({
         studentName: ward.studentName,
         schoolName: ward.schoolName,
