@@ -74,111 +74,22 @@ const parentEnquirySchema = new mongoose.Schema(
       lowercase: true,
     },
 
-    occupation: {
+
+    address: {
       type: String,
       required: true,
       trim: true,
     },
 
-    occupationType: {
+    startTime: {
       type: String,
       default: "",
       trim: true,
     },
 
-    businessName: {
+    endTime: {
       type: String,
       default: "",
-      trim: true,
-    },
-
-    businessIndustryType: {
-      type: String,
-      default: "",
-      trim: true,
-    },
-
-    businessRoleDesignation: {
-      type: String,
-      default: "",
-      trim: true,
-    },
-
-    companyName: {
-      type: String,
-      default: "",
-      trim: true,
-    },
-
-    jobTitle: {
-      type: String,
-      default: "",
-      trim: true,
-    },
-
-    workingIndustry: {
-      type: String,
-      default: "",
-      trim: true,
-    },
-
-    schoolInstituteName: {
-      type: String,
-      default: "",
-      trim: true,
-    },
-
-    schoolPosition: {
-      type: String,
-      default: "",
-      trim: true,
-    },
-
-    subjectsDepartment: {
-      type: String,
-      default: "",
-      trim: true,
-    },
-
-    homemakerNotes: {
-      type: String,
-      default: "",
-      trim: true,
-    },
-
-    professionType: {
-      type: String,
-      default: "",
-      trim: true,
-    },
-
-    workDomain: {
-      type: String,
-      default: "",
-      trim: true,
-    },
-
-    experience: {
-      type: String,
-      default: "",
-      trim: true,
-    },
-
-    otherOccupation: {
-      type: String,
-      default: "",
-      trim: true,
-    },
-
-    area: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-
-    pincode: {
-      type: String,
-      required: true,
       trim: true,
     },
 
@@ -250,4 +161,5 @@ const parentEnquirySchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Synchronized Schema
 export default mongoose.model("ParentEnquiry", parentEnquirySchema);

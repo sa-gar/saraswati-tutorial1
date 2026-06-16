@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
+const API_BASE =
+  window.location.hostname === "localhost" ||
+  window.location.hostname === "127.0.0.1"
+    ? "http://localhost:5000/api"
+    : "https://saraswati-tutorial1-2.onrender.com/api";
 
 const LEAD_STATUSES = [
   "New Lead",
@@ -129,9 +133,12 @@ function buildSearchText(parentEnquiry) {
     parentEnquiry.email,
     parentEnquiry.area,
     parentEnquiry.pincode,
+    parentEnquiry.address,
     parentEnquiry.preferredMode,
     parentEnquiry.preferredGender,
     parentEnquiry.preferredTime,
+    parentEnquiry.startTime,
+    parentEnquiry.endTime,
     getClassDuration(parentEnquiry),
     ...wardTexts,
   ]
@@ -144,7 +151,7 @@ function buildSuggestionValues(parentEnquiries) {
   const values = [];
 
   parentEnquiries.forEach((p) => {
-    values.push(p.parentName, p.name, p.phone, p.area, p.pincode);
+    values.push(p.parentName, p.name, p.phone, p.area, p.pincode, p.address);
 
     p.wards?.forEach((ward) => {
       values.push(
@@ -255,8 +262,8 @@ export default function AdminDashboard() {
 
       const matchesCity =
         selectedCity === "All Cities" ||
-        (selectedCity === "Mumbai" && String(parentEnquiry.area || "").toLowerCase().includes("mumbai")) ||
-        (selectedCity === "Bangalore" && !String(parentEnquiry.area || "").toLowerCase().includes("mumbai"));
+        (selectedCity === "Mumbai" && String(parentEnquiry.address || parentEnquiry.area || "").toLowerCase().includes("mumbai")) ||
+        (selectedCity === "Bangalore" && !String(parentEnquiry.address || parentEnquiry.area || "").toLowerCase().includes("mumbai"));
 
       return matchesFilter && matchesSearch && matchesCity;
     });
@@ -635,7 +642,7 @@ export default function AdminDashboard() {
 
           <StatCard
             title="Parent Leads"
-            value={parentEnquiries.filter(p => selectedCity === "All Cities" || (selectedCity === "Mumbai" && String(p.area || "").toLowerCase().includes("mumbai")) || (selectedCity === "Bangalore" && !String(p.area || "").toLowerCase().includes("mumbai"))).length}
+            value={parentEnquiries.filter(p => selectedCity === "All Cities" || (selectedCity === "Mumbai" && String(p.address || p.area || "").toLowerCase().includes("mumbai")) || (selectedCity === "Bangalore" && !String(p.address || p.area || "").toLowerCase().includes("mumbai"))).length}
             subtitle={`${filteredParentEnquiries.length} visible`}
           />
 
@@ -824,14 +831,22 @@ export default function AdminDashboard() {
 
                           <InfoRow label="Phone" value={p.phone} />
                           <InfoRow label="Email" value={p.email} />
-                          <InfoRow
-                            label="Occupation"
-                            value={`${p.occupation || "Not provided"}${
-                              p.occupationType ? ` (${p.occupationType})` : ""
-                            }`}
-                          />
-                          <InfoRow label="Area" value={p.area} />
-                          <InfoRow label="PIN Code" value={p.pincode} />
+                          {p.occupation && (
+                            <InfoRow
+                              label="Occupation"
+                              value={`${p.occupation}${
+                                p.occupationType ? ` (${p.occupationType})` : ""
+                              }`}
+                            />
+                          )}
+                          {p.address ? (
+                            <InfoRow label="Address" value={p.address} />
+                          ) : (
+                            <>
+                              <InfoRow label="Area" value={p.area} />
+                              <InfoRow label="PIN Code" value={p.pincode} />
+                            </>
+                          )}
                         </div>
 
                         <div className="rounded-2xl bg-slate-50 p-4">
@@ -855,23 +870,23 @@ export default function AdminDashboard() {
                           />
                         </div>
 
-                        <div className="rounded-2xl bg-slate-50 p-4">
-                          <h4 className="mb-3 text-sm font-black uppercase tracking-wide text-slate-500">
-                            Dynamic Occupation Info
-                          </h4>
+                        {(p.businessName || p.professionType || p.otherOccupation) && (
+                          <div className="rounded-2xl bg-slate-50 p-4">
+                            <h4 className="mb-3 text-sm font-black uppercase tracking-wide text-slate-500">
+                              Dynamic Occupation Info
+                            </h4>
 
-                          <InfoRow label="Business Name" value={p.businessName} />
-                          <InfoRow label="Company Name" value={p.companyName} />
-                          <InfoRow label="Job Title" value={p.jobTitle} />
-                          <InfoRow
-                            label="Profession Type"
-                            value={p.professionType}
-                          />
-                          <InfoRow
-                            label="Other Occupation"
-                            value={p.otherOccupation}
-                          />
-                        </div>
+                            <InfoRow label="Business Name" value={p.businessName} />
+                            <InfoRow
+                              label="Profession Type"
+                              value={p.professionType}
+                            />
+                            <InfoRow
+                              label="Other Occupation"
+                              value={p.otherOccupation}
+                            />
+                          </div>
+                        )}
                       </div>
 
                       <div className="px-5 pb-5">

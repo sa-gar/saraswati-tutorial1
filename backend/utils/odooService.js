@@ -124,7 +124,7 @@ export async function createLead(data) {
           data.preferredTime || "",
 
         x_studio_locality:
-          data.area || "",
+          data.address || data.area || "",
 
         x_studio_preferred_tutor_gender:
           data.preferredGender?.toString() || "No Preference",
