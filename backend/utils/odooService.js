@@ -102,6 +102,37 @@ export async function createLead(data) {
 
       const ward = data.wards?.[0] || {};
 
+      // Calculate curriculum/board selection
+      let curriculumVal = "";
+      const curr = String(ward.curriculum || "").toUpperCase();
+      if (curr.includes("STATE")) {
+        curriculumVal = "STATE";
+      } else if (["CBSE", "ICSE", "NIOS", "IB", "IGCSE"].includes(curr)) {
+        curriculumVal = curr;
+      }
+
+      // Calculate days/week selection
+      let daysWeekVal = "";
+      const daysCount = (data.preferredDays || []).length;
+      if (daysCount >= 2 && daysCount <= 6) {
+        daysWeekVal = `${daysCount} Days`;
+      } else if (daysCount === 1) {
+        daysWeekVal = "2 Days";
+      } else if (daysCount >= 7) {
+        daysWeekVal = "6 Days";
+      }
+
+      // Calculate hours/days selection
+      let hoursDaysVal = "";
+      const dur = String(data.classDuration || "").toLowerCase();
+      if (dur.includes("1.5")) {
+        hoursDaysVal = "1.5 Hr";
+      } else if (dur.includes("1")) {
+        hoursDaysVal = "1 Hr";
+      } else if (dur.includes("2")) {
+        hoursDaysVal = "2 Hrs";
+      }
+
       leadPayload = {
         name: data.parentName || "",
         contact_name: data.parentName || "",
@@ -132,6 +163,10 @@ export async function createLead(data) {
         x_studio_registration_date:
           new Date().toISOString().split("T")[0],
       };
+
+      if (curriculumVal) leadPayload.x_studio_curriculumboard = curriculumVal;
+      if (daysWeekVal) leadPayload.x_studio_daysweek = daysWeekVal;
+      if (hoursDaysVal) leadPayload.x_studio_hoursdays = hoursDaysVal;
     }
 
     console.log("LEAD PAYLOAD:");
