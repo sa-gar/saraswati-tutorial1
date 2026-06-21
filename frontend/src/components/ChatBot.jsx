@@ -69,7 +69,7 @@ export default function ChatBot() {
 
     if (option === "Book Demo Class") {
       addBotMessage(
-        "You can book a free demo class by filling the parent enquiry form.",
+        "You can book a demo class by filling the parent enquiry form.",
         [],
         [
           {

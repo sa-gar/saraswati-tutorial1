@@ -22,7 +22,7 @@ export default function CategoryPage() {
           name="description"
           content={
             mainCategory.description ||
-            `Best ${mainCategory.name} in Bangalore with expert tutors. Book free demo today.`
+            `Best ${mainCategory.name} in Bangalore with expert tutors. Book demo today.`
           }
         />
       </Helmet>
@@ -57,7 +57,7 @@ export default function CategoryPage() {
           to="/parent-enquiry"
           className="inline-block bg-slate-900 text-white px-6 py-3 rounded-xl"
         >
-          Book Free Demo
+          Book Demo
         </Link>
       </div>
 

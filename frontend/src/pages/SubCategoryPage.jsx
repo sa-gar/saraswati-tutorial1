@@ -23,7 +23,7 @@ export default function SubCategoryPage() {
         </title>
         <meta
           name="description"
-          content={`Find best ${subData.name} tuition in Bangalore with expert tutors. Book free demo today.`}
+          content={`Find best ${subData.name} tuition in Bangalore with expert tutors. Book demo today.`}
         />
       </Helmet>
 
@@ -70,7 +70,7 @@ export default function SubCategoryPage() {
           to="/parent-enquiry"
           className="inline-block bg-slate-900 text-white px-6 py-3 rounded-xl"
         >
-          Book Free Demo
+          Book Demo
         </Link>
       </div>
 

@@ -140,9 +140,40 @@ const parentEnquirySchema = new mongoose.Schema(
       required: true,
     },
 
+    planType: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    daysPerWeek: {
+      type: Number,
+      default: null,
+    },
+
+    hoursPerDay: {
+      type: Number,
+      default: null,
+    },
+
+    monthlyFees: {
+      type: Number,
+      default: null,
+    },
+
     odooLeadId: {
       type: mongoose.Schema.Types.Mixed,
       default: null,
+    },
+
+    geoInfo: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
+
+    ipAddress: {
+      type: String,
+      default: "",
     },
 
     status: {

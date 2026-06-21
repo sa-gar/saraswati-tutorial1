@@ -19,7 +19,17 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://saraswatitutorial.com",
+      "https://mumbai.saraswatitutorial.com",
+      "https://saraswati-tutorials.odoo.com"
+    ],
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(compression());
 // Health check
@@ -70,7 +80,9 @@ if (
   process.env.MONGO_URI !== "your_mongodb_connection_string"
 ) {
   mongoose
-    .connect(process.env.MONGO_URI)
+    .connect(process.env.MONGO_URI, {
+      bufferCommands: false,
+    })
     .then(() => {
       console.log("MongoDB connected");
       app.listen(PORT, () => {

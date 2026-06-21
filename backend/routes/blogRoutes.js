@@ -1,5 +1,6 @@
 import express from "express";
 import Blog from "../models/Blog.js";
+import { verifyToken } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -48,7 +49,7 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-router.post("/", async (req, res) => {
+router.post("/", verifyToken(["admin", "blog-editor"]), async (req, res) => {
   try {
     const { title, content, image, author } = req.body;
 
@@ -74,7 +75,7 @@ router.post("/", async (req, res) => {
   }
 });
 
-router.put("/:id", async (req, res) => {
+router.put("/:id", verifyToken(["admin", "blog-editor"]), async (req, res) => {
   try {
     const { title, content, image, author } = req.body;
 
@@ -117,7 +118,7 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", verifyToken(["admin", "blog-editor"]), async (req, res) => {
   try {
     const deleted = await Blog.findByIdAndDelete(req.params.id);
 

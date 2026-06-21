@@ -10,7 +10,7 @@ router.post("/login", async (req, res) => {
     const BLOG_EDITOR_EMAIL = process.env.BLOG_EDITOR_EMAIL;
     const BLOG_EDITOR_PASSWORD = process.env.BLOG_EDITOR_PASSWORD;
 
-    if (email !== BLOG_EDITOR_EMAIL || password !== BLOG_EDITOR_PASSWORD) {
+    if (!BLOG_EDITOR_EMAIL || !BLOG_EDITOR_PASSWORD || email !== BLOG_EDITOR_EMAIL || password !== BLOG_EDITOR_PASSWORD) {
       return res.status(401).json({ message: "Invalid blog editor credentials" });
     }
 

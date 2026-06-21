@@ -1,10 +1,11 @@
 import express from "express";
 import Booking from "../models/Booking.js";
+import { verifyToken } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
 // GET all bookings
-router.get("/", async (req, res) => {
+router.get("/", verifyToken(["admin"]), async (req, res) => {
   try {
     const bookings = await Booking.find().sort({ createdAt: -1 });
     res.json(bookings);
@@ -25,7 +26,7 @@ router.post("/", async (req, res) => {
 });
 
 // UPDATE booking
-router.put("/:id", async (req, res) => {
+router.put("/:id", verifyToken(["admin"]), async (req, res) => {
   try {
     const updatedBooking = await Booking.findByIdAndUpdate(
       req.params.id,

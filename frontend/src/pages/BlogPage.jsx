@@ -9,7 +9,7 @@ import {
   Tag,
 } from "lucide-react";
 
-const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
+import { API_BASE } from "../config";
 
 const fallbackCategories = [
   "All",
@@ -357,7 +357,7 @@ export default function BlogPage() {
                   to="/parent-enquiry"
                   className="inline-flex rounded-2xl bg-white px-5 py-3 font-medium text-slate-900"
                 >
-                  Book a Free Demo
+                  Book Demo
                 </Link>
               </div>
             </section>

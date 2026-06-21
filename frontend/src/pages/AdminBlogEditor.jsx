@@ -15,7 +15,7 @@ import {
   FileText,
 } from "lucide-react";
 
-const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
+import { API_BASE } from "../config";
 
 function stripHtml(html = "") {
   return html.replace(/<[^>]+>/g, "").trim();
@@ -77,10 +77,12 @@ export default function AdminBlogEditor() {
 
   const createBlog = async () => {
     try {
+      const token = localStorage.getItem("blogEditorToken") || localStorage.getItem("adminToken");
       const res = await fetch(`${API_BASE}/blogs`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
         },
         body: JSON.stringify(blogForm),
       });
@@ -112,8 +114,12 @@ export default function AdminBlogEditor() {
     if (!ok) return;
 
     try {
+      const token = localStorage.getItem("blogEditorToken") || localStorage.getItem("adminToken");
       const res = await fetch(`${API_BASE}/blogs/${id}`, {
         method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
       });
 
       const data = await res.json();
@@ -142,10 +148,12 @@ export default function AdminBlogEditor() {
 
   const saveBlogEdit = async () => {
     try {
+      const token = localStorage.getItem("blogEditorToken") || localStorage.getItem("adminToken");
       const res = await fetch(`${API_BASE}/blogs/${editingBlog._id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
         },
         body: JSON.stringify(editBlogForm),
       });
@@ -174,8 +182,12 @@ export default function AdminBlogEditor() {
     formData.append("image", file);
 
     try {
+      const token = localStorage.getItem("blogEditorToken") || localStorage.getItem("adminToken");
       const res = await fetch(`${API_BASE}/upload`, {
         method: "POST",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
         body: formData,
       });
 

@@ -36,7 +36,7 @@ export default function CoursePage() {
           name="description"
           content={
             courseData.seoDesc ||
-            `Best ${courseData.name} in Bangalore with expert tutors. Book free demo today.`
+            `Best ${courseData.name} in Bangalore with expert tutors. Book demo today.`
           }
         />
       </Helmet>

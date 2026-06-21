@@ -1,10 +1,11 @@
 import express from "express";
 import Enquiry from "../models/Enquiry.js";
+import { verifyToken } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
 // GET
-router.get("/", async (req, res) => {
+router.get("/", verifyToken(["admin"]), async (req, res) => {
   try {
     const enquiries = await Enquiry.find().sort({ createdAt: -1 });
     res.json(enquiries);

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { motion, AnimatePresence } from "framer-motion";
 import ChatBot from "../components/ChatBot";
+import PlansSection from "../components/PlansSection";
 import {
   Star,
   MapPin,
@@ -395,7 +396,7 @@ export default function MumbaiPage() {
               whileTap={{ scale: 0.95, backgroundColor: "rgba(15, 23, 42, 0.15)", borderColor: "rgba(15, 23, 42, 0.3)", color: "#0f172a" }}
               className="rounded-xl border border-transparent bg-slate-950 px-5 py-2.5 text-xs font-black text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-black"
             >
-              Book Free Demo
+              Book Demo
             </MotionLink>
             <MotionLink
               to="/tutor-register"
@@ -442,7 +443,7 @@ export default function MumbaiPage() {
                   whileTap={{ scale: 0.95, backgroundColor: "rgba(15, 23, 42, 0.15)", borderColor: "rgba(15, 23, 42, 0.3)", color: "#0f172a" }}
                   className="rounded-xl border border-transparent bg-slate-950 py-3 text-center text-white font-black"
                 >
-                  Book Free Demo
+                  Book Demo
                 </MotionLink>
                 <MotionLink
                   to="/tutor-register"
@@ -463,8 +464,6 @@ export default function MumbaiPage() {
         id="home"
         className="relative overflow-hidden bg-[radial-gradient(circle_at_top_left,#3b82f622,transparent_35%),radial-gradient(circle_at_top_right,#6366f122,transparent_30%),linear-gradient(135deg,#020617,#0f172a_50%,#1e1b4b)] py-20 text-white md:py-32"
       >
-        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-50 to-transparent" />
-
         <div className="mx-auto max-w-7xl px-6">
           <div className="grid gap-12 lg:grid-cols-12 lg:items-center">
             <motion.div
@@ -489,7 +488,7 @@ export default function MumbaiPage() {
                   whileTap={{ scale: 0.95, backgroundColor: "rgba(255, 255, 255, 0.15)", borderColor: "rgba(255, 255, 255, 0.4)", color: "#ffffff" }}
                   className="group inline-flex items-center gap-2 rounded-2xl border border-transparent bg-white px-7 py-4 font-black text-slate-950 shadow-xl shadow-blue-950/20 transition hover:-translate-y-0.5 hover:bg-slate-100"
                 >
-                  Book Free Demo Class
+                  Book Demo
                   <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
                 </MotionLink>
 
@@ -582,6 +581,8 @@ export default function MumbaiPage() {
           </div>
         </div>
       </section>
+
+      <PlansSection />
 
       {/* SEO Intro Section */}
       <section className="mx-auto max-w-7xl px-6 py-16">
@@ -928,7 +929,7 @@ export default function MumbaiPage() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,#3b82f615,transparent_60%)]" />
         <div className="relative mx-auto max-w-4xl px-6 text-center">
           <h2 className="text-3xl font-black tracking-tight md:text-5xl">
-            Book a Free Demo Class Today
+            Book a Demo Class Today
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-slate-400">
             Get matched with experienced home tutors in Mumbai for your child’s academic needs.

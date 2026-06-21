@@ -24,8 +24,7 @@ import {
   Loader2,
 } from "lucide-react";
 
-const API_BASE = "https://saraswati-tutorial1-2.onrender.com/api";
-// const API_BASE = "http://localhost:5000/api";
+import { API_BASE } from "../config";
 
 const initialFormData = {
   name: "",
@@ -457,6 +456,16 @@ export default function TutorRegistration() {
     });
   };
 
+  const processUploadFile = async (file, fallbackPrefix) => {
+    if (!file) return null;
+    const extension = file.name.split(".").pop();
+    if (file.type === "application/pdf" || extension.toLowerCase() === "pdf") {
+      return new File([file], `${fallbackPrefix}.pdf`, { type: "application/pdf" });
+    }
+    const compressed = await compressImage(file);
+    return convertToFile(compressed, `${fallbackPrefix}.jpg`);
+  };
+
   const handleSubmit = async () => {
     if (loading) return;
 
@@ -481,21 +490,16 @@ export default function TutorRegistration() {
 
       for (const file of filesToCheck) {
         if (file && file.size > MAX_SIZE) {
-          alert("Each image should be under 8MB");
+          alert("Each file should be under 8MB");
           setLoading(false);
           return;
         }
       }
 
-      const compressedPhoto = await compressImage(formData.photo);
-      const compressedId = await compressImage(formData.idProof);
-      const compressedCert = await compressImage(formData.expCert);
-      const compressedOther = await compressImage(formData.otherDoc);
-
-      const photoFile = convertToFile(compressedPhoto, "photo.jpg");
-      const idFile = convertToFile(compressedId, "idproof.jpg");
-      const certFile = convertToFile(compressedCert, "certificate.jpg");
-      const otherFile = convertToFile(compressedOther, "otherdoc.jpg");
+      const photoFile = await processUploadFile(formData.photo, "photo");
+      const idFile = await processUploadFile(formData.idProof, "idproof");
+      const certFile = await processUploadFile(formData.expCert, "certificate");
+      const otherFile = await processUploadFile(formData.otherDoc, "otherdoc");
 
       const photoRes = await uploadSingleFile("photo", photoFile);
       const idRes = await uploadSingleFile("idProof", idFile);
@@ -1023,7 +1027,7 @@ export default function TutorRegistration() {
                     required
                     inputId="idProof"
                     file={formData.idProof}
-                    accept="image/*"
+                    accept="image/*,.pdf"
                     onChange={(file) =>
                       setFormData((prev) => ({ ...prev, idProof: file }))
                     }
@@ -1036,7 +1040,7 @@ export default function TutorRegistration() {
                     required
                     inputId="expCert"
                     file={formData.expCert}
-                    accept="image/*"
+                    accept="image/*,.pdf"
                     onChange={(file) =>
                       setFormData((prev) => ({ ...prev, expCert: file }))
                     }
@@ -1048,7 +1052,7 @@ export default function TutorRegistration() {
                     subtitle="Optional supporting document"
                     inputId="otherDoc"
                     file={formData.otherDoc}
-                    accept="image/*"
+                    accept="image/*,.pdf"
                     onChange={(file) =>
                       setFormData((prev) => ({ ...prev, otherDoc: file }))
                     }

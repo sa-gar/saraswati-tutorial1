@@ -113,24 +113,32 @@ export async function createLead(data) {
 
       // Calculate days/week selection
       let daysWeekVal = "";
-      const daysCount = (data.preferredDays || []).length;
-      if (daysCount >= 2 && daysCount <= 6) {
-        daysWeekVal = `${daysCount} Days`;
-      } else if (daysCount === 1) {
-        daysWeekVal = "2 Days";
-      } else if (daysCount >= 7) {
-        daysWeekVal = "6 Days";
+      if (data.daysPerWeek) {
+        daysWeekVal = `${data.daysPerWeek} Days`;
+      } else {
+        const daysCount = (data.preferredDays || []).length;
+        if (daysCount >= 2 && daysCount <= 6) {
+          daysWeekVal = `${daysCount} Days`;
+        } else if (daysCount === 1) {
+          daysWeekVal = "2 Days";
+        } else if (daysCount >= 7) {
+          daysWeekVal = "6 Days";
+        }
       }
 
       // Calculate hours/days selection
       let hoursDaysVal = "";
-      const dur = String(data.classDuration || "").toLowerCase();
-      if (dur.includes("1.5")) {
-        hoursDaysVal = "1.5 Hr";
-      } else if (dur.includes("1")) {
-        hoursDaysVal = "1 Hr";
-      } else if (dur.includes("2")) {
-        hoursDaysVal = "2 Hrs";
+      if (data.hoursPerDay) {
+        hoursDaysVal = `${data.hoursPerDay} ${data.hoursPerDay === 1 ? "Hr" : "Hrs"}`;
+      } else {
+        const dur = String(data.classDuration || "").toLowerCase();
+        if (dur.includes("1.5")) {
+          hoursDaysVal = "1.5 Hr";
+        } else if (dur.includes("1")) {
+          hoursDaysVal = "1 Hr";
+        } else if (dur.includes("2")) {
+          hoursDaysVal = "2 Hrs";
+        }
       }
 
       leadPayload = {

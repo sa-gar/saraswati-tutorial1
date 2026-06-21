@@ -13,7 +13,7 @@ const tutorSchema = new mongoose.Schema(
     price: { type: Number, default: 0 },
     rating: { type: Number, default: 4.5 },
     reviews: { type: Number, default: 0 },
-    verified: { type: Boolean, default: true },
+    verified: { type: Boolean, default: false },
     experience: { type: String, default: "" },
     occupation: { type: String, default: "" },
     tagline: { type: String, default: "" },

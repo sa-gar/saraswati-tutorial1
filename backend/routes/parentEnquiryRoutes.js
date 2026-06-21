@@ -1,6 +1,8 @@
 import express from "express";
 import ParentEnquiry from "../models/ParentEnquiry.js";
+import ParentEnquiryDraft from "../models/ParentEnquiryDraft.js";
 import { createLead, updateLead } from "../utils/odooService.js";
+import { verifyToken } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
@@ -9,12 +11,67 @@ const router = express.Router();
  * Final API:
  * GET /api/parent-enquiries
  */
-router.get("/", async (req, res) => {
+router.get("/", verifyToken(["admin"]), async (req, res) => {
   try {
     const data = await ParentEnquiry.find().sort({ createdAt: -1 });
     res.json(data);
   } catch (error) {
     console.error("Parent enquiry fetch error:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+/**
+ * GET all parent enquiry drafts (incomplete leads)
+ * GET /api/parent-enquiries/drafts
+ */
+router.get("/drafts", verifyToken(["admin"]), async (req, res) => {
+  try {
+    const drafts = await ParentEnquiryDraft.find().sort({ updatedAt: -1 });
+    res.json(drafts);
+  } catch (error) {
+    console.error("Draft enquiry fetch error:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+/**
+ * AUTO-SAVE parent enquiry draft
+ * POST /api/parent-enquiries/draft
+ */
+router.post("/draft", async (req, res) => {
+  try {
+    const { emailOrPhone, stepReached, formData, geoInfo, ipAddress } = req.body;
+    if (!emailOrPhone) {
+      return res.status(400).json({ message: "emailOrPhone is required" });
+    }
+
+    const draft = await ParentEnquiryDraft.findOneAndUpdate(
+      { emailOrPhone: emailOrPhone.trim() },
+      { stepReached, formData, geoInfo, ipAddress },
+      { new: true, upsert: true }
+    );
+
+    res.status(200).json(draft);
+  } catch (error) {
+    console.error("Draft enquiry save error:", error);
+    res.status(400).json({ message: error.message });
+  }
+});
+
+/**
+ * DELETE parent enquiry draft
+ * DELETE /api/parent-enquiries/drafts/:id
+ */
+router.delete("/drafts/:id", verifyToken(["admin"]), async (req, res) => {
+  try {
+    const draft = await ParentEnquiryDraft.findByIdAndDelete(req.params.id);
+    if (!draft) {
+      return res.status(404).json({ message: "Draft not found" });
+    }
+    res.json({ message: "Draft deleted successfully" });
+  } catch (error) {
+    console.error("Draft enquiry delete error:", error);
     res.status(500).json({ message: error.message });
   }
 });
@@ -45,6 +102,21 @@ router.post("/", async (req, res) => {
 
     const saved = await enquiry.save();
 
+    // Clear drafts if any exist
+    try {
+      const email = req.body.email;
+      const phone = req.body.phone;
+      const queryList = [];
+      if (email) queryList.push({ emailOrPhone: email.trim() });
+      if (phone) queryList.push({ emailOrPhone: phone.trim() });
+      
+      if (queryList.length > 0) {
+        await ParentEnquiryDraft.deleteMany({ $or: queryList });
+      }
+    } catch (draftErr) {
+      console.error("Error clearing draft on submit:", draftErr.message);
+    }
+
     res.status(201).json(saved);
   } catch (error) {
     console.error("Parent enquiry create error:", error);
@@ -58,7 +130,7 @@ router.post("/", async (req, res) => {
  * Final API:
  * PUT /api/parent-enquiries/:id
  */
-router.put("/:id", async (req, res) => {
+router.put("/:id", verifyToken(["admin"]), async (req, res) => {
   try {
     const allowedUpdates = {
       status: req.body.status,
@@ -143,7 +215,7 @@ router.get("/confirm", async (req, res) => {
  * Final API:
  * DELETE /api/parent-enquiries/:id
  */
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", verifyToken(["admin"]), async (req, res) => {
   try {
     const enquiry = await ParentEnquiry.findByIdAndDelete(req.params.id);
 

@@ -2,6 +2,7 @@ import express from "express";
 import multer from "multer";
 import { v2 as cloudinary } from "cloudinary";
 import dotenv from "dotenv";
+import { verifyToken } from "../middleware/authMiddleware.js";
 
 dotenv.config();
 
@@ -28,6 +29,7 @@ const uploadToCloudinary = async (file, folder) => {
     "image/jpeg",
     "image/jpg",
     "image/png",
+    "application/pdf",
   ];
 
   if (!allowedTypes.includes(file.mimetype)) {
@@ -46,6 +48,7 @@ const uploadToCloudinary = async (file, folder) => {
 
 router.post(
   "/",
+  verifyToken(["admin", "blog-editor"]),
   upload.fields([
     { name: "image", maxCount: 1 },
     { name: "idProof", maxCount: 1 },
