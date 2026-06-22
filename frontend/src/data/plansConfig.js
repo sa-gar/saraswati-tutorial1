@@ -12,10 +12,8 @@ export const PLANS = [
     badgeTheme: "bg-slate-900/10 text-slate-800 border-slate-900/20",
     keyBenefit: "Daily homework support & consistent practice",
     cardBenefits: [
-      "Homework Support",
-      "Practice Focused",
-      "Entry Level Experienced Tutors",
-      "Save up to 25%"
+      "Daily Homework Support & Consistent Practice",
+      "Vetted Entry-Level Tutors"
     ],
     pricingOptions: [
       { days: 3, hours: 1.5, price: 8100 },
@@ -61,10 +59,8 @@ export const PLANS = [
     badgeTheme: "bg-black/10 text-slate-950 border-black/20",
     keyBenefit: "Experienced tutors with concept clarity focus",
     cardBenefits: [
-      "Concept Clarity",
-      "Syllabus Tracking",
-      "Better Learning Experience",
-      "Only +18% More Investment"
+      "Experienced Tutors (2.5–5 Years Experience)",
+      "Customized School Syllabus Tracking"
     ],
     pricingOptions: [
       { days: 3, hours: 1.5, price: 9000 },
@@ -111,10 +107,9 @@ export const PLANS = [
     experience: "5+ to 25+ Years",
     keyBenefit: "Veteran mentors with 5+ to 25+ Years Experience",
     cardBenefits: [
-      "5+ to 25+ Years Experience",
-      "Priority Support",
-      "Parent-Tutor Meetings",
-      "₹650 - ₹800 Per Class"
+      "Veteran School Teachers & Board Examiners",
+      "5+ to 25+ Years Tutoring Experience",
+      "Dedicated Academic Counselor & Advanced Test Series"
     ],
     pricingOptions: [
       { days: 3, hours: 1, price: 10000 },
