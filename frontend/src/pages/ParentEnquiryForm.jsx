@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { PLANS } from "../data/plansConfig";
 import { API_BASE } from "../config";
+import { trackEvent } from "../utils/analytics";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -361,6 +362,7 @@ export default function ParentEnquiryForm() {
     }));
     setViewingPlanId(null);
     setSelectedOption(null);
+    trackEvent("choose_plan", plan.id);
   };
 
   const handleChangePlan = () => {
@@ -396,6 +398,20 @@ export default function ParentEnquiryForm() {
         });
       })
       .catch((err) => console.log("Geo lookup error:", err));
+
+    // Form start / abandonment tracking
+    sessionStorage.setItem("enquiry_form_started", "true");
+    sessionStorage.removeItem("enquiry_form_submitted");
+    trackEvent("form_started");
+
+    return () => {
+      const started = sessionStorage.getItem("enquiry_form_started") === "true";
+      const submitted = sessionStorage.getItem("enquiry_form_submitted") === "true";
+      if (started && !submitted) {
+        trackEvent("form_abandoned");
+      }
+      sessionStorage.removeItem("enquiry_form_started");
+    };
   }, []);
 
   useEffect(() => {
@@ -721,6 +737,8 @@ export default function ParentEnquiryForm() {
         throw new Error(data?.message || "Submission failed");
       }
 
+      sessionStorage.setItem("enquiry_form_submitted", "true");
+      trackEvent("form_submitted", form.planType, true);
       setForm(initialForm);
       setErrors({});
       navigate("/thank-you");

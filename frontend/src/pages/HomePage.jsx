@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import ChatBot from "../components/ChatBot";
 import PlansSection from "../components/PlansSection";
 import { API_BASE } from "../config";
+import { trackEvent } from "../utils/analytics";
 import {
   Search,
   Star,
@@ -825,6 +826,7 @@ export default function HomePage() {
           <div className="hidden items-center gap-3 lg:flex">
             <MotionLink
               to="/parent-enquiry"
+              onClick={() => trackEvent("book_demo")}
               whileTap={{ scale: 0.95, backgroundColor: "rgba(15, 23, 42, 0.15)", borderColor: "rgba(15, 23, 42, 0.3)", color: "#0f172a" }}
               className="rounded-xl border border-transparent bg-slate-950 px-5 py-2.5 text-xs font-black text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-black"
             >
@@ -832,6 +834,7 @@ export default function HomePage() {
             </MotionLink>
             <MotionLink
               to="/tutor-register"
+              onClick={() => trackEvent("become_tutor")}
               whileTap={{ scale: 0.95, backgroundColor: "rgba(15, 23, 42, 0.15)", borderColor: "rgba(15, 23, 42, 0.3)", color: "#0f172a" }}
               className="rounded-xl border border-transparent bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-xs font-black text-white shadow-lg transition hover:-translate-y-0.5"
             >
@@ -873,7 +876,7 @@ export default function HomePage() {
                 <Link to="/blogs" onClick={() => setMenuOpen(false)} className="py-2">Blog</Link>
                 <MotionLink
                   to="/parent-enquiry"
-                  onClick={() => setMenuOpen(false)}
+                  onClick={() => { setMenuOpen(false); trackEvent("book_demo"); }}
                   whileTap={{ scale: 0.95, backgroundColor: "rgba(15, 23, 42, 0.15)", borderColor: "rgba(15, 23, 42, 0.3)", color: "#0f172a" }}
                   className="rounded-xl border border-transparent bg-slate-950 py-3 text-center text-white font-black"
                 >
@@ -881,7 +884,7 @@ export default function HomePage() {
                 </MotionLink>
                 <MotionLink
                   to="/tutor-register"
-                  onClick={() => setMenuOpen(false)}
+                  onClick={() => { setMenuOpen(false); trackEvent("become_tutor"); }}
                   whileTap={{ scale: 0.95, backgroundColor: "rgba(15, 23, 42, 0.15)", borderColor: "rgba(15, 23, 42, 0.3)", color: "#0f172a" }}
                   className="rounded-xl border border-transparent bg-gradient-to-r from-blue-600 to-indigo-600 py-3 text-center text-white font-black"
                 >
@@ -917,6 +920,7 @@ export default function HomePage() {
               <div className="mt-8 flex flex-wrap gap-4">
                 <MotionLink
                   to="/parent-enquiry"
+                  onClick={() => trackEvent("book_demo")}
                   whileTap={{ scale: 0.95, backgroundColor: "rgba(255, 255, 255, 0.15)", borderColor: "rgba(255, 255, 255, 0.4)", color: "#ffffff" }}
                   className="group inline-flex items-center gap-2 rounded-2xl border border-transparent bg-white px-7 py-4 font-black text-slate-950 shadow-xl shadow-blue-950/20 transition hover:-translate-y-0.5 hover:bg-slate-100"
                 >
@@ -980,13 +984,17 @@ export default function HomePage() {
                   </p>
 
                   <div className="mt-6 space-y-3">
-                    <div className="flex items-center gap-3 rounded-2xl bg-white/5 border border-white/10 p-3.5 backdrop-blur-sm">
+                    <a
+                      href="tel:+918904457689"
+                      onClick={() => trackEvent("call_click")}
+                      className="flex items-center gap-3 rounded-2xl bg-white/5 border border-white/10 p-3.5 backdrop-blur-sm transition hover:bg-white/10 cursor-pointer"
+                    >
                       <Phone className="h-5 w-5 text-blue-400" />
                       <div>
                         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Call / WhatsApp</div>
                         <div className="text-xs font-black text-white">+91 8904457689 / +91 9041157689</div>
                       </div>
-                    </div>
+                    </a>
 
                     <div className="flex items-center gap-3 rounded-2xl bg-white/5 border border-white/10 p-3.5 backdrop-blur-sm">
                       <Mail className="h-5 w-5 text-blue-400" />
@@ -999,6 +1007,7 @@ export default function HomePage() {
 
                   <MotionLink
                     to="/parent-enquiry"
+                    onClick={() => trackEvent("book_demo")}
                     whileTap={{ scale: 0.95, backgroundColor: "rgba(255, 255, 255, 0.15)", borderColor: "rgba(255, 255, 255, 0.4)", color: "#ffffff" }}
                     className="mt-6 flex h-13 w-full items-center justify-center gap-2 rounded-2xl border border-transparent bg-white text-sm font-black text-slate-950 transition hover:bg-slate-100 py-3"
                   >
@@ -1489,6 +1498,7 @@ export default function HomePage() {
           <div className="mt-8">
             <Link
               to="/parent-enquiry"
+              onClick={() => trackEvent("book_demo")}
               className="inline-flex items-center gap-2 rounded-2xl border border-transparent bg-white px-8 py-4 font-black text-slate-950 shadow-xl transition hover:-translate-y-0.5 hover:bg-slate-100"
             >
               Enquire Now
@@ -1564,6 +1574,7 @@ export default function HomePage() {
         href="https://wa.me/918904457689"
         target="_blank"
         rel="noopener noreferrer"
+        onClick={() => trackEvent("whatsapp_click")}
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1, y: [0, -6, 0] }}
         whileHover={{ scale: 1.1 }}

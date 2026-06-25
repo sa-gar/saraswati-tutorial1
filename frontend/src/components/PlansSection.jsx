@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import { PLANS } from "../data/plansConfig";
+import { trackEvent } from "../utils/analytics";
 
 const TIMELINE_STEPS = [
   {
@@ -89,10 +90,15 @@ export default function PlansSection() {
       setActivePlan(null);
     } else {
       setActivePlan(planId);
+      trackEvent("explore_plan", planId);
     }
   };
 
   const handleScrollToEnquiry = () => {
+    if (activePlan) {
+      trackEvent("choose_plan", activePlan);
+      trackEvent("book_demo", activePlan);
+    }
     const enquirySection = document.getElementById("parent-enquiry") || document.getElementById("home");
     if (enquirySection) {
       enquirySection.scrollIntoView({ behavior: "smooth" });

@@ -11,6 +11,7 @@ import parentEnquiryRoutes from "./routes/parentEnquiryRoutes.js";
 import blogRoutes from "./routes/blogRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js"; 
 import blogAuthRoutes from "./routes/blogAuthRoutes.js";
+import analyticsRoutes from "./routes/analyticsRoutes.js";
 import compression from "compression";
 
 dotenv.config();
@@ -73,6 +74,7 @@ app.use("/api/parent-enquiries", parentEnquiryRoutes);
 app.use("/api/blogs", blogRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/blog-auth", blogAuthRoutes);
+app.use("/api/analytics", analyticsRoutes);
 
 // MongoDB Connection + Server Start
 if (

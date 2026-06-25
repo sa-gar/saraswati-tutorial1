@@ -21,6 +21,7 @@ import Disclaimer from "./pages/Disclaimer";
 import TermsConditions from "./pages/TermsAndConditions";
 import Testimonials from "./pages/Testimonials";
 import MumbaiPage from "./pages/MumbaiPage";
+import AnalyticsTracker from "./components/AnalyticsTracker";
 
 // Admin Protected Route
 function ProtectedRoute({ children }) {
@@ -44,6 +45,7 @@ export default function App() {
   return (
     <HelmetProvider>
       <div className="min-h-screen bg-slate-50">
+        <AnalyticsTracker />
         <Routes>
           {/* Public Pages */}
           <Route

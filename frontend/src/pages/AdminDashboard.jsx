@@ -34,10 +34,34 @@ import {
   FileDown,
   Award,
   Settings,
-  CreditCard
+  CreditCard,
+  Activity,
+  Globe,
+  Laptop,
+  Smartphone,
+  Tablet,
+  Eye,
+  MousePointerClick,
+  ExternalLink
 } from "lucide-react";
 
 import { API_BASE } from "../config";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as ReChartsTooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend as ReChartsLegend,
+  BarChart,
+  Bar
+} from "recharts";
+
 const EDUCATION_CERT_PASSWORD = "saraswati7250";
 
 const LEAD_STATUSES = [
@@ -230,11 +254,40 @@ export default function AdminDashboard() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newTutor, setNewTutor] = useState(emptyTutor);
 
+  const [currentMainTab, setCurrentMainTab] = useState("leads"); // "leads" or "analytics"
+  const [period, setPeriod] = useState("7d"); // "24h", "7d", "30d"
+  const [analyticsData, setAnalyticsData] = useState(null);
+  const [loadingAnalytics, setLoadingAnalytics] = useState(false);
+
   function handleLogout() {
     localStorage.removeItem("adminToken");
     localStorage.removeItem("adminEmail");
     navigate("/admin-login");
   }
+
+  const fetchAnalyticsData = async () => {
+    setLoadingAnalytics(true);
+    try {
+      const token = localStorage.getItem("adminToken");
+      const res = await fetch(`${API_BASE}/analytics/stats?period=${period}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      if (res.status === 401) {
+        handleLogout();
+        return;
+      }
+      if (res.ok) {
+        const data = await res.json();
+        setAnalyticsData(data);
+      }
+    } catch (err) {
+      console.error("Error fetching analytics stats:", err);
+    } finally {
+      setLoadingAnalytics(false);
+    }
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -252,6 +305,17 @@ export default function AdminDashboard() {
         fetch(`${API_BASE}/tutors`, { headers }),
         fetch(`${API_BASE}/parent-enquiries/drafts`, { headers }),
       ]);
+
+      if (
+        eRes.status === 401 ||
+        peRes.status === 401 ||
+        bRes.status === 401 ||
+        tRes.status === 401 ||
+        dRes.status === 401
+      ) {
+        handleLogout();
+        return;
+      }
 
       const [eData, peData, bData, tData, dData] = await Promise.all([
         eRes.json(),
@@ -272,6 +336,12 @@ export default function AdminDashboard() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (currentMainTab === "analytics") {
+      fetchAnalyticsData();
+    }
+  }, [currentMainTab, period]);
 
   useEffect(() => {
     fetchData();
@@ -651,12 +721,45 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {loading && (
-          <div className="mb-6 rounded-2xl border border-blue-100 bg-blue-50/70 p-4 text-sm font-medium text-blue-700 flex items-center gap-2">
-            <RefreshCw className="h-4 w-4 animate-spin text-blue-600" />
-            Loading latest dashboard data...
-          </div>
-        )}
+        {/* Main Tab Switcher */}
+        <div className="mb-8 flex border-b border-slate-200/80 gap-6">
+          <button
+            onClick={() => setCurrentMainTab("leads")}
+            className={`pb-4 text-base font-extrabold transition-all relative cursor-pointer ${
+              currentMainTab === "leads"
+                ? "text-blue-600 font-extrabold"
+                : "text-slate-500 hover:text-slate-800"
+            }`}
+          >
+            Admission Leads
+            {currentMainTab === "leads" && (
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-full" />
+            )}
+          </button>
+          
+          <button
+            onClick={() => setCurrentMainTab("analytics")}
+            className={`pb-4 text-base font-extrabold transition-all relative cursor-pointer ${
+              currentMainTab === "analytics"
+                ? "text-blue-650 font-extrabold"
+                : "text-slate-500 hover:text-slate-800"
+            }`}
+          >
+            Analytics & Visitor Insights
+            {currentMainTab === "analytics" && (
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-full" />
+            )}
+          </button>
+        </div>
+
+        {currentMainTab === "leads" ? (
+          <>
+            {loading && (
+              <div className="mb-6 rounded-2xl border border-blue-100 bg-blue-50/70 p-4 text-sm font-medium text-blue-700 flex items-center gap-2">
+                <RefreshCw className="h-4 w-4 animate-spin text-blue-600" />
+                Loading latest dashboard data...
+              </div>
+            )}
 
         <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <StatCard
@@ -1431,6 +1534,17 @@ export default function AdminDashboard() {
           </section>
         )}
 
+          </>
+        ) : (
+          <AnalyticsConsole
+            data={analyticsData}
+            loading={loadingAnalytics}
+            period={period}
+            setPeriod={setPeriod}
+            refresh={fetchAnalyticsData}
+          />
+        )}
+
         {editingTutor && (
           <TutorModal
             title="Edit Tutor"
@@ -1727,5 +1841,625 @@ function ModalInput({ value, onChange, placeholder }) {
       value={value}
       onChange={(e) => onChange(e.target.value)}
     />
+  );
+}
+
+// Premium Analytics & Visitor Insights Component
+function AnalyticsConsole({ data, loading, period, setPeriod, refresh }) {
+  const PIE_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#94a3b8"];
+
+  // Helper to format source name
+  const formatSourceName = (name) => {
+    if (!name || name === "Direct Visit") return "Direct";
+    if (name === "Google Search") return "Google";
+    if (name === "Other Referral Websites") return "Other";
+    return name;
+  };
+
+  // Prepare traffic sources data
+  const pieData = useMemo(() => {
+    if (!data || !Array.isArray(data.trafficSources)) return [];
+    return data.trafficSources.map((item) => ({
+      name: formatSourceName(item?._id),
+      value: item?.count || 0
+    }));
+  }, [data?.trafficSources]);
+
+  // Normalize actions counts for UI display
+  const actionCounts = useMemo(() => {
+    const defaultActions = {
+      explore_plan: 0,
+      book_demo: 0,
+      choose_plan: 0,
+      become_tutor: 0,
+      whatsapp_click: 0,
+      call_click: 0,
+      form_started: 0,
+      form_submitted: 0,
+      form_abandoned: 0
+    };
+
+    if (data && Array.isArray(data.actions)) {
+      data.actions.forEach((item) => {
+        if (item && item._id in defaultActions) {
+          defaultActions[item._id] = item.count || 0;
+        }
+      });
+    }
+
+    return defaultActions;
+  }, [data?.actions]);
+
+  // Compute scroll color
+  const getScrollColor = (depth) => {
+    if (depth >= 75) return "text-emerald-400";
+    if (depth >= 45) return "text-blue-400";
+    return "text-slate-400";
+  };
+
+  // Compute time format
+  const formatTimeSpent = (secs) => {
+    if (!secs) return "0s";
+    if (secs < 60) return `${secs}s`;
+    const mins = Math.floor(secs / 60);
+    const remainingSecs = secs % 60;
+    return `${mins}m ${remainingSecs}s`;
+  };
+
+  const clarityProjectId = import.meta.env.VITE_CLARITY_PROJECT_ID || "xbj2we9di2";
+
+  return (
+    <div className="animate-slideFade rounded-3xl bg-[#090e1a] border border-slate-800/80 p-6 text-white shadow-2xl relative overflow-hidden">
+      {/* Background radial overlays */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.15),transparent_45%)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,rgba(99,102,241,0.1),transparent_40%)] pointer-events-none" />
+
+      {/* Header section */}
+      <div className="relative z-10 flex flex-col justify-between gap-6 border-b border-slate-800/80 pb-6 md:flex-row md:items-center">
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-400">
+              Visitor Insights Console
+            </p>
+          </div>
+
+          <h2 className="text-3xl font-black tracking-tight">
+            Web Traffic & Action Analytics
+          </h2>
+          
+          <p className="mt-1 text-xs text-slate-400 font-semibold">
+            Real-time user sessions, conversion funnel, devices, and Microsoft Clarity integration.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Period Selector */}
+          <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-1 flex">
+            {["24h", "7d", "30d"].map((p) => (
+              <button
+                key={p}
+                onClick={() => setPeriod(p)}
+                className={`px-4 py-2 text-xs font-bold rounded-xl transition cursor-pointer ${
+                  period === p
+                    ? "bg-blue-600 text-white shadow-lg"
+                    : "text-slate-400 hover:text-white"
+                }`}
+              >
+                {p === "24h" ? "24 Hours" : p === "7d" ? "7 Days" : "30 Days"}
+              </button>
+            ))}
+          </div>
+
+          {/* Refresh Action */}
+          <button
+            onClick={refresh}
+            className="flex items-center justify-center p-3 rounded-2xl bg-slate-900 border border-slate-800 hover:bg-slate-800 transition cursor-pointer"
+            title="Refresh statistics"
+          >
+            <RefreshCw className={`h-4.5 w-4.5 text-slate-300 ${loading ? "animate-spin text-blue-400" : ""}`} />
+          </button>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="min-h-[500px] flex flex-col items-center justify-center relative z-10 gap-3">
+          <RefreshCw className="h-8 w-8 animate-spin text-blue-500" />
+          <p className="text-slate-400 text-sm font-semibold">Compiling latest visitor metrics...</p>
+        </div>
+      ) : (
+        <div className="mt-8 relative z-10 space-y-8">
+          
+          {/* Summary Metric Cards */}
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-6">
+            <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-2xl p-5 hover:border-blue-900/50 transition">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Visitors</span>
+              <p className="mt-2 text-3xl font-black text-white tracking-tight">{data?.summary?.totalVisitors || 0}</p>
+              <span className="mt-1 text-[10px] text-emerald-400 font-semibold block">Unique users</span>
+            </div>
+
+            <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-2xl p-5 border-l-2 border-l-emerald-500">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Active Users</span>
+              <p className="mt-2 text-3xl font-black text-emerald-400 tracking-tight">{data?.summary?.activeUsers || 0}</p>
+              <span className="mt-1 text-[10px] text-slate-400 font-medium block">Active (last 5 min)</span>
+            </div>
+
+            <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-2xl p-5 hover:border-indigo-900/50 transition">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">New Visitors</span>
+              <p className="mt-2 text-3xl font-black text-white tracking-tight">{data?.summary?.newVisitors || 0}</p>
+              <span className="mt-1 text-[10px] text-blue-400 font-semibold block">First sessions</span>
+            </div>
+
+            <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-2xl p-5 hover:border-slate-800 transition">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Returning Users</span>
+              <p className="mt-2 text-3xl font-black text-white tracking-tight">{data?.summary?.returningVisitors || 0}</p>
+              <span className="mt-1 text-[10px] text-slate-400 font-medium block">Recurring visits</span>
+            </div>
+
+            <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-2xl p-5 hover:border-slate-800 transition">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Bounce Rate</span>
+              <p className="mt-2 text-3xl font-black text-white tracking-tight">{data?.summary?.avgBounceRate || 0}%</p>
+              <span className="mt-1 text-[10px] text-slate-400 font-medium block">Single page views</span>
+            </div>
+
+            <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-2xl p-5 hover:border-slate-800 transition">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Scroll Depth</span>
+              <p className="mt-2 text-3xl font-black text-white tracking-tight">{data?.summary?.avgScrollDepth || 0}%</p>
+              <span className="mt-1 text-[10px] text-slate-400 font-medium block">Average depth</span>
+            </div>
+          </div>
+
+          {/* Primary Graphs Row */}
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            {/* Daily Visitors Line Chart */}
+            <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-3xl p-5 lg:col-span-2">
+              <div className="mb-4 flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-350 flex items-center gap-1.5">
+                  <Activity className="h-4 w-4 text-blue-500" />
+                  Visitor Traffic Trend
+                </span>
+              </div>
+              
+              <div className="h-72 w-full text-slate-400">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart
+                    data={data?.dailyVisitors || []}
+                    margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                  >
+                    <defs>
+                      <linearGradient id="visitorColor" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4} />
+                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.06)" />
+                    <XAxis 
+                      dataKey="date" 
+                      stroke="#64748b" 
+                      fontSize={10} 
+                      tickLine={false} 
+                      axisLine={false} 
+                    />
+                    <YAxis 
+                      stroke="#64748b" 
+                      fontSize={10} 
+                      tickLine={false} 
+                      axisLine={false} 
+                    />
+                    <ReChartsTooltip
+                      contentStyle={{ background: "#0f172a", border: "1px solid #1e293b", borderRadius: "12px", color: "#fff" }}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="count" 
+                      name="Unique Visitors" 
+                      stroke="#3b82f6" 
+                      strokeWidth={2} 
+                      fillOpacity={1} 
+                      fill="url(#visitorColor)" 
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Traffic Sources Pie Chart */}
+            <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-3xl p-5 flex flex-col justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-350 flex items-center gap-1.5 mb-4">
+                <Globe className="h-4 w-4 text-emerald-500" />
+                Traffic Referral Sources
+              </span>
+
+              {pieData.length === 0 ? (
+                <div className="flex-1 flex items-center justify-center text-xs text-slate-500 font-semibold">
+                  No source data available
+                </div>
+              ) : (
+                <div className="flex-1 flex flex-col sm:flex-row items-center justify-around gap-4">
+                  <div className="h-44 w-44">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={pieData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={50}
+                          outerRadius={70}
+                          paddingAngle={3}
+                          dataKey="value"
+                        >
+                          {pieData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <ReChartsTooltip
+                          contentStyle={{ background: "#0f172a", border: "1px solid #1e293b", borderRadius: "12px", color: "#fff" }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5 text-xs text-slate-300 w-full sm:w-auto">
+                    {pieData.map((entry, index) => (
+                      <div key={entry.name} className="flex items-center gap-2">
+                        <span
+                          className="h-2.5 w-2.5 rounded-full shrink-0"
+                          style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }}
+                        />
+                        <span className="font-semibold">{entry.name}</span>
+                        <span className="text-slate-500">({entry.value})</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Locations & Devices Row */}
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            {/* Top Cities Bar Chart */}
+            <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-3xl p-5 lg:col-span-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-350 flex items-center gap-1.5 mb-4">
+                <MapPin className="h-4 w-4 text-rose-500" />
+                Top Cities Geolocation
+              </span>
+
+              <div className="h-64 w-full">
+                {!Array.isArray(data?.locationStats) || data.locationStats.length === 0 ? (
+                  <div className="h-full flex items-center justify-center text-xs text-slate-500 font-semibold">
+                    No location data available
+                  </div>
+                ) : (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={data.locationStats.slice(0, 10)}
+                      margin={{ top: 10, right: 10, left: -25, bottom: 0 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.06)" />
+                      <XAxis 
+                        dataKey="city" 
+                        stroke="#64748b" 
+                        fontSize={10} 
+                        tickLine={false} 
+                        axisLine={false} 
+                      />
+                      <YAxis 
+                        stroke="#64748b" 
+                        fontSize={10} 
+                        tickLine={false} 
+                        axisLine={false} 
+                      />
+                      <ReChartsTooltip
+                        contentStyle={{ background: "#0f172a", border: "1px solid #1e293b", borderRadius: "12px", color: "#fff" }}
+                      />
+                      <Bar dataKey="count" name="Visitors" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            </div>
+
+            {/* Devices and Tech Specs */}
+            <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-3xl p-5 flex flex-col justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-350 flex items-center gap-1.5 mb-4">
+                <Laptop className="h-4 w-4 text-purple-500" />
+                Devices & Technology Specs
+              </span>
+
+              <div className="space-y-4 flex-1 flex flex-col justify-around">
+                {/* Device Breakdown */}
+                <div>
+                  <div className="flex justify-between text-xs font-bold text-slate-400 mb-2">
+                    <span>DEVICE CATEGORY</span>
+                    <span>VISITORS</span>
+                  </div>
+                  <div className="space-y-2">
+                    {["Mobile", "Desktop", "Tablet"].map((dev) => {
+                      const found = data?.devices?.find((d) => d._id?.toLowerCase() === dev.toLowerCase());
+                      const count = found ? found.count : 0;
+                      const totalDevices = data?.devices?.reduce((sum, d) => sum + d.count, 0) || 1;
+                      const pct = Math.round((count / totalDevices) * 100);
+                      
+                      const barColors = { Mobile: "bg-emerald-500", Desktop: "bg-blue-500", Tablet: "bg-amber-500" };
+                      const Icon = dev === "Mobile" ? Smartphone : dev === "Desktop" ? Laptop : Tablet;
+
+                      return (
+                        <div key={dev} className="flex items-center gap-3">
+                          <Icon className="h-4 w-4 text-slate-400 shrink-0" />
+                          <span className="text-xs font-semibold w-16">{dev}</span>
+                          <div className="flex-1 bg-slate-850 h-2 rounded-full overflow-hidden">
+                            <div className={`h-full ${barColors[dev]}`} style={{ width: `${pct}%` }} />
+                          </div>
+                          <span className="text-xs font-bold w-12 text-right">{pct}%</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Top Browser and Top OS */}
+                <div className="grid grid-cols-2 gap-4 border-t border-slate-850 pt-4">
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Top Operating System</span>
+                    <p className="mt-1 text-sm font-bold text-slate-200">
+                      {data?.operatingSystems?.[0]?._id || "Unknown"}
+                      <span className="text-xs text-slate-400 font-medium ml-1">({data?.operatingSystems?.[0]?.count || 0})</span>
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Top Browser</span>
+                    <p className="mt-1 text-sm font-bold text-slate-200">
+                      {data?.browsers?.[0]?._id || "Unknown"}
+                      <span className="text-xs text-slate-400 font-medium ml-1">({data?.browsers?.[0]?.count || 0})</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Plan Analytics & Custom Actions Row */}
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            {/* Plans Conversion Performance */}
+            <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-3xl p-5 lg:col-span-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-350 flex items-center gap-1.5 mb-4">
+                <Award className="h-4 w-4 text-indigo-400" />
+                Plans Carousel Conversion Funnel
+              </span>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs font-semibold text-slate-300">
+                  <thead>
+                    <tr className="text-left border-b border-slate-800/80 text-[10px] text-slate-500 uppercase tracking-wider">
+                      <th className="pb-3">PLAN NAME</th>
+                      <th className="pb-3 text-center">VIEWS</th>
+                      <th className="pb-3 text-center">INTERACTIONS</th>
+                      <th className="pb-3 text-center">SELECTIONS</th>
+                      <th className="pb-3 text-right">CONVERSION</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Array.isArray(data?.plans) && data.plans.map((plan) => (
+                      <tr key={plan.name} className="border-b border-slate-850/50 last:border-0">
+                        <td className="py-4 font-bold text-white text-sm">{plan.name}</td>
+                        <td className="py-4 text-center font-bold text-slate-350">{plan.views}</td>
+                        <td className="py-4 text-center font-bold text-slate-350">{plan.clicks}</td>
+                        <td className="py-4 text-center font-bold text-emerald-400">{plan.selections}</td>
+                        <td className="py-4 text-right">
+                          <span className="bg-emerald-950/60 border border-emerald-900/60 text-emerald-400 font-black rounded-lg px-2.5 py-1">
+                            {plan.conversionRate}%
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Custom Interactive Action Events */}
+            <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-3xl p-5 flex flex-col justify-between">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-350 flex items-center gap-1.5 mb-4">
+                <MousePointerClick className="h-4 w-4 text-amber-500" />
+                Key CTA Button Clicks
+              </span>
+
+              <div className="space-y-2 flex-1 flex flex-col justify-around">
+                <div className="flex justify-between items-center text-xs font-semibold border-b border-slate-850/60 py-2">
+                  <span className="text-slate-400">Explore Plans</span>
+                  <span className="bg-slate-800 px-2 py-0.5 rounded text-white font-bold">{actionCounts.explore_plan}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs font-semibold border-b border-slate-850/60 py-2">
+                  <span className="text-slate-400">Book Demo CTA</span>
+                  <span className="bg-slate-800 px-2 py-0.5 rounded text-white font-bold">{actionCounts.book_demo}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs font-semibold border-b border-slate-850/60 py-2">
+                  <span className="text-slate-400">Plan Selected</span>
+                  <span className="bg-slate-800 px-2 py-0.5 rounded text-white font-bold">{actionCounts.choose_plan}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs font-semibold border-b border-slate-850/60 py-2">
+                  <span className="text-slate-400">Become a Tutor CTA</span>
+                  <span className="bg-slate-800 px-2 py-0.5 rounded text-white font-bold">{actionCounts.become_tutor}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs font-semibold border-b border-slate-850/60 py-2">
+                  <span className="text-slate-400">WhatsApp Button Clicks</span>
+                  <span className="bg-emerald-950/40 border border-emerald-900/60 text-emerald-400 px-2 py-0.5 rounded font-bold">{actionCounts.whatsapp_click}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs font-semibold border-b border-slate-850/60 py-2">
+                  <span className="text-slate-400">Phone Call Clicks</span>
+                  <span className="bg-blue-950/40 border border-blue-900/60 text-blue-400 px-2 py-0.5 rounded font-bold">{actionCounts.call_click}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs font-semibold py-2">
+                  <span className="text-slate-400">Enquiry Started vs Submitted</span>
+                  <span className="text-slate-300 font-bold">
+                    <span className="text-slate-400">{actionCounts.form_started}</span>
+                    <span className="mx-1 text-slate-600">/</span>
+                    <span className="text-emerald-400">{actionCounts.form_submitted}</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Page Analytics */}
+          <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-3xl p-5">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-350 flex items-center gap-1.5 mb-4">
+              <Eye className="h-4 w-4 text-emerald-400" />
+              Most Visited Pages & Engagement Metrics
+            </span>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs font-semibold text-slate-300">
+                <thead>
+                  <tr className="text-left border-b border-slate-800/80 text-[10px] text-slate-500 uppercase tracking-wider">
+                    <th className="pb-3">PAGE PATH</th>
+                    <th className="pb-3 text-center">PAGE VIEWS</th>
+                    <th className="pb-3 text-center">AVG TIME SPENT</th>
+                    <th className="pb-3 text-center">MAX SCROLL DEPTH</th>
+                    <th className="pb-3 text-right">BOUNCE RATE</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Array.isArray(data?.pages) && data.pages.map((page) => (
+                    <tr key={page.page} className="border-b border-slate-850/50 last:border-0">
+                      <td className="py-4 font-mono font-bold text-blue-400 text-xs">{page.page}</td>
+                      <td className="py-4 text-center font-bold text-white">{page.views}</td>
+                      <td className="py-4 text-center font-bold text-slate-350">{formatTimeSpent(page.avgTimeSpent)}</td>
+                      <td className="py-4 text-center font-bold">
+                        <span className={getScrollColor(page.avgScrollDepth)}>{page.avgScrollDepth}%</span>
+                      </td>
+                      <td className="py-4 text-right">
+                        <span className={`font-bold ${page.bounceRate >= 60 ? 'text-rose-400' : 'text-slate-400'}`}>
+                          {page.bounceRate}%
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Real-time activity & Clarity Integration Cards */}
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            {/* Real-time Activity feed */}
+            <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-3xl p-5 lg:col-span-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-350 flex items-center gap-1.5 mb-4">
+                <Activity className="h-4 w-4 text-blue-400 animate-pulse" />
+                Live Visitor Event Log (Real-Time)
+              </span>
+
+              <div className="max-h-80 overflow-y-auto space-y-3.5 pr-2 no-scrollbar">
+                {!Array.isArray(data?.recentActivity) || data.recentActivity.length === 0 ? (
+                  <div className="text-center py-10 text-xs text-slate-500 font-semibold">
+                    No recent activities recorded.
+                  </div>
+                ) : (
+                  data.recentActivity.map((act) => {
+                    const dateObj = act?.createdAt ? new Date(act.createdAt) : null;
+                    const timeStr = dateObj && !isNaN(dateObj.getTime())
+                      ? dateObj.toLocaleTimeString("en-IN", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: true
+                        })
+                      : "00:00";
+                    
+                    const actionLabels = {
+                      page_view: `Visited ${act.page_visited}`,
+                      explore_plan: `Explored ${act.plan_clicked || "plan details"}`,
+                      choose_plan: `Chose ${act.plan_clicked || "plan"} option`,
+                      book_demo: `Clicked Book Demo`,
+                      become_tutor: `Clicked Become a Tutor`,
+                      whatsapp_click: `Clicked WhatsApp button`,
+                      call_click: `Clicked Phone Call button`,
+                      form_started: `Started Enquiry Form`,
+                      form_submitted: `Submitted Enquiry Form`,
+                      form_abandoned: `Abandoned Enquiry Form`
+                    };
+
+                    const actionColors = {
+                      form_submitted: "bg-emerald-950/40 border-emerald-900/50 text-emerald-400",
+                      form_abandoned: "bg-rose-950/40 border-rose-900/50 text-rose-400",
+                      form_started: "bg-indigo-950/40 border-indigo-900/50 text-indigo-400",
+                      whatsapp_click: "bg-emerald-950/40 border-emerald-900/50 text-emerald-400",
+                      page_view: "bg-slate-850 border-slate-800 text-slate-350"
+                    };
+
+                    const actionClass = actionColors[act.action] || "bg-blue-950/40 border-blue-900/50 text-blue-400";
+
+                    return (
+                      <div key={act._id} className="flex gap-4 items-start border-b border-slate-850/50 pb-3 last:border-0 last:pb-0">
+                        <span className="text-[10px] font-bold text-slate-500 w-14 shrink-0 mt-1">{timeStr}</span>
+                        <div className="flex-1">
+                          <p className="text-xs font-bold text-white flex items-center gap-1.5 flex-wrap">
+                            User from <span className="text-blue-400">{act.city || "Unknown City"}</span>
+                            <span className="text-slate-600">•</span>
+                            Source: <span className="text-slate-400 font-semibold">{formatSourceName(act.source)}</span>
+                            <span className="text-slate-600">•</span>
+                            Device: <span className="text-slate-400 font-semibold">{act.device || "Desktop"}</span>
+                          </p>
+                          <div className="mt-1.5 flex items-center gap-2">
+                            <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded border ${actionClass}`}>
+                              {actionLabels[act.action] || act.action}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+
+            {/* Microsoft Clarity Project Widget */}
+            <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-3xl p-5 flex flex-col justify-between">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-350 flex items-center gap-1.5 mb-3">
+                  <Activity className="h-4 w-4 text-blue-400" />
+                  Session Recordings & Heatmaps
+                </span>
+                
+                <p className="text-xs leading-relaxed text-slate-400 mt-2 font-medium">
+                  We have integrated Microsoft Clarity to enable advanced heatmaps, mouse click records, scroll depth tracking, and user session replay recordings.
+                </p>
+
+                <div className="mt-4 p-3 bg-blue-950/20 border border-blue-900/30 rounded-2xl flex flex-col gap-2">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-slate-400">Integrate Mode:</span>
+                    <span className="text-emerald-400 font-bold">Active</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-slate-400">Project ID:</span>
+                    <span className="font-mono font-bold">{clarityProjectId}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 space-y-3">
+                <a
+                  href={`https://clarity.microsoft.com/projects/view/${clarityProjectId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 hover:bg-blue-700 transition font-black text-xs text-white shadow-lg cursor-pointer"
+                >
+                  Watch Session Replays
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+                
+                <p className="text-[10px] text-center text-slate-500 font-semibold leading-normal">
+                  * Note: You must log into your Microsoft Clarity account in this browser to open recordings directly.
+                </p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      )}
+    </div>
   );
 }
