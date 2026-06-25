@@ -48,7 +48,6 @@ const uploadToCloudinary = async (file, folder) => {
 
 router.post(
   "/",
-  verifyToken(["admin", "blog-editor"]),
   upload.fields([
     { name: "image", maxCount: 1 },
     { name: "idProof", maxCount: 1 },
@@ -56,7 +55,13 @@ router.post(
     { name: "otherDoc", maxCount: 1 },
     { name: "photo", maxCount: 1 },
   ]),
-
+  (req, res, next) => {
+    // Only require authorization if uploading a blog cover image
+    if (req.files && req.files.image) {
+      return verifyToken(["admin", "blog-editor"])(req, res, next);
+    }
+    next();
+  },
   async (req, res) => {
     try {
 
