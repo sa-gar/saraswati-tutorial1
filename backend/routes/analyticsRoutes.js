@@ -1,6 +1,9 @@
 import express from "express";
 import AnalyticsLog from "../models/AnalyticsLog.js";
 import { verifyToken } from "../middleware/authMiddleware.js";
+import { resolveGeo } from "../utils/geoLookup.js";
+import ParentEnquiry from "../models/ParentEnquiry.js";
+import ParentEnquiryDraft from "../models/ParentEnquiryDraft.js";
 
 const router = express.Router();
 
@@ -32,6 +35,31 @@ router.post("/log", async (req, res) => {
       return res.status(400).json({ message: "visitor_id, session_id, and page_visited are required" });
     }
 
+    // Resolve client IP
+    let clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+    if (clientIp) {
+      if (clientIp.includes(",")) {
+        clientIp = clientIp.split(",")[0].trim();
+      }
+      if (clientIp.startsWith("::ffff:")) {
+        clientIp = clientIp.substring(7);
+      }
+    }
+
+    // Fallback geolocation lookup on backend if frontend lookup was blocked/failed
+    let finalCity = city || "Unknown City";
+    let finalRegion = region || "Unknown State";
+    let finalCountry = country || "Unknown Country";
+
+    if (!city || city === "Unknown City" || !region || region === "Unknown State") {
+      const resolved = await resolveGeo(clientIp);
+      if (resolved.city !== "Unknown City") {
+        finalCity = resolved.city;
+        finalRegion = resolved.region;
+        finalCountry = resolved.country;
+      }
+    }
+
     // If update_page_view, find the latest page_view log for this session and page, and update it
     if (action === "update_page_view") {
       const latestView = await AnalyticsLog.findOne({
@@ -53,9 +81,9 @@ router.post("/log", async (req, res) => {
         const fallbackLog = new AnalyticsLog({
           visitor_id,
           session_id,
-          city,
-          country,
-          region,
+          city: finalCity,
+          country: finalCountry,
+          region: finalRegion,
           source,
           page_visited,
           plan_clicked,
@@ -65,7 +93,8 @@ router.post("/log", async (req, res) => {
           os,
           action: "page_view",
           time_spent: time_spent || 0,
-          scroll_depth: scroll_depth || 0
+          scroll_depth: scroll_depth || 0,
+          ipAddress: clientIp
         });
         const saved = await fallbackLog.save();
         return res.status(201).json(saved);
@@ -76,9 +105,9 @@ router.post("/log", async (req, res) => {
     const newLog = new AnalyticsLog({
       visitor_id,
       session_id,
-      city: city || "Unknown City",
-      country: country || "Unknown Country",
-      region: region || "Unknown State",
+      city: finalCity,
+      country: finalCountry,
+      region: finalRegion,
       source: source || "Direct Visit",
       page_visited,
       plan_clicked: plan_clicked || "",
@@ -88,7 +117,8 @@ router.post("/log", async (req, res) => {
       os: os || "Unknown OS",
       action: action || "page_view",
       time_spent: time_spent || 0,
-      scroll_depth: scroll_depth || 0
+      scroll_depth: scroll_depth || 0,
+      ipAddress: clientIp
     });
 
     const saved = await newLog.save();
@@ -179,7 +209,12 @@ router.get("/stats", verifyToken(["admin"]), async (req, res) => {
 
     // 6. User Location
     const locationStats = await AnalyticsLog.aggregate([
-      { $match: { createdAt: { $gte: startDate } } },
+      { 
+        $match: { 
+          createdAt: { $gte: startDate },
+          city: { $ne: "Unknown City" }
+        } 
+      },
       {
         $group: {
           _id: { country: "$country", region: "$region", city: "$city" },
@@ -324,6 +359,50 @@ router.get("/stats", verifyToken(["admin"]), async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(50);
 
+    const visitorIds = recentActivity.map(act => act.visitor_id).filter(Boolean);
+    
+    // Find matching parent enquiries and drafts
+    const [enquiries, drafts] = await Promise.all([
+      ParentEnquiry.find({ visitor_id: { $in: visitorIds } }, { parentName: 1, phone: 1, email: 1, visitor_id: 1 }),
+      ParentEnquiryDraft.find({ visitor_id: { $in: visitorIds } }, { emailOrPhone: 1, formData: 1, visitor_id: 1 })
+    ]);
+
+    // Create a map of visitor_id -> { name, phone, email, isDraft }
+    const visitorIdentityMap = {};
+    
+    drafts.forEach(d => {
+      if (d.visitor_id) {
+        const name = d.formData?.parentName || d.formData?.name || "";
+        const contact = d.formData?.phone || d.formData?.email || d.emailOrPhone || "";
+        visitorIdentityMap[d.visitor_id] = {
+          name,
+          phone: contact.includes("@") ? "" : contact,
+          email: contact.includes("@") ? contact : "",
+          isDraft: true
+        };
+      }
+    });
+
+    enquiries.forEach(e => {
+      if (e.visitor_id) {
+        visitorIdentityMap[e.visitor_id] = {
+          name: e.parentName || "",
+          phone: e.phone || "",
+          email: e.email || "",
+          isDraft: false
+        };
+      }
+    });
+
+    // Merge identity into recentActivity items
+    const enrichedActivity = recentActivity.map(act => {
+      const actObj = act.toObject();
+      if (visitorIdentityMap[act.visitor_id]) {
+        actObj.identity = visitorIdentityMap[act.visitor_id];
+      }
+      return actObj;
+    });
+
     // Compute average bounce rate and scroll depth for overall overview
     const totalViews = enrichedPageStats.reduce((sum, p) => sum + p.views, 0);
     const avgBounceRate = totalViews > 0 
@@ -351,11 +430,52 @@ router.get("/stats", verifyToken(["admin"]), async (req, res) => {
       pages: enrichedPageStats,
       plans: formattedPlanStats,
       actions: actionStatsRaw,
-      recentActivity
+      recentActivity: enrichedActivity
     });
   } catch (error) {
     console.error("Error generating stats:", error);
     res.status(500).json({ message: "Internal server error", error: error.message });
+  }
+});
+
+/**
+ * GET /api/analytics/session/:session_id
+ * Protected admin endpoint to fetch chronological events of a single session
+ */
+router.get("/session/:session_id", verifyToken(["admin"]), async (req, res) => {
+  try {
+    const logs = await AnalyticsLog.find({ session_id: req.params.session_id })
+      .sort({ createdAt: 1 });
+      
+    let identity = null;
+    if (logs.length > 0) {
+      const visitorId = logs[0].visitor_id;
+      const [enquiry, draft] = await Promise.all([
+        ParentEnquiry.findOne({ visitor_id: visitorId }),
+        ParentEnquiryDraft.findOne({ visitor_id: visitorId })
+      ]);
+      
+      if (enquiry) {
+        identity = {
+          name: enquiry.parentName,
+          phone: enquiry.phone,
+          email: enquiry.email,
+          isDraft: false
+        };
+      } else if (draft) {
+        identity = {
+          name: draft.formData?.parentName || draft.formData?.name || "",
+          phone: draft.formData?.phone || draft.emailOrPhone || "",
+          email: draft.formData?.email || "",
+          isDraft: true
+        };
+      }
+    }
+
+    res.json({ logs, identity });
+  } catch (error) {
+    console.error("Error fetching session logs:", error);
+    res.status(500).json({ message: "Error fetching session logs", error: error.message });
   }
 });
 

@@ -3,6 +3,7 @@ import ParentEnquiry from "../models/ParentEnquiry.js";
 import ParentEnquiryDraft from "../models/ParentEnquiryDraft.js";
 import { createLead, updateLead } from "../utils/odooService.js";
 import { verifyToken } from "../middleware/authMiddleware.js";
+import { resolveGeo } from "../utils/geoLookup.js";
 
 const router = express.Router();
 
@@ -41,14 +42,42 @@ router.get("/drafts", verifyToken(["admin"]), async (req, res) => {
  */
 router.post("/draft", async (req, res) => {
   try {
-    const { emailOrPhone, stepReached, formData, geoInfo, ipAddress } = req.body;
+    const { emailOrPhone, stepReached, formData, geoInfo, ipAddress, visitor_id, session_id } = req.body;
     if (!emailOrPhone) {
       return res.status(400).json({ message: "emailOrPhone is required" });
     }
 
+    // Resolve client IP
+    let clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+    if (clientIp) {
+      if (clientIp.includes(",")) {
+        clientIp = clientIp.split(",")[0].trim();
+      }
+      if (clientIp.startsWith("::ffff:")) {
+        clientIp = clientIp.substring(7);
+      }
+    }
+
+    let finalIp = ipAddress || clientIp;
+    let finalGeo = geoInfo || {};
+
+    if (!finalGeo.city || finalGeo.city === "Unknown City") {
+      const resolved = await resolveGeo(finalIp);
+      if (resolved.city !== "Unknown City") {
+        finalGeo = {
+          city: resolved.city,
+          region: resolved.region,
+          postal: resolved.postal,
+          country: resolved.country,
+          ip: resolved.ip,
+          org: resolved.org
+        };
+      }
+    }
+
     const draft = await ParentEnquiryDraft.findOneAndUpdate(
       { emailOrPhone: emailOrPhone.trim() },
-      { stepReached, formData, geoInfo, ipAddress },
+      { stepReached, formData, geoInfo: finalGeo, ipAddress: finalIp, visitor_id, session_id },
       { new: true, upsert: true }
     );
 
@@ -83,6 +112,37 @@ router.delete("/drafts/:id", verifyToken(["admin"]), async (req, res) => {
  */
 router.post("/", async (req, res) => {
   try {
+    // Resolve client IP
+    let clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+    if (clientIp) {
+      if (clientIp.includes(",")) {
+        clientIp = clientIp.split(",")[0].trim();
+      }
+      if (clientIp.startsWith("::ffff:")) {
+        clientIp = clientIp.substring(7);
+      }
+    }
+
+    let finalIp = req.body.ipAddress || clientIp;
+    let finalGeo = req.body.geoInfo || {};
+
+    if (!finalGeo.city || finalGeo.city === "Unknown City") {
+      const resolved = await resolveGeo(finalIp);
+      if (resolved.city !== "Unknown City") {
+        finalGeo = {
+          city: resolved.city,
+          region: resolved.region,
+          postal: resolved.postal,
+          country: resolved.country,
+          ip: resolved.ip,
+          org: resolved.org
+        };
+      }
+    }
+
+    req.body.geoInfo = finalGeo;
+    req.body.ipAddress = finalIp;
+
     let odooRes = null;
 
     try {

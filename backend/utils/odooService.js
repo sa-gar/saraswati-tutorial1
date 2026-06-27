@@ -51,14 +51,6 @@ async function callOdoo(service, method, args) {
 export async function createLead(data) {
 
   try {
-
-    console.log("ODOO ENV:", {
-      ODOO_URL,
-      DB,
-      USERNAME,
-      PASSWORD,
-    });
-
     // LOGIN
     const uid = await callOdoo("common", "authenticate", [
       DB,
@@ -177,8 +169,7 @@ export async function createLead(data) {
       if (hoursDaysVal) leadPayload.x_studio_hoursdays = hoursDaysVal;
     }
 
-    console.log("LEAD PAYLOAD:");
-    console.log(JSON.stringify(leadPayload, null, 2));
+    console.log("[Odoo] Creating lead for:", data.userType);
 
     // CREATE LEAD
     const leadId = await callOdoo("object", "execute_kw", [
@@ -192,8 +183,7 @@ export async function createLead(data) {
       [leadPayload],
     ]);
 
-    console.log("ODOO LEAD CREATED:", leadId);
-
+    console.log("[Odoo] Lead created with ID:", leadId);
     return leadId;
 
   } catch (err) {

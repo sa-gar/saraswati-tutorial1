@@ -85,7 +85,10 @@ export async function getGeoInfo() {
   const cached = localStorage.getItem("visitor_geo");
   if (cached) {
     try {
-      return JSON.parse(cached);
+      const parsed = JSON.parse(cached);
+      if (parsed.city && parsed.city !== "Unknown City") {
+        return parsed;
+      }
     } catch (e) {
       // Ignore parse error and refetch
     }
@@ -100,7 +103,9 @@ export async function getGeoInfo() {
       country: data.country_name || "Unknown Country",
       ip: data.ip || ""
     };
-    localStorage.setItem("visitor_geo", JSON.stringify(geo));
+    if (geo.city && geo.city !== "Unknown City") {
+      localStorage.setItem("visitor_geo", JSON.stringify(geo));
+    }
     return geo;
   } catch (err) {
     console.error("Geo lookup error:", err);
@@ -238,7 +243,7 @@ export async function trackEvent(action, planClicked = "", enquirySubmitted = fa
   if (window.gtag) {
     window.gtag("event", action, {
       plan_clicked: planClicked,
-      enquiry_submitted,
+      enquiry_submitted: enquirySubmitted,
       page_path: window.location.pathname
     });
   }
@@ -248,7 +253,7 @@ export async function trackEvent(action, planClicked = "", enquirySubmitted = fa
     window.dataLayer.push({
       event: action,
       plan_clicked: planClicked,
-      enquiry_submitted,
+      enquiry_submitted: enquirySubmitted,
       page_path: window.location.pathname
     });
   }

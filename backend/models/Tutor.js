@@ -46,8 +46,9 @@ const tutorSchema = new mongoose.Schema(
       default: "pending"
     },
 
-    adminComment: { type: String, default: "" }
+    adminComment: { type: String, default: "" },
 
+    odooLeadId: { type: mongoose.Schema.Types.Mixed, default: null }
   },
   { timestamps: true }
 );

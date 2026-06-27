@@ -176,6 +176,16 @@ const parentEnquirySchema = new mongoose.Schema(
       default: "",
     },
 
+    visitor_id: {
+      type: String,
+      default: "",
+    },
+
+    session_id: {
+      type: String,
+      default: "",
+    },
+
     status: {
       type: String,
       enum: [
@@ -187,6 +197,46 @@ const parentEnquirySchema = new mongoose.Schema(
         "Lost",
       ],
       default: "New Lead",
+    },
+
+    adminNotes: {
+      type: String,
+      default: "",
+    },
+
+    nextFollowUpDate: {
+      type: String,
+      default: "",
+    },
+
+    assignedTutor: {
+      type: String,
+      default: "",
+    },
+
+    demoDate: {
+      type: String,
+      default: "",
+    },
+
+    demoTime: {
+      type: String,
+      default: "",
+    },
+
+    feesFinalized: {
+      type: Boolean,
+      default: false,
+    },
+
+    finalFees: {
+      type: Number,
+      default: null,
+    },
+
+    lostReason: {
+      type: String,
+      default: "",
     },
   },
   { timestamps: true }

@@ -16,7 +16,8 @@ const analyticsLogSchema = new mongoose.Schema(
     os: { type: String, default: "Unknown OS" },
     action: { type: String, default: "page_view" },
     time_spent: { type: Number, default: 0 },
-    scroll_depth: { type: Number, default: 0 }
+    scroll_depth: { type: Number, default: 0 },
+    ipAddress: { type: String, default: "" }
   },
   { timestamps: true }
 );

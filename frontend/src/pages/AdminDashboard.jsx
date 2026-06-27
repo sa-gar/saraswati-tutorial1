@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
   Users, 
@@ -1856,6 +1856,46 @@ function ModalInput({ value, onChange, placeholder }) {
 function AnalyticsConsole({ data, loading, period, setPeriod, refresh }) {
   const PIE_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#94a3b8"];
 
+  // 1. Auto-Refresh Logic
+  const [autoRefresh, setAutoRefresh] = useState(false);
+  const refreshRef = useRef(refresh);
+
+  useEffect(() => {
+    refreshRef.current = refresh;
+  }, [refresh]);
+
+  useEffect(() => {
+    if (!autoRefresh) return;
+    const interval = setInterval(() => {
+      refreshRef.current();
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [autoRefresh]);
+
+  // 2. CSV Export Utility
+  const exportToCSV = (dataList, filename, headers, columnNames) => {
+    const headerRow = columnNames ? columnNames.join(",") : headers.join(",");
+    const csvRows = [headerRow];
+    for (const row of dataList) {
+      const values = headers.map(header => {
+        const val = row[header];
+        const escaped = ('' + (val ?? '')).replace(/"/g, '""');
+        return `"${escaped}"`;
+      });
+      csvRows.push(values.join(","));
+    }
+    const csvString = csvRows.join("\n");
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   // Helper to format source name
   const formatSourceName = (name) => {
     if (!name || name === "Direct Visit") return "Direct";
@@ -1898,6 +1938,91 @@ function AnalyticsConsole({ data, loading, period, setPeriod, refresh }) {
     return defaultActions;
   }, [data?.actions]);
 
+  // Funnel calculations
+  const funnelSteps = useMemo(() => {
+    const total = data?.summary?.totalVisitors || 0;
+    const explored = actionCounts.explore_plan + actionCounts.choose_plan;
+    const started = actionCounts.form_started;
+    const submitted = actionCounts.form_submitted;
+
+    return [
+      { label: "1. Total Traffic", count: total, pct: 100, color: "bg-blue-500" },
+      { label: "2. Plan Engagements", count: explored, pct: total > 0 ? Math.round((explored / total) * 100) : 0, color: "bg-indigo-500" },
+      { label: "3. Form Initiations", count: started, pct: total > 0 ? Math.round((started / total) * 100) : 0, color: "bg-purple-500" },
+      { label: "4. Submitted Leads", count: submitted, pct: total > 0 ? Math.round((submitted / total) * 100) : 0, color: "bg-emerald-500" }
+    ];
+  }, [data?.summary?.totalVisitors, actionCounts]);
+
+  // 3. Interactive sorting and filtering for Page table
+  const [pageSearch, setPageSearch] = useState("");
+  const [pageSortField, setPageSortField] = useState("views");
+  const [pageSortOrder, setPageSortOrder] = useState("desc");
+
+  const togglePageSort = (field) => {
+    if (pageSortField === field) {
+      setPageSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      setPageSortField(field);
+      setPageSortOrder("desc");
+    }
+  };
+
+  const sortedAndFilteredPages = useMemo(() => {
+    if (!data || !Array.isArray(data.pages)) return [];
+
+    let filtered = data.pages.filter(p =>
+      p.page?.toLowerCase().includes(pageSearch.toLowerCase())
+    );
+
+    filtered.sort((a, b) => {
+      let valA = a[pageSortField];
+      let valB = b[pageSortField];
+
+      if (typeof valA === 'string') {
+        return pageSortOrder === 'asc'
+          ? valA.localeCompare(valB)
+          : valB.localeCompare(valA);
+      } else {
+        return pageSortOrder === 'asc'
+          ? (valA || 0) - (valB || 0)
+          : (valB || 0) - (valA || 0);
+      }
+    });
+
+    return filtered;
+  }, [data?.pages, pageSearch, pageSortField, pageSortOrder]);
+
+  // 4. Session Timeline Modal state
+  const [selectedSessionId, setSelectedSessionId] = useState(null);
+  const [sessionLogs, setSessionLogs] = useState([]);
+  const [sessionIdentity, setSessionIdentity] = useState(null);
+  const [loadingSession, setLoadingSession] = useState(false);
+
+  const handleOpenSession = async (sessionId) => {
+    if (!sessionId) return;
+    setSelectedSessionId(sessionId);
+    setLoadingSession(true);
+    setSessionLogs([]);
+    setSessionIdentity(null);
+    try {
+      const token = localStorage.getItem("adminToken");
+      const res = await fetch(`${API_BASE}/analytics/session/${sessionId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      if (res.ok) {
+        const result = await res.json();
+        setSessionLogs(result.logs || []);
+        setSessionIdentity(result.identity || null);
+      }
+    } catch (err) {
+      console.error("Error loading session:", err);
+    } finally {
+      setLoadingSession(false);
+    }
+  };
+
   // Compute scroll color
   const getScrollColor = (depth) => {
     if (depth >= 75) return "text-emerald-400";
@@ -1915,6 +2040,29 @@ function AnalyticsConsole({ data, loading, period, setPeriod, refresh }) {
   };
 
   const clarityProjectId = import.meta.env.VITE_CLARITY_PROJECT_ID || "xbj2we9di2";
+
+  const handleExportPages = () => {
+    if (!data || !Array.isArray(data.pages)) return;
+    exportToCSV(
+      data.pages,
+      `page_engagement_${period}.csv`,
+      ["page", "views", "avgTimeSpent", "avgScrollDepth", "bounceRate"],
+      ["Page Path", "Views", "Avg Time Spent (s)", "Avg Scroll Depth (%)", "Bounce Rate (%)"]
+    );
+  };
+
+  const handleExportActivity = () => {
+    if (!data || !Array.isArray(data.recentActivity)) return;
+    exportToCSV(
+      data.recentActivity.map(act => ({
+        ...act,
+        time: new Date(act.createdAt).toLocaleString("en-IN")
+      })),
+      `recent_activity_${period}.csv`,
+      ["time", "city", "source", "device", "action", "page_visited", "plan_clicked"],
+      ["Timestamp", "City", "Traffic Source", "Device", "Action Type", "Page Path", "Plan Clicked"]
+    );
+  };
 
   return (
     <div className="animate-slideFade rounded-3xl bg-[#090e1a] border border-slate-800/80 p-6 text-white shadow-2xl relative overflow-hidden">
@@ -1945,6 +2093,19 @@ function AnalyticsConsole({ data, loading, period, setPeriod, refresh }) {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
+          {/* Auto-Refresh Control */}
+          <button
+            onClick={() => setAutoRefresh(prev => !prev)}
+            className={`flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs font-bold transition duration-200 cursor-pointer ${
+              autoRefresh
+                ? "bg-emerald-600/90 text-white shadow-lg shadow-emerald-500/20 border border-emerald-500/30"
+                : "bg-slate-900 border border-slate-800 text-slate-400 hover:text-white"
+            }`}
+          >
+            <span className={`h-2 w-2 rounded-full ${autoRefresh ? "bg-emerald-400 animate-pulse" : "bg-slate-500"}`} />
+            Auto-Refresh (30s)
+          </button>
+
           {/* Period Selector */}
           <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-1 flex">
             {["24h", "7d", "30d"].map((p) => (
@@ -1983,40 +2144,72 @@ function AnalyticsConsole({ data, loading, period, setPeriod, refresh }) {
           
           {/* Summary Metric Cards */}
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-6">
-            <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-2xl p-5 hover:border-blue-900/50 transition">
+            <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-2xl p-5 hover:border-blue-900/50 transition animate-slideFade">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Visitors</span>
               <p className="mt-2 text-3xl font-black text-white tracking-tight">{data?.summary?.totalVisitors || 0}</p>
               <span className="mt-1 text-[10px] text-emerald-400 font-semibold block">Unique users</span>
             </div>
 
-            <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-2xl p-5 border-l-2 border-l-emerald-500">
+            <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-2xl p-5 border-l-2 border-l-emerald-500 animate-slideFade">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Active Users</span>
               <p className="mt-2 text-3xl font-black text-emerald-400 tracking-tight">{data?.summary?.activeUsers || 0}</p>
               <span className="mt-1 text-[10px] text-slate-400 font-medium block">Active (last 5 min)</span>
             </div>
 
-            <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-2xl p-5 hover:border-indigo-900/50 transition">
+            <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-2xl p-5 hover:border-indigo-900/50 transition animate-slideFade">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">New Visitors</span>
               <p className="mt-2 text-3xl font-black text-white tracking-tight">{data?.summary?.newVisitors || 0}</p>
               <span className="mt-1 text-[10px] text-blue-400 font-semibold block">First sessions</span>
             </div>
 
-            <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-2xl p-5 hover:border-slate-800 transition">
+            <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-2xl p-5 hover:border-slate-800 transition animate-slideFade">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Returning Users</span>
               <p className="mt-2 text-3xl font-black text-white tracking-tight">{data?.summary?.returningVisitors || 0}</p>
               <span className="mt-1 text-[10px] text-slate-400 font-medium block">Recurring visits</span>
             </div>
 
-            <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-2xl p-5 hover:border-slate-800 transition">
+            <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-2xl p-5 hover:border-slate-800 transition animate-slideFade">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Bounce Rate</span>
               <p className="mt-2 text-3xl font-black text-white tracking-tight">{data?.summary?.avgBounceRate || 0}%</p>
               <span className="mt-1 text-[10px] text-slate-400 font-medium block">Single page views</span>
             </div>
 
-            <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-2xl p-5 hover:border-slate-800 transition">
+            <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-2xl p-5 hover:border-slate-800 transition animate-slideFade">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Scroll Depth</span>
               <p className="mt-2 text-3xl font-black text-white tracking-tight">{data?.summary?.avgScrollDepth || 0}%</p>
               <span className="mt-1 text-[10px] text-slate-400 font-medium block">Average depth</span>
+            </div>
+          </div>
+
+          {/* Visual Conversion Funnel */}
+          <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-3xl p-6 animate-slideFade">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-350 flex items-center gap-1.5 mb-4">
+              <Award className="h-4 w-4 text-emerald-400" />
+              Admissions Lead Conversion Funnel
+            </span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {funnelSteps.map((step, idx) => (
+                <div key={step.label} className="relative bg-slate-950/40 border border-slate-850 p-4 rounded-2xl flex flex-col justify-between overflow-hidden">
+                  <div>
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">{step.label}</span>
+                    <p className="mt-2 text-3xl font-black text-white tracking-tight">{step.count}</p>
+                  </div>
+                  <div className="mt-4">
+                    <div className="flex justify-between text-[10px] text-slate-400 font-bold mb-1">
+                      <span>Conversion</span>
+                      <span>{step.pct}%</span>
+                    </div>
+                    <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                      <div className={`h-full ${step.color}`} style={{ width: `${step.pct}%` }} />
+                    </div>
+                  </div>
+                  {idx < 3 && (
+                    <div className="hidden lg:block absolute -right-3 top-1/2 -translate-y-1/2 text-slate-800 z-10 font-black text-xl pointer-events-none">
+                      ➜
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
 
@@ -2313,40 +2506,76 @@ function AnalyticsConsole({ data, loading, period, setPeriod, refresh }) {
             </div>
           </div>
 
-          {/* Page Analytics */}
+          {/* Page Analytics Table with Search and Sort */}
           <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-3xl p-5">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-350 flex items-center gap-1.5 mb-4">
-              <Eye className="h-4 w-4 text-emerald-400" />
-              Most Visited Pages & Engagement Metrics
-            </span>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-350 flex items-center gap-1.5">
+                <Eye className="h-4 w-4 text-emerald-400" />
+                Most Visited Pages & Engagement Metrics
+              </span>
+
+              <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                <input
+                  type="text"
+                  placeholder="Filter pages..."
+                  value={pageSearch}
+                  onChange={(e) => setPageSearch(e.target.value)}
+                  className="bg-slate-950/80 border border-slate-800 px-3 py-1.5 text-xs rounded-xl text-white font-semibold outline-none focus:border-blue-500 max-w-[200px]"
+                />
+                
+                <button
+                  onClick={handleExportPages}
+                  className="flex items-center gap-1 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-xs text-white font-bold px-3 py-1.5 rounded-xl cursor-pointer transition"
+                >
+                  <FileDown className="h-3.5 w-3.5" />
+                  Export CSV
+                </button>
+              </div>
+            </div>
 
             <div className="overflow-x-auto">
               <table className="w-full text-xs font-semibold text-slate-300">
                 <thead>
-                  <tr className="text-left border-b border-slate-800/80 text-[10px] text-slate-500 uppercase tracking-wider">
-                    <th className="pb-3">PAGE PATH</th>
-                    <th className="pb-3 text-center">PAGE VIEWS</th>
-                    <th className="pb-3 text-center">AVG TIME SPENT</th>
-                    <th className="pb-3 text-center">MAX SCROLL DEPTH</th>
-                    <th className="pb-3 text-right">BOUNCE RATE</th>
+                  <tr className="text-left border-b border-slate-800/80 text-[10px] text-slate-500 uppercase tracking-wider select-none">
+                    <th className="pb-3 cursor-pointer hover:text-white transition" onClick={() => togglePageSort("page")}>
+                      PAGE PATH {pageSortField === "page" ? (pageSortOrder === "asc" ? "▲" : "▼") : ""}
+                    </th>
+                    <th className="pb-3 text-center cursor-pointer hover:text-white transition" onClick={() => togglePageSort("views")}>
+                      PAGE VIEWS {pageSortField === "views" ? (pageSortOrder === "asc" ? "▲" : "▼") : ""}
+                    </th>
+                    <th className="pb-3 text-center cursor-pointer hover:text-white transition" onClick={() => togglePageSort("avgTimeSpent")}>
+                      AVG TIME SPENT {pageSortField === "avgTimeSpent" ? (pageSortOrder === "asc" ? "▲" : "▼") : ""}
+                    </th>
+                    <th className="pb-3 text-center cursor-pointer hover:text-white transition" onClick={() => togglePageSort("avgScrollDepth")}>
+                      MAX SCROLL DEPTH {pageSortField === "avgScrollDepth" ? (pageSortOrder === "asc" ? "▲" : "▼") : ""}
+                    </th>
+                    <th className="pb-3 text-right cursor-pointer hover:text-white transition" onClick={() => togglePageSort("bounceRate")}>
+                      BOUNCE RATE {pageSortField === "bounceRate" ? (pageSortOrder === "asc" ? "▲" : "▼") : ""}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {Array.isArray(data?.pages) && data.pages.map((page) => (
-                    <tr key={page.page} className="border-b border-slate-850/50 last:border-0">
-                      <td className="py-4 font-mono font-bold text-blue-400 text-xs">{page.page}</td>
-                      <td className="py-4 text-center font-bold text-white">{page.views}</td>
-                      <td className="py-4 text-center font-bold text-slate-350">{formatTimeSpent(page.avgTimeSpent)}</td>
-                      <td className="py-4 text-center font-bold">
-                        <span className={getScrollColor(page.avgScrollDepth)}>{page.avgScrollDepth}%</span>
-                      </td>
-                      <td className="py-4 text-right">
-                        <span className={`font-bold ${page.bounceRate >= 60 ? 'text-rose-400' : 'text-slate-400'}`}>
-                          {page.bounceRate}%
-                        </span>
-                      </td>
+                  {sortedAndFilteredPages.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="text-center py-6 text-slate-500 italic">No matching pages found</td>
                     </tr>
-                  ))}
+                  ) : (
+                    sortedAndFilteredPages.map((page) => (
+                      <tr key={page.page} className="border-b border-slate-850/50 last:border-0 hover:bg-slate-900/20 transition">
+                        <td className="py-4 font-mono font-bold text-blue-400 text-xs break-all pr-4">{page.page}</td>
+                        <td className="py-4 text-center font-bold text-white">{page.views}</td>
+                        <td className="py-4 text-center font-bold text-slate-350">{formatTimeSpent(page.avgTimeSpent)}</td>
+                        <td className="py-4 text-center font-bold">
+                          <span className={getScrollColor(page.avgScrollDepth)}>{page.avgScrollDepth}%</span>
+                        </td>
+                        <td className="py-4 text-right">
+                          <span className={`font-bold ${page.bounceRate >= 60 ? 'text-rose-400' : 'text-slate-400'}`}>
+                            {page.bounceRate}%
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -2354,12 +2583,22 @@ function AnalyticsConsole({ data, loading, period, setPeriod, refresh }) {
 
           {/* Real-time activity & Clarity Integration Cards */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            {/* Real-time Activity feed */}
+            {/* Real-time Activity feed with timeline modal hooks */}
             <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-3xl p-5 lg:col-span-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-350 flex items-center gap-1.5 mb-4">
-                <Activity className="h-4 w-4 text-blue-400 animate-pulse" />
-                Live Visitor Event Log (Real-Time)
-              </span>
+              <div className="flex justify-between items-center mb-4">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-350 flex items-center gap-1.5">
+                  <Activity className="h-4 w-4 text-blue-400 animate-pulse" />
+                  Live Visitor Event Log (Click to view session timeline)
+                </span>
+                
+                <button
+                  onClick={handleExportActivity}
+                  className="flex items-center gap-1 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-xs text-white font-bold px-3 py-1.5 rounded-xl cursor-pointer transition"
+                >
+                  <FileDown className="h-3.5 w-3.5" />
+                  Export CSV
+                </button>
+              </div>
 
               <div className="max-h-80 overflow-y-auto space-y-3.5 pr-2 no-scrollbar">
                 {!Array.isArray(data?.recentActivity) || data.recentActivity.length === 0 ? (
@@ -2401,15 +2640,37 @@ function AnalyticsConsole({ data, loading, period, setPeriod, refresh }) {
                     const actionClass = actionColors[act.action] || "bg-blue-950/40 border-blue-900/50 text-blue-400";
 
                     return (
-                      <div key={act._id} className="flex gap-4 items-start border-b border-slate-850/50 pb-3 last:border-0 last:pb-0">
+                      <div 
+                        key={act._id} 
+                        onClick={() => handleOpenSession(act.session_id)}
+                        className="flex gap-4 items-start border-b border-slate-850/50 pb-3 last:border-0 last:pb-0 cursor-pointer hover:bg-slate-850/30 transition p-2.5 rounded-2xl"
+                      >
                         <span className="text-[10px] font-bold text-slate-500 w-14 shrink-0 mt-1">{timeStr}</span>
                         <div className="flex-1">
-                          <p className="text-xs font-bold text-white flex items-center gap-1.5 flex-wrap">
-                            User from <span className="text-blue-400">{act.city || "Unknown City"}</span>
-                            <span className="text-slate-600">•</span>
-                            Source: <span className="text-slate-400 font-semibold">{formatSourceName(act.source)}</span>
-                            <span className="text-slate-600">•</span>
-                            Device: <span className="text-slate-400 font-semibold">{act.device || "Desktop"}</span>
+                          <p className="text-xs font-bold text-white flex items-center gap-1.5 flex-wrap animate-fadeIn">
+                            {act.identity ? (
+                              <span className="text-emerald-400 font-extrabold flex items-center gap-1">
+                                {act.identity.name} {act.identity.phone ? `(${act.identity.phone})` : ""}
+                                {act.identity.isDraft ? (
+                                  <span className="ml-1 text-[8px] bg-amber-500/10 text-amber-300 font-medium px-1 rounded border border-amber-500/20">Draft</span>
+                                ) : (
+                                  <span className="ml-1 text-[8px] bg-emerald-500/10 text-emerald-300 font-medium px-1 rounded border border-emerald-500/20">Lead</span>
+                                )}
+                              </span>
+                            ) : (
+                              <span>User</span>
+                            )}
+                            <span>from</span> <span className="text-blue-400 font-black">{act.city || "Unknown City"}</span>
+                            <span className="text-slate-700">•</span>
+                            Source: <span className="text-slate-350 font-semibold">{formatSourceName(act.source)}</span>
+                            <span className="text-slate-700">•</span>
+                            Device: <span className="text-slate-350 font-semibold">{act.device || "Desktop"}{act.os ? ` (${act.os})` : ""}</span>
+                            {act.ipAddress && (
+                              <>
+                                <span className="text-slate-700">•</span>
+                                IP: <span className="text-slate-350 font-mono font-semibold">{act.ipAddress}</span>
+                              </>
+                            )}
                           </p>
                           <div className="mt-1.5 flex items-center gap-2">
                             <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded border ${actionClass}`}>
@@ -2466,6 +2727,153 @@ function AnalyticsConsole({ data, loading, period, setPeriod, refresh }) {
             </div>
           </div>
 
+        </div>
+      )}
+
+      {/* 5. Timeline Journey Modal popup */}
+      {selectedSessionId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-md animate-slideFade">
+          <div className="max-h-[85vh] w-full max-w-2xl overflow-hidden rounded-3xl bg-[#090e1a] border border-slate-800 p-6 text-white shadow-2xl flex flex-col relative z-50">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
+              <div>
+                <h3 className="text-xl font-black text-white flex items-center gap-2">
+                  <Activity className="h-5 w-5 text-blue-400 animate-pulse" />
+                  Chronological Session Timeline
+                </h3>
+                <p className="text-[10px] text-slate-500 font-mono mt-1">Session: {selectedSessionId}</p>
+              </div>
+              <button
+                onClick={() => setSelectedSessionId(null)}
+                className="rounded-full bg-slate-800 hover:bg-slate-750 px-4 py-2 text-xs font-bold text-slate-350 transition cursor-pointer border border-slate-700/50"
+              >
+                Close
+              </button>
+            </div>
+
+            {sessionIdentity && (
+              <div className="bg-[#101726]/85 border border-emerald-500/20 shadow-lg shadow-[#090e1a]/80 rounded-2xl p-4 mb-4 flex items-center justify-between gap-4 animate-slideFade shrink-0">
+                <div className="space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-black text-emerald-400">{sessionIdentity.name}</span>
+                    {sessionIdentity.isDraft ? (
+                      <span className="text-[9px] bg-amber-500/10 text-amber-300 font-bold px-2 py-0.5 rounded-full border border-amber-500/20">Draft Lead</span>
+                    ) : (
+                      <span className="text-[9px] bg-emerald-500/10 text-emerald-300 font-bold px-2 py-0.5 rounded-full border border-emerald-500/20">Submitted Lead</span>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-x-3.5 gap-y-1 text-[10px] font-bold text-slate-400">
+                    {sessionIdentity.phone && <span className="flex items-center gap-1">📞 {sessionIdentity.phone}</span>}
+                    {sessionIdentity.email && <span className="flex items-center gap-1">✉️ {sessionIdentity.email}</span>}
+                    {sessionLogs.length > 0 && (
+                      <>
+                        <span className="flex items-center gap-1">📱 {sessionLogs[0].device || "Desktop"}{sessionLogs[0].os ? ` (${sessionLogs[0].os})` : ""}</span>
+                        <span className="flex items-center gap-1">🧭 Source: {formatSourceName(sessionLogs[0].source)}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+                {sessionLogs.length > 0 && (
+                  <div className="text-right text-[10px] text-slate-500 font-mono space-y-0.5 hidden sm:block">
+                    <div>IP: {sessionLogs[0].ipAddress || "Unknown"}</div>
+                    <div>Location: {sessionLogs[0].city || "Unknown City"}</div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="flex-1 overflow-y-auto space-y-4 pr-1 no-scrollbar min-h-60">
+              {loadingSession ? (
+                <div className="flex flex-col items-center justify-center py-20 gap-3">
+                  <RefreshCw className="h-6 w-6 animate-spin text-blue-500" />
+                  <p className="text-xs text-slate-400 font-semibold">Retrieving session timeline events...</p>
+                </div>
+              ) : sessionLogs.length === 0 ? (
+                <div className="text-center py-20 text-xs text-slate-500 font-semibold italic">No logged events found for this session.</div>
+              ) : (
+                <div className="relative border-l border-slate-800 ml-3 pl-6 space-y-5">
+                  {sessionLogs.map((log) => {
+                    const dateObj = log.createdAt ? new Date(log.createdAt) : null;
+                    const timeStr = dateObj && !isNaN(dateObj.getTime())
+                      ? dateObj.toLocaleTimeString("en-IN", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          second: "2-digit",
+                          hour12: true
+                        })
+                      : "00:00:00";
+
+                    const actionLabels = {
+                      page_view: `Visited page`,
+                      explore_plan: `Explored plan details`,
+                      choose_plan: `Chose plan option`,
+                      book_demo: `Clicked Book Demo`,
+                      become_tutor: `Clicked Become a Tutor`,
+                      whatsapp_click: `Clicked WhatsApp button`,
+                      call_click: `Clicked Phone Call button`,
+                      form_started: `Started Enquiry Form`,
+                      form_submitted: `Submitted Enquiry Form`,
+                      form_abandoned: `Abandoned Enquiry Form`
+                    };
+                    
+                    const actionStyles = {
+                      page_view: "border-blue-500/50 bg-blue-950/20 text-blue-400",
+                      form_started: "border-indigo-500/50 bg-indigo-950/20 text-indigo-400",
+                      form_submitted: "border-emerald-500/50 bg-emerald-950/20 text-emerald-400",
+                      form_abandoned: "border-rose-500/50 bg-rose-950/20 text-rose-400",
+                      whatsapp_click: "border-emerald-500/50 bg-emerald-950/20 text-emerald-400",
+                      call_click: "border-blue-500/50 bg-blue-950/20 text-blue-400"
+                    };
+
+                    const actionStyle = actionStyles[log.action] || "border-slate-700 bg-slate-900/50 text-slate-350";
+
+                    return (
+                      <div key={log._id} className="relative">
+                        {/* Timeline dot marker */}
+                        <span className={`absolute -left-[31px] top-1.5 h-3.5 w-3.5 rounded-full border-2 bg-[#090e1a] ${
+                          log.action === "form_submitted" ? "border-emerald-500" : "border-slate-800"
+                        }`} />
+                        
+                        <div className="bg-slate-950/40 border border-slate-850/80 p-3.5 rounded-2xl">
+                          <div className="flex items-center justify-between gap-4 mb-1">
+                            <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded border ${actionStyle}`}>
+                              {actionLabels[log.action] || log.action.replace("_", " ")}
+                            </span>
+                            <span className="text-[10px] text-slate-500 font-bold">{timeStr}</span>
+                          </div>
+
+                          {log.action === "page_view" && (
+                            <p className="text-xs font-mono font-bold text-blue-400 mt-1 break-all">{log.page_visited}</p>
+                          )}
+                          
+                          {log.plan_clicked && (
+                            <p className="text-xs font-semibold text-slate-350 mt-1">
+                              Plan: <span className="text-indigo-400 font-bold">{log.plan_clicked}</span>
+                            </p>
+                          )}
+
+                          {(log.time_spent > 0 || log.scroll_depth > 0) && (
+                            <div className="flex gap-4 mt-2 text-[10px] text-slate-500 font-bold border-t border-slate-900 pt-2">
+                              {log.time_spent > 0 && <span>⏱️ Dwell Time: {log.time_spent}s</span>}
+                              {log.scroll_depth > 0 && <span>📜 Scroll Depth: {log.scroll_depth}%</span>}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+            
+            <div className="mt-4 pt-4 border-t border-slate-800 flex justify-end">
+              <button
+                onClick={() => setSelectedSessionId(null)}
+                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-xs font-black rounded-xl transition cursor-pointer text-white shadow-lg shadow-blue-600/20"
+              >
+                Close Session Timeline
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

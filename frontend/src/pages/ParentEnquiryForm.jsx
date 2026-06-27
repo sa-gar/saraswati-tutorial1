@@ -634,7 +634,9 @@ export default function ParentEnquiryForm() {
           stepReached: nextStepNumber,
           formData: currentForm,
           geoInfo,
-          ipAddress: geoInfo.ip || ""
+          ipAddress: geoInfo.ip || "",
+          visitor_id: localStorage.getItem("visitor_id") || "",
+          session_id: sessionStorage.getItem("session_id") || ""
         }),
       });
     } catch (err) {
@@ -699,6 +701,8 @@ export default function ParentEnquiryForm() {
       })),
       geoInfo,
       ipAddress: geoInfo.ip || "",
+      visitor_id: localStorage.getItem("visitor_id") || "",
+      session_id: sessionStorage.getItem("session_id") || "",
     };
   };
 

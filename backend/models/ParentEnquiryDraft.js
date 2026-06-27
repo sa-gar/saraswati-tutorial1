@@ -25,6 +25,14 @@ const parentEnquiryDraftSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    visitor_id: {
+      type: String,
+      default: "",
+    },
+    session_id: {
+      type: String,
+      default: "",
+    },
   },
   { timestamps: true }
 );
