@@ -85,6 +85,7 @@ const FILTER_OPTIONS = [
 
 const emptyTutor = {
   name: "",
+  email: "",
   subject: "",
   qualification: "",
   location: "",
@@ -478,6 +479,7 @@ export default function AdminDashboard() {
     setEditingTutor(tutor);
     setEditForm({
       name: tutor.name || "",
+      email: tutor.email || "",
       subject: tutor.subject || "",
       qualification: tutor.qualification || "",
       location: tutor.location || "",
@@ -1761,6 +1763,12 @@ function TutorModal({ title, form, setForm, primaryText, onPrimary, onClose }) {
             placeholder="Name"
             value={form.name}
             onChange={(value) => setForm({ ...form, name: value })}
+          />
+
+          <ModalInput
+            placeholder="Email"
+            value={form.email}
+            onChange={(value) => setForm({ ...form, email: value })}
           />
 
           <ModalInput

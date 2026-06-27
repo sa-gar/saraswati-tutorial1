@@ -3,8 +3,8 @@ import mongoose from "mongoose";
 const tutorSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
-    phone: { type: String, required: true, trim: true },
-    email: { type: String, required: true, trim: true },
+    phone: { type: String, default: "", trim: true },
+    email: { type: String, default: "", trim: true },
     qualification: { type: String, default: "" },
     subject: { type: String, default: "" },
     expertise: { type: [String], default: [] },
