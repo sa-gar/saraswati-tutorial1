@@ -200,12 +200,12 @@ export default function MumbaiPage() {
     {
       title: "Chemistry Tuition",
       desc: "Understand chemical equations, periodic tables, organic chemistry, and reactions with clear personal guidance.",
-      image: "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?auto=format&fit=crop&q=80&w=600"
+      image: "https://images.unsplash.com/photo-1603126857599-f6e157fa2fe6?auto=format&fit=crop&q=80&w=600"
     },
     {
       title: "Biology Tuition",
       desc: "Excel in life sciences, anatomy, and plant physiology with detailed diagrams, memory aids, and expert tutoring.",
-      image: "https://images.unsplash.com/photo-1532187643603-ba119ca4109e?auto=format&fit=crop&q=80&w=600"
+      image: "https://images.unsplash.com/photo-1530026405186-ed1f139313f8?auto=format&fit=crop&q=80&w=600"
     },
     {
       title: "English Tuition",
