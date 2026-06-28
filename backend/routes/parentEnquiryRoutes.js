@@ -1,6 +1,7 @@
 import express from "express";
 import ParentEnquiry from "../models/ParentEnquiry.js";
 import ParentEnquiryDraft from "../models/ParentEnquiryDraft.js";
+import AnalyticsLog from "../models/AnalyticsLog.js";
 import { createLead, updateLead } from "../utils/odooService.js";
 import { verifyToken } from "../middleware/authMiddleware.js";
 import { resolveGeo } from "../utils/geoLookup.js";
@@ -42,7 +43,20 @@ router.get("/drafts", verifyToken(["admin"]), async (req, res) => {
  */
 router.post("/draft", async (req, res) => {
   try {
-    const { emailOrPhone, stepReached, formData, geoInfo, ipAddress, visitor_id, session_id } = req.body;
+    const {
+      emailOrPhone,
+      stepReached,
+      formData,
+      geoInfo,
+      ipAddress,
+      visitor_id,
+      session_id,
+      utm_source,
+      utm_medium,
+      utm_campaign,
+      utm_content,
+      utm_term
+    } = req.body;
     if (!emailOrPhone) {
       return res.status(400).json({ message: "emailOrPhone is required" });
     }
@@ -77,7 +91,19 @@ router.post("/draft", async (req, res) => {
 
     const draft = await ParentEnquiryDraft.findOneAndUpdate(
       { emailOrPhone: emailOrPhone.trim() },
-      { stepReached, formData, geoInfo: finalGeo, ipAddress: finalIp, visitor_id, session_id },
+      {
+        stepReached,
+        formData,
+        geoInfo: finalGeo,
+        ipAddress: finalIp,
+        visitor_id,
+        session_id,
+        utm_source,
+        utm_medium,
+        utm_campaign,
+        utm_content,
+        utm_term
+      },
       { new: true, upsert: true }
     );
 
@@ -143,6 +169,27 @@ router.post("/", async (req, res) => {
     req.body.geoInfo = finalGeo;
     req.body.ipAddress = finalIp;
 
+    // Log backend validation success event
+    try {
+      const logData = {
+        visitor_id: req.body.visitor_id || "unknown",
+        session_id: req.body.session_id || "unknown",
+        city: finalGeo.city || "Unknown City",
+        region: finalGeo.region || "Unknown State",
+        country: finalGeo.country || "Unknown Country",
+        source: req.body.utm_source || "Direct",
+        page_visited: "/parent-enquiry",
+        device: req.body.device || "Desktop",
+        browser: req.body.browser || "Unknown Browser",
+        os: req.body.os || "Unknown OS",
+        ipAddress: finalIp,
+        action: "backend_validation_success"
+      };
+      await new AnalyticsLog(logData).save();
+    } catch (logErr) {
+      console.error("Failed to log backend validation success:", logErr.message);
+    }
+
     let odooRes = null;
 
     try {
@@ -161,6 +208,27 @@ router.post("/", async (req, res) => {
     });
 
     const saved = await enquiry.save();
+
+    // Log database saved successfully event
+    try {
+      const logData = {
+        visitor_id: req.body.visitor_id || "unknown",
+        session_id: req.body.session_id || "unknown",
+        city: finalGeo.city || "Unknown City",
+        region: finalGeo.region || "Unknown State",
+        country: finalGeo.country || "Unknown Country",
+        source: req.body.utm_source || "Direct",
+        page_visited: "/parent-enquiry",
+        device: req.body.device || "Desktop",
+        browser: req.body.browser || "Unknown Browser",
+        os: req.body.os || "Unknown OS",
+        ipAddress: finalIp,
+        action: "database_saved_success"
+      };
+      await new AnalyticsLog(logData).save();
+    } catch (logErr) {
+      console.error("Failed to log database saved success:", logErr.message);
+    }
 
     // Clear drafts if any exist
     try {

@@ -305,7 +305,7 @@ router.get("/stats", verifyToken(["admin"]), async (req, res) => {
 
     // 9. Plan Analytics
     const planStatsRaw = await AnalyticsLog.aggregate([
-      { $match: { createdAt: { $gte: startDate }, action: { $in: ["explore_plan", "click_plan", "choose_plan"] } } },
+      { $match: { createdAt: { $gte: startDate }, action: { $in: ["explore_plan", "click_plan", "choose_plan", "book_demo"] } } },
       {
         $group: {
           _id: { plan: "$plan_clicked", action: "$action" },
@@ -314,11 +314,25 @@ router.get("/stats", verifyToken(["admin"]), async (req, res) => {
       }
     ]);
 
+    // Count ParentEnquiry submissions by plan type
+    const enquiriesByPlanAgg = await ParentEnquiry.aggregate([
+      { $match: { createdAt: { $gte: startDate } } },
+      { $group: { _id: { $toLower: "$planType" }, count: { $sum: 1 } } }
+    ]);
+
+    const enquiriesPlanCount = { foundation: 0, advance: 0, elite: 0 };
+    enquiriesByPlanAgg.forEach(item => {
+      const plan = String(item._id || "").toLowerCase();
+      if (plan.includes("foundation")) enquiriesPlanCount.foundation = item.count;
+      else if (plan.includes("advance")) enquiriesPlanCount.advance = item.count;
+      else if (plan.includes("elite")) enquiriesPlanCount.elite = item.count;
+    });
+
     // Format Plan performance
     const plansMapping = {
-      foundation: { name: "Foundation", views: 0, clicks: 0, selections: 0 },
-      advance: { name: "Advance Growth", views: 0, clicks: 0, selections: 0 },
-      elite: { name: "Elite Mentor", views: 0, clicks: 0, selections: 0 }
+      foundation: { name: "Foundation", views: 0, exploreClicks: 0, selections: 0, enquiries: 0, demos: 0 },
+      advance: { name: "Advance Growth", views: 0, exploreClicks: 0, selections: 0, enquiries: 0, demos: 0 },
+      elite: { name: "Elite Mentor", views: 0, exploreClicks: 0, selections: 0, enquiries: 0, demos: 0 }
     };
 
     planStatsRaw.forEach(p => {
@@ -331,10 +345,25 @@ router.get("/stats", verifyToken(["admin"]), async (req, res) => {
       else if (planKey.includes("elite")) matchedKey = "elite";
 
       if (matchedKey) {
-        if (action === "explore_plan") plansMapping[matchedKey].views += p.count;
-        if (action === "click_plan") plansMapping[matchedKey].clicks += p.count;
-        if (action === "choose_plan") plansMapping[matchedKey].selections += p.count;
+        if (action === "explore_plan") {
+          plansMapping[matchedKey].views += p.count;
+          plansMapping[matchedKey].exploreClicks += p.count;
+        }
+        if (action === "click_plan") {
+          plansMapping[matchedKey].exploreClicks += p.count;
+        }
+        if (action === "choose_plan") {
+          plansMapping[matchedKey].selections += p.count;
+        }
+        if (action === "book_demo") {
+          plansMapping[matchedKey].demos += p.count;
+        }
       }
+    });
+
+    Object.keys(plansMapping).forEach(key => {
+      plansMapping[key].enquiries = enquiriesPlanCount[key] || 0;
+      plansMapping[key].demos = Math.max(plansMapping[key].demos, plansMapping[key].enquiries);
     });
 
     const formattedPlanStats = Object.values(plansMapping).map(p => {
@@ -345,6 +374,52 @@ router.get("/stats", verifyToken(["admin"]), async (req, res) => {
         conversionRate
       };
     });
+
+    // UTM Leads breakdown from ParentEnquiry
+    const leadSourcesAgg = await ParentEnquiry.aggregate([
+      { $match: { createdAt: { $gte: startDate } } },
+      {
+        $group: {
+          _id: { $ifNull: ["$utm_source", ""] },
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const leadSourcesMap = {
+      Google: 0,
+      WhatsApp: 0,
+      Instagram: 0,
+      Facebook: 0,
+      Direct: 0,
+      YouTube: 0,
+      Referral: 0
+    };
+
+    leadSourcesAgg.forEach(item => {
+      let src = String(item._id || "").trim();
+      if (!src) {
+        leadSourcesMap.Direct += item.count;
+        return;
+      }
+      
+      const lowerSrc = src.toLowerCase();
+      if (lowerSrc.includes("google")) leadSourcesMap.Google += item.count;
+      else if (lowerSrc.includes("whatsapp") || lowerSrc === "wa") leadSourcesMap.WhatsApp += item.count;
+      else if (lowerSrc.includes("instagram") || lowerSrc === "ig") leadSourcesMap.Instagram += item.count;
+      else if (lowerSrc.includes("facebook") || lowerSrc === "fb") leadSourcesMap.Facebook += item.count;
+      else if (lowerSrc.includes("youtube") || lowerSrc === "yt") leadSourcesMap.YouTube += item.count;
+      else if (lowerSrc.includes("direct")) leadSourcesMap.Direct += item.count;
+      else if (lowerSrc.includes("referral")) leadSourcesMap.Referral += item.count;
+      else {
+        leadSourcesMap.Referral += item.count;
+      }
+    });
+
+    const leadSources = Object.keys(leadSourcesMap).map(name => ({
+      name,
+      count: leadSourcesMap[name]
+    }));
 
     // 10. User Actions
     const actionStatsRaw = await AnalyticsLog.aggregate([
@@ -412,6 +487,14 @@ router.get("/stats", verifyToken(["admin"]), async (req, res) => {
       ? Math.round(enrichedPageStats.reduce((sum, p) => sum + (p.avgScrollDepth * p.views), 0) / totalViews)
       : 0;
 
+    // Calculate average session duration
+    const sessionDurationAgg = await AnalyticsLog.aggregate([
+      { $match: { createdAt: { $gte: startDate }, action: "page_view" } },
+      { $group: { _id: "$session_id", duration: { $sum: "$time_spent" } } },
+      { $group: { _id: null, avgDuration: { $avg: "$duration" } } }
+    ]);
+    const avgSessionDuration = Math.round(sessionDurationAgg[0]?.avgDuration || 0);
+
     res.json({
       summary: {
         totalVisitors: totalUniqueCount,
@@ -419,8 +502,10 @@ router.get("/stats", verifyToken(["admin"]), async (req, res) => {
         newVisitors: newCount,
         returningVisitors: returningCount,
         avgBounceRate,
-        avgScrollDepth
+        avgScrollDepth,
+        avgSessionDuration
       },
+      leadSources,
       dailyVisitors,
       trafficSources,
       locationStats,

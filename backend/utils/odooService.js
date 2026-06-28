@@ -143,6 +143,8 @@ export async function createLead(data) {
         x_studio_type: "Parent",
         x_studio_source_1: "Website",
 
+        description: `UTM Source: ${data.utm_source || "Direct"}\nUTM Medium: ${data.utm_medium || "none"}\nUTM Campaign: ${data.utm_campaign || "none"}\nUTM Content: ${data.utm_content || "none"}\nUTM Term: ${data.utm_term || "none"}`,
+
         x_studio_parent_name: data.parentName || "",
         x_studio_class: ward.classGrade || "",
 

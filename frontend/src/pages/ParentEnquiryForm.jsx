@@ -636,7 +636,12 @@ export default function ParentEnquiryForm() {
           geoInfo,
           ipAddress: geoInfo.ip || "",
           visitor_id: localStorage.getItem("visitor_id") || "",
-          session_id: sessionStorage.getItem("session_id") || ""
+          session_id: sessionStorage.getItem("session_id") || "",
+          utm_source: sessionStorage.getItem("utm_source") || "Direct",
+          utm_medium: sessionStorage.getItem("utm_medium") || "none",
+          utm_campaign: sessionStorage.getItem("utm_campaign") || "none",
+          utm_content: sessionStorage.getItem("utm_content") || "none",
+          utm_term: sessionStorage.getItem("utm_term") || "none"
         }),
       });
     } catch (err) {
@@ -703,6 +708,11 @@ export default function ParentEnquiryForm() {
       ipAddress: geoInfo.ip || "",
       visitor_id: localStorage.getItem("visitor_id") || "",
       session_id: sessionStorage.getItem("session_id") || "",
+      utm_source: sessionStorage.getItem("utm_source") || "Direct",
+      utm_medium: sessionStorage.getItem("utm_medium") || "none",
+      utm_campaign: sessionStorage.getItem("utm_campaign") || "none",
+      utm_content: sessionStorage.getItem("utm_content") || "none",
+      utm_term: sessionStorage.getItem("utm_term") || "none"
     };
   };
 

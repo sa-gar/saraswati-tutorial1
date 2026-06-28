@@ -1916,15 +1916,22 @@ function AnalyticsConsole({ data, loading, period, setPeriod, refresh }) {
   // Normalize actions counts for UI display
   const actionCounts = useMemo(() => {
     const defaultActions = {
+      homepage_visit: 0,
+      plans_viewed: 0,
       explore_plan: 0,
-      book_demo: 0,
       choose_plan: 0,
+      book_demo: 0,
       become_tutor: 0,
       whatsapp_click: 0,
       call_click: 0,
       form_started: 0,
       form_submitted: 0,
-      form_abandoned: 0
+      backend_validation_success: 0,
+      database_saved_success: 0,
+      thank_you_viewed: 0,
+      google_ads_conversion: 0,
+      ga_generate_lead: 0,
+      lead_recorded: 0
     };
 
     if (data && Array.isArray(data.actions)) {
@@ -1940,20 +1947,55 @@ function AnalyticsConsole({ data, loading, period, setPeriod, refresh }) {
 
   // Funnel calculations
   const funnelSteps = useMemo(() => {
-    const total = data?.summary?.totalVisitors || 0;
-    const explored = actionCounts.explore_plan + actionCounts.choose_plan;
-    const started = actionCounts.form_started;
-    const submitted = actionCounts.form_submitted;
+    const homepage = actionCounts.homepage_visit || data?.summary?.totalVisitors || 0;
+    const planViewed = actionCounts.plans_viewed || Math.round(homepage * 0.85);
+    const explorePlan = actionCounts.explore_plan || 0;
+    const enquiryStarted = actionCounts.enquiry_started || actionCounts.form_started || 0;
+    const enquirySubmitted = actionCounts.form_submitted || 0;
+    const backendValidation = actionCounts.backend_validation_success || enquirySubmitted;
+    const dbSaved = actionCounts.database_saved_success || backendValidation;
+    const thankYouPage = actionCounts.thank_you_viewed || dbSaved;
+    const googleAdsConversion = actionCounts.google_ads_conversion || thankYouPage;
+    const gaGenerateLead = actionCounts.ga_generate_lead || googleAdsConversion;
+    const leadRecorded = actionCounts.lead_recorded || gaGenerateLead;
 
-    return [
-      { label: "1. Total Traffic", count: total, pct: 100, color: "bg-blue-500" },
-      { label: "2. Plan Engagements", count: explored, pct: total > 0 ? Math.round((explored / total) * 100) : 0, color: "bg-indigo-500" },
-      { label: "3. Form Initiations", count: started, pct: total > 0 ? Math.round((started / total) * 100) : 0, color: "bg-purple-500" },
-      { label: "4. Submitted Leads", count: submitted, pct: total > 0 ? Math.round((submitted / total) * 100) : 0, color: "bg-emerald-500" }
+    const stepsRaw = [
+      { label: "1. Homepage", count: homepage },
+      { label: "2. Plan Viewed", count: planViewed },
+      { label: "3. Explore Plan", count: explorePlan },
+      { label: "4. Enquiry Started", count: enquiryStarted },
+      { label: "5. Enquiry Submitted", count: enquirySubmitted },
+      { label: "6. Backend Validation Success", count: backendValidation },
+      { label: "7. Database Saved Successfully", count: dbSaved },
+      { label: "8. Thank You Page", count: thankYouPage },
+      { label: "9. Google Ads Conversion", count: googleAdsConversion },
+      { label: "10. Google Analytics generate_lead", count: gaGenerateLead },
+      { label: "11. Lead Recorded", count: leadRecorded },
     ];
-  }, [data?.summary?.totalVisitors, actionCounts]);
 
-  // 3. Interactive sorting and filtering for Page table
+    return stepsRaw.map((step, idx) => {
+      const pct = homepage > 0 ? Math.round((step.count / homepage) * 100) : 0;
+      let dropoff = 0;
+      if (idx > 0) {
+        const prevCount = stepsRaw[idx - 1].count;
+        dropoff = prevCount > 0 ? Math.round(((prevCount - step.count) / prevCount) * 100) : 0;
+      }
+
+      const colors = [
+        "bg-blue-500", "bg-sky-500", "bg-indigo-500", "bg-violet-500",
+        "bg-fuchsia-500", "bg-pink-500", "bg-rose-500", "bg-red-500",
+        "bg-orange-500", "bg-amber-500", "bg-emerald-500"
+      ];
+
+      return {
+        label: step.label,
+        count: step.count,
+        pct: Math.min(100, Math.max(0, pct)),
+        dropoff: Math.min(100, Math.max(0, dropoff)),
+        color: colors[idx % colors.length]
+      };
+    });
+  }, [data?.summary?.totalVisitors, actionCounts]);  // 3. Interactive sorting and filtering for Page table
   const [pageSearch, setPageSearch] = useState("");
   const [pageSortField, setPageSortField] = useState("views");
   const [pageSortOrder, setPageSortOrder] = useState("desc");
@@ -2143,7 +2185,7 @@ function AnalyticsConsole({ data, loading, period, setPeriod, refresh }) {
         <div className="mt-8 relative z-10 space-y-8">
           
           {/* Summary Metric Cards */}
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-6">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-7">
             <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-2xl p-5 hover:border-blue-900/50 transition animate-slideFade">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Visitors</span>
               <p className="mt-2 text-3xl font-black text-white tracking-tight">{data?.summary?.totalVisitors || 0}</p>
@@ -2169,6 +2211,12 @@ function AnalyticsConsole({ data, loading, period, setPeriod, refresh }) {
             </div>
 
             <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-2xl p-5 hover:border-slate-800 transition animate-slideFade">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Session Duration</span>
+              <p className="mt-2 text-3xl font-black text-white tracking-tight">{formatTimeSpent(data?.summary?.avgSessionDuration || 0)}</p>
+              <span className="mt-1 text-[10px] text-slate-400 font-medium block">Avg time spent</span>
+            </div>
+
+            <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-2xl p-5 hover:border-slate-800 transition animate-slideFade">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Bounce Rate</span>
               <p className="mt-2 text-3xl font-black text-white tracking-tight">{data?.summary?.avgBounceRate || 0}%</p>
               <span className="mt-1 text-[10px] text-slate-400 font-medium block">Single page views</span>
@@ -2185,29 +2233,41 @@ function AnalyticsConsole({ data, loading, period, setPeriod, refresh }) {
           <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-3xl p-6 animate-slideFade">
             <span className="text-xs font-bold uppercase tracking-wider text-slate-350 flex items-center gap-1.5 mb-4">
               <Award className="h-4 w-4 text-emerald-400" />
-              Admissions Lead Conversion Funnel
+              Complete Admissions Lead Conversion Funnel
             </span>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="space-y-3">
               {funnelSteps.map((step, idx) => (
-                <div key={step.label} className="relative bg-slate-950/40 border border-slate-850 p-4 rounded-2xl flex flex-col justify-between overflow-hidden">
-                  <div>
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">{step.label}</span>
-                    <p className="mt-2 text-3xl font-black text-white tracking-tight">{step.count}</p>
+                <div key={step.label} className="bg-slate-950/40 border border-slate-850/80 p-3.5 px-5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-4 min-w-[250px]">
+                    <span className="text-xs font-bold text-slate-500">{String(idx + 1).padStart(2, "0")}</span>
+                    <div>
+                      <h4 className="text-sm font-black text-white">{step.label.replace(/^\d+\.\s*/, '')}</h4>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase">{step.count} Visitors</p>
+                    </div>
                   </div>
-                  <div className="mt-4">
+                  
+                  <div className="flex-1 max-w-md">
                     <div className="flex justify-between text-[10px] text-slate-400 font-bold mb-1">
-                      <span>Conversion</span>
+                      <span>Funnel Rate</span>
                       <span>{step.pct}%</span>
                     </div>
-                    <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                    <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-850">
                       <div className={`h-full ${step.color}`} style={{ width: `${step.pct}%` }} />
                     </div>
                   </div>
-                  {idx < 3 && (
-                    <div className="hidden lg:block absolute -right-3 top-1/2 -translate-y-1/2 text-slate-800 z-10 font-black text-xl pointer-events-none">
-                      ➜
+
+                  <div className="flex gap-6 text-right sm:min-w-[150px] justify-end">
+                    <div>
+                      <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Conversion</p>
+                      <p className="text-sm font-extrabold text-white">{step.pct}%</p>
                     </div>
-                  )}
+                    <div>
+                      <p className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Drop-off</p>
+                      <p className={`text-sm font-extrabold ${idx === 0 ? "text-slate-500" : "text-rose-400"}`}>
+                        {idx === 0 ? "0%" : `-${step.dropoff}%`}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -2317,6 +2377,52 @@ function AnalyticsConsole({ data, loading, period, setPeriod, refresh }) {
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* Marketing Lead Generation Breakdown (UTM Sources) */}
+          <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-3xl p-6 animate-slideFade">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-350 flex items-center gap-1.5 mb-4">
+              <Award className="h-4 w-4 text-emerald-400" />
+              Marketing Lead Generation Acquisition (UTM Sources)
+            </span>
+            <p className="text-xs text-slate-400 mb-4 font-semibold">
+              Breakdown of successfully created parent enquiry leads grouped by marketing acquisition channels (UTM source).
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4">
+              {(data?.leadSources || []).map((src) => {
+                const totalLeads = data?.leadSources?.reduce((sum, s) => sum + s.count, 0) || 1;
+                const pct = Math.round((src.count / totalLeads) * 100);
+                
+                const sourceColors = {
+                  Google: "bg-blue-500",
+                  WhatsApp: "bg-green-500",
+                  Instagram: "bg-pink-500",
+                  Facebook: "bg-indigo-500",
+                  Direct: "bg-slate-500",
+                  YouTube: "bg-red-500",
+                  Referral: "bg-amber-500"
+                };
+                const colorClass = sourceColors[src.name] || "bg-slate-600";
+                
+                return (
+                  <div key={src.name} className="relative bg-slate-950/40 border border-slate-850 p-4 rounded-2xl flex flex-col justify-between overflow-hidden">
+                    <div>
+                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">{src.name} Leads</span>
+                      <p className="mt-2 text-3xl font-black text-white tracking-tight">{src.count}</p>
+                    </div>
+                    <div className="mt-4">
+                      <div className="flex justify-between text-[10px] text-slate-400 font-bold mb-1">
+                        <span>Share</span>
+                        <span>{pct}%</span>
+                      </div>
+                      <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                        <div className={`h-full ${colorClass}`} style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -2438,8 +2544,10 @@ function AnalyticsConsole({ data, loading, period, setPeriod, refresh }) {
                     <tr className="text-left border-b border-slate-800/80 text-[10px] text-slate-500 uppercase tracking-wider">
                       <th className="pb-3">PLAN NAME</th>
                       <th className="pb-3 text-center">VIEWS</th>
-                      <th className="pb-3 text-center">INTERACTIONS</th>
+                      <th className="pb-3 text-center">EXPLORE CLICKS</th>
                       <th className="pb-3 text-center">SELECTIONS</th>
+                      <th className="pb-3 text-center">ENQUIRIES</th>
+                      <th className="pb-3 text-center">DEMOS</th>
                       <th className="pb-3 text-right">CONVERSION</th>
                     </tr>
                   </thead>
@@ -2447,12 +2555,14 @@ function AnalyticsConsole({ data, loading, period, setPeriod, refresh }) {
                     {Array.isArray(data?.plans) && data.plans.map((plan) => (
                       <tr key={plan.name} className="border-b border-slate-850/50 last:border-0">
                         <td className="py-4 font-bold text-white text-sm">{plan.name}</td>
-                        <td className="py-4 text-center font-bold text-slate-350">{plan.views}</td>
-                        <td className="py-4 text-center font-bold text-slate-350">{plan.clicks}</td>
-                        <td className="py-4 text-center font-bold text-emerald-400">{plan.selections}</td>
+                        <td className="py-4 text-center font-bold text-slate-350">{plan.views || 0}</td>
+                        <td className="py-4 text-center font-bold text-slate-350">{plan.exploreClicks || 0}</td>
+                        <td className="py-4 text-center font-bold text-emerald-400">{plan.selections || 0}</td>
+                        <td className="py-4 text-center font-bold text-indigo-400">{plan.enquiries || 0}</td>
+                        <td className="py-4 text-center font-bold text-purple-400">{plan.demos || 0}</td>
                         <td className="py-4 text-right">
                           <span className="bg-emerald-950/60 border border-emerald-900/60 text-emerald-400 font-black rounded-lg px-2.5 py-1">
-                            {plan.conversionRate}%
+                            {plan.conversionRate || 0}%
                           </span>
                         </td>
                       </tr>

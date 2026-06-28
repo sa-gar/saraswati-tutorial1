@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
-import { initAnalytics, trackPageChange, updatePageView } from "../utils/analytics";
+import { initAnalytics, trackPageChange, updatePageView, trackEvent } from "../utils/analytics";
 
 export default function AnalyticsTracker() {
   const location = useLocation();
@@ -34,6 +34,33 @@ export default function AnalyticsTracker() {
       f.parentNode.insertBefore(j, f);
     }
 
+    // 3b. Dynamically load Google Analytics 4 and Google Ads Config
+    const ga4Id = import.meta.env.VITE_GA4_MEASUREMENT_ID || "G-JV6G65QVLJ";
+    const adsId = import.meta.env.VITE_GOOGLE_ADS_ID || "AW-17166473673";
+
+    if (window.gtag) {
+      if (adsId) {
+        window.gtag("config", adsId);
+      }
+      if (ga4Id && ga4Id !== "G-JV6G65QVLJ") {
+        window.gtag("config", ga4Id);
+      }
+    } else if (ga4Id || adsId) {
+      const tagId = ga4Id || adsId;
+      window.dataLayer = window.dataLayer || [];
+      window.gtag = function() { window.dataLayer.push(arguments); };
+      window.gtag("js", new Date());
+      window.gtag("config", tagId);
+      if (adsId && ga4Id) {
+        window.gtag("config", adsId);
+      }
+      const f = document.getElementsByTagName("script")[0];
+      const j = document.createElement("script");
+      j.async = true;
+      j.src = "https://www.googletagmanager.com/gtag/js?id=" + tagId;
+      f.parentNode.insertBefore(j, f);
+    }
+
     // 4. Scroll depth listener
     const handleScroll = () => {
       const scrollTop = window.scrollY || document.documentElement.scrollTop;
@@ -47,6 +74,28 @@ export default function AnalyticsTracker() {
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
+
+    // 4b. Global click listener for key CTA tracking (WhatsApp, Call, Become Tutor)
+    const handleGlobalClick = (e) => {
+      const target = e.target.closest("a");
+      if (!target) return;
+      
+      const href = target.getAttribute("href") || "";
+      
+      if (href.includes("wa.me") || href.includes("whatsapp.com")) {
+        trackEvent("whatsapp_click", href);
+      }
+      
+      if (href.startsWith("tel:")) {
+        trackEvent("call_click", href);
+      }
+
+      if (href.includes("tutor-register") || href.includes("become-tutor")) {
+        trackEvent("become_tutor", href);
+      }
+    };
+
+    window.addEventListener("click", handleGlobalClick);
 
     // 5. Visibility and beforeunload listener to update time spent on final page
     const handleUnloadOrVisibility = () => {
@@ -67,6 +116,7 @@ export default function AnalyticsTracker() {
 
     return () => {
       window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("click", handleGlobalClick);
       window.removeEventListener("beforeunload", handleUnloadOrVisibility);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
@@ -87,6 +137,16 @@ export default function AnalyticsTracker() {
 
     // Log new page view
     trackPageChange(location.pathname);
+
+    // Funnel entries
+    if (location.pathname === "/") {
+      trackEvent("homepage_visit");
+      trackEvent("plans_viewed");
+    } else if (location.pathname === "/parent-enquiry") {
+      trackEvent("enquiry_started");
+    } else if (location.pathname === "/thank-you") {
+      trackEvent("thank_you_viewed");
+    }
   }, [location.pathname]);
 
   return null;

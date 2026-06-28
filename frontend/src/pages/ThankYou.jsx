@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import { trackLeadConversion } from "../utils/analytics";
 
 const PARENT_WHATSAPP_LINK = "https://wa.me/message/VX2T7QEATZPRL1";
 const TUTOR_WHATSAPP_LINK = "https://wa.me/message/TI4DOHTXZTLGD1";
@@ -15,6 +16,14 @@ export default function ThankYou() {
   const whatsappLink = isTutor
     ? TUTOR_WHATSAPP_LINK
     : PARENT_WHATSAPP_LINK;
+
+  useEffect(() => {
+    const wasSubmitted = sessionStorage.getItem("enquiry_form_submitted") === "true";
+    if (wasSubmitted && !isTutor) {
+      sessionStorage.removeItem("enquiry_form_submitted");
+      trackLeadConversion();
+    }
+  }, [isTutor]);
 
   useEffect(() => {
     const timer = setTimeout(() => {

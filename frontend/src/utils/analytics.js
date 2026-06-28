@@ -43,6 +43,9 @@ export function getBrowserAndOS() {
 
 // Parse traffic source based on UTM params, ref, or document.referrer
 export function getTrafficSource() {
+  const cachedSource = sessionStorage.getItem("utm_source");
+  if (cachedSource) return cachedSource;
+
   const urlParams = new URLSearchParams(window.location.search);
   const utmSource =
     urlParams.get("utm_source") || urlParams.get("source") || urlParams.get("ref");
@@ -78,6 +81,55 @@ export function getTrafficSource() {
     return "YouTube";
   }
   return "Other Referral Websites";
+}
+
+// Parse and store UTM params in sessionStorage with referrers fallback
+export function captureUtmParams() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const utms = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"];
+  
+  let hasUtms = false;
+  utms.forEach((key) => {
+    const val = urlParams.get(key);
+    if (val) {
+      sessionStorage.setItem(key, val);
+      hasUtms = true;
+    }
+  });
+
+  // Fallback for utm_source if not set
+  if (!sessionStorage.getItem("utm_source")) {
+    const referrer = document.referrer ? document.referrer.toLowerCase() : "";
+    let detectedSource = "Direct";
+    let detectedMedium = "none";
+    
+    if (referrer) {
+      if (referrer.includes("google.com")) {
+        detectedSource = "Google";
+        detectedMedium = "organic";
+      } else if (referrer.includes("whatsapp.com") || referrer.includes("wa.me")) {
+        detectedSource = "WhatsApp";
+        detectedMedium = "social";
+      } else if (referrer.includes("instagram.com")) {
+        detectedSource = "Instagram";
+        detectedMedium = "social";
+      } else if (referrer.includes("facebook.com") || referrer.includes("messenger.com")) {
+        detectedSource = "Facebook";
+        detectedMedium = "social";
+      } else if (referrer.includes("youtube.com") || referrer.includes("youtu.be")) {
+        detectedSource = "YouTube";
+        detectedMedium = "social";
+      } else {
+        detectedSource = "Referral";
+        detectedMedium = "referral";
+      }
+    }
+    sessionStorage.setItem("utm_source", detectedSource);
+    sessionStorage.setItem("utm_medium", detectedMedium);
+    sessionStorage.setItem("utm_campaign", "none");
+    sessionStorage.setItem("utm_content", "none");
+    sessionStorage.setItem("utm_term", "none");
+  }
 }
 
 // Fetch geolocation and cache in localStorage
@@ -126,6 +178,8 @@ export function initAnalytics() {
   if (!sessionStorage.getItem("session_id")) {
     sessionStorage.setItem("session_id", "s_" + generateId());
   }
+  // Capture UTM parameters immediately
+  captureUtmParams();
   // Trigger geo lookup silently in the background
   getGeoInfo();
 }
@@ -273,4 +327,51 @@ export async function trackEvent(action, planClicked = "", enquirySubmitted = fa
   } catch (err) {
     console.error(`Failed to track event ${action}:`, err);
   }
+}
+
+// Trigger Google Ads Conversion & Google Analytics generate_lead verified events
+export async function trackLeadConversion() {
+  if (sessionStorage.getItem("conversion_fired")) {
+    console.log("Conversion already fired in this session.");
+    return;
+  }
+  sessionStorage.setItem("conversion_fired", "true");
+
+  const adsId = import.meta.env.VITE_GOOGLE_ADS_ID || "AW-17166473673";
+  const conversionLabel = import.meta.env.VITE_GOOGLE_ADS_CONVERSION_LABEL || "1bJTCL7i4cYcEMmzzvk_";
+
+  // Google Ads Conversion Event
+  if (window.gtag && adsId && conversionLabel) {
+    window.gtag("event", "conversion", {
+      send_to: `${adsId}/${conversionLabel}`,
+    });
+  }
+
+  // Google Analytics generate_lead Event
+  if (window.gtag) {
+    window.gtag("event", "generate_lead", {
+      event_category: "engagement",
+      event_label: "Enquiry Form Submitted",
+    });
+  }
+
+  // GTM Event
+  if (window.dataLayer) {
+    window.dataLayer.push({
+      event: "generate_lead",
+      ads_id: adsId,
+      conversion_label: conversionLabel
+    });
+    window.dataLayer.push({
+      event: "demo_booking_completed"
+    });
+  }
+
+  // Database logs to trigger the funnel steps:
+  // - google_ads_conversion
+  // - ga_generate_lead
+  // - lead_recorded
+  await trackEvent("google_ads_conversion", "", true);
+  await trackEvent("ga_generate_lead", "", true);
+  await trackEvent("lead_recorded", "", true);
 }

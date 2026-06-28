@@ -33,6 +33,26 @@ const parentEnquiryDraftSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    utm_source: {
+      type: String,
+      default: "",
+    },
+    utm_medium: {
+      type: String,
+      default: "",
+    },
+    utm_campaign: {
+      type: String,
+      default: "",
+    },
+    utm_content: {
+      type: String,
+      default: "",
+    },
+    utm_term: {
+      type: String,
+      default: "",
+    },
   },
   { timestamps: true }
 );
