@@ -633,7 +633,7 @@ const COMPARISON_POINTS = {
     "Best value for most students"
   ],
   elite: [
-    "Learn from mentors with 5+ to 25+ years experience",
+    "Learn from mentors with 10 to 25 years experience",
     "Premium mentorship and priority support",
     "Personalized academic strategy",
     "Effective cost of ₹650–₹800 per class"
@@ -769,12 +769,7 @@ function PlanCard({ plan, isActive, isSelectedAny, isCenter, position, onClick }
           {plan.description}
         </p>
 
-        {/* Highlight details for specific plans */}
-        {plan.experience && (
-          <span className="mt-2 text-[10px] font-bold uppercase tracking-wider opacity-60">
-            Tutor Experience: {plan.experience}
-          </span>
-        )}
+
       </div>
 
       {/* Middle Section: Key Benefits */}

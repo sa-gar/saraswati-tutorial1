@@ -59,7 +59,7 @@ export const PLANS = [
     badgeTheme: "bg-black/10 text-slate-950 border-black/20",
     keyBenefit: "Experienced tutors with concept clarity focus",
     cardBenefits: [
-      "Experienced Tutors (2.5–5 Years Experience)",
+      "Experienced Tutors (3 to 9 Years Experience)",
       "Customized School Syllabus Tracking"
     ],
     pricingOptions: [
@@ -86,7 +86,7 @@ export const PLANS = [
         "Parent-tutor-coordinator meeting every 4 weeks"
       ],
       faqs: [
-        { q: "How are tutors selected for this plan?", a: "We match tutors with at least 3-5 years of teaching experience, specifically verified for secondary grades." },
+        { q: "How are tutors selected for this plan?", a: "We match tutors with at least 3 to 9 years of teaching experience, specifically verified for secondary grades." },
         { q: "What if a student struggles with a specific topic?", a: "Tutors will modify the lesson plan to dedicate additional time for remedial teaching." },
         { q: "Are test reports shared?", a: "Yes, bi-weekly test scores and conceptual gap analysis reports are shared with parents." }
       ],
@@ -104,11 +104,11 @@ export const PLANS = [
     textColor: "text-white",
     textDarkColor: "text-white",
     badgeTheme: "bg-white/10 text-white border-white/10",
-    experience: "5+ to 25+ Years",
-    keyBenefit: "Veteran mentors with 5+ to 25+ Years Experience",
+    experience: "10 to 25 Years",
+    keyBenefit: "Veteran mentors with 10 to 25 Years Experience",
     cardBenefits: [
       "Veteran School Teachers & Board Examiners",
-      "5+ to 25+ Years Tutoring Experience",
+      "10 to 25 Years Tutoring Experience",
       "Dedicated Academic Counselor & Advanced Test Series"
     ],
     pricingOptions: [
@@ -124,7 +124,7 @@ export const PLANS = [
         { label: "Tutor matching", value: "Veteran mentors only" }
       ],
       benefits: [
-        { title: "5+ to 25+ Years Experience", desc: "Learn from veteran school teachers and board examiners." },
+        { title: "10 to 25 Years Experience", desc: "Learn from veteran school teachers and board examiners." },
         { title: "Priority Support", desc: "Immediate coordinator assistance and direct feedback channel." },
         { title: "Weekly Assessment", desc: "Custom testing mapped specifically to school benchmarks." },
         { title: "Parent-Tutor Meets", desc: "Monthly reviews detailing progress and curriculum tracking." }
