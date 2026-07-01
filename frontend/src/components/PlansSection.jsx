@@ -15,7 +15,8 @@ import {
   ChevronDown,
   X,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Info
 } from "lucide-react";
 
 import { PLANS } from "../data/plansConfig";
@@ -914,6 +915,12 @@ function PlanDetails({ plan, onCTA }) {
           <p className="mt-6 text-[11px] leading-relaxed text-slate-500 border-t border-white/5 pt-4">
             * {fullDetails.additionalInfo}
           </p>
+          <div className="mt-5 pt-4 border-t border-white/5 flex items-start gap-2.5 text-xs text-slate-400">
+            <Info className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
+            <p className="leading-relaxed font-semibold">
+              Final pricing is personalized for every student and may vary based on the selected board, grade, subjects, class schedule, preferred tutor experience, learning requirements, and tutor availability.
+            </p>
+          </div>
         </div>
 
         <button

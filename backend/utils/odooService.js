@@ -121,7 +121,8 @@ export async function createLead(data) {
       // Calculate hours/days selection
       let hoursDaysVal = "";
       if (data.hoursPerDay) {
-        hoursDaysVal = `${data.hoursPerDay} ${data.hoursPerDay === 1 ? "Hr" : "Hrs"}`;
+        const h = Number(data.hoursPerDay);
+        hoursDaysVal = `${h} ${(h === 1 || h === 1.5) ? "Hr" : "Hrs"}`;
       } else {
         const dur = String(data.classDuration || "").toLowerCase();
         if (dur.includes("1.5")) {
@@ -160,7 +161,7 @@ export async function createLead(data) {
           data.address || data.area || "",
 
         x_studio_preferred_tutor_gender:
-          data.preferredGender?.toString() || "No Preference",
+          data.preferredGender === "Flexible" ? "No Preference" : (data.preferredGender?.toString() || "No Preference"),
 
         x_studio_registration_date:
           new Date().toISOString().split("T")[0],

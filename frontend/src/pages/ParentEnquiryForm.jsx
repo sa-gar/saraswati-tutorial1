@@ -1265,7 +1265,7 @@ export default function ParentEnquiryForm() {
                       {[
                         { id: "Male", label: "Male Tutor", icon: User },
                         { id: "Female", label: "Female Tutor", icon: User },
-                        { id: "No Preference", label: "No Preference", icon: Users }
+                        { id: "Flexible", label: "Flexible", icon: Users }
                       ].map((gender) => {
                         const isSelected = form.preferredGender === gender.id;
                         const GenderIcon = gender.icon;
@@ -1307,56 +1307,66 @@ export default function ParentEnquiryForm() {
                 <motion.div variants={itemVariants} className="mt-8">
                   {form.planType ? (
                     <div className="flex flex-col gap-6">
-                      <div className="rounded-3xl border border-slate-200 bg-white/90 backdrop-blur-md p-6 shadow-xl flex flex-col md:flex-row justify-between items-center gap-6">
-                        <div className="flex items-center gap-4">
-                          <div className={`p-4 rounded-2xl ${
-                            form.planType === 'foundation' ? 'bg-slate-100 text-slate-700' :
-                            form.planType === 'advance' ? 'bg-amber-100 text-amber-700' :
-                            'bg-slate-900 text-white'
-                          }`}>
-                            {form.planType === 'elite' ? <Award className="h-8 w-8" /> : <Star className="h-8 w-8" />}
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <h4 className="text-xl font-black text-slate-900">
-                                {PLANS.find(p => p.id === form.planType)?.title || form.planType}
-                              </h4>
-                              <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-black text-emerald-700 border border-emerald-200">
-                                Selected
-                              </span>
+                      <div className="rounded-3xl border border-slate-200 bg-white/90 backdrop-blur-md p-6 shadow-xl">
+                        <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+                          <div className="flex items-center gap-4">
+                            <div className={`p-4 rounded-2xl ${
+                              form.planType === 'foundation' ? 'bg-slate-100 text-slate-700' :
+                              form.planType === 'advance' ? 'bg-amber-100 text-amber-700' :
+                              'bg-slate-900 text-white'
+                            }`}>
+                              {form.planType === 'elite' ? <Award className="h-8 w-8" /> : <Star className="h-8 w-8" />}
                             </div>
-                            <p className="mt-1 text-sm text-slate-500 font-medium">
-                              {form.daysPerWeek} Days/Week • {form.hoursPerDay} Hr/Day
-                            </p>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h4 className="text-xl font-black text-slate-900">
+                                  {PLANS.find(p => p.id === form.planType)?.title || form.planType}
+                                </h4>
+                                <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-black text-emerald-700 border border-emerald-200">
+                                  Selected
+                                </span>
+                              </div>
+                              <p className="mt-1 text-sm text-slate-500 font-medium">
+                                {form.daysPerWeek} Days/Week • {form.hoursPerDay} Hr/Day
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 border-slate-100 pt-4 md:pt-0">
+                            <div className="text-left md:text-right">
+                              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Monthly Tuition Fee</p>
+                              <p className="text-2xl font-black text-slate-900">₹{form.monthlyFees?.toLocaleString('en-IN')}</p>
+                              {form.planType === 'foundation' && form.discount && (
+                                <span className="text-[10px] font-black text-emerald-600 block mt-0.5">
+                                  Save ₹{form.discount.toLocaleString('en-IN')} (25% applied)
+                                </span>
+                              )}
+                              {form.planType === 'advance' && (
+                                <span className="text-[10px] font-black text-amber-700 block mt-0.5">
+                                  Only +18% more investment
+                                </span>
+                              )}
+                              {form.planType === 'elite' && form.costPerClass && (
+                                <span className="text-[10px] font-black text-slate-500 block mt-0.5">
+                                  Approx. ₹{form.costPerClass} / Class
+                                </span>
+                              )}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={handleChangePlan}
+                              className="rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 px-5 py-3 text-sm font-bold text-slate-700 transition cursor-pointer"
+                            >
+                              Change Plan
+                            </button>
                           </div>
                         </div>
-                        <div className="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 border-slate-100 pt-4 md:pt-0">
-                          <div className="text-left md:text-right">
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Monthly Tuition Fee</p>
-                            <p className="text-2xl font-black text-slate-900">₹{form.monthlyFees?.toLocaleString('en-IN')}</p>
-                            {form.planType === 'foundation' && form.discount && (
-                              <span className="text-[10px] font-black text-emerald-600 block mt-0.5">
-                                Save ₹{form.discount.toLocaleString('en-IN')} (25% applied)
-                              </span>
-                            )}
-                            {form.planType === 'advance' && (
-                              <span className="text-[10px] font-black text-amber-700 block mt-0.5">
-                                Only +18% more investment
-                              </span>
-                            )}
-                            {form.planType === 'elite' && form.costPerClass && (
-                              <span className="text-[10px] font-black text-slate-500 block mt-0.5">
-                                Approx. ₹{form.costPerClass} / Class
-                              </span>
-                            )}
-                          </div>
-                          <button
-                            type="button"
-                            onClick={handleChangePlan}
-                            className="rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 px-5 py-3 text-sm font-bold text-slate-700 transition cursor-pointer"
-                          >
-                            Change Plan
-                          </button>
+
+                        {/* Professional Pricing Disclaimer */}
+                        <div className="mt-5 pt-4 border-t border-slate-150 flex items-start gap-2.5 text-xs text-slate-400">
+                          <Info className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
+                          <p className="leading-relaxed font-semibold">
+                            Final pricing is personalized for every student and may vary based on the selected board, grade, subjects, class schedule, preferred tutor experience, learning requirements, and tutor availability.
+                          </p>
                         </div>
                       </div>
 
@@ -1955,6 +1965,14 @@ export default function ParentEnquiryForm() {
                                 Approx. ₹{form.costPerClass} / Class
                               </span>
                             )}
+                            
+                            {/* Professional Pricing Disclaimer */}
+                            <div className="mt-3 pt-3 border-t border-slate-100 flex items-start gap-2 text-xs text-slate-400">
+                              <Info className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
+                              <p className="leading-relaxed font-semibold">
+                                Final pricing is personalized for every student and may vary based on the selected board, grade, subjects, class schedule, preferred tutor experience, learning requirements, and tutor availability.
+                              </p>
+                            </div>
                           </div>
                           <div>
                             <span className="font-semibold text-slate-400 text-xs uppercase tracking-wider block mb-1">Preferred Days</span>
