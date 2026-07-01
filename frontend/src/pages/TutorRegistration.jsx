@@ -373,6 +373,22 @@ export default function TutorRegistration() {
       return "Select at least one teaching location";
     }
 
+    if (!formData.hasOccupation) {
+      setErrors((prev) => ({
+        ...prev,
+        hasOccupation: "Please select if you have school/college experience",
+      }));
+      return "Please select if you have school/college experience";
+    }
+
+    if (formData.hasOccupation === "yes" && !formData.occupation) {
+      setErrors((prev) => ({
+        ...prev,
+        occupation: "Please select your occupation",
+      }));
+      return "Please select your occupation";
+    }
+
     if (!formData.hasVehicle) {
       setErrors((prev) => ({
         ...prev,
@@ -584,7 +600,9 @@ export default function TutorRegistration() {
   const isStep2Ready =
     formData.locations.length > 0 &&
     formData.hasVehicle &&
-    (formData.hasVehicle === "no" || formData.vehicleNumber.trim());
+    (formData.hasVehicle === "no" || formData.vehicleNumber.trim()) &&
+    formData.hasOccupation &&
+    (formData.hasOccupation === "no" || formData.occupation);
 
   const isStep3Ready =
     formData.photo &&
@@ -783,22 +801,37 @@ export default function TutorRegistration() {
                         { label: "Yes", value: "yes" },
                         { label: "No", value: "no" },
                       ]}
-                      onChange={(value) =>
+                      onChange={(value) => {
                         setFormData((prev) => ({
                           ...prev,
                           hasOccupation: value,
-                        }))
-                      }
+                          occupation: value === "no" ? "" : prev.occupation,
+                          organization: value === "no" ? "" : prev.organization,
+                        }));
+                        setErrors((prev) => ({
+                          ...prev,
+                          hasOccupation: "",
+                          occupation: "",
+                        }));
+                      }}
                     />
+
+                    {errors.hasOccupation && (
+                      <p className="mt-2 text-sm font-bold text-red-650">
+                        {errors.hasOccupation}
+                      </p>
+                    )}
 
                     {formData.hasOccupation === "yes" && (
                       <div className="mt-5 grid gap-4 md:grid-cols-2">
                         <SelectField
                           icon={Briefcase}
                           label="Occupation"
+                          required
                           name="occupation"
                           value={formData.occupation}
                           onChange={handleChange}
+                          error={errors.occupation}
                           options={occupationOptions}
                           placeholder="Select occupation"
                         />

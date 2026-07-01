@@ -85,8 +85,13 @@ router.post("/", async (req, res) => {
     }
 
     //  Save with Odoo ID
+    const hasVehicle = req.body.hasVehicle === "yes" ? "yes" : "no";
+    const hasOccupation = req.body.hasOccupation === "yes" ? "yes" : "no";
+
     const tutor = new Tutor({
       ...req.body,
+      hasVehicle,
+      hasOccupation,
       odooLeadId: odooRes,
     });
 
@@ -95,7 +100,7 @@ router.post("/", async (req, res) => {
     res.status(201).json(savedTutor);
 
   } catch (error) {
-    // // console.error(" Server Error:", error.message);
+    console.error("Server Error in tutor registration:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
