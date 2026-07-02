@@ -76,7 +76,6 @@ const itemVariants = {
 export default function PlansSection() {
   const [activePlan, setActivePlan] = useState(null);
   const detailsRef = useRef(null);
-
   // Smooth scroll to the details section when activePlan changes
   useEffect(() => {
     if (activePlan && detailsRef.current) {
@@ -540,7 +539,7 @@ function PlanCarousel({ plans, activePlan, onCardClick }) {
 const FoundationImage = () => (
   <svg
     viewBox="0 0 120 120"
-    className="absolute bottom-16 right-3 w-24 h-24 text-current opacity-[0.06] pointer-events-none transition-all duration-700 group-hover:scale-110 group-hover:-translate-x-1 group-hover:-translate-y-1"
+    className="w-full h-full text-current opacity-[0.18] pointer-events-none transition-all duration-700 group-hover:scale-110 group-hover:opacity-25"
     fill="none"
     stroke="currentColor"
     strokeWidth="1.2"
@@ -558,7 +557,7 @@ const FoundationImage = () => (
     <path d="M35 55 L35 60 C35 63, 65 75, 75 75 C85 75, 95 63, 95 60 L95 55" />
     <path d="M75 67 L75 75" />
     {/* Graduation Cap / Star */}
-    <path d="M65 20 L80 26 L65 32 L50 26 Z" fill="currentColor" opacity="0.1" />
+    <path d="M65 20 L80 26 L65 32 L50 26 Z" fill="currentColor" opacity="0.3" />
     <path d="M50 26 L50 36" />
     <path d="M65 32 L65 40" />
     <circle cx="65" cy="26" r="2" fill="currentColor" />
@@ -568,7 +567,7 @@ const FoundationImage = () => (
 const AdvanceImage = () => (
   <svg
     viewBox="0 0 120 120"
-    className="absolute bottom-16 right-3 w-24 h-24 text-current opacity-[0.06] pointer-events-none transition-all duration-700 group-hover:scale-110 group-hover:-translate-x-1 group-hover:-translate-y-1"
+    className="w-full h-full text-current opacity-[0.18] pointer-events-none transition-all duration-700 group-hover:scale-110 group-hover:opacity-25"
     fill="none"
     stroke="currentColor"
     strokeWidth="1.2"
@@ -585,18 +584,18 @@ const AdvanceImage = () => (
     <circle cx="90" cy="25" r="6" strokeWidth="1.5" />
     <circle cx="90" cy="25" r="2" fill="currentColor" />
     {/* Area gradient under curve */}
-    <path d="M20 100 L20 90 Q 40 85, 55 60 T 90 25 L 90 100 Z" fill="currentColor" opacity="0.03" />
+    <path d="M20 100 L20 90 Q 40 85, 55 60 T 90 25 L 90 100 Z" fill="currentColor" opacity="0.08" />
     {/* Growth bar indicator */}
-    <rect x="30" y="85" width="8" height="15" rx="1" fill="currentColor" opacity="0.2" />
-    <rect x="50" y="65" width="8" height="35" rx="1" fill="currentColor" opacity="0.2" />
-    <rect x="70" y="45" width="8" height="55" rx="1" fill="currentColor" opacity="0.2" />
+    <rect x="30" y="85" width="8" height="15" rx="1" fill="currentColor" opacity="0.3" />
+    <rect x="50" y="65" width="8" height="35" rx="1" fill="currentColor" opacity="0.3" />
+    <rect x="70" y="45" width="8" height="55" rx="1" fill="currentColor" opacity="0.3" />
   </svg>
 );
 
 const EliteImage = () => (
   <svg
     viewBox="0 0 120 120"
-    className="absolute top-3 right-3 w-24 h-24 text-current opacity-[0.06] pointer-events-none transition-all duration-700 group-hover:scale-110 group-hover:rotate-6"
+    className="w-full h-full text-current opacity-[0.18] pointer-events-none transition-all duration-700 group-hover:scale-110 group-hover:rotate-6 group-hover:opacity-25"
     fill="none"
     stroke="currentColor"
     strokeWidth="1.2"
@@ -639,7 +638,6 @@ const COMPARISON_POINTS = {
     "Effective cost of ₹650–₹800 per class"
   ]
 };
-
 // Plan Card Component
 function PlanCard({ plan, isActive, isSelectedAny, isCenter, position, onClick }) {
   const isSilver = plan.theme === "silver";
@@ -735,18 +733,61 @@ function PlanCard({ plan, isActive, isSelectedAny, isCenter, position, onClick }
     }
   };
 
+  // Benefit icon background based on theme
+  const getBenefitIconBg = () => {
+    if (isSilver) return "bg-slate-200/60 border-slate-300/60";
+    if (isGold) return "bg-black/10 border-black/20";
+    return "bg-white/10 border-white/20";
+  };
+
+  const getBenefitTitleColor = () => {
+    if (isSilver) return "text-slate-700";
+    if (isGold) return "text-slate-900";
+    return "text-white";
+  };
+
+  const getBenefitDescColor = () => {
+    if (isSilver) return "text-slate-500";
+    if (isGold) return "text-slate-700";
+    return "text-slate-400";
+  };
+
+  const getCTAClasses = () => {
+    if (isSilver) return "bg-slate-800 text-white hover:bg-slate-700";
+    if (isGold) return "bg-slate-900 text-white hover:bg-slate-800";
+    return "bg-white text-black hover:bg-slate-100";
+  };
+
+  const getBadgeBg = () => {
+    if (isSilver) return "bg-slate-900/10 text-slate-700 border-slate-400/20";
+    if (isGold) return "bg-black/10 text-slate-900 border-black/20";
+    return "bg-white/10 text-white border-white/20";
+  };
+
+  const getStarColor = () => {
+    if (isSilver) return "text-slate-600 fill-slate-600";
+    if (isGold) return "text-slate-900 fill-slate-900";
+    return "text-white fill-white";
+  };
+
+  // Small circular benefit icons using lucide icons
+  const benefitIcons = [
+    <UserCheck key="uc" className="h-3.5 w-3.5" />,
+    <ShieldCheck key="sc" className="h-3.5 w-3.5" />,
+    <TrendingUp key="tu" className="h-3.5 w-3.5" />
+  ];
+
+  const benefits = plan.fullDetails?.benefits?.slice(0, 3) || [];
+
   return (
     <div
       onClick={onClick}
       style={getCardStyle()}
-      className={`relative overflow-hidden rounded-[2.2rem] border p-6 sm:p-7 flex flex-col justify-between h-[410px] sm:h-[400px] cursor-pointer group ${getCardThemeClasses()} ${getActiveStateClasses()} ${
+      className={`relative overflow-hidden rounded-[2.2rem] border flex flex-col h-[500px] sm:h-[520px] cursor-pointer group ${getCardThemeClasses()} ${getActiveStateClasses()} ${
         isSelectedAny && !isActive ? "pointer-events-none md:pointer-events-auto" : ""
       }`}
     >
-      {/* Background illustration */}
-      {renderIllustration()}
-
-      {/* Subtle shine effect overlay on hover (All Cards) */}
+      {/* Subtle shine effect overlay on hover */}
       <div className="shine-overlay pointer-events-none" />
 
       {/* Glow layer behind active card */}
@@ -754,56 +795,277 @@ function PlanCard({ plan, isActive, isSelectedAny, isCenter, position, onClick }
         <div className="absolute inset-0 rounded-[2.2rem] ring-4 ring-current/10 blur-md pointer-events-none" />
       )}
 
-      {/* Top Section */}
-      <div className="flex flex-col items-start w-full">
-        {/* Highlight Badge */}
-        <div className={`rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-wider border mb-6 ${getBadgeThemeClasses()}`}>
-          {plan.badge}
+      {/* === TOP SECTION: Badge + Title + Illustration === */}
+      <div className="relative z-10 flex items-start justify-between px-6 sm:px-7 pt-6 sm:pt-7">
+        {/* Left: Badge + Title + Description */}
+        <div className="flex-1 pr-2">
+          {/* Badge with star */}
+          <div className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-wider border mb-4 ${getBadgeBg()}`}>
+            <Star className={`h-2.5 w-2.5 ${getStarColor()}`} />
+            {plan.badge}
+          </div>
+
+          {/* Plan Name */}
+          <h3 className="text-[22px] sm:text-2xl font-black tracking-tight leading-snug">{plan.title}</h3>
+
+          {/* Description */}
+          <p className="mt-2 text-[11px] leading-relaxed font-medium opacity-70 max-w-[180px]">
+            {plan.description}
+          </p>
         </div>
 
-        {/* Plan Name */}
-        <h3 className="text-2xl font-black tracking-tight">{plan.title}</h3>
-
-        {/* Small Description */}
-        <p className="mt-3 text-xs leading-relaxed font-medium opacity-85 select-none">
-          {plan.description}
-        </p>
-
-
+        {/* Right: 3D Illustration — rendered prominently */}
+        <div className="shrink-0 relative w-[90px] h-[90px] sm:w-[100px] sm:h-[100px] -mt-1 -mr-1">
+          {renderIllustration()}
+        </div>
       </div>
 
-      {/* Middle Section: Key Benefits */}
-      <div className="my-4 pt-4 border-t border-current/10 w-full flex flex-col gap-3">
-        {plan.cardBenefits.map((benefit, idx) => (
-          <div key={idx} className="flex items-start gap-2.5">
-            <Check className="h-4.5 w-4.5 shrink-0 mt-0.5 text-current opacity-80" />
-            <span className="text-xs font-semibold leading-snug">
-              {benefit}
-            </span>
+      {/* === MIDDLE SECTION: Benefits with circular icons === */}
+      <div className="relative z-10 flex flex-col gap-3.5 px-6 sm:px-7 mt-5 flex-1">
+        {benefits.map((benefit, idx) => (
+          <div key={idx} className="flex items-start gap-3">
+            {/* Circular icon badge */}
+            <div className={`shrink-0 w-8 h-8 rounded-full border flex items-center justify-center ${getBenefitIconBg()}`}>
+              {benefitIcons[idx % benefitIcons.length]}
+            </div>
+            {/* Text */}
+            <div className="flex-1 min-w-0">
+              <div className={`text-[11px] font-bold leading-snug ${getBenefitTitleColor()}`}>
+                {benefit.title}
+              </div>
+              <div className={`text-[10px] leading-relaxed font-medium mt-0.5 ${getBenefitDescColor()}`}>
+                {benefit.desc}
+              </div>
+            </div>
           </div>
         ))}
       </div>
 
-      {/* Bottom Section: Price & Minimal Action */}
-      <div className="mt-auto pt-4 border-t border-current/10 flex items-center justify-between w-full">
-        <div className="flex flex-col min-h-[40px] justify-center">
-          {isActive ? (
-            <>
-              <span className="text-[10px] font-bold uppercase tracking-wider opacity-50 block">Investment</span>
-              <span className="text-2xl font-extrabold tracking-tight">{plan.price}</span>
-            </>
-          ) : null}
-        </div>
-
-        {/* Explore Plan -> [ Minimal design ] */}
-        <div className="text-[10px] font-black uppercase tracking-wider opacity-80 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 py-1 px-3.5 rounded-full border border-current/25 bg-current/5">
-          <span>Explore Plan</span>
-          <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+      {/* === BOTTOM SECTION: Full-width CTA Button === */}
+      <div className="relative z-10 px-5 pb-5 sm:px-6 sm:pb-6 mt-4">
+        <div className={`w-full flex items-center justify-center gap-2.5 py-3.5 rounded-2xl font-black text-[11px] sm:text-xs transition-all duration-300 shadow-lg ${getCTAClasses()}`}>
+          <span className="flex items-center justify-center w-5 h-5 rounded-full bg-white/20">
+            <ArrowRight className="h-3 w-3" />
+          </span>
+          Explore Plan Details
+          <ArrowRight className="h-3.5 w-3.5" />
         </div>
       </div>
     </div>
   );
 }
+
+// ==========================================
+// Premium SVG Icon Components for Core Benefits
+// ==========================================
+const VerificationSVG = () => (
+  <svg width="80" height="80" viewBox="0 0 80 80" fill="none" className="shrink-0 drop-shadow-[0_4px_10px_rgba(30,58,138,0.3)]">
+    <defs>
+      <linearGradient id="shieldGrad" x1="10" y1="10" x2="70" y2="70" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#1E3A8A" stopOpacity="0.8" />
+        <stop offset="100%" stopColor="#0B132B" stopOpacity="0.9" />
+      </linearGradient>
+      <linearGradient id="goldGrad" x1="20" y1="20" x2="60" y2="60" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#F59E0B" />
+        <stop offset="50%" stopColor="#FBBF24" />
+        <stop offset="100%" stopColor="#B45309" />
+      </linearGradient>
+      <linearGradient id="borderGrad" x1="10" y1="10" x2="70" y2="70" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#60A5FA" />
+        <stop offset="100%" stopColor="#1D4ED8" />
+      </linearGradient>
+    </defs>
+    <path d="M40 10 C48 10 65 14 65 26 C65 50 48 68 40 72 C32 68 15 50 15 26 C15 14 32 10 40 10 Z" fill="url(#shieldGrad)" stroke="url(#borderGrad)" strokeWidth="2.5" />
+    <path d="M40 45 C47.732 45 54 51.268 54 59 H26 C26 51.268 32.268 45 40 45 Z" fill="url(#goldGrad)" opacity="0.8" />
+    <circle cx="40" cy="32" r="9" fill="url(#goldGrad)" />
+    <circle cx="58" cy="56" r="10" fill="#0B132B" stroke="url(#goldGrad)" strokeWidth="2" />
+    <circle cx="58" cy="56" r="8" fill="url(#goldGrad)" />
+    <path d="M54 56.5 L56.5 59 L62 53.5" stroke="#0B132B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+  </svg>
+);
+
+const LocationSVG = () => (
+  <svg width="80" height="80" viewBox="0 0 80 80" fill="none" className="shrink-0 drop-shadow-[0_4px_10px_rgba(245,158,11,0.25)]">
+    <defs>
+      <linearGradient id="pinGrad" x1="40" y1="12" x2="40" y2="52" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#FFE082" />
+        <stop offset="50%" stopColor="#F59E0B" />
+        <stop offset="100%" stopColor="#D97706" />
+      </linearGradient>
+      <linearGradient id="mapGrad" x1="15" y1="45" x2="65" y2="70" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#1E3A8A" stopOpacity="0.4" />
+        <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.1" />
+      </linearGradient>
+    </defs>
+    <path d="M15 55 L40 45 L65 55 L40 65 Z" fill="url(#mapGrad)" stroke="#3B82F6" strokeWidth="1.5" strokeOpacity="0.6" />
+    <path d="M27.5 50 L52.5 60" stroke="#3B82F6" strokeWidth="1" strokeOpacity="0.4" />
+    <path d="M27.5 60 L52.5 50" stroke="#3B82F6" strokeWidth="1" strokeOpacity="0.4" />
+    <ellipse cx="40" cy="55" rx="16" ry="6" stroke="#3B82F6" strokeWidth="1" strokeDasharray="3 3" strokeOpacity="0.8" />
+    <ellipse cx="40" cy="55" rx="8" ry="3" stroke="#FFE082" strokeWidth="1" strokeOpacity="0.8" />
+    <g transform="translate(0, -4)">
+      <path d="M40 52 C38 52 26 40 26 28 C26 20.268 32.268 14 40 14 C47.732 14 54 20.268 54 28 C54 40 42 52 40 52 Z" fill="url(#pinGrad)" />
+      <circle cx="40" cy="28" r="6" fill="#0B132B" />
+    </g>
+  </svg>
+);
+
+const DoubtSupportSVG = () => (
+  <svg width="80" height="80" viewBox="0 0 80 80" fill="none" className="shrink-0 drop-shadow-[0_4px_10px_rgba(59,130,246,0.3)]">
+    <defs>
+      <linearGradient id="clockGrad" x1="15" y1="15" x2="65" y2="65" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#1E293B" />
+        <stop offset="100%" stopColor="#0B132B" />
+      </linearGradient>
+      <linearGradient id="goldArrow" x1="20" y1="20" x2="60" y2="60" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#FBBF24" />
+        <stop offset="100%" stopColor="#D97706" />
+      </linearGradient>
+    </defs>
+    <circle cx="40" cy="40" r="26" fill="url(#clockGrad)" stroke="#3B82F6" strokeWidth="2.5" />
+    <path d="M40 40 L40 24" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" />
+    <path d="M40 40 L52 40" stroke="#F59E0B" strokeWidth="2.5" strokeLinecap="round" />
+    <circle cx="40" cy="40" r="3" fill="#FFFFFF" />
+    <path d="M68 40 C68 55.464 55.464 68 40 68 C24.536 68 12 55.464 12 40 C12 24.536 24.536 12 40 12 C48.5 12 56 16 61 22.5" stroke="url(#goldArrow)" strokeWidth="2" strokeLinecap="round" strokeDasharray="3 2" />
+    <path d="M57 23 L63 23 L63 17" stroke="url(#goldArrow)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    <rect x="42" y="52" width="28" height="15" rx="7.5" fill="#0B132B" stroke="#3B82F6" strokeWidth="1.5" />
+    <text x="56" y="63" fill="#FFFFFF" fontSize="8" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">24/7</text>
+  </svg>
+);
+
+const ReplacementSVG = () => (
+  <svg width="80" height="80" viewBox="0 0 80 80" fill="none" className="shrink-0 drop-shadow-[0_4px_10px_rgba(30,58,138,0.3)]">
+    <defs>
+      <linearGradient id="userBlue" x1="15" y1="40" x2="45" y2="70" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#3B82F6" />
+        <stop offset="100%" stopColor="#1E3B8B" />
+      </linearGradient>
+      <linearGradient id="userGold" x1="45" y1="45" x2="65" y2="65" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#FBBF24" />
+        <stop offset="100%" stopColor="#D97706" />
+      </linearGradient>
+      <linearGradient id="arrowGrad" x1="20" y1="20" x2="60" y2="20" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#F59E0B" />
+        <stop offset="100%" stopColor="#3B82F6" />
+      </linearGradient>
+    </defs>
+    <path d="M30 46 C37.732 46 44 52.268 44 60 H16 C16 52.268 22.268 46 30 46 Z" fill="url(#userBlue)" stroke="#1E4ED8" strokeWidth="1.5" />
+    <circle cx="30" cy="33" r="8" fill="url(#userBlue)" stroke="#1E4ED8" strokeWidth="1.5" />
+    <path d="M54 50 C60.627 50 66 55.373 66 62 H42 C42 55.373 47.373 50 54 50 Z" fill="url(#userGold)" stroke="#B45309" strokeWidth="1" />
+    <circle cx="54" cy="39" r="6" fill="url(#userGold)" stroke="#B45309" strokeWidth="1" />
+    <path d="M22 26 C30 18 50 18 58 26" stroke="url(#arrowGrad)" strokeWidth="2" strokeLinecap="round" fill="none" />
+    <path d="M58 20 L58 26 L52 26" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    <path d="M58 60 C50 68 30 68 22 60" stroke="url(#arrowGrad)" strokeWidth="2" strokeLinecap="round" fill="none" />
+    <path d="M22 66 L22 60 L28 60" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+  </svg>
+);
+
+const GuidanceSVG = () => (
+  <svg width="80" height="80" viewBox="0 0 80 80" fill="none" className="shrink-0 drop-shadow-[0_4px_10px_rgba(59,130,246,0.3)]">
+    <defs>
+      <linearGradient id="compGrad" x1="15" y1="15" x2="65" y2="65" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#1E293B" />
+        <stop offset="100%" stopColor="#0B132B" />
+      </linearGradient>
+      <linearGradient id="needleGold" x1="40" y1="25" x2="40" y2="55" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#FBBF24" />
+        <stop offset="100%" stopColor="#D97706" />
+      </linearGradient>
+    </defs>
+    <circle cx="40" cy="40" r="26" fill="url(#compGrad)" stroke="#3B82F6" strokeWidth="2.5" />
+    <path d="M40 18 L46 40 L40 45 L34 40 Z" fill="url(#needleGold)" />
+    <path d="M40 62 L34 40 L40 45 L46 40 Z" fill="#60A5FA" opacity="0.8" />
+    <circle cx="40" cy="40" r="3" fill="#FFFFFF" />
+    <line x1="40" y1="18" x2="40" y2="22" stroke="#FFFFFF" strokeWidth="1.5" />
+    <line x1="40" y1="58" x2="40" y2="62" stroke="#FFFFFF" strokeWidth="1.5" />
+    <line x1="18" y1="40" x2="22" y2="40" stroke="#FFFFFF" strokeWidth="1.5" />
+    <line x1="58" y1="40" x2="62" y2="40" stroke="#FFFFFF" strokeWidth="1.5" />
+  </svg>
+);
+
+const HomeworkSVG = () => (
+  <svg width="80" height="80" viewBox="0 0 80 80" fill="none" className="shrink-0 drop-shadow-[0_4px_10px_rgba(245,158,11,0.25)]">
+    <defs>
+      <linearGradient id="bookGrad" x1="20" y1="20" x2="60" y2="60" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#1E3A8A" />
+        <stop offset="100%" stopColor="#0B132B" />
+      </linearGradient>
+      <linearGradient id="pencilGold" x1="45" y1="20" x2="65" y2="40" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#FFE082" />
+        <stop offset="100%" stopColor="#F59E0B" />
+      </linearGradient>
+    </defs>
+    <path d="M22 25 C22 22 25 20 38 20 C51 20 58 24 58 24 L58 58 C58 58 51 54 38 54 C25 54 22 56 22 56 Z" fill="url(#bookGrad)" stroke="#3B82F6" strokeWidth="2" />
+    <path d="M38 20 C38 20 45 23 58 23" stroke="#3B82F6" strokeWidth="1.5" />
+    <path d="M22 56 C22 56 29 53 38 53 L38 20" stroke="#3B82F6" strokeWidth="2" />
+    <line x1="28" y1="30" x2="34" y2="30" stroke="#60A5FA" strokeWidth="1.5" strokeOpacity="0.6" />
+    <line x1="28" y1="36" x2="34" y2="36" stroke="#60A5FA" strokeWidth="1.5" strokeOpacity="0.6" />
+    <line x1="28" y1="42" x2="34" y2="42" stroke="#60A5FA" strokeWidth="1.5" strokeOpacity="0.6" />
+    <g transform="translate(6, 2) rotate(15 50 30)">
+      <path d="M48 20 L54 20 L54 45 L48 45 Z" fill="url(#pencilGold)" />
+      <path d="M48 20 L51 14 L54 20 Z" fill="#FFE57F" />
+      <path d="M50.5 14 L51.5 14 L51 17 Z" fill="#0B132B" />
+      <rect x="48" y="43" width="6" height="4" rx="1" fill="#EF4444" />
+    </g>
+  </svg>
+);
+
+const PracticeSVG = () => (
+  <svg width="80" height="80" viewBox="0 0 80 80" fill="none" className="shrink-0 drop-shadow-[0_4px_10px_rgba(59,130,246,0.3)]">
+    <defs>
+      <linearGradient id="targetGrad" x1="15" y1="15" x2="65" y2="65" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#1E3A8A" stopOpacity="0.8" />
+        <stop offset="100%" stopColor="#0B132B" stopOpacity="0.9" />
+      </linearGradient>
+    </defs>
+    <circle cx="40" cy="40" r="26" fill="url(#targetGrad)" stroke="#3B82F6" strokeWidth="2.5" />
+    <circle cx="40" cy="40" r="18" stroke="#FFE082" strokeWidth="2" strokeDasharray="4 2" />
+    <circle cx="40" cy="40" r="10" stroke="#F59E0B" strokeWidth="2" />
+    <circle cx="40" cy="40" r="4" fill="#F59E0B" />
+    <path d="M58 22 L42 38" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" />
+    <path d="M42 38 L48 38 L42 44 Z" fill="#FFFFFF" />
+    <path d="M55 21 L59 17 M57 23 L61 19" stroke="#60A5FA" strokeWidth="2" strokeLinecap="round" />
+  </svg>
+);
+
+const ExperienceSVG = () => (
+  <svg width="80" height="80" viewBox="0 0 80 80" fill="none" className="shrink-0 drop-shadow-[0_4px_10px_rgba(245,158,11,0.25)]">
+    <defs>
+      <linearGradient id="medalGold" x1="20" y1="20" x2="60" y2="60" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#FFE082" />
+        <stop offset="50%" stopColor="#F59E0B" />
+        <stop offset="100%" stopColor="#D97706" />
+      </linearGradient>
+    </defs>
+    <path d="M32 40 L24 65 L36 60 L44 40 Z" fill="#3B82F6" opacity="0.8" />
+    <path d="M48 40 L56 65 L44 60 L36 40 Z" fill="#1D4ED8" />
+    <circle cx="40" cy="34" r="20" fill="url(#medalGold)" stroke="#FFFFFF" strokeWidth="2" />
+    <circle cx="40" cy="34" r="16" fill="#0B132B" />
+    <path d="M40 23 L43.5 30 L51 31 L45.5 36 L47 43.5 L40 40 L33 43.5 L34.5 36 L29 31 L36.5 30 Z" fill="url(#medalGold)" />
+  </svg>
+);
+
+const getBenefitIcon = (title) => {
+  switch (title) {
+    case "Tutor Verification":
+      return <VerificationSVG />;
+    case "Tutor Location":
+      return <LocationSVG />;
+    case "24 Hours Doubt Support":
+      return <DoubtSupportSVG />;
+    case "Tutor Replacement Support":
+      return <ReplacementSVG />;
+    case "Consistent Guidance":
+      return <GuidanceSVG />;
+    case "Homework Support":
+      return <HomeworkSVG />;
+    case "Daily Practice":
+      return <PracticeSVG />;
+    case "Tutor Experience":
+      return <ExperienceSVG />;
+    default:
+      return <VerificationSVG />;
+  }
+};
 
 // Plan Details Component
 function PlanDetails({ plan, onCTA }) {
@@ -850,19 +1112,25 @@ function PlanDetails({ plan, onCTA }) {
 
         {/* Benefits Grid */}
         <div>
-          <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Core Benefits</h4>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="relative mb-6">
+            <h4 className="text-base font-extrabold text-white uppercase tracking-widest">Core Benefits</h4>
+            <div className="flex items-center gap-1 mt-1.5">
+              <div className="h-[2px] w-14 bg-gradient-to-r from-amber-500 to-amber-300 rounded-full" />
+              <div className="h-[3px] w-[3px] rounded-full bg-amber-400 animate-pulse" />
+            </div>
+          </div>
+          <div className="grid gap-6 sm:grid-cols-2">
             {fullDetails.benefits.map((benefit, idx) => {
-              const icons = [Award, Clock, BookOpen, ShieldCheck];
-              const IconComp = icons[idx % icons.length];
               return (
-                <div key={idx} className="flex gap-3 items-start rounded-2xl bg-white/5 border border-white/5 p-4 hover:bg-white/10 transition duration-300">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-white shrink-0">
-                    <IconComp className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h5 className="text-sm font-semibold text-white">{benefit.title}</h5>
-                    <p className="mt-1 text-xs text-slate-400 leading-relaxed">{benefit.desc}</p>
+                <div
+                  key={idx}
+                  className="flex gap-5 items-center rounded-3xl bg-gradient-to-br from-[#0B1528] to-[#050B15] border border-blue-900/30 p-6 hover:border-blue-700/40 hover:shadow-[0_8px_30px_rgba(59,130,246,0.08)] transition duration-300 group"
+                >
+                  {getBenefitIcon(benefit.title)}
+                  <div className="flex-1 min-w-0">
+                    <h5 className="text-base font-bold text-white tracking-tight">{benefit.title}</h5>
+                    <div className="h-[2px] w-6 bg-amber-500 rounded-full my-2" />
+                    <p className="text-xs font-semibold text-slate-400 leading-relaxed">{benefit.desc}</p>
                   </div>
                 </div>
               );

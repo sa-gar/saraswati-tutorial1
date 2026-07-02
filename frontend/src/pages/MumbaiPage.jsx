@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { motion, AnimatePresence } from "framer-motion";
@@ -24,7 +24,12 @@ import {
   HelpCircle,
   Users,
   Check,
-  MessageCircle
+  MessageCircle,
+  Calendar,
+  User,
+  Globe,
+  GraduationCap,
+  Rocket
 } from "lucide-react";
 
 const MotionLink = motion(Link);
@@ -50,7 +55,7 @@ const handleLocationRedirect = (city) => {
 
 function LocationSelector({ activeCity }) {
   return (
-    <div className="relative flex items-center p-1 bg-slate-100/90 backdrop-blur-sm border border-slate-200/60 rounded-2xl shadow-inner select-none z-10 gap-1">
+    <div className="relative flex items-center p-1 bg-slate-100/90 backdrop-blur-sm border border-slate-200/50 rounded-full shadow-inner select-none z-10 gap-1">
       {[
         { id: "Bangalore", label: "Bangalore" },
         { id: "Mumbai", label: "Mumbai" }
@@ -65,19 +70,13 @@ function LocationSelector({ activeCity }) {
                 handleLocationRedirect(city.id);
               }
             }}
-            className={`relative flex items-center gap-1.5 py-1.5 px-3.5 text-xs font-bold rounded-xl transition-colors duration-300 cursor-pointer z-10 ${
-              isSelected ? "text-white" : "text-slate-600 hover:text-slate-950"
+            className={`relative flex items-center gap-1.5 py-1.5 px-4 text-xs font-bold rounded-full transition-all duration-300 cursor-pointer z-10 ${
+              isSelected ? "text-white bg-gradient-to-r from-blue-600 to-indigo-600 shadow-md" : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            {isSelected && (
-              <motion.div
-                layoutId="activeCityBg"
-                className="absolute inset-0 bg-slate-950 rounded-xl -z-10 shadow-sm"
-                transition={{ type: "spring", stiffness: 350, damping: 28 }}
-              />
-            )}
-            <MapPin className={`h-3.5 w-3.5 ${isSelected ? "text-blue-400" : "text-slate-400"}`} />
+            <MapPin className={`h-3.5 w-3.5 ${isSelected ? "text-white" : "text-slate-450"}`} />
             <span>{city.label}</span>
+            {isSelected && <ChevronDown className="h-3 w-3 text-white/90" />}
           </button>
         );
       })}
@@ -88,6 +87,28 @@ function LocationSelector({ activeCity }) {
 export default function MumbaiPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeFaq, setActiveFaq] = useState(null);
+  const [activeSection, setActiveSection] = useState("home");
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const sections = ["home", "why-choose", "subjects", "boards", "areas", "faqs"];
+      const scrollPosition = window.scrollY + 160;
+
+      for (const section of sections) {
+        const el = document.getElementById(section);
+        if (el) {
+          const offsetTop = el.offsetTop;
+          const offsetHeight = el.offsetHeight;
+          if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
+            setActiveSection(section);
+            break;
+          }
+        }
+      }
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const toggleFaq = (index) => {
     setActiveFaq(activeFaq === index ? null : index);
@@ -342,62 +363,88 @@ export default function MumbaiPage() {
         <script type="application/ld+json">{JSON.stringify(updatedFaqSchema)}</script>
         <script type="application/ld+json">{JSON.stringify(localBusinessSchema)}</script>
       </Helmet>
-
-      {/* Glassmorphism Header */}
-      <header className="sticky top-0 z-50 border-b border-white/20 bg-white/70 backdrop-blur-md shadow-[0_4px_30px_rgba(0,0,0,0.03)]">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-3">
-            <Link to="/" className="flex items-center gap-3.5 group">
-              <div className="relative p-1 bg-gradient-to-br from-blue-100 to-indigo-150 rounded-2xl border border-slate-200/50 shadow-inner flex items-center justify-center transition-all duration-300 group-hover:scale-105 group-hover:shadow-[0_0_15px_rgba(59,130,246,0.15)]">
+      <header className="sticky top-0 z-50 w-full py-3 px-4 sm:px-6 lg:px-8 bg-transparent">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 xl:px-6 py-2.5 xl:py-3.5 bg-white/95 backdrop-blur-md border border-slate-200/50 rounded-[1.75rem] shadow-[0_8px_30px_rgba(0,0,0,0.05)]">
+          <div className="flex items-center gap-2 xl:gap-3 shrink-0">
+            <Link to="/" className="flex items-center gap-2 xl:gap-3 group shrink-0">
+              <div className="h-12 w-12 shrink-0 bg-white rounded-xl border border-slate-200/60 shadow-sm flex items-center justify-center transition-all duration-300 group-hover:scale-105">
                 <img
                   src="/logo.png"
-                  alt="Saraswati Tutorials Logo"
-                  className="h-10 w-10 rounded-xl object-contain"
+                  alt="ST"
+                  className="h-9 w-9 rounded-lg object-contain"
                   onError={(e) => {
                     e.target.src = "https://placehold.co/100x100?text=ST";
                   }}
                 />
               </div>
-              <div className="shrink-0">
-                <div className="text-lg font-black tracking-tight text-slate-950 bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 bg-clip-text text-transparent transition-all duration-300 group-hover:text-blue-650">
+              <div className="shrink-0 leading-tight">
+                <div className="text-base xl:text-lg font-black tracking-tight text-slate-900 transition-all duration-300 group-hover:text-blue-600">
                   Saraswati Tutorials
                 </div>
-                <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                <div className="text-[9px] xl:text-[10px] font-black uppercase tracking-widest text-blue-600">
                   Premium Home Tutors
                 </div>
               </div>
             </Link>
 
-            <div className="hidden sm:block h-6 w-px bg-slate-200/80 mx-2" />
+            <div className="hidden sm:block h-8 w-px bg-slate-200 mx-2 xl:mx-3 shrink-0" />
 
-            <LocationSelector activeCity="Mumbai" />
+            <div className="shrink-0">
+              <LocationSelector activeCity="Mumbai" />
+            </div>
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden items-center gap-5 text-sm font-semibold text-slate-600 xl:flex">
-            <a href="#home" className="transition hover:text-blue-650">Home</a>
-            <a href="#why-choose" className="transition hover:text-blue-650">Why Us</a>
-            <a href="#subjects" className="transition hover:text-blue-650">Subjects</a>
-            <a href="#boards" className="transition hover:text-blue-650">Boards</a>
-            <a href="#areas" className="transition hover:text-blue-650">Areas</a>
-            <a href="#faqs" className="transition hover:text-blue-650">FAQs</a>
+          <nav className="hidden items-center gap-2 xl:gap-3.5 2xl:gap-5 text-xs xl:text-[13px] 2xl:text-[14px] font-bold text-slate-600 xl:flex shrink-0">
+            {[
+              { href: "#home", label: "Home", id: "home" },
+              { href: "#why-choose", label: "Why Us", id: "why-choose" },
+              { href: "#subjects", label: "Subjects", id: "subjects" },
+              { href: "#boards", label: "Boards", id: "boards" },
+              { href: "#areas", label: "Areas", id: "areas" },
+              { href: "#faqs", label: "FAQs", id: "faqs" },
+            ].map((link) => {
+              const isActive = activeSection === link.id;
+              return (
+                <a
+                  key={link.id}
+                  href={link.href}
+                  className={`relative py-1.5 transition duration-300 whitespace-nowrap shrink-0 ${
+                    isActive ? "text-blue-600 font-extrabold" : "text-slate-600 hover:text-slate-950"
+                  }`}
+                >
+                  {link.label}
+                  {isActive && (
+                    <motion.div
+                      layoutId="navUnderline"
+                      className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-blue-600 rounded-full"
+                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                </a>
+              );
+            })}
           </nav>
 
-          <div className="hidden items-center gap-2.5 xl:flex">
+          <div className="hidden items-center gap-2 xl:gap-3 xl:flex shrink-0">
             <MotionLink
               to="/parent-enquiry"
-              whileHover={{ scale: 1.05, translateY: -2, boxShadow: "0 10px 20px rgba(0,0,0,0.12)" }}
-              whileTap={{ scale: 0.95 }}
-              className="whitespace-nowrap rounded-xl border border-transparent bg-slate-950 px-5 py-2.5 text-xs font-black text-white shadow-md transition-all duration-300 hover:bg-black"
+              onClick={() => trackEvent("book_demo")}
+              whileHover={{ scale: 1.03, translateY: -1, boxShadow: "0 6px 15px rgba(0,0,0,0.06)" }}
+              whileTap={{ scale: 0.98 }}
+              className="whitespace-nowrap flex items-center gap-1.5 xl:gap-2 rounded-xl xl:rounded-[14px] border border-slate-200 bg-white px-3.5 xl:px-5 py-2 xl:py-2.5 text-[11px] xl:text-xs font-black text-slate-800 shadow-sm transition-all duration-300 hover:bg-slate-50 hover:border-slate-300 shrink-0"
             >
+              <Calendar className="h-3.5 w-3.5 xl:h-4 xl:w-4 text-slate-500" />
               Book Demo
             </MotionLink>
             <MotionLink
               to="/tutor-register"
-              whileHover={{ scale: 1.05, translateY: -2, boxShadow: "0 10px 20px rgba(37,99,235,0.22)" }}
-              whileTap={{ scale: 0.95 }}
-              className="whitespace-nowrap rounded-xl border border-transparent bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-xs font-black text-white shadow-md transition-all duration-300"
+              onClick={() => trackEvent("become_tutor")}
+              whileHover={{ scale: 1.03, translateY: -1, boxShadow: "0 8px 18px rgba(37,99,235,0.2)" }}
+              whileTap={{ scale: 0.98 }}
+              className="whitespace-nowrap flex items-center gap-1.5 xl:gap-2 rounded-xl xl:rounded-[14px] border border-transparent bg-gradient-to-r from-blue-600 to-indigo-700 px-3.5 xl:px-5 py-2 xl:py-2.5 text-[11px] xl:text-xs font-black text-white shadow-md transition-all duration-300 shrink-0"
             >
+              <User className="h-3.5 w-3.5 xl:h-4 xl:w-4 text-white/90" />
               Become a Tutor
             </MotionLink>
           </div>
@@ -459,9 +506,10 @@ export default function MumbaiPage() {
       {/* Hero Section */}
       <section
         id="home"
-        className="relative overflow-hidden bg-[radial-gradient(circle_at_top_left,#3b82f622,transparent_35%),radial-gradient(circle_at_top_right,#6366f122,transparent_30%),linear-gradient(135deg,#020617,#0f172a_50%,#1e1b4b)] py-20 text-white md:py-32"
+        className="relative overflow-hidden bg-[#030d22] py-20 text-white md:py-32"
       >
-        <div className="mx-auto max-w-7xl px-6">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,#1e3a8a30,transparent_50%),radial-gradient(circle_at_70%_60%,#3b82f615,transparent_50%)]" />
+        <div className="mx-auto max-w-7xl px-6 relative z-10">
           <div className="grid gap-12 lg:grid-cols-12 lg:items-center">
             <motion.div
               initial={{ opacity: 0, y: 24 }}
@@ -469,22 +517,30 @@ export default function MumbaiPage() {
               transition={{ duration: 0.6 }}
               className="lg:col-span-7"
             >
-
+              {/* Eyebrow Pill */}
+              <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-1.5 text-xs font-semibold text-blue-400 mb-6">
+                <Star className="h-3.5 w-3.5 fill-current text-blue-400" />
+                <span>TRUSTED BY 1000+ PARENTS</span>
+              </div>
 
               <h1 className="text-4xl font-black tracking-tight text-white md:text-6xl lg:leading-tight">
-                Home Tuition in Mumbai for Class 6 to 12
+                Home Tuition in <span className="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">Mumbai</span> for Class 6 to 12
               </h1>
 
-              <p className="mt-6 text-lg leading-relaxed text-slate-300">
-                Expert home tutors and online classes for CBSE, ICSE, IGCSE, IB & State Board students across Mumbai. Personalized one-to-one tuition for Maths, Science, English and Commerce subjects.
-              </p>
+              {/* Tagline Description with connector line */}
+              <div className="relative pl-6 border-l-2 border-blue-500/20 mt-6">
+                <div className="absolute left-[-5px] top-1/2 -translate-y-1/2 h-2 w-2 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.8)]" />
+                <p className="text-lg leading-relaxed text-slate-300">
+                  Expert home tutors and online classes for CBSE, ICSE, IGCSE, IB & State Board students across Mumbai. Personalized one-to-one tuition for Maths, Science, English and Commerce subjects.
+                </p>
+              </div>
 
               <div className="mt-8 flex flex-wrap gap-4">
                 <MotionLink
                   to="/parent-enquiry"
-                  whileHover={{ scale: 1.03, translateY: -2, boxShadow: "0 10px 25px rgba(255,255,255,0.12)" }}
+                  whileHover={{ scale: 1.03, translateY: -2, boxShadow: "0 10px 25px rgba(59,130,246,0.3)" }}
                   whileTap={{ scale: 0.97 }}
-                  className="group inline-flex items-center gap-2 rounded-2xl border border-transparent bg-white px-7 py-4 font-black text-slate-950 shadow-xl shadow-blue-950/20 transition-all duration-300 hover:bg-slate-100"
+                  className="group inline-flex items-center gap-2 rounded-2xl border border-transparent bg-blue-600 px-7 py-4 font-black text-white shadow-xl shadow-blue-900/40 transition-all duration-300 hover:bg-blue-500"
                 >
                   Book Demo
                   <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
@@ -493,29 +549,111 @@ export default function MumbaiPage() {
                 <MotionLink
                   to="/parent-enquiry"
                   whileTap={{ scale: 0.95, backgroundColor: "rgba(255, 255, 255, 0.05)", borderColor: "rgba(255, 255, 255, 0.2)" }}
-                  className="rounded-2xl border border-white/20 bg-white/5 px-7 py-4 font-black text-white backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/10"
+                  className="rounded-2xl border border-white/10 bg-white/5 px-7 py-4 font-black text-white backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/10 text-center"
                 >
                   Hire a Home Tutor
                 </MotionLink>
               </div>
-
               {/* Quick Stats Grid */}
-              <div className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-4">
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
-                  <div className="text-2xl font-black text-blue-400">50+</div>
-                  <div className="text-xs font-semibold text-slate-400">Verified Tutors</div>
+              <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Card 1 */}
+                <div className="relative overflow-hidden rounded-2xl border border-blue-500/10 bg-[#060c18] p-3.5 flex items-center gap-2.5 transition-all duration-300 hover:border-blue-500/30 hover:shadow-[0_0_30px_rgba(59,130,246,0.08)] group">
+                  <div className="relative flex items-center justify-center w-10 h-10 shrink-0 rounded-full bg-blue-950/30 border border-blue-500/15 shadow-[0_0_15px_rgba(59,130,246,0.1)]">
+                    {/* Dashed outer ring */}
+                    <div className="absolute inset-[-2.5px] rounded-full border border-dashed border-blue-500/30 animate-[spin_60s_linear_infinite]" />
+                    <svg className="w-5 h-5 relative z-10 filter drop-shadow-[0_2px_8px_rgba(59,130,246,0.4)]" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 22C12 22 20 18 20 12V5L12 2L4 5V12C4 12 12 22 12 22Z" stroke="url(#blueGradCard1)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M8.5 11.5l2.5 2.5 5-5" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                      <defs>
+                        <linearGradient id="blueGradCard1" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#3b82f6" />
+                          <stop offset="100%" stopColor="#1d4ed8" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="text-lg xl:text-xl font-black text-blue-400">50+</div>
+                    <div className="text-[11px] font-semibold text-slate-300">Verified Tutors</div>
+                  </div>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
-                  <div className="text-2xl font-black text-blue-400">25+</div>
-                  <div className="text-xs font-semibold text-slate-400">Subjects Covered</div>
+
+                {/* Card 2 */}
+                <div className="relative overflow-hidden rounded-2xl border border-blue-500/10 bg-[#060c18] p-3.5 flex items-center gap-2.5 transition-all duration-300 hover:border-blue-500/30 hover:shadow-[0_0_30px_rgba(59,130,246,0.08)] group">
+                  <div className="relative flex items-center justify-center w-10 h-10 shrink-0 rounded-full bg-blue-950/30 border border-blue-500/15 shadow-[0_0_15px_rgba(59,130,246,0.1)]">
+                    <div className="absolute inset-[-2.5px] rounded-full border border-dashed border-blue-500/30 animate-[spin_60s_linear_infinite]" />
+                    <svg className="w-5 h-5 relative z-10 filter drop-shadow-[0_2px_8px_rgba(59,130,246,0.4)]" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 19.5c-2-1.5-5.5-1.5-8-1.5h-1V4h1c2.5 0 6 0 8 1.5v14z" fill="url(#bookPageGrad)" stroke="url(#blueGradCard2)" strokeWidth="1.5" strokeLinejoin="round"/>
+                      <path d="M12 19.5c2-1.5 5.5-1.5 8-1.5h1V4h-1c-2.5 0-6 0-8 1.5v14z" fill="url(#bookPageGrad)" stroke="url(#blueGradCard2)" strokeWidth="1.5" strokeLinejoin="round"/>
+                      <path d="M14 7h4M14 10h4M14 13h4" stroke="url(#blueGradCard2)" strokeWidth="2" strokeLinecap="round"/>
+                      <defs>
+                        <linearGradient id="blueGradCard2" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#3b82f6" />
+                          <stop offset="100%" stopColor="#1d4ed8" />
+                        </linearGradient>
+                        <linearGradient id="bookPageGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#1e3a8a" stopOpacity="0.6" />
+                          <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.1" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="text-lg xl:text-xl font-black text-blue-400">25+</div>
+                    <div className="text-[11px] font-semibold text-slate-300">Subjects Covered</div>
+                  </div>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
-                  <div className="text-2xl font-black text-blue-400">All Boards</div>
-                  <div className="text-xs font-semibold text-slate-400">Comprehensive Syllabus</div>
+
+                {/* Card 3 */}
+                <div className="relative overflow-hidden rounded-2xl border border-blue-500/10 bg-[#060c18] p-3.5 flex items-center gap-2.5 transition-all duration-300 hover:border-blue-500/30 hover:shadow-[0_0_30px_rgba(59,130,246,0.08)] group">
+                  <div className="relative flex items-center justify-center w-10 h-10 shrink-0 rounded-full bg-blue-950/30 border border-blue-500/15 shadow-[0_0_15px_rgba(59,130,246,0.1)]">
+                    <div className="absolute inset-[-2.5px] rounded-full border border-dashed border-blue-500/30 animate-[spin_60s_linear_infinite]" />
+                    <svg className="w-6 h-6 relative z-10 filter drop-shadow-[0_2px_8px_rgba(59,130,246,0.4)]" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M2 9l10-7 10 7H2z" fill="url(#blueGradCard3)" stroke="url(#blueGradCard3)" strokeWidth="1" strokeLinejoin="round" />
+                      <path d="M3.5 9h17v2h-17V9z" fill="url(#blueGradCard3)" />
+                      <rect x="5.5" y="11" width="2" height="7" rx="0.5" fill="url(#blueGradCard3)" />
+                      <rect x="11" y="11" width="2" height="7" rx="0.5" fill="url(#blueGradCard3)" />
+                      <rect x="16.5" y="11" width="2" height="7" rx="0.5" fill="url(#blueGradCard3)" />
+                      <path d="M3 18h18v2H3v-2zm-1 2h20v2H2v-2z" fill="url(#blueGradCard3)" />
+                      <defs>
+                        <linearGradient id="blueGradCard3" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#3b82f6" />
+                          <stop offset="100%" stopColor="#1d4ed8" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-lg xl:text-xl font-extrabold text-blue-400">All Boards</div>
+                    <div className="text-[11px] font-semibold text-slate-300 leading-tight">Comprehensive Syllabus</div>
+                  </div>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
-                  <div className="text-2xl font-black text-blue-400">Free Trial</div>
-                  <div className="text-xs font-semibold text-slate-400">Demo Class</div>
+
+                {/* Card 4 */}
+                <div className="relative rounded-2xl border border-blue-500/10 bg-[#060c18] p-3.5 flex items-center gap-2.5 transition-all duration-300 hover:border-blue-500/30 hover:shadow-[0_0_30px_rgba(59,130,246,0.08)] group">
+                  <div className="relative flex items-center justify-center w-10 h-10 shrink-0 rounded-full bg-blue-950/30 border border-blue-500/15 shadow-[0_0_15px_rgba(59,130,246,0.1)]">
+                    <div className="absolute inset-[-2.5px] rounded-full border border-dashed border-blue-500/30 animate-[spin_60s_linear_infinite]" />
+                    <svg className="w-6 h-6 relative z-10 filter drop-shadow-[0_2px_8px_rgba(59,130,246,0.4)]" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 2L2 7l10 5 10-5-10-5z" fill="url(#blueGradCard4)" stroke="url(#blueGradCard4)" strokeWidth="1" strokeLinejoin="round"/>
+                      <path d="M6 10v4c0 3 2.5 5 6 5s6-2 6-5v-4" fill="url(#capInnerGrad)" stroke="url(#blueGradCard4)" strokeWidth="1.5" strokeLinejoin="round"/>
+                      <path d="M20.5 8.5v5.5M20.5 14v2" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round"/>
+                      <circle cx="20.5" cy="17" r="1.5" fill="#60a5fa" />
+                      <defs>
+                        <linearGradient id="blueGradCard4" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#3b82f6" />
+                          <stop offset="100%" stopColor="#1d4ed8" />
+                        </linearGradient>
+                        <linearGradient id="capInnerGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" stopColor="#1e3a8a" stopOpacity="0.7" />
+                          <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.1" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-lg xl:text-xl font-extrabold text-blue-400">Free Trial</div>
+                    <div className="text-[11px] font-semibold text-slate-300 leading-tight">Demo Class</div>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -527,7 +665,7 @@ export default function MumbaiPage() {
               transition={{ duration: 0.6, delay: 0.1 }}
               className="lg:col-span-5 w-full mt-10 lg:mt-0"
             >
-              <div className="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-slate-900/60 p-4 shadow-2xl backdrop-blur-xl">
+              <div className="relative overflow-hidden rounded-[2.5rem] border border-slate-800 bg-[#081229]/80 p-5 shadow-2xl backdrop-blur-xl">
                 {/* Tuition realistic picture */}
                 <div className="relative h-60 w-full overflow-hidden rounded-[2rem] shadow-inner">
                   <img
@@ -536,39 +674,44 @@ export default function MumbaiPage() {
                     className="h-full w-full object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
-                  <div className="absolute bottom-4 left-4 rounded-xl bg-blue-600/80 px-3.5 py-1.5 text-[10px] font-black tracking-wide text-white backdrop-blur">
+                  <div className="absolute bottom-4 left-4 rounded-xl bg-blue-600/90 px-3.5 py-1.5 text-[10px] font-black tracking-wide text-white backdrop-blur flex items-center gap-1.5 border border-blue-400/20">
+                    <ShieldCheck className="h-3.5 w-3.5" />
                     Verified Home Tutors
                   </div>
                 </div>
 
-                <div className="mt-6 p-4">
+                <div className="mt-6 p-2">
                   <h3 className="text-xl font-black text-white">Mumbai Parent Consultation</h3>
-                  <p className="mt-2 text-xs text-slate-300">
+                  <p className="mt-2 text-xs text-slate-400">
                     Get in touch with our curriculum coordinator to discuss syllabus tracking, tutor preferences, and timings.
                   </p>
 
                   <div className="mt-6 space-y-3">
-                    <div className="flex items-center gap-3 rounded-2xl bg-white/5 border border-white/10 p-3.5 backdrop-blur-sm">
+                    <a
+                      href="tel:+919041157689"
+                      className="flex items-center gap-3 rounded-2xl bg-[#0b1b36] border border-slate-800 p-3.5 transition hover:bg-[#102447] cursor-pointer"
+                    >
                       <Phone className="h-5 w-5 text-blue-400" />
                       <div>
                         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Call / WhatsApp</div>
-                        <div className="text-sm font-black text-white">+91 9041157689</div>
+                        <div className="text-xs font-black text-white">+91 9041157689</div>
                       </div>
-                    </div>
+                    </a>
 
-                    <div className="flex items-center gap-3 rounded-2xl bg-white/5 border border-white/10 p-3.5 backdrop-blur-sm">
+                    <div className="flex items-center gap-3 rounded-2xl bg-[#0b1b36] border border-slate-800 p-3.5">
                       <Mail className="h-5 w-5 text-blue-400" />
                       <div>
                         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Email Address</div>
-                        <div className="text-sm font-black text-white">services@saraswatitutorial.com</div>
+                        <div className="text-xs font-black text-white">services@saraswatitutorial.com</div>
                       </div>
                     </div>
                   </div>
 
                   <MotionLink
                     to="/parent-enquiry"
-                    whileTap={{ scale: 0.95, backgroundColor: "rgba(255, 255, 255, 0.15)", borderColor: "rgba(255, 255, 255, 0.4)", color: "#ffffff" }}
-                    className="mt-6 flex h-13 w-full items-center justify-center gap-2 rounded-2xl border border-transparent bg-white text-sm font-black text-slate-950 transition hover:bg-slate-100"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="mt-6 flex h-13 w-full items-center justify-center gap-2 rounded-full border border-transparent bg-white text-sm font-black text-slate-950 transition hover:bg-slate-100 py-3.5 shadow-lg"
                   >
                     Enquire Now
                     <ArrowRight className="h-4 w-4" />

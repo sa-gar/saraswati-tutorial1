@@ -30,7 +30,12 @@ import {
   MessageCircle,
   Clock3,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Calendar,
+  User,
+  Globe,
+  GraduationCap,
+  Rocket
 } from "lucide-react";
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -96,7 +101,7 @@ const handleLocationRedirect = (city) => {
 
 function LocationSelector({ activeCity }) {
   return (
-    <div className="relative flex items-center p-1 bg-slate-100/90 backdrop-blur-sm border border-slate-200/60 rounded-2xl shadow-inner select-none z-10 gap-1">
+    <div className="relative flex items-center p-1 bg-slate-100/90 backdrop-blur-sm border border-slate-200/50 rounded-full shadow-inner select-none z-10 gap-1">
       {[
         { id: "Bangalore", label: "Bangalore" },
         { id: "Mumbai", label: "Mumbai" }
@@ -111,19 +116,13 @@ function LocationSelector({ activeCity }) {
                 handleLocationRedirect(city.id);
               }
             }}
-            className={`relative flex items-center gap-1.5 py-1.5 px-3.5 text-xs font-bold rounded-xl transition-colors duration-300 cursor-pointer z-10 ${
-              isSelected ? "text-white" : "text-slate-600 hover:text-slate-950"
+            className={`relative flex items-center gap-1.5 py-1.5 px-4 text-xs font-bold rounded-full transition-all duration-300 cursor-pointer z-10 ${
+              isSelected ? "text-white bg-gradient-to-r from-blue-600 to-indigo-600 shadow-md" : "text-slate-600 hover:text-slate-900"
             }`}
           >
-            {isSelected && (
-              <motion.div
-                layoutId="activeCityBg"
-                className="absolute inset-0 bg-slate-950 rounded-xl -z-10 shadow-sm"
-                transition={{ type: "spring", stiffness: 350, damping: 28 }}
-              />
-            )}
-            <MapPin className={`h-3.5 w-3.5 ${isSelected ? "text-blue-400" : "text-slate-400"}`} />
+            <MapPin className={`h-3.5 w-3.5 ${isSelected ? "text-white" : "text-slate-450"}`} />
             <span>{city.label}</span>
+            {isSelected && <ChevronDown className="h-3 w-3 text-white/90" />}
           </button>
         );
       })}
@@ -167,7 +166,82 @@ function InfoPill({ icon: Icon, text, highlight }) {
   );
 }
 
+const LawScaleSVG = () => (
+  <svg className="h-3.5 w-3.5 text-[#E2B755]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 3v17" />
+    <path d="M12 5l-8 3" />
+    <path d="M12 5l8 3" />
+    <path d="M4 17a4 4 0 0 0 8 0" />
+    <path d="M12 17a4 4 0 0 0 8 0" />
+  </svg>
+);
+
+const MathSVG = () => (
+  <svg className="h-3.5 w-3.5 text-[#E2B755]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="4" y="2" width="16" height="20" rx="2" />
+    <line x1="8" y1="6" x2="16" y2="6" />
+    <line x1="16" y1="14" x2="16" y2="18" />
+    <line x1="8" y1="14" x2="12" y2="14" />
+    <line x1="8" y1="18" x2="12" y2="18" />
+  </svg>
+);
+
+const ScienceSVG = () => (
+  <svg className="h-3.5 w-3.5 text-[#E2B755]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="3" />
+    <path d="M12 21a9 9 0 0 0 0-18 9 9 0 0 0 0 18z" />
+    <path d="M12 3v18" />
+    <path d="M3 12h18" />
+  </svg>
+);
+
+const AcademicSVG = () => (
+  <svg className="h-3.5 w-3.5 text-[#E2B755]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+  </svg>
+);
+
+const RatingShieldIcon = () => (
+  <svg viewBox="0 0 24 24" className="h-5 w-5 fill-none stroke-[#CAA036]" strokeWidth="1.5">
+    <path d="M 12 2 C 12 2 20 4 20 8 C 20 14 15 20 12 22 C 9 20 4 14 4 8 C 4 4 12 2 12 2 Z" />
+    <path d="M 9 11 L 11 13 L 15 9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="stroke-[#CAA036]" />
+  </svg>
+);
+
+const ExperienceCalendarIcon = () => (
+  <svg viewBox="0 0 24 24" className="h-5 w-5 fill-none stroke-emerald-600" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+    <line x1="16" y1="2" x2="16" y2="6" />
+    <line x1="8" y1="2" x2="8" y2="6" />
+    <line x1="3" y1="10" x2="21" y2="10" />
+    <path d="m9 16 2 2 4-4" />
+  </svg>
+);
+
+const ColumnIcon = () => (
+  <svg className="h-4 w-4 text-[#E2B755]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 2h16M4 22h16M8 6v12M12 6v12M16 6v12M6 6h12M6 18h12" />
+  </svg>
+);
+
+const getSubjectBadgeIcon = (subjectStr = "") => {
+  const s = subjectStr.toLowerCase();
+  if (s.includes("law") || s.includes("legal") || s.includes("constitution")) {
+    return <LawScaleSVG />;
+  }
+  if (s.includes("math") || s.includes("algebra") || s.includes("geometry") || s.includes("stat")) {
+    return <MathSVG />;
+  }
+  if (s.includes("science") || s.includes("physic") || s.includes("chemist") || s.includes("biolog")) {
+    return <ScienceSVG />;
+  }
+  return <AcademicSVG />;
+};
+
 function TutorCard({ tutor, onViewProfile, onBook, swipeMode = false }) {
+  const subjectIcon = getSubjectBadgeIcon(tutor.subject || tutor.category || "");
+
   return (
     <motion.div
       whileHover={{ y: -6 }}
@@ -178,113 +252,245 @@ function TutorCard({ tutor, onViewProfile, onBook, swipeMode = false }) {
           : ""
       }
     >
-      <Card className="group h-full overflow-hidden rounded-[2rem] border-0 bg-white shadow-sm ring-1 ring-slate-200 transition hover:shadow-2xl hover:shadow-slate-200">
-        <CardContent className="p-0">
-          <div className="relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 p-5 text-white">
-            <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-blue-500/30 blur-3xl" />
-            <div className="absolute bottom-0 left-8 h-20 w-20 rounded-full bg-emerald-400/20 blur-2xl" />
+      <Card className="group h-full overflow-hidden rounded-[2rem] border-0 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.04)] ring-1 ring-slate-100 transition hover:shadow-2xl hover:shadow-slate-200/80">
+        <CardContent className="p-0 flex flex-col h-full">
+          {/* Header section (Dark cosmic background) */}
+          <div className="relative overflow-hidden bg-gradient-to-br from-[#061530] via-[#091f42] to-[#041126] p-6 text-white rounded-t-[2rem] z-10 shrink-0">
+            {/* Ambient glows */}
+            <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-blue-500/20 blur-3xl pointer-events-none" />
+            <div className="absolute bottom-0 left-8 h-20 w-20 rounded-full bg-emerald-500/10 blur-2xl pointer-events-none" />
 
-            <div className="relative flex items-start justify-between gap-4">
+            {/* Wreath watermark */}
+            <div className="absolute right-2 top-1 bottom-1 w-[160px] opacity-[0.04] pointer-events-none flex items-center justify-center text-white z-0">
+              <svg viewBox="0 0 100 100" className="h-full w-full stroke-current" fill="none" strokeWidth="1.5">
+                <path d="M 30,80 A 25,25 0 0,1 30,20" />
+                <path d="M 28,30 Q 25,27 22,30 Q 25,33 28,30" fill="currentColor" />
+                <path d="M 26,42 Q 22,40 19,43 Q 22,46 26,42" fill="currentColor" />
+                <path d="M 26,55 Q 22,54 19,57 Q 22,60 26,55" fill="currentColor" />
+                <path d="M 29,68 Q 26,67 23,70 Q 26,73 29,68" fill="currentColor" />
+                <path d="M 70,80 A 25,25 0 0,0 70,20" />
+                <path d="M 72,30 Q 75,27 78,30 Q 75,33 72,30" fill="currentColor" />
+                <path d="M 74,42 Q 78,40 81,43 Q 78,46 74,42" fill="currentColor" />
+                <path d="M 74,55 Q 78,54 81,57 Q 78,60 74,55" fill="currentColor" />
+                <path d="M 71,68 Q 74,67 77,70 Q 74,73 71,68" fill="currentColor" />
+                <path d="M 50,30 L 50,75 M 40,75 L 60,75" />
+                <path d="M 38,40 L 62,40" />
+                <path d="M 38,40 L 32,55 M 32,55 A 6,3 0 0,0 44,55 Z" />
+                <path d="M 62,40 L 56,55 M 56,55 A 6,3 0 0,0 68,55 Z" />
+              </svg>
+            </div>
+
+            <div className="relative flex items-center justify-between gap-4 z-10">
               <div className="flex min-w-0 items-center gap-4">
-                {tutor.photo ? (
-                  <img
-                    src={getTutorImage(tutor.photo)}
-                    alt={tutor.name}
-                    loading="lazy"
-                    width="72"
-                    height="72"
-                    className="h-[72px] w-[72px] rounded-3xl object-cover ring-4 ring-white/10"
-                  />
-                ) : (
-                  <Avatar className="h-[72px] w-[72px] rounded-3xl ring-4 ring-white/10">
-                    <AvatarFallback className="flex h-[72px] w-[72px] items-center justify-center rounded-3xl bg-white/10 text-lg font-black text-white">
-                      {getInitials(tutor.name)}
-                    </AvatarFallback>
-                  </Avatar>
-                )}
+                {/* Hexagon image container */}
+                <div className="relative shrink-0 select-none">
+                  <div 
+                    className="h-[84px] w-[84px] bg-gradient-to-br from-[#E2B755] to-[#B88728] flex items-center justify-center p-[2.5px] shadow-lg"
+                    style={{ clipPath: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)" }}
+                  >
+                    <div 
+                      className="h-full w-full bg-[#081730] flex items-center justify-center p-[1px]"
+                      style={{ clipPath: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)" }}
+                    >
+                      {tutor.photo ? (
+                        <img
+                          src={getTutorImage(tutor.photo)}
+                          alt={tutor.name}
+                          loading="lazy"
+                          className="h-full w-full object-cover"
+                          style={{ clipPath: "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)" }}
+                        />
+                      ) : (
+                        <div className="h-full w-full bg-[#091f42] flex items-center justify-center text-lg font-black text-white">
+                          {getInitials(tutor.name)}
+                        </div>
+                      )}
+                    </div>
+                  </div>
 
-                <div className="min-w-0">
+                  {/* Overlapping subject badge (Shield Shape) */}
+                  <div className="absolute -bottom-2 -right-2 h-9 w-9 drop-shadow-md flex items-center justify-center select-none">
+                    <svg viewBox="0 0 24 24" className="absolute inset-0 h-full w-full fill-[#061530] stroke-[#E2B755]" strokeWidth="2">
+                      <path d="M 12 2 C 12 2 20 4 20 8 C 20 14 15 20 12 22 C 9 20 4 14 4 8 C 4 4 12 2 12 2 Z" />
+                    </svg>
+                    <div className="relative z-10 flex items-center justify-center">
+                      {subjectIcon}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="min-w-0 leading-tight">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="truncate text-xl font-black text-white">
+                    <h3 className="text-xl font-black text-white tracking-tight truncate max-w-[150px] sm:max-w-[200px]">
                       {tutor.name || "Expert Tutor"}
                     </h3>
 
                     {tutor.verified ? (
-                      <span className="inline-flex items-center rounded-full bg-emerald-400/15 px-2.5 py-1 text-xs font-bold text-emerald-200 ring-1 ring-emerald-300/20">
-                        <ShieldCheck className="mr-1 h-3.5 w-3.5" />
+                      <span className="inline-flex items-center gap-1 rounded-full border border-[#CAA036]/60 bg-[#CAA036]/10 px-2 py-0.5 text-[10px] font-bold text-[#E2B755]">
+                        <ShieldCheck className="h-3 w-3" />
                         Verified
                       </span>
                     ) : null}
                   </div>
 
-                  <p className="mt-1 text-sm text-slate-300">
+                  <p className="mt-1 text-sm font-semibold text-blue-300 truncate">
                     {tutor.subject || tutor.category || "Subject expert"}
                   </p>
+
+                  <div className="h-[2px] w-8 bg-gradient-to-r from-[#E2B755] to-transparent mt-2.5" />
+
+                  {/* Tagline emblem line (Greek Column Circle) */}
+                  <div className="flex items-center gap-2.5 text-[11.5px] text-slate-200 mt-3 font-semibold min-w-0">
+                    <div className="h-7 w-7 rounded-full bg-[#081a36] border border-[#E2B755]/30 flex items-center justify-center shrink-0 shadow-[0_2px_8px_rgba(0,0,0,0.1)]">
+                      <ColumnIcon />
+                    </div>
+                    <span className="truncate max-w-[150px] sm:max-w-[220px] tracking-wide">
+                      {tutor.tagline || tutor.about || "Experienced faculty tutor"}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              <div className="rounded-2xl bg-white/10 px-3 py-2 text-right ring-1 ring-white/15">
-                <div className="text-sm font-black text-white">
-                  ₹{tutor.price || 0}/hr
+              {/* Price starts fee container */}
+              <div className="flex items-center gap-2.5 bg-[#081a36]/65 border border-white/10 rounded-2xl p-2.5 shadow-inner shrink-0">
+                <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#F4D068] to-[#CAA036] flex items-center justify-center text-slate-955 font-extrabold text-sm shadow-md shrink-0 select-none">
+                  ₹
                 </div>
-                <div className="text-[11px] text-slate-300">Starting fee</div>
+                <div className="text-right">
+                  <div className="text-lg font-black text-white leading-none">
+                    ₹{tutor.price || 500}/hr
+                  </div>
+                  <div className="text-[10px] text-slate-400 font-semibold mt-0.5">Starting fee</div>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="p-6">
-            <p className="line-clamp-3 text-sm leading-6 text-slate-600">
-              {tutor.tagline ||
-                tutor.about ||
-                "Experienced tutor available for personalized learning support and demo classes."}
-            </p>
+          {/* Body Section (Light Theme) */}
+          <div className="p-6 flex flex-col justify-between flex-1 bg-white">
+            <div>
+              {/* Language Tag */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                {(tutor.languages || ["English", "Hindi"])
+                  .slice(0, 3)
+                  .map((lang) => (
+                    <span
+                      key={lang}
+                      className="inline-flex items-center gap-1.5 bg-blue-50/70 border border-blue-100/60 rounded-full px-3 py-1 text-xs font-semibold text-blue-600 shadow-sm"
+                    >
+                      <Globe className="h-3.5 w-3.5 text-blue-500" />
+                      {lang}
+                    </span>
+                  ))}
+              </div>
 
-            <div className="mt-4 flex flex-wrap gap-2">
-              {(tutor.languages || ["English", "Hindi"])
-                .slice(0, 4)
-                .map((lang) => (
-                  <Badge
-                    key={lang}
-                    className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700 hover:bg-slate-100"
-                  >
-                    {lang}
-                  </Badge>
-                ))}
+              {/* 2x2 Details Grid */}
+              <div className="grid grid-cols-2 gap-3">
+                {/* Rating */}
+                <div className="flex items-center gap-3.5 bg-slate-50/60 border border-slate-100 rounded-2xl p-3.5 shadow-[0_2px_10px_rgba(0,0,0,0.01)]">
+                  <div className="h-10 w-10 rounded-xl bg-amber-500/5 flex items-center justify-center shrink-0 border border-amber-500/10 shadow-sm">
+                    <RatingShieldIcon />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5 text-sm font-extrabold text-slate-800 leading-tight">
+                      <span>{tutor.rating || "4.8"}</span>
+                      <div className="flex items-center gap-0.5">
+                        {[1, 2, 3, 4, 5].map((starIdx) => {
+                          const ratingVal = parseFloat(tutor.rating || "4.8");
+                          const isFilled = starIdx <= Math.round(ratingVal);
+                          return (
+                            <Star
+                              key={starIdx}
+                              className={`h-2.5 w-2.5 ${isFilled ? "fill-amber-400 text-amber-400" : "text-slate-200"}`}
+                            />
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div className="text-[11px] font-bold text-slate-400 mt-0.5">Rating</div>
+                  </div>
+                </div>
+
+                {/* Location */}
+                <div className="flex items-center gap-3.5 bg-slate-50/60 border border-slate-100 rounded-2xl p-3.5 shadow-[0_2px_10px_rgba(0,0,0,0.01)]">
+                  <div className="h-10 w-10 rounded-xl bg-blue-500/5 text-blue-600 flex items-center justify-center shrink-0 border border-blue-500/10 shadow-sm">
+                    <MapPin className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-extrabold text-slate-800 truncate leading-tight">
+                      {tutor.location || tutor.locations?.[0] || "Bangalore"}
+                    </div>
+                    <div className="text-[11px] font-bold text-slate-400 mt-0.5">Location</div>
+                  </div>
+                </div>
+
+                {/* Experience */}
+                <div className="flex items-center gap-3.5 bg-slate-50/60 border border-slate-100 rounded-2xl p-3.5 shadow-[0_2px_10px_rgba(0,0,0,0.01)]">
+                  <div className="h-10 w-10 rounded-xl bg-emerald-500/5 flex items-center justify-center shrink-0 border border-emerald-500/10 shadow-sm">
+                    <ExperienceCalendarIcon />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-sm font-extrabold text-slate-805 leading-tight">
+                      {tutor.experience || "10+ years"}
+                    </div>
+                    <div className="text-[11px] font-bold text-slate-400 mt-0.5">Experience</div>
+                  </div>
+                </div>
+
+                {/* Teaching Mode */}
+                <div className="flex items-center gap-3.5 bg-slate-50/60 border border-slate-100 rounded-2xl p-3.5 shadow-[0_2px_10px_rgba(0,0,0,0.01)]">
+                  <div className="h-10 w-10 rounded-xl bg-indigo-55/5 text-indigo-650 flex items-center justify-center shrink-0 border border-indigo-500/10 shadow-sm">
+                    <GraduationCap className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-sm font-extrabold text-slate-805 leading-tight">
+                      {tutor.mode || "Online/Home"}
+                    </div>
+                    <div className="text-[11px] font-bold text-slate-400 mt-0.5">Teaching Mode</div>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div className="mt-5 grid grid-cols-2 gap-3 text-sm text-slate-600">
-              <InfoPill icon={Star} text={tutor.rating || "4.8"} highlight />
-              <InfoPill
-                icon={MapPin}
-                text={tutor.location || tutor.locations?.[0] || "Bangalore"}
-              />
-              <InfoPill
-                icon={Clock3}
-                text={tutor.experience || "Experienced"}
-              />
-              <InfoPill icon={Users} text={tutor.mode || "Online/Home"} />
-            </div>
-
-            <div className="mt-6 flex flex-wrap gap-2.5">
+            {/* Action Buttons Row */}
+            <div className="mt-6 flex flex-col sm:flex-row gap-2">
               <Button
-                className="flex-1 min-w-[100px] rounded-2xl bg-slate-950 px-4 py-3 font-bold text-white shadow-lg shadow-slate-200 transition hover:-translate-y-0.5 hover:bg-black text-xs"
+                className="flex-1 rounded-[14px] bg-[#0B1B33] px-4 py-2.5 font-bold text-white shadow-md hover:bg-slate-900 transition duration-300 flex items-center justify-between text-[11.5px] cursor-pointer"
                 onClick={() => onBook(tutor)}
               >
-                Request Demo
+                <div className="flex items-center gap-2">
+                  <div className="h-7 w-7 rounded-lg bg-white/10 flex items-center justify-center shrink-0 border border-white/5">
+                    <Calendar className="h-4 w-4 text-slate-400" />
+                  </div>
+                  <span>Request Demo</span>
+                </div>
+                <ChevronRight className="h-4 w-4 text-slate-400" />
               </Button>
               
               <Link
                 to="/payment"
-                className="flex-1 min-w-[100px] inline-flex items-center justify-center rounded-2xl bg-green-600 px-4 py-3 font-bold text-white shadow-lg shadow-green-200 transition hover:-translate-y-0.5 hover:bg-green-700 text-xs"
+                className="flex-1 inline-flex items-center justify-between rounded-[14px] bg-[#008A3B] px-4 py-2.5 font-bold text-white shadow-md hover:bg-green-700 transition duration-300 text-[11.5px] cursor-pointer"
               >
-                Pay for Demo
+                <div className="flex items-center gap-2">
+                  <div className="h-7 w-7 rounded-lg bg-white/10 flex items-center justify-center shrink-0 border border-white/5">
+                    <ShieldCheck className="h-4 w-4 text-green-300" />
+                  </div>
+                  <span>Pay for Demo</span>
+                </div>
+                <ChevronRight className="h-4 w-4 text-green-300" />
               </Link>
 
               <Button
-                className="flex-1 min-w-[100px] rounded-2xl border border-slate-200 bg-white px-4 py-3 font-bold text-slate-800 transition hover:bg-slate-50 text-xs"
+                className="flex-1 rounded-[14px] border border-blue-200 bg-white px-4 py-2.5 font-bold text-blue-600 shadow-sm hover:bg-blue-50/50 transition duration-300 flex items-center justify-between text-[11.5px] cursor-pointer"
                 onClick={() => onViewProfile(tutor)}
               >
-                View Profile
+                <div className="flex items-center gap-2">
+                  <div className="h-7 w-7 rounded-lg bg-blue-50 flex items-center justify-center shrink-0 border border-blue-100">
+                    <User className="h-4 w-4 text-blue-400" />
+                  </div>
+                  <span>View Profile</span>
+                </div>
+                <ChevronRight className="h-4 w-4 text-blue-500" />
               </Button>
             </div>
           </div>
@@ -408,6 +614,28 @@ export default function HomePage() {
   const [toast, setToast] = useState("");
   const [loading, setLoading] = useState(true);
   const [activeFaq, setActiveFaq] = useState(null);
+  const [activeSection, setActiveSection] = useState("home");
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const sections = ["home", "tutors", "why-choose", "subjects", "boards", "areas", "faqs"];
+      const scrollPosition = window.scrollY + 160;
+
+      for (const section of sections) {
+        const el = document.getElementById(section);
+        if (el) {
+          const offsetTop = el.offsetTop;
+          const offsetHeight = el.offsetHeight;
+          if (scrollPosition >= offsetTop && scrollPosition < offsetTop + offsetHeight) {
+            setActiveSection(section);
+            break;
+          }
+        }
+      }
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const sliderRef = useRef(null);
 
@@ -774,65 +1002,95 @@ export default function HomePage() {
         <script type="application/ld+json">{JSON.stringify(localBusinessSchema)}</script>
       </Helmet>
 
-      {/* Glassmorphism Header */}
-      <header className="sticky top-0 z-50 border-b border-white/20 bg-white/70 backdrop-blur-md shadow-[0_4px_30px_rgba(0,0,0,0.03)]">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-3">
-            <Link to="/" className="flex items-center gap-3.5 group">
-              <div className="relative p-1 bg-gradient-to-br from-blue-100 to-indigo-150 rounded-2xl border border-slate-200/50 shadow-inner flex items-center justify-center transition-all duration-300 group-hover:scale-105 group-hover:shadow-[0_0_15px_rgba(59,130,246,0.15)]">
+      <header className="sticky top-0 z-50 w-full py-3 px-4 sm:px-6 lg:px-8 bg-transparent">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 xl:px-6 py-2.5 xl:py-3.5 bg-white/95 backdrop-blur-md border border-slate-200/50 rounded-[1.75rem] shadow-[0_8px_30px_rgba(0,0,0,0.05)]">
+          <div className="flex items-center gap-2 xl:gap-3 shrink-0">
+            <Link to="/" className="flex items-center gap-2 xl:gap-3 group shrink-0">
+              <div className="h-12 w-12 shrink-0 bg-white rounded-xl border border-slate-200/60 shadow-sm flex items-center justify-center transition-all duration-300 group-hover:scale-105">
                 <img
                   src="/logo.png"
-                  alt="Saraswati Tutorials Logo"
-                  className="h-10 w-10 rounded-xl object-contain"
+                  alt="ST"
+                  className="h-9 w-9 rounded-lg object-contain"
                   onError={(e) => {
                     e.target.src = "https://placehold.co/100x100?text=ST";
                   }}
                 />
               </div>
-              <div className="shrink-0">
-                <div className="text-lg font-black tracking-tight text-slate-950 bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 bg-clip-text text-transparent transition-all duration-300 group-hover:text-blue-650">
+              <div className="shrink-0 leading-tight">
+                <div className="text-base xl:text-lg font-black tracking-tight text-slate-900 transition-all duration-300 group-hover:text-blue-600">
                   Saraswati Tutorials
                 </div>
-                <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                <div className="text-[9px] xl:text-[10px] font-black uppercase tracking-widest text-blue-600">
                   Premium Home Tutors
                 </div>
               </div>
             </Link>
 
-            <div className="hidden sm:block h-6 w-px bg-slate-200/80 mx-2" />
+            <div className="hidden sm:block h-8 w-px bg-slate-200 mx-2 xl:mx-3 shrink-0" />
 
-            <LocationSelector activeCity="Bangalore" />
+            <div className="shrink-0">
+              <LocationSelector activeCity="Bangalore" />
+            </div>
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden items-center gap-5 text-sm font-semibold text-slate-600 xl:flex">
-            <a href="#home" className="transition hover:text-blue-650">Home</a>
-            <a href="#tutors" className="transition hover:text-blue-650">Tutors</a>
-            <a href="#why-choose" className="transition hover:text-blue-650">Why Us</a>
-            <a href="#subjects" className="transition hover:text-blue-650">Subjects</a>
-            <a href="#boards" className="transition hover:text-blue-650">Boards</a>
-            <a href="#areas" className="transition hover:text-blue-650">Areas</a>
-            <a href="#faqs" className="transition hover:text-blue-650">FAQs</a>
-            <Link to="/blogs" className="transition hover:text-blue-650">Blog</Link>
+          <nav className="hidden items-center gap-2 xl:gap-3.5 2xl:gap-5 text-xs xl:text-[13px] 2xl:text-[14px] font-bold text-slate-600 xl:flex shrink-0">
+            {[
+              { href: "#home", label: "Home", id: "home" },
+              { href: "#tutors", label: "Tutors", id: "tutors" },
+              { href: "#why-choose", label: "Why Us", id: "why-choose" },
+              { href: "#subjects", label: "Subjects", id: "subjects" },
+              { href: "#boards", label: "Boards", id: "boards" },
+              { href: "#areas", label: "Areas", id: "areas" },
+              { href: "#faqs", label: "FAQs", id: "faqs" },
+            ].map((link) => {
+              const isActive = activeSection === link.id;
+              return (
+                <a
+                  key={link.id}
+                  href={link.href}
+                  className={`relative py-1.5 transition duration-300 whitespace-nowrap shrink-0 ${
+                    isActive ? "text-blue-600 font-extrabold" : "text-slate-600 hover:text-slate-950"
+                  }`}
+                >
+                  {link.label}
+                  {isActive && (
+                    <motion.div
+                      layoutId="navUnderline"
+                      className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-blue-600 rounded-full"
+                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                </a>
+              );
+            })}
+            <Link
+              to="/blogs"
+              className="relative py-1.5 transition duration-300 whitespace-nowrap shrink-0 text-slate-600 hover:text-slate-950"
+            >
+              Blog
+            </Link>
           </nav>
 
-          <div className="hidden items-center gap-2.5 xl:flex">
+          <div className="hidden items-center gap-2 xl:gap-3 xl:flex shrink-0">
             <MotionLink
               to="/parent-enquiry"
               onClick={() => trackEvent("book_demo")}
-              whileHover={{ scale: 1.05, translateY: -2, boxShadow: "0 10px 20px rgba(0,0,0,0.12)" }}
-              whileTap={{ scale: 0.95 }}
-              className="whitespace-nowrap rounded-xl border border-transparent bg-slate-950 px-5 py-2.5 text-xs font-black text-white shadow-md transition-all duration-300 hover:bg-black"
+              whileHover={{ scale: 1.03, translateY: -1, boxShadow: "0 6px 15px rgba(0,0,0,0.06)" }}
+              whileTap={{ scale: 0.98 }}
+              className="whitespace-nowrap flex items-center gap-1.5 xl:gap-2 rounded-xl xl:rounded-[14px] border border-slate-200 bg-white px-3.5 xl:px-5 py-2 xl:py-2.5 text-[11px] xl:text-xs font-black text-slate-800 shadow-sm transition-all duration-300 hover:bg-slate-50 hover:border-slate-300 shrink-0"
             >
+              <Calendar className="h-3.5 w-3.5 xl:h-4 xl:w-4 text-slate-500" />
               Book Demo
             </MotionLink>
             <MotionLink
               to="/tutor-register"
               onClick={() => trackEvent("become_tutor")}
-              whileHover={{ scale: 1.05, translateY: -2, boxShadow: "0 10px 20px rgba(37,99,235,0.22)" }}
-              whileTap={{ scale: 0.95 }}
-              className="whitespace-nowrap rounded-xl border border-transparent bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-xs font-black text-white shadow-md transition-all duration-300"
+              whileHover={{ scale: 1.03, translateY: -1, boxShadow: "0 8px 18px rgba(37,99,235,0.2)" }}
+              whileTap={{ scale: 0.98 }}
+              className="whitespace-nowrap flex items-center gap-1.5 xl:gap-2 rounded-xl xl:rounded-[14px] border border-transparent bg-gradient-to-r from-blue-600 to-indigo-700 px-3.5 xl:px-5 py-2 xl:py-2.5 text-[11px] xl:text-xs font-black text-white shadow-md transition-all duration-300 shrink-0"
             >
+              <User className="h-3.5 w-3.5 xl:h-4 xl:w-4 text-white/90" />
               Become a Tutor
             </MotionLink>
           </div>
@@ -896,9 +1154,10 @@ export default function HomePage() {
       {/* Hero Section */}
       <section
         id="home"
-        className="relative overflow-hidden bg-[radial-gradient(circle_at_top_left,#3b82f622,transparent_35%),radial-gradient(circle_at_top_right,#6366f122,transparent_30%),linear-gradient(135deg,#020617,#0f172a_50%,#1e1b4b)] py-20 text-white md:py-32"
+        className="relative overflow-hidden bg-[#030d22] py-20 text-white md:py-32"
       >
-        <div className="mx-auto max-w-7xl px-6">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,#1e3a8a30,transparent_50%),radial-gradient(circle_at_70%_60%,#3b82f615,transparent_50%)]" />
+        <div className="mx-auto max-w-7xl px-6 relative z-10">
           <div className="grid gap-12 lg:grid-cols-12 lg:items-center">
             <motion.div
               initial={{ opacity: 0, y: 24 }}
@@ -906,21 +1165,31 @@ export default function HomePage() {
               transition={{ duration: 0.6 }}
               className="lg:col-span-7"
             >
+              {/* Eyebrow Pill */}
+              <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-1.5 text-xs font-semibold text-blue-400 mb-6">
+                <Star className="h-3.5 w-3.5 fill-current text-blue-400" />
+                <span>TRUSTED BY 1000+ PARENTS</span>
+              </div>
+
               <h1 className="text-4xl font-black tracking-tight text-white md:text-6xl lg:leading-tight">
-                Home Tuition in Bangalore for Class 6 to 12
+                Home Tuition in <span className="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">Bangalore</span> for Class 6 to 12
               </h1>
 
-              <p className="mt-6 text-lg leading-relaxed text-slate-300">
-                Expert home tutors and online classes for CBSE, ICSE, IGCSE, IB & State Board students across Bangalore. Personalized one-to-one tuition for Maths, Science, English, Commerce, and skills.
-              </p>
+              {/* Tagline Description with connector line */}
+              <div className="relative pl-6 border-l-2 border-blue-500/20 mt-6">
+                <div className="absolute left-[-5px] top-1/2 -translate-y-1/2 h-2 w-2 rounded-full bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.8)]" />
+                <p className="text-lg leading-relaxed text-slate-300">
+                  Expert home tutors and online classes for CBSE, ICSE, IGCSE, IB & State Board students across Bangalore. Personalized one-to-one tuition for Maths, Science, English, Commerce, and skills.
+                </p>
+              </div>
 
               <div className="mt-8 flex flex-wrap gap-4">
                 <MotionLink
                   to="/parent-enquiry"
                   onClick={() => trackEvent("book_demo")}
-                  whileHover={{ scale: 1.03, translateY: -2, boxShadow: "0 10px 25px rgba(255,255,255,0.12)" }}
+                  whileHover={{ scale: 1.03, translateY: -2, boxShadow: "0 10px 25px rgba(59,130,246,0.3)" }}
                   whileTap={{ scale: 0.97 }}
-                  className="group inline-flex items-center gap-2 rounded-2xl border border-transparent bg-white px-7 py-4 font-black text-slate-950 shadow-xl shadow-blue-950/20 transition-all duration-300 hover:bg-slate-100"
+                  className="group inline-flex items-center gap-2 rounded-2xl border border-transparent bg-blue-600 px-7 py-4 font-black text-white shadow-xl shadow-blue-900/40 transition-all duration-300 hover:bg-blue-500"
                 >
                   Book Demo
                   <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
@@ -928,29 +1197,112 @@ export default function HomePage() {
 
                 <a
                   href="#tutors"
-                  className="rounded-2xl border border-white/20 bg-white/5 px-7 py-4 font-black text-white backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/10 text-center"
+                  className="rounded-2xl border border-white/10 bg-white/5 px-7 py-4 font-black text-white backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/10 text-center"
                 >
                   Find a Home Tutor
                 </a>
               </div>
 
               {/* Quick Stats Grid */}
-              <div className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-4">
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
-                  <div className="text-2xl font-black text-blue-400">100+</div>
-                  <div className="text-xs font-semibold text-slate-400">Verified Tutors</div>
+              <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Card 1 */}
+                <div className="relative rounded-2xl border border-blue-500/10 bg-[#060c18] pl-3.5 pr-2.5 py-4 flex items-center gap-2.5 transition-all duration-300 hover:border-blue-500/30 hover:shadow-[0_0_30px_rgba(59,130,246,0.08)] group">
+                  <div className="relative flex items-center justify-center w-10 h-10 shrink-0 rounded-full bg-blue-950/30 border border-blue-500/15 shadow-[0_0_15px_rgba(59,130,246,0.1)]">
+                    {/* Dashed outer ring */}
+                    <div className="absolute inset-[-2.5px] rounded-full border border-dashed border-blue-500/30 animate-[spin_60s_linear_infinite]" />
+                    <svg className="w-5 h-5 relative z-10 filter drop-shadow-[0_2px_8px_rgba(59,130,246,0.4)]" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 22C12 22 20 18 20 12V5L12 2L4 5V12C4 12 12 22 12 22Z" stroke="url(#blueGradCard1)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M8.5 11.5l2.5 2.5 5-5" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                      <defs>
+                        <linearGradient id="blueGradCard1" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#3b82f6" />
+                          <stop offset="100%" stopColor="#1d4ed8" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-lg xl:text-xl font-extrabold text-blue-400">100+</div>
+                    <div className="text-[11px] font-semibold text-slate-300 leading-tight">Verified Tutors</div>
+                  </div>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
-                  <div className="text-2xl font-black text-blue-400">35+</div>
-                  <div className="text-xs font-semibold text-slate-400">Subjects Covered</div>
+
+                {/* Card 2 */}
+                <div className="relative rounded-2xl border border-blue-500/10 bg-[#060c18] pl-3.5 pr-2.5 py-4 flex items-center gap-2.5 transition-all duration-300 hover:border-blue-500/30 hover:shadow-[0_0_30px_rgba(59,130,246,0.08)] group">
+                  <div className="relative flex items-center justify-center w-10 h-10 shrink-0 rounded-full bg-blue-950/30 border border-blue-500/15 shadow-[0_0_15px_rgba(59,130,246,0.1)]">
+                    <div className="absolute inset-[-2.5px] rounded-full border border-dashed border-blue-500/30 animate-[spin_60s_linear_infinite]" />
+                    <svg className="w-5 h-5 relative z-10 filter drop-shadow-[0_2px_8px_rgba(59,130,246,0.4)]" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 19.5c-2-1.5-5.5-1.5-8-1.5h-1V4h1c2.5 0 6 0 8 1.5v14z" fill="url(#bookPageGrad)" stroke="url(#blueGradCard2)" strokeWidth="1.5" strokeLinejoin="round"/>
+                      <path d="M12 19.5c2-1.5 5.5-1.5 8-1.5h1V4h-1c-2.5 0-6 0-8 1.5v14z" fill="url(#bookPageGrad)" stroke="url(#blueGradCard2)" strokeWidth="1.5" strokeLinejoin="round"/>
+                      <path d="M14 7h4M14 10h4M14 13h4" stroke="url(#blueGradCard2)" strokeWidth="2" strokeLinecap="round"/>
+                      <defs>
+                        <linearGradient id="blueGradCard2" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#3b82f6" />
+                          <stop offset="100%" stopColor="#1d4ed8" />
+                        </linearGradient>
+                        <linearGradient id="bookPageGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#1e3a8a" stopOpacity="0.6" />
+                          <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.1" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-lg xl:text-xl font-extrabold text-blue-400">35+</div>
+                    <div className="text-[11px] font-semibold text-slate-300 leading-tight">Subjects Covered</div>
+                  </div>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
-                  <div className="text-2xl font-black text-blue-400">All Boards</div>
-                  <div className="text-xs font-semibold text-slate-400">Comprehensive Syllabus</div>
+
+                {/* Card 3 */}
+                <div className="relative rounded-2xl border border-blue-500/10 bg-[#060c18] pl-3.5 pr-2.5 py-4 flex items-center gap-2.5 transition-all duration-300 hover:border-blue-500/30 hover:shadow-[0_0_30px_rgba(59,130,246,0.08)] group">
+                  <div className="relative flex items-center justify-center w-10 h-10 shrink-0 rounded-full bg-blue-950/30 border border-blue-500/15 shadow-[0_0_15px_rgba(59,130,246,0.1)]">
+                    <div className="absolute inset-[-2.5px] rounded-full border border-dashed border-blue-500/30 animate-[spin_60s_linear_infinite]" />
+                    <svg className="w-6 h-6 relative z-10 filter drop-shadow-[0_2px_8px_rgba(59,130,246,0.4)]" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M2 9l10-7 10 7H2z" fill="url(#blueGradCard3)" stroke="url(#blueGradCard3)" strokeWidth="1" strokeLinejoin="round" />
+                      <path d="M3.5 9h17v2h-17V9z" fill="url(#blueGradCard3)" />
+                      <rect x="5.5" y="11" width="2" height="7" rx="0.5" fill="url(#blueGradCard3)" />
+                      <rect x="11" y="11" width="2" height="7" rx="0.5" fill="url(#blueGradCard3)" />
+                      <rect x="16.5" y="11" width="2" height="7" rx="0.5" fill="url(#blueGradCard3)" />
+                      <path d="M3 18h18v2H3v-2zm-1 2h20v2H2v-2z" fill="url(#blueGradCard3)" />
+                      <defs>
+                        <linearGradient id="blueGradCard3" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#3b82f6" />
+                          <stop offset="100%" stopColor="#1d4ed8" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-lg xl:text-xl font-extrabold text-blue-400">All Boards</div>
+                    <div className="text-[11px] font-semibold text-slate-300 leading-tight">Comprehensive Syllabus</div>
+                  </div>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
-                  <div className="text-2xl font-black text-blue-400">Free Trial</div>
-                  <div className="text-xs font-semibold text-slate-400">Demo Class</div>
+
+                {/* Card 4 */}
+                <div className="relative rounded-2xl border border-blue-500/10 bg-[#060c18] pl-3.5 pr-2.5 py-4 flex items-center gap-2.5 transition-all duration-300 hover:border-blue-500/30 hover:shadow-[0_0_30px_rgba(59,130,246,0.08)] group">
+                  <div className="relative flex items-center justify-center w-10 h-10 shrink-0 rounded-full bg-blue-950/30 border border-blue-500/15 shadow-[0_0_15px_rgba(59,130,246,0.1)]">
+                    <div className="absolute inset-[-2.5px] rounded-full border border-dashed border-blue-500/30 animate-[spin_60s_linear_infinite]" />
+                    <svg className="w-6 h-6 relative z-10 filter drop-shadow-[0_2px_8px_rgba(59,130,246,0.4)]" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 2L2 7l10 5 10-5-10-5z" fill="url(#blueGradCard4)" stroke="url(#blueGradCard4)" strokeWidth="1" strokeLinejoin="round"/>
+                      <path d="M6 10v4c0 3 2.5 5 6 5s6-2 6-5v-4" fill="url(#capInnerGrad)" stroke="url(#blueGradCard4)" strokeWidth="1.5" strokeLinejoin="round"/>
+                      <path d="M20.5 8.5v5.5M20.5 14v2" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round"/>
+                      <circle cx="20.5" cy="17" r="1.5" fill="#60a5fa" />
+                      <defs>
+                        <linearGradient id="blueGradCard4" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" stopColor="#3b82f6" />
+                          <stop offset="100%" stopColor="#1d4ed8" />
+                        </linearGradient>
+                        <linearGradient id="capInnerGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" stopColor="#1e3a8a" stopOpacity="0.7" />
+                          <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.1" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-lg xl:text-xl font-extrabold text-blue-400">Free Trial</div>
+                    <div className="text-[11px] font-semibold text-slate-300 leading-tight">Demo Class</div>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -962,7 +1314,7 @@ export default function HomePage() {
               transition={{ duration: 0.6, delay: 0.1 }}
               className="lg:col-span-5 w-full mt-10 lg:mt-0"
             >
-              <div className="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-slate-900/60 p-4 shadow-2xl backdrop-blur-xl">
+              <div className="relative overflow-hidden rounded-[2.5rem] border border-slate-800 bg-[#081229]/80 p-5 shadow-2xl backdrop-blur-xl">
                 <div className="relative h-60 w-full overflow-hidden rounded-[2rem] shadow-inner">
                   <img
                     src="/bangalore_tutor_hero.png"
@@ -970,14 +1322,15 @@ export default function HomePage() {
                     className="h-full w-full object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
-                  <div className="absolute bottom-4 left-4 rounded-xl bg-blue-600/80 px-3.5 py-1.5 text-[10px] font-black tracking-wide text-white backdrop-blur">
+                  <div className="absolute bottom-4 left-4 rounded-xl bg-blue-600/90 px-3.5 py-1.5 text-[10px] font-black tracking-wide text-white backdrop-blur flex items-center gap-1.5 border border-blue-400/20">
+                    <ShieldCheck className="h-3.5 w-3.5" />
                     Verified Home Tutors
                   </div>
                 </div>
 
-                <div className="mt-6 p-4">
+                <div className="mt-6 p-2">
                   <h3 className="text-xl font-black text-white">Bangalore Parent Consultation</h3>
-                  <p className="mt-2 text-xs text-slate-300">
+                  <p className="mt-2 text-xs text-slate-400">
                     Get in touch with our curriculum coordinator to discuss syllabus tracking, tutor preferences, and timings.
                   </p>
 
@@ -985,7 +1338,7 @@ export default function HomePage() {
                     <a
                       href="tel:+918904457689"
                       onClick={() => trackEvent("call_click")}
-                      className="flex items-center gap-3 rounded-2xl bg-white/5 border border-white/10 p-3.5 backdrop-blur-sm transition hover:bg-white/10 cursor-pointer"
+                      className="flex items-center gap-3 rounded-2xl bg-[#0b1b36] border border-slate-800 p-3.5 transition hover:bg-[#102447] cursor-pointer"
                     >
                       <Phone className="h-5 w-5 text-blue-400" />
                       <div>
@@ -994,7 +1347,7 @@ export default function HomePage() {
                       </div>
                     </a>
 
-                    <div className="flex items-center gap-3 rounded-2xl bg-white/5 border border-white/10 p-3.5 backdrop-blur-sm">
+                    <div className="flex items-center gap-3 rounded-2xl bg-[#0b1b36] border border-slate-800 p-3.5">
                       <Mail className="h-5 w-5 text-blue-400" />
                       <div>
                         <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Email Address</div>
@@ -1006,8 +1359,9 @@ export default function HomePage() {
                   <MotionLink
                     to="/parent-enquiry"
                     onClick={() => trackEvent("book_demo")}
-                    whileTap={{ scale: 0.95, backgroundColor: "rgba(255, 255, 255, 0.15)", borderColor: "rgba(255, 255, 255, 0.4)", color: "#ffffff" }}
-                    className="mt-6 flex h-13 w-full items-center justify-center gap-2 rounded-2xl border border-transparent bg-white text-sm font-black text-slate-950 transition hover:bg-slate-100 py-3"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="mt-6 flex h-13 w-full items-center justify-center gap-2 rounded-full border border-transparent bg-white text-sm font-black text-slate-950 transition hover:bg-slate-100 py-3.5 shadow-lg"
                   >
                     Enquire Now
                     <ArrowRight className="h-4 w-4" />

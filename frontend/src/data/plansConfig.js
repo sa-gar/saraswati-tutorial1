@@ -75,15 +75,16 @@ export const PLANS = [
         { label: "Investment diff", value: "Only +18% vs Foundation Plan" }
       ],
       benefits: [
-        { title: "Concept Clarity focus", desc: "Custom learning guides addressing critical knowledge gaps." },
-        { title: "Thorough Syllabus Tracking", desc: "Regular testing intervals matching board blueprints." },
-        { title: "Flexible Timings", desc: "Schedule adjustments to align with student routines." },
-        { title: "All Core Subjects", desc: "Tutoring support across mathematics, sciences, and languages." }
+        { title: "Tutor Verification", desc: "Thoroughly vetted and background-verified home tutors with 3–10 years experience." },
+        { title: "Tutor Location", desc: "Assigned tutors located within a 5–8 km radius for highly reliable schedules." },
+        { title: "24 Hours Doubt Support", desc: "Instant academic assistance and doubt solving available round the clock." },
+        { title: "Tutor Replacement Support", desc: "Quick replacement guarantee if the tutor's style doesn't match student needs." }
       ],
       features: [
-        "Standardized performance tracking dashboard access",
-        "Customized mock examinations by subject experts",
-        "Parent-tutor-coordinator meeting every 4 weeks"
+        "Practice & Revision Support",
+        "Academic Tests",
+        "Academic Planning & Strategy",
+        "Performance Review Sessions"
       ],
       faqs: [
         { q: "How are tutors selected for this plan?", a: "We match tutors with 3 to 10 years of teaching experience, specifically verified for secondary grades." },
@@ -124,15 +125,16 @@ export const PLANS = [
         { label: "Tutor matching", value: "Veteran mentors only" }
       ],
       benefits: [
-        { title: "10+ Years Experience", desc: "Learn from veteran school teachers and board examiners." },
-        { title: "Priority Support", desc: "Immediate coordinator assistance and direct feedback channel." },
-        { title: "Weekly Assessment", desc: "Custom testing mapped specifically to school benchmarks." },
-        { title: "Parent-Tutor Meets", desc: "Monthly reviews detailing progress and curriculum tracking." }
+        { title: "Tutor Verification", desc: "Top-tier school teachers, board examiners, and veteran mentors with 10+ years experience." },
+        { title: "Tutor Location", desc: "Premium local mentors mapped within a 1–3 km radius for prompt sessions." },
+        { title: "24 Hours Doubt Support", desc: "Priority 24/7 dedicated support and direct feedback channels with coordinators." },
+        { title: "Tutor Replacement Support", desc: "Instant coordinator-guided replacement to ensure uninterrupted exam prep." }
       ],
       features: [
-        "Monthly detailed parent-mentor-coordinator advisory call",
-        "Advanced test series and prep material for board/competitive exams",
-        "Dedicated mental preparation and time-management coaching sessions"
+        "Practice & Revision Support",
+        "Academic Tests",
+        "Academic Planning & Strategy",
+        "Performance Review Sessions"
       ],
       faqs: [
         { q: "Who are the Elite Mentors?", a: "They are school coordinators, board examiners, and veteran teachers with 10+ years of teaching experience." },
