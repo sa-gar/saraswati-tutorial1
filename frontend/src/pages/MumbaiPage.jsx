@@ -48,50 +48,39 @@ const handleLocationRedirect = (city) => {
   }
 };
 
-function LocationDropdown({ activeCity }) {
-  const [open, setOpen] = useState(false);
-
+function LocationSelector({ activeCity }) {
   return (
-    <div className="relative z-50">
-      <motion.button
-        type="button"
-        onClick={() => setOpen(!open)}
-        whileTap={{ scale: 0.95, backgroundColor: "rgba(15, 23, 42, 0.15)", borderColor: "rgba(15, 23, 42, 0.3)" }}
-        className="flex items-center gap-2 rounded-full border border-white/50 bg-white/40 backdrop-blur-sm px-3.5 py-2 text-xs font-black text-slate-700 hover:bg-white/60 transition ring-1 ring-slate-200/30"
-      >
-        <MapPin className="h-3.5 w-3.5 text-blue-600 shrink-0" />
-        <span>{activeCity}</span>
-        <span className="text-[9px] opacity-60">▼</span>
-      </motion.button>
-
-      {open && (
-        <div className="absolute left-0 mt-2 w-32 rounded-2xl border border-white/40 bg-white/70 backdrop-blur-md p-1.5 shadow-xl ring-1 ring-slate-200/50">
-          <motion.button
+    <div className="relative flex items-center p-1 bg-slate-100/90 backdrop-blur-sm border border-slate-200/60 rounded-2xl shadow-inner select-none z-10 gap-1">
+      {[
+        { id: "Bangalore", label: "Bangalore" },
+        { id: "Mumbai", label: "Mumbai" }
+      ].map((city) => {
+        const isSelected = activeCity === city.id;
+        return (
+          <button
+            key={city.id}
             type="button"
-            whileTap={{ scale: 0.95, backgroundColor: "rgba(15, 23, 42, 0.1)" }}
             onClick={() => {
-              setOpen(false);
-              handleLocationRedirect("Bangalore");
+              if (activeCity !== city.id) {
+                handleLocationRedirect(city.id);
+              }
             }}
-            className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-bold transition hover:bg-white/50 ${activeCity === "Bangalore" ? "text-blue-600 bg-blue-50/50" : "text-slate-700"
-              }`}
+            className={`relative flex items-center gap-1.5 py-1.5 px-3.5 text-xs font-bold rounded-xl transition-colors duration-300 cursor-pointer z-10 ${
+              isSelected ? "text-white" : "text-slate-600 hover:text-slate-950"
+            }`}
           >
-            Bangalore
-          </motion.button>
-          <motion.button
-            type="button"
-            whileTap={{ scale: 0.95, backgroundColor: "rgba(15, 23, 42, 0.1)" }}
-            onClick={() => {
-              setOpen(false);
-              handleLocationRedirect("Mumbai");
-            }}
-            className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-bold transition hover:bg-white/50 ${activeCity === "Mumbai" ? "text-blue-600 bg-blue-50/50" : "text-slate-700"
-              }`}
-          >
-            Mumbai
-          </motion.button>
-        </div>
-      )}
+            {isSelected && (
+              <motion.div
+                layoutId="activeCityBg"
+                className="absolute inset-0 bg-slate-950 rounded-xl -z-10 shadow-sm"
+                transition={{ type: "spring", stiffness: 350, damping: 28 }}
+              />
+            )}
+            <MapPin className={`h-3.5 w-3.5 ${isSelected ? "text-blue-400" : "text-slate-400"}`} />
+            <span>{city.label}</span>
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -357,51 +346,57 @@ export default function MumbaiPage() {
       {/* Glassmorphism Header */}
       <header className="sticky top-0 z-50 border-b border-white/20 bg-white/70 backdrop-blur-md shadow-[0_4px_30px_rgba(0,0,0,0.03)]">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-4">
-            <Link to="/" className="flex items-center gap-3">
-              <img
-                src="/logo.png"
-                alt="Saraswati Tutorial Logo"
-                className="h-10 w-10 rounded-xl object-contain shadow-sm"
-                onError={(e) => {
-                  e.target.src = "https://placehold.co/100x100?text=ST";
-                }}
-              />
-              <div>
-                <div className="text-lg font-black tracking-tight text-slate-950">
-                  Saraswati Tutorial
+          <div className="flex items-center gap-3">
+            <Link to="/" className="flex items-center gap-3.5 group">
+              <div className="relative p-1 bg-gradient-to-br from-blue-100 to-indigo-150 rounded-2xl border border-slate-200/50 shadow-inner flex items-center justify-center transition-all duration-300 group-hover:scale-105 group-hover:shadow-[0_0_15px_rgba(59,130,246,0.15)]">
+                <img
+                  src="/logo.png"
+                  alt="Saraswati Tutorials Logo"
+                  className="h-10 w-10 rounded-xl object-contain"
+                  onError={(e) => {
+                    e.target.src = "https://placehold.co/100x100?text=ST";
+                  }}
+                />
+              </div>
+              <div className="shrink-0">
+                <div className="text-lg font-black tracking-tight text-slate-950 bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 bg-clip-text text-transparent transition-all duration-300 group-hover:text-blue-650">
+                  Saraswati Tutorials
                 </div>
-                <div className="text-xs font-semibold text-slate-500">
-                  Home Tutor
+                <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Premium Home Tutors
                 </div>
               </div>
             </Link>
 
-            <LocationDropdown activeCity="Mumbai" />
+            <div className="hidden sm:block h-6 w-px bg-slate-200/80 mx-2" />
+
+            <LocationSelector activeCity="Mumbai" />
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden items-center gap-6 text-sm font-bold text-slate-700 lg:flex">
-            <a href="#home" className="transition hover:text-blue-600">Home</a>
-            <a href="#why-choose" className="transition hover:text-blue-600">Why Us</a>
-            <a href="#subjects" className="transition hover:text-blue-600">Subjects</a>
-            <a href="#boards" className="transition hover:text-blue-600">Boards</a>
-            <a href="#areas" className="transition hover:text-blue-600">Areas We Serve</a>
-            <a href="#faqs" className="transition hover:text-blue-600">FAQs</a>
+          <nav className="hidden items-center gap-5 text-sm font-semibold text-slate-600 xl:flex">
+            <a href="#home" className="transition hover:text-blue-650">Home</a>
+            <a href="#why-choose" className="transition hover:text-blue-650">Why Us</a>
+            <a href="#subjects" className="transition hover:text-blue-650">Subjects</a>
+            <a href="#boards" className="transition hover:text-blue-650">Boards</a>
+            <a href="#areas" className="transition hover:text-blue-650">Areas</a>
+            <a href="#faqs" className="transition hover:text-blue-650">FAQs</a>
           </nav>
 
-          <div className="hidden items-center gap-3 lg:flex">
+          <div className="hidden items-center gap-2.5 xl:flex">
             <MotionLink
               to="/parent-enquiry"
-              whileTap={{ scale: 0.95, backgroundColor: "rgba(15, 23, 42, 0.15)", borderColor: "rgba(15, 23, 42, 0.3)", color: "#0f172a" }}
-              className="rounded-xl border border-transparent bg-slate-950 px-5 py-2.5 text-xs font-black text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-black"
+              whileHover={{ scale: 1.05, translateY: -2, boxShadow: "0 10px 20px rgba(0,0,0,0.12)" }}
+              whileTap={{ scale: 0.95 }}
+              className="whitespace-nowrap rounded-xl border border-transparent bg-slate-950 px-5 py-2.5 text-xs font-black text-white shadow-md transition-all duration-300 hover:bg-black"
             >
               Book Demo
             </MotionLink>
             <MotionLink
               to="/tutor-register"
-              whileTap={{ scale: 0.95, backgroundColor: "rgba(15, 23, 42, 0.15)", borderColor: "rgba(15, 23, 42, 0.3)", color: "#0f172a" }}
-              className="rounded-xl border border-transparent bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-xs font-black text-white shadow-lg transition hover:-translate-y-0.5"
+              whileHover={{ scale: 1.05, translateY: -2, boxShadow: "0 10px 20px rgba(37,99,235,0.22)" }}
+              whileTap={{ scale: 0.95 }}
+              className="whitespace-nowrap rounded-xl border border-transparent bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-xs font-black text-white shadow-md transition-all duration-300"
             >
               Become a Tutor
             </MotionLink>
@@ -410,7 +405,7 @@ export default function MumbaiPage() {
           <motion.button
             onClick={() => setMenuOpen(!menuOpen)}
             whileTap={{ scale: 0.95, backgroundColor: "rgba(15, 23, 42, 0.1)" }}
-            className="rounded-xl border border-slate-200 bg-white p-2 text-slate-800 lg:hidden"
+            className="rounded-xl border border-slate-200 bg-white p-2 text-slate-800 xl:hidden"
             aria-label="Open Navigation Menu"
           >
             {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -424,12 +419,12 @@ export default function MumbaiPage() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="border-t border-white/20 bg-white/80 backdrop-blur-lg px-6 py-4 lg:hidden shadow-xl"
+              className="border-t border-white/20 bg-white/80 backdrop-blur-lg px-6 py-4 xl:hidden shadow-xl"
             >
               <div className="flex flex-col gap-4 text-base font-bold text-slate-800">
                 <div className="flex items-center justify-between py-2 border-b border-white/20">
                   <span className="text-xs font-black uppercase text-slate-400">Select City:</span>
-                  <LocationDropdown activeCity="Mumbai" />
+                  <LocationSelector activeCity="Mumbai" />
                 </div>
                 <a href="#home" onClick={() => setMenuOpen(false)} className="py-2">Home</a>
                 <a href="#why-choose" onClick={() => setMenuOpen(false)} className="py-2">Why Us</a>
@@ -440,16 +435,18 @@ export default function MumbaiPage() {
                 <MotionLink
                   to="/parent-enquiry"
                   onClick={() => setMenuOpen(false)}
-                  whileTap={{ scale: 0.95, backgroundColor: "rgba(15, 23, 42, 0.15)", borderColor: "rgba(15, 23, 42, 0.3)", color: "#0f172a" }}
-                  className="rounded-xl border border-transparent bg-slate-950 py-3 text-center text-white font-black"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="rounded-xl border border-transparent bg-slate-950 py-3 text-center text-white font-black transition-all duration-300"
                 >
                   Book Demo
                 </MotionLink>
                 <MotionLink
                   to="/tutor-register"
                   onClick={() => setMenuOpen(false)}
-                  whileTap={{ scale: 0.95, backgroundColor: "rgba(15, 23, 42, 0.15)", borderColor: "rgba(15, 23, 42, 0.3)", color: "#0f172a" }}
-                  className="rounded-xl border border-transparent bg-gradient-to-r from-blue-600 to-indigo-600 py-3 text-center text-white font-black"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="rounded-xl border border-transparent bg-gradient-to-r from-blue-600 to-indigo-600 py-3 text-center text-white font-black transition-all duration-300"
                 >
                   Become a Tutor
                 </MotionLink>
@@ -485,8 +482,9 @@ export default function MumbaiPage() {
               <div className="mt-8 flex flex-wrap gap-4">
                 <MotionLink
                   to="/parent-enquiry"
-                  whileTap={{ scale: 0.95, backgroundColor: "rgba(255, 255, 255, 0.15)", borderColor: "rgba(255, 255, 255, 0.4)", color: "#ffffff" }}
-                  className="group inline-flex items-center gap-2 rounded-2xl border border-transparent bg-white px-7 py-4 font-black text-slate-950 shadow-xl shadow-blue-950/20 transition hover:-translate-y-0.5 hover:bg-slate-100"
+                  whileHover={{ scale: 1.03, translateY: -2, boxShadow: "0 10px 25px rgba(255,255,255,0.12)" }}
+                  whileTap={{ scale: 0.97 }}
+                  className="group inline-flex items-center gap-2 rounded-2xl border border-transparent bg-white px-7 py-4 font-black text-slate-950 shadow-xl shadow-blue-950/20 transition-all duration-300 hover:bg-slate-100"
                 >
                   Book Demo
                   <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
@@ -624,15 +622,19 @@ export default function MumbaiPage() {
               return (
                 <motion.div
                   whileHover={{ y: -5 }}
-                  transition={{ duration: 0.2 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
                   key={idx}
-                  className="rounded-3xl border border-white/60 bg-white/30 backdrop-blur-md p-6 shadow-sm shadow-slate-100/20 transition hover:bg-white/50 hover:shadow-xl hover:scale-[1.02]"
+                  className="group relative overflow-hidden rounded-3xl border border-slate-200 bg-white/70 backdrop-blur-md p-6 shadow-sm transition-all duration-300 hover:bg-blue-600 hover:border-blue-500 hover:shadow-[0_15px_30px_rgba(37,99,235,0.25)] hover:scale-[1.01]"
                 >
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 transition-colors duration-300 group-hover:bg-white/15 group-hover:text-white">
                     <IconComp className="h-6 w-6" />
                   </div>
-                  <h4 className="mt-5 text-lg font-black text-slate-950">{item.title}</h4>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-500">{item.desc}</p>
+                  <h4 className="mt-5 text-lg font-black text-slate-950 transition-colors duration-300 group-hover:text-white">
+                    {item.title}
+                  </h4>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-500 transition-colors duration-300 group-hover:text-blue-100">
+                    {item.desc}
+                  </p>
                 </motion.div>
               );
             })}

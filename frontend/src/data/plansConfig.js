@@ -13,7 +13,7 @@ export const PLANS = [
     keyBenefit: "Daily homework support & consistent practice",
     cardBenefits: [
       "Daily Homework Support & Consistent Practice",
-      "Vetted Entry-Level Tutors"
+      "Tutor Experience: 1–3 Years"
     ],
     pricingOptions: [
       { days: 3, hours: 1.5, price: 8100 },
@@ -31,7 +31,7 @@ export const PLANS = [
         { title: "Consistent Guidance", desc: "Regular classes focusing on fundamental basics." },
         { title: "Homework Support", desc: "Assistance in managing daily school assignments." },
         { title: "Daily Practice", desc: "Fostering academic discipline through systematic schedules." },
-        { title: "Vetted Tutors", desc: "Entry-level tutors matching basic curriculum criteria." }
+        { title: "Tutor Experience", desc: "Tutors with 1–3 years of teaching experience." }
       ],
       features: [
         "Monthly syllabus alignment review",
@@ -40,7 +40,7 @@ export const PLANS = [
       ],
       faqs: [
         { q: "Can we change classes if we miss a session?", a: "Yes, rescheduling is permitted with a 24-hour notice to the tutor." },
-        { q: "Who are the tutors for this plan?", a: "Vetted entry-level tutors and university graduates who excel in explaining core academic concepts." },
+        { q: "Who are the tutors for this plan?", a: "Vetted tutors and university graduates with 1–3 years of teaching experience who excel in explaining core academic concepts." },
         { q: "Is there a curriculum choice?", a: "Supports state boards, CBSE, and ICSE." }
       ],
       additionalInfo: "Minimum commitment of 1 month. Free initial coordinator consultation to assess student learning style."
@@ -59,7 +59,7 @@ export const PLANS = [
     badgeTheme: "bg-black/10 text-slate-950 border-black/20",
     keyBenefit: "Experienced tutors with concept clarity focus",
     cardBenefits: [
-      "Experienced Tutors (3 to 9 Years Experience)",
+      "Tutor Experience: 3–10 Years",
       "Customized School Syllabus Tracking"
     ],
     pricingOptions: [
@@ -86,7 +86,7 @@ export const PLANS = [
         "Parent-tutor-coordinator meeting every 4 weeks"
       ],
       faqs: [
-        { q: "How are tutors selected for this plan?", a: "We match tutors with at least 3 to 9 years of teaching experience, specifically verified for secondary grades." },
+        { q: "How are tutors selected for this plan?", a: "We match tutors with 3 to 10 years of teaching experience, specifically verified for secondary grades." },
         { q: "What if a student struggles with a specific topic?", a: "Tutors will modify the lesson plan to dedicate additional time for remedial teaching." },
         { q: "Are test reports shared?", a: "Yes, bi-weekly test scores and conceptual gap analysis reports are shared with parents." }
       ],
@@ -104,11 +104,11 @@ export const PLANS = [
     textColor: "text-white",
     textDarkColor: "text-white",
     badgeTheme: "bg-white/10 text-white border-white/10",
-    experience: "10 to 25 Years",
-    keyBenefit: "Veteran mentors with 10 to 25 Years Experience",
+    experience: "10+ Years",
+    keyBenefit: "Veteran mentors with 10+ Years Experience",
     cardBenefits: [
       "Veteran School Teachers & Board Examiners",
-      "10 to 25 Years Tutoring Experience",
+      "Tutor Experience: 10+ Years",
       "Dedicated Academic Counselor & Advanced Test Series"
     ],
     pricingOptions: [
@@ -124,7 +124,7 @@ export const PLANS = [
         { label: "Tutor matching", value: "Veteran mentors only" }
       ],
       benefits: [
-        { title: "10 to 25 Years Experience", desc: "Learn from veteran school teachers and board examiners." },
+        { title: "10+ Years Experience", desc: "Learn from veteran school teachers and board examiners." },
         { title: "Priority Support", desc: "Immediate coordinator assistance and direct feedback channel." },
         { title: "Weekly Assessment", desc: "Custom testing mapped specifically to school benchmarks." },
         { title: "Parent-Tutor Meets", desc: "Monthly reviews detailing progress and curriculum tracking." }
@@ -135,7 +135,7 @@ export const PLANS = [
         "Dedicated mental preparation and time-management coaching sessions"
       ],
       faqs: [
-        { q: "Who are the Elite Mentors?", a: "They are school coordinators, board examiners, and veteran teachers with over a decade of teaching experience." },
+        { q: "Who are the Elite Mentors?", a: "They are school coordinators, board examiners, and veteran teachers with 10+ years of teaching experience." },
         { q: "Is the schedule highly flexible?", a: "Yes, elite members receive priority slots, meaning schedules can be adjusted dynamically." },
         { q: "Can this plan cover advanced entrance prep?", a: "Yes, it includes guidance for advanced board preparation and foundational entrance concepts." }
       ],

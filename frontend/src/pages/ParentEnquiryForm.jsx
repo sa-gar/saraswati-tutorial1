@@ -100,6 +100,7 @@ const initialForm = {
   finalPrice: null,
   costPerClass: null,
   wards: [{ ...initialWard }],
+  pricingConsent: false,
 };
 
 const dayOptions = [
@@ -258,6 +259,19 @@ const formatTime12Hr = (timeString) => {
   return `${hour}:${minute} ${ampm}`;
 };
 
+const isClass1to8 = (classGrade) => {
+  return ["1 to 5", "6", "7", "8"].includes(String(classGrade || "").trim());
+};
+
+const getFilteredPricingOptions = (plan, wards = []) => {
+  if (!plan) return [];
+  const hasClass1to8 = Array.isArray(wards) && wards.some(w => isClass1to8(w.classGrade));
+  if (['foundation', 'advance'].includes(plan.id) && hasClass1to8) {
+    return plan.pricingOptions.filter(opt => opt.hours !== 1);
+  }
+  return plan.pricingOptions;
+};
+
 const getDynamicCalculation = (planId, option) => {
   if (!option) return null;
   
@@ -331,18 +345,24 @@ export default function ParentEnquiryForm() {
 
   const handleOpenPlanModal = (plan) => {
     setViewingPlanId(plan.id);
+    const allowedOptions = getFilteredPricingOptions(plan, form.wards);
     if (form.planType === plan.id) {
-      const matched = plan.pricingOptions.find(
+      const matched = allowedOptions.find(
         (opt) => opt.days === form.daysPerWeek && opt.hours === form.hoursPerDay
       );
-      setSelectedOption(matched || plan.pricingOptions[0]);
+      setSelectedOption(matched || allowedOptions[0]);
     } else {
-      setSelectedOption(plan.pricingOptions[0]);
+      setSelectedOption(allowedOptions[0]);
     }
   };
 
   const handleChoosePlan = (plan) => {
     if (!selectedOption) return;
+    const hasClass1to8 = form.wards.some(w => isClass1to8(w.classGrade));
+    if (['foundation', 'advance'].includes(plan.id) && hasClass1to8 && selectedOption.hours === 1) {
+      setMessage("For classes 1 to 8, 1 Hour session is not allowed on this plan. Please select 1.5 or 2 Hours.");
+      return;
+    }
     const calc = getDynamicCalculation(plan.id, selectedOption);
     setForm((prev) => ({
       ...prev,
@@ -376,10 +396,12 @@ export default function ParentEnquiryForm() {
       finalPrice: null,
       costPerClass: null,
       preferredDays: [],
+      pricingConsent: false,
     }));
     setErrors((prev) => ({
       ...prev,
       preferredDays: "",
+      pricingConsent: "",
     }));
   };
 
@@ -610,8 +632,20 @@ export default function ParentEnquiryForm() {
 
       if (!form.planType) {
         newErrors.planType = "Preferred Plan selection is required";
-      } else if (form.preferredDays.length !== form.daysPerWeek) {
-        newErrors.preferredDays = `Please select exactly ${form.daysPerWeek} preferred days.`;
+      } else {
+        const hasClass1to8 = form.wards.some(w => isClass1to8(w.classGrade));
+        if (['foundation', 'advance'].includes(form.planType) && hasClass1to8 && form.hoursPerDay === 1) {
+          newErrors.planType = "For classes 1 to 8, 1 Hour session is not allowed on this plan. Please select 1.5 or 2 Hours.";
+        }
+        if (form.preferredDays.length !== form.daysPerWeek) {
+          newErrors.preferredDays = `Please select exactly ${form.daysPerWeek} preferred days.`;
+        }
+      }
+    }
+
+    if (currentStep === 4) {
+      if (!form.pricingConsent) {
+        newErrors.pricingConsent = "Acknowledgment of the pricing terms is required to submit.";
       }
     }
 
@@ -1365,7 +1399,7 @@ export default function ParentEnquiryForm() {
                         <div className="mt-5 pt-4 border-t border-slate-150 flex items-start gap-2.5 text-xs text-slate-400">
                           <Info className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
                           <p className="leading-relaxed font-semibold">
-                            Final pricing is personalized for every student and may vary based on the selected board, grade, subjects, class schedule, preferred tutor experience, learning requirements, and tutor availability.
+                            I understand that the final tuition fee may vary after the demo session based on the student's basics, syllabus weightage, parents' expectations, and the overall tutor effort required.
                           </p>
                         </div>
                       </div>
@@ -1626,7 +1660,7 @@ export default function ParentEnquiryForm() {
                                 <div>
                                   <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Select Pricing Option</h4>
                                   <div className="space-y-2">
-                                    {activePlanData.pricingOptions.map((opt, idx) => {
+                                    {getFilteredPricingOptions(activePlanData, form.wards).map((opt, idx) => {
                                       const isSelected = selectedOption && selectedOption.days === opt.days && selectedOption.hours === opt.hours;
                                       
                                       // Calculate row display price
@@ -1966,12 +2000,35 @@ export default function ParentEnquiryForm() {
                               </span>
                             )}
                             
-                            {/* Professional Pricing Disclaimer */}
-                            <div className="mt-3 pt-3 border-t border-slate-100 flex items-start gap-2 text-xs text-slate-400">
-                              <Info className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
-                              <p className="leading-relaxed font-semibold">
-                                Final pricing is personalized for every student and may vary based on the selected board, grade, subjects, class schedule, preferred tutor experience, learning requirements, and tutor availability.
-                              </p>
+                            {/* Professional Pricing Consent Checkbox */}
+                            <div className="mt-4 pt-4 border-t border-slate-100 flex items-start gap-3">
+                              <input
+                                type="checkbox"
+                                id="pricingConsent"
+                                checked={form.pricingConsent || false}
+                                onChange={(e) =>
+                                  setForm((prev) => ({
+                                    ...prev,
+                                    pricingConsent: e.target.checked,
+                                  }))
+                                }
+                                className="mt-1 h-5 w-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer shrink-0"
+                                style={{ accentColor: "#2563eb" }}
+                              />
+                              <div className="flex-1">
+                                <label
+                                  htmlFor="pricingConsent"
+                                  className="text-xs font-semibold text-slate-500 leading-relaxed cursor-pointer select-none"
+                                >
+                                  I understand that the final tuition fee may vary after the demo session based on the student's basics, syllabus weightage, parents' expectations, and the overall tutor effort required. <span className="text-red-500">*</span>
+                                </label>
+                                {errors.pricingConsent && (
+                                  <p className="mt-1.5 text-xs font-bold text-red-600 flex items-center gap-1">
+                                    <span className="inline-block h-1 w-1 rounded-full bg-red-650 animate-pulse" />
+                                    {errors.pricingConsent}
+                                  </p>
+                                )}
+                              </div>
                             </div>
                           </div>
                           <div>

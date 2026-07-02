@@ -633,7 +633,7 @@ const COMPARISON_POINTS = {
     "Best value for most students"
   ],
   elite: [
-    "Learn from mentors with 10 to 25 years experience",
+    "Learn from mentors with 10+ years experience",
     "Premium mentorship and priority support",
     "Personalized academic strategy",
     "Effective cost of ₹650–₹800 per class"
