@@ -572,9 +572,9 @@ export default function MumbaiPage() {
                       </defs>
                     </svg>
                   </div>
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <div className="text-lg xl:text-xl font-black text-blue-400">50+</div>
-                    <div className="text-[11px] font-semibold text-slate-300">Verified Tutors</div>
+                    <div className="text-[11px] font-semibold text-slate-300 leading-tight">Verified Tutors</div>
                   </div>
                 </div>
 
@@ -598,9 +598,9 @@ export default function MumbaiPage() {
                       </defs>
                     </svg>
                   </div>
-                  <div>
+                  <div className="min-w-0 flex-1">
                     <div className="text-lg xl:text-xl font-black text-blue-400">25+</div>
-                    <div className="text-[11px] font-semibold text-slate-300">Subjects Covered</div>
+                    <div className="text-[11px] font-semibold text-slate-300 leading-tight">Subjects Covered</div>
                   </div>
                 </div>
 

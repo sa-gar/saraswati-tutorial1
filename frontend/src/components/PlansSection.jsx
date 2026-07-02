@@ -401,10 +401,10 @@ function PlanCarousel({ plans, activePlan, onCardClick }) {
   const centeredPlan = slides[centeredIndex];
 
   return (
-    <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-8 xl:gap-12 items-center max-w-6xl mx-auto w-full">
+    <div className="grid lg:grid-cols-[1.1fr_0.9fr] gap-8 xl:gap-12 items-start max-w-6xl mx-auto w-full">
       {/* Left Column: Carousel */}
       <div
-        className="relative w-full max-w-[380px] sm:max-w-[500px] md:max-w-[620px] mx-auto px-6 sm:px-8 md:px-12 flex items-center justify-center lg:-translate-x-16 xl:-translate-x-20 transition-transform duration-300"
+        className="relative w-full max-w-[340px] sm:max-w-[500px] md:max-w-[620px] mx-auto px-5 sm:px-8 md:px-12 flex items-center justify-center lg:-translate-x-16 xl:-translate-x-20 transition-transform duration-300"
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
@@ -441,7 +441,7 @@ function PlanCarousel({ plans, activePlan, onCardClick }) {
             <div
               key={`${plan.id}-${idx}`}
               ref={idx === 0 ? cardRef : null}
-              className="w-[240px] min-w-[240px] sm:w-[310px] md:w-[360px] px-2 sm:px-2.5 flex-shrink-0"
+              className="w-[230px] min-w-[230px] sm:w-[300px] md:w-[355px] px-1.5 sm:px-2 md:px-2.5 flex-shrink-0"
               style={{
                 perspective: "1000px"
               }}
@@ -477,7 +477,7 @@ function PlanCarousel({ plans, activePlan, onCardClick }) {
 
       {/* Right Column: "How It Works" Timeline Panel */}
       <div className="w-full max-w-[460px] lg:max-w-none mx-auto lg:mx-0 px-4 mt-4 lg:mt-0 relative z-30">
-        <div className="rounded-[2.2rem] border border-white/10 bg-slate-900/40 px-6 py-5 sm:px-7 sm:py-5.5 backdrop-blur-xl relative overflow-hidden shadow-[0_15px_35px_-5px_rgba(0,0,0,0.6)] h-[410px] sm:h-[400px] flex flex-col justify-between">
+        <div className="rounded-[2rem] sm:rounded-[2.2rem] border border-white/10 bg-slate-900/40 px-5 py-5 sm:px-7 sm:py-5.5 backdrop-blur-xl relative overflow-hidden shadow-[0_15px_35px_-5px_rgba(0,0,0,0.6)] min-h-[300px] sm:h-[460px] md:h-[500px] flex flex-col justify-between">
           {/* Dynamic background glow matching the plan theme */}
           <div className={`absolute -right-24 -top-24 h-48 w-48 rounded-full blur-[80px] opacity-[0.12] transition-colors duration-700 pointer-events-none ${
             centeredPlan?.theme === "silver" ? "bg-slate-400" :
@@ -783,7 +783,7 @@ function PlanCard({ plan, isActive, isSelectedAny, isCenter, position, onClick }
     <div
       onClick={onClick}
       style={getCardStyle()}
-      className={`relative overflow-hidden rounded-[2.2rem] border flex flex-col h-[500px] sm:h-[520px] cursor-pointer group ${getCardThemeClasses()} ${getActiveStateClasses()} ${
+      className={`relative overflow-hidden rounded-[2rem] sm:rounded-[2.2rem] border flex flex-col min-h-[460px] h-auto sm:h-[500px] md:h-[520px] cursor-pointer group ${getCardThemeClasses()} ${getActiveStateClasses()} ${
         isSelectedAny && !isActive ? "pointer-events-none md:pointer-events-auto" : ""
       }`}
     >
@@ -796,44 +796,46 @@ function PlanCard({ plan, isActive, isSelectedAny, isCenter, position, onClick }
       )}
 
       {/* === TOP SECTION: Badge + Title + Illustration === */}
-      <div className="relative z-10 flex items-start justify-between px-6 sm:px-7 pt-6 sm:pt-7">
+      <div className="relative z-10 flex items-start justify-between px-4 sm:px-6 md:px-7 pt-5 sm:pt-6 md:pt-7">
         {/* Left: Badge + Title + Description */}
-        <div className="flex-1 pr-2">
+        <div className="flex-1 min-w-0 pr-2">
           {/* Badge with star */}
-          <div className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-wider border mb-4 ${getBadgeBg()}`}>
-            <Star className={`h-2.5 w-2.5 ${getStarColor()}`} />
-            {plan.badge}
+          <div className={`inline-flex items-center gap-1 sm:gap-1.5 rounded-full px-2.5 sm:px-3 py-1 text-[8px] sm:text-[9px] font-black uppercase tracking-wider border mb-3 sm:mb-4 ${getBadgeBg()}`}>
+            <Star className={`h-2 w-2 sm:h-2.5 sm:w-2.5 shrink-0 ${getStarColor()}`} />
+            <span className="truncate">{plan.badge}</span>
           </div>
 
           {/* Plan Name */}
-          <h3 className="text-[22px] sm:text-2xl font-black tracking-tight leading-snug">{plan.title}</h3>
+          <h3 className="text-[17px] sm:text-[20px] md:text-2xl font-black tracking-tight leading-snug">{plan.title}</h3>
 
           {/* Description */}
-          <p className="mt-2 text-[11px] leading-relaxed font-medium opacity-70 max-w-[180px]">
+          <p className="mt-1.5 sm:mt-2 text-[10px] sm:text-[11px] leading-relaxed font-medium opacity-70">
             {plan.description}
           </p>
         </div>
 
-        {/* Right: 3D Illustration — rendered prominently */}
-        <div className="shrink-0 relative w-[90px] h-[90px] sm:w-[100px] sm:h-[100px] -mt-1 -mr-1">
+        {/* Right: Illustration — smaller on mobile */}
+        <div className="shrink-0 relative w-[60px] h-[60px] sm:w-[80px] sm:h-[80px] md:w-[90px] md:h-[90px] -mt-1 -mr-1">
           {renderIllustration()}
         </div>
       </div>
 
       {/* === MIDDLE SECTION: Benefits with circular icons === */}
-      <div className="relative z-10 flex flex-col gap-3.5 px-6 sm:px-7 mt-5 flex-1">
+      <div className="relative z-10 flex flex-col gap-2.5 sm:gap-3 px-4 sm:px-6 md:px-7 mt-3 sm:mt-4 flex-1">
         {benefits.map((benefit, idx) => (
-          <div key={idx} className="flex items-start gap-3">
+          <div key={idx} className="flex items-start gap-2.5 sm:gap-3">
             {/* Circular icon badge */}
-            <div className={`shrink-0 w-8 h-8 rounded-full border flex items-center justify-center ${getBenefitIconBg()}`}>
-              {benefitIcons[idx % benefitIcons.length]}
+            <div className={`shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full border flex items-center justify-center ${getBenefitIconBg()}`}>
+              <span className="h-3 w-3 sm:h-3.5 sm:w-3.5 flex items-center justify-center">
+                {benefitIcons[idx % benefitIcons.length]}
+              </span>
             </div>
             {/* Text */}
             <div className="flex-1 min-w-0">
-              <div className={`text-[11px] font-bold leading-snug ${getBenefitTitleColor()}`}>
+              <div className={`text-[10px] sm:text-[11px] font-bold leading-snug ${getBenefitTitleColor()}`}>
                 {benefit.title}
               </div>
-              <div className={`text-[10px] leading-relaxed font-medium mt-0.5 ${getBenefitDescColor()}`}>
+              <div className={`text-[9px] sm:text-[10px] leading-relaxed font-medium mt-0.5 ${getBenefitDescColor()}`}>
                 {benefit.desc}
               </div>
             </div>
@@ -842,13 +844,13 @@ function PlanCard({ plan, isActive, isSelectedAny, isCenter, position, onClick }
       </div>
 
       {/* === BOTTOM SECTION: Full-width CTA Button === */}
-      <div className="relative z-10 px-5 pb-5 sm:px-6 sm:pb-6 mt-4">
-        <div className={`w-full flex items-center justify-center gap-2.5 py-3.5 rounded-2xl font-black text-[11px] sm:text-xs transition-all duration-300 shadow-lg ${getCTAClasses()}`}>
-          <span className="flex items-center justify-center w-5 h-5 rounded-full bg-white/20">
-            <ArrowRight className="h-3 w-3" />
+      <div className="relative z-10 px-4 pb-4 sm:px-5 sm:pb-5 md:px-6 md:pb-6 mt-3 sm:mt-4">
+        <div className={`w-full flex items-center justify-center gap-2 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl font-black text-[10px] sm:text-[11px] md:text-xs transition-all duration-300 shadow-lg ${getCTAClasses()}`}>
+          <span className="flex items-center justify-center w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-current/20 shrink-0">
+            <ArrowRight className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
           </span>
-          Explore Plan Details
-          <ArrowRight className="h-3.5 w-3.5" />
+          <span className="truncate">Explore Plan Details</span>
+          <ArrowRight className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" />
         </div>
       </div>
     </div>
