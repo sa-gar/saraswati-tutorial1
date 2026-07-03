@@ -1663,10 +1663,30 @@ export default function ParentEnquiryForm() {
                               ) : (
                                 <>
                                   <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Monthly Tuition Fee</p>
-                                  <p className="text-2xl font-black text-slate-900">₹{form.monthlyFees?.toLocaleString('en-IN')}</p>
+                                  <p className="text-2xl font-black text-slate-900">
+                                    {['foundation', 'advance'].includes(form.planType) ? (
+                                      (() => {
+                                        const firstWardClass = form.wards[0]?.classGrade || "6";
+                                        const firstWardBoard = form.wards[0]?.curriculum || "CBSE";
+                                        const basePrice = calculatePrice('board', firstWardClass, firstWardBoard, form.daysPerWeek, form.hoursPerDay);
+                                        return (
+                                          <>
+                                            <span className="line-through text-slate-400 text-lg mr-2 font-black">
+                                              ₹{basePrice.toLocaleString('en-IN')}
+                                            </span>
+                                            <span className="text-slate-900">
+                                              ₹{form.monthlyFees?.toLocaleString('en-IN')}
+                                            </span>
+                                          </>
+                                        );
+                                      })()
+                                    ) : (
+                                      `₹${form.monthlyFees?.toLocaleString('en-IN')}`
+                                    )}
+                                  </p>
                                   {form.planType === 'foundation' && form.discount && (
                                     <span className="text-[10px] font-black text-emerald-600 block mt-0.5">
-                                      Save ₹{form.discount.toLocaleString('en-IN')} (25% applied)
+                                      Save ₹{form.discount.toLocaleString('en-IN')} (18% applied)
                                     </span>
                                   )}
                                   {form.planType === 'advance' && (
@@ -2347,7 +2367,25 @@ export default function ParentEnquiryForm() {
                               <>
                                 <span className="font-semibold text-slate-400 text-xs uppercase tracking-wider block">Monthly Tuition Investment</span>
                                 <span className="font-extrabold text-emerald-700 text-lg">
-                                  ₹{form.monthlyFees?.toLocaleString('en-IN')}
+                                  {['foundation', 'advance'].includes(form.planType) ? (
+                                    (() => {
+                                      const firstWardClass = form.wards[0]?.classGrade || "6";
+                                      const firstWardBoard = form.wards[0]?.curriculum || "CBSE";
+                                      const basePrice = calculatePrice('board', firstWardClass, firstWardBoard, form.daysPerWeek, form.hoursPerDay);
+                                      return (
+                                        <>
+                                          <span className="line-through text-slate-400 text-sm mr-2 font-black">
+                                            ₹{basePrice.toLocaleString('en-IN')}
+                                          </span>
+                                          <span className="text-emerald-700">
+                                            ₹{form.monthlyFees?.toLocaleString('en-IN')}
+                                          </span>
+                                        </>
+                                      );
+                                    })()
+                                  ) : (
+                                    `₹${form.monthlyFees?.toLocaleString('en-IN')}`
+                                  )}
                                 </span>
                                 {form.planType === 'foundation' && form.discount && (
                                   <span className="text-[10px] font-black text-emerald-600 block mt-0.5">
@@ -2383,7 +2421,7 @@ export default function ParentEnquiryForm() {
                                   htmlFor="pricingConsent"
                                   className="text-xs font-semibold text-slate-500 leading-relaxed cursor-pointer select-none"
                                 >
-                                  I understand that the final tuition fees may vary after the demo session based on the student's basics, syllabus weightage, parents' expectations, and the overall tutor effort required. <span className="text-red-500">*</span>
+                                  I understand and agree that the displayed tuition fee is an estimated price. The final tuition fee may increase or decrease after the demo session based on the student's academic level, learning requirements, syllabus complexity, parents' expectations, preferred tutor experience, travel distance (if applicable), and the overall teaching effort required. <span className="text-red-500">*</span>
                                 </label>
                                 {errors.pricingConsent && (
                                   <p className="mt-1.5 text-xs font-bold text-red-600 flex items-center gap-1">
