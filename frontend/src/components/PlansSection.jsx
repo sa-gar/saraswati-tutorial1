@@ -19,7 +19,7 @@ import {
   Info
 } from "lucide-react";
 
-import { PLANS } from "../data/plansConfig";
+import { PLANS, calculatePrice, calculateEliteHourlyPrice } from "../data/plansConfig";
 import { trackEvent } from "../utils/analytics";
 
 const TIMELINE_STEPS = [
@@ -75,7 +75,10 @@ const itemVariants = {
 
 export default function PlansSection() {
   const [activePlan, setActivePlan] = useState(null);
+  const [selectedClass, setSelectedClass] = useState(() => localStorage.getItem("selectedClass") || "Grade 6");
+  const [selectedBoard, setSelectedBoard] = useState(() => localStorage.getItem("selectedBoard") || "CBSE");
   const detailsRef = useRef(null);
+  
   // Smooth scroll to the details section when activePlan changes
   useEffect(() => {
     if (activePlan && detailsRef.current) {
@@ -98,6 +101,9 @@ export default function PlansSection() {
     if (activePlan) {
       trackEvent("choose_plan", activePlan);
       trackEvent("book_demo", activePlan);
+      localStorage.setItem("prefilledPlan", activePlan);
+      localStorage.setItem("prefilledClass", selectedClass);
+      localStorage.setItem("prefilledBoard", selectedBoard);
     }
     const enquirySection = document.getElementById("parent-enquiry") || document.getElementById("home");
     if (enquirySection) {
@@ -168,6 +174,44 @@ export default function PlansSection() {
           <p className="mt-4 text-base font-semibold text-slate-400 md:text-lg max-w-2xl mx-auto">
             Flexible Plans • Expert Mentorship • Better Results
           </p>
+
+          {/* Interactive Class & Board Selectors */}
+          <div className="mt-8 flex flex-wrap justify-center gap-4 max-w-lg mx-auto z-30 relative px-4">
+            <div className="flex-1 min-w-[180px]">
+              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2 text-left pl-1">
+                Student Class
+              </label>
+              <select
+                value={selectedClass}
+                onChange={(e) => {
+                  setSelectedClass(e.target.value);
+                  localStorage.setItem("selectedClass", e.target.value);
+                }}
+                className="w-full bg-slate-900/80 border border-white/10 rounded-2xl px-4 py-3 text-xs font-bold text-white focus:outline-none focus:border-blue-500 transition duration-300 cursor-pointer shadow-inner backdrop-blur-md"
+              >
+                {["Grade 1–5", "Grade 6", "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12", "Degree"].map((cg) => (
+                  <option key={cg} value={cg} className="bg-slate-950 text-white">{cg}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex-1 min-w-[180px]">
+              <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2 text-left pl-1">
+                Syllabus / Board
+              </label>
+              <select
+                value={selectedBoard}
+                onChange={(e) => {
+                  setSelectedBoard(e.target.value);
+                  localStorage.setItem("selectedBoard", e.target.value);
+                }}
+                className="w-full bg-slate-900/80 border border-white/10 rounded-2xl px-4 py-3 text-xs font-bold text-white focus:outline-none focus:border-blue-500 transition duration-300 cursor-pointer shadow-inner backdrop-blur-md"
+              >
+                {["CBSE", "ICSE / ISC", "IGCSE", "IB", "State Board / PUC", "NIOS"].map((b) => (
+                  <option key={b} value={b} className="bg-slate-950 text-white">{b}</option>
+                ))}
+              </select>
+            </div>
+          </div>
         </motion.div>
 
         {/* Carousel / Cards Layout Wrapper */}
@@ -202,6 +246,8 @@ export default function PlansSection() {
                   <PlanDetails
                     plan={activePlanData}
                     onCTA={handleScrollToEnquiry}
+                    selectedClass={selectedClass}
+                    selectedBoard={selectedBoard}
                   />
                 </div>
               </motion.div>
@@ -1070,7 +1116,7 @@ const getBenefitIcon = (title) => {
 };
 
 // Plan Details Component
-function PlanDetails({ plan, onCTA }) {
+function PlanDetails({ plan, onCTA, selectedClass, selectedBoard }) {
   const { fullDetails, title, theme } = plan;
 
   const getHeaderBadgeClasses = () => {
@@ -1098,6 +1144,9 @@ function PlanDetails({ plan, onCTA }) {
         return "bg-white text-black hover:bg-slate-100";
     }
   };
+
+  // Pricing configuration calculation
+  const pricingOptions = plan.pricingOptions || [];
 
   return (
     <div className="grid gap-8 lg:grid-cols-[1.3fr_0.7fr] text-white">
@@ -1167,23 +1216,54 @@ function PlanDetails({ plan, onCTA }) {
       <div className="rounded-3xl border border-white/5 bg-slate-950/70 p-6 flex flex-col justify-between h-full min-h-[380px]">
         <div>
           <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-6">Complete Pricing Breakdown</h4>
+          
+          {plan.id === 'elite' && (
+            (() => {
+              const hrRate = calculateEliteHourlyPrice(selectedClass, selectedBoard);
+              return (
+                <div className="mb-6 bg-slate-900 border border-white/5 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-inner">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Hourly Rate</span>
+                  <span className="text-2xl font-black tracking-tight text-amber-400 mt-1">
+                    ₹{hrRate.toLocaleString('en-IN')}/hour
+                  </span>
+                  <span className="text-[10px] font-medium text-slate-400 block mt-1">
+                    Estimated Monthly Tuition calculated below
+                  </span>
+                </div>
+              );
+            })()
+          )}
+
           <table className="w-full text-sm border-collapse text-left">
             <tbody>
-              {fullDetails.pricing.map((row, idx) => (
-                <tr key={idx} className="border-b border-white/5 last:border-0">
-                  <td className="py-3.5 font-semibold text-slate-400">{row.label}</td>
-                  <td className="py-3.5 text-right font-black text-white">{row.value}</td>
-                </tr>
-              ))}
+              {pricingOptions.map((opt, idx) => {
+                // Dynamically calculate the price on the landing page based on state selectors
+                const calculatedRowPrice = calculatePrice(plan.id, selectedClass, selectedBoard, opt.days, opt.hours);
+                return (
+                  <tr key={idx} className="border-b border-white/5 last:border-0">
+                    <td className="py-3.5 font-semibold text-slate-400">
+                      {opt.days} Days / {opt.hours} Hour{opt.hours !== 1 ? "s" : ""}
+                    </td>
+                    <td className="py-3.5 text-right font-black text-white">
+                      ₹{calculatedRowPrice.toLocaleString('en-IN')}{" "}
+                      <span className="text-[10px] text-slate-500 font-bold">/ month</span>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
           <p className="mt-6 text-[11px] leading-relaxed text-slate-500 border-t border-white/5 pt-4">
             * {fullDetails.additionalInfo}
           </p>
-          <div className="mt-5 pt-4 border-t border-white/5 flex items-start gap-2.5 text-xs text-slate-400">
-            <Info className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
-            <p className="leading-relaxed font-semibold">
-              Final pricing is personalized for every student and may vary based on the selected board, grade, subjects, class schedule, preferred tutor experience, learning requirements, and tutor availability.
+          <div className="mt-5 pt-4 border-t border-white/5 flex items-start gap-2.5 text-xs text-slate-450">
+            <Info className="h-4 w-4 text-slate-455 shrink-0 mt-0.5" />
+            <p className="leading-relaxed font-semibold text-[10px] text-slate-550">
+              {plan.id === 'elite' ? (
+                "Estimated monthly tuition fees are calculated using the selected board, class, session duration and weekly schedule. Final tuition fees may vary after the demo session depending on the student's learning level, syllabus complexity, parents' expectations, tutor availability, travel distance (if applicable) and the overall academic support required."
+              ) : (
+                "Final tuition fees may vary after the demo session depending on the student's learning level, syllabus complexity, parents' expectations, teacher availability, travel distance (if applicable), and the overall academic effort required."
+              )}
             </p>
           </div>
         </div>
