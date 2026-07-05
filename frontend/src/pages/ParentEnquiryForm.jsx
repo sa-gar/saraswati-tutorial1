@@ -508,10 +508,13 @@ const ExperienceSVG = () => (
 const getBenefitIcon = (title) => {
   switch (title) {
     case "Tutor Verification":
+    case "Background Verified Tutors":
+    case "Accuracy & Result Oriented":
       return <VerificationSVG />;
     case "Tutor Location":
       return <LocationSVG />;
     case "24 Hours Doubt Support":
+    case "24-Hour Doubt Support":
       return <DoubtSupportSVG />;
     case "Tutor Replacement Support":
       return <ReplacementSVG />;
@@ -522,6 +525,7 @@ const getBenefitIcon = (title) => {
     case "Daily Practice":
       return <PracticeSVG />;
     case "Tutor Experience":
+    case "Entry Level Tutors":
       return <ExperienceSVG />;
     default:
       return <VerificationSVG />;
@@ -550,9 +554,11 @@ export default function ParentEnquiryForm() {
   const [viewingPlanId, setViewingPlanId] = useState(null);
   const [selectedOption, setSelectedOption] = useState(null);
   const [openFaqIndex, setOpenFaqIndex] = useState(null);
+  const [showAllFeatures, setShowAllFeatures] = useState(false);
 
   useEffect(() => {
     setOpenFaqIndex(null);
+    setShowAllFeatures(false);
   }, [viewingPlanId]);
 
   const handleOpenPlanModal = (plan) => {
@@ -1890,7 +1896,7 @@ export default function ParentEnquiryForm() {
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
                             transition={{ duration: 0.35 }}
-                            className="relative w-full max-w-2xl md:max-w-3xl max-h-[80vh] rounded-[2rem] bg-white shadow-2xl border border-slate-100 flex flex-col overflow-hidden"
+                            className="relative w-full max-w-3xl md:max-w-4xl lg:max-w-5xl max-h-[90vh] rounded-[2rem] bg-white shadow-2xl border border-slate-100 flex flex-col overflow-hidden"
                             onClick={(e) => e.stopPropagation()}
                           >
                             {/* Modal Header */}
@@ -1927,7 +1933,7 @@ export default function ParentEnquiryForm() {
                             </div>
 
                             {/* Modal Body */}
-                            <div className="p-5 md:p-6 grid gap-6 md:grid-cols-[1.2fr_0.8fr] flex-1 overflow-y-auto">
+                            <div className="p-5 md:p-6 grid gap-6 md:grid-cols-[1.4fr_0.6fr] flex-1 overflow-y-auto">
                               <div className="space-y-5">
                                 {/* Benefits */}
                                 <div>
@@ -1938,15 +1944,17 @@ export default function ParentEnquiryForm() {
                                       return (
                                         <div
                                           key={idx}
-                                          className={`flex gap-4 items-center rounded-2xl p-4 transition duration-300 ${
+                                          className={`flex gap-3.5 items-start rounded-2xl p-4 transition duration-300 ${
                                             isDarkModal
                                               ? 'bg-gradient-to-br from-[#0B1528] to-[#050B15] border border-blue-900/30 text-white hover:border-blue-700/40'
                                               : 'bg-gradient-to-br from-[#F8FAFC] to-[#F1F5F9] border border-slate-200 text-slate-800 hover:border-slate-300 hover:shadow-sm'
                                           }`}
                                         >
-                                          {/* Scale down the SVG for the modal */}
-                                          <div className="scale-75 origin-center shrink-0 -m-2">
-                                            {getBenefitIcon(benefit.title)}
+                                          {/* Scale down the SVG for the modal and align it to the top */}
+                                          <div className="w-12 h-12 shrink-0 overflow-hidden relative mt-0.5">
+                                            <div className="scale-[0.6] origin-top-left absolute top-0 left-0">
+                                              {getBenefitIcon(benefit.title)}
+                                            </div>
                                           </div>
                                           <div className="flex-1 min-w-0">
                                             <h5 className={`text-xs font-bold leading-tight ${isDarkModal ? 'text-white' : 'text-slate-800'}`}>
@@ -1967,12 +1975,29 @@ export default function ParentEnquiryForm() {
                                 <div>
                                   <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">What's Included</h4>
                                   <ul className="space-y-1.5">
-                                    {activePlanData.fullDetails.features.map((feature, idx) => (
-                                      <li key={idx} className="flex items-start gap-1.5 text-[11px] text-slate-600">
-                                        <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0 mt-0.5" />
-                                        <span>{feature}</span>
-                                      </li>
-                                    ))}
+                                    {(() => {
+                                      const features = activePlanData.fullDetails.features || [];
+                                      const displayedFeatures = showAllFeatures ? features : features.slice(0, 1);
+                                      return (
+                                        <>
+                                          {displayedFeatures.map((feature, idx) => (
+                                            <li key={idx} className="flex items-start gap-1.5 text-[11px] text-slate-600 animate-slideFade">
+                                              <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                                              <span>{feature}</span>
+                                            </li>
+                                          ))}
+                                          {features.length > 1 && (
+                                            <button
+                                              type="button"
+                                              onClick={() => setShowAllFeatures(!showAllFeatures)}
+                                              className="mt-1 text-[10px] font-bold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1 cursor-pointer focus:outline-none"
+                                            >
+                                              {showAllFeatures ? "See Less" : `See More (+${features.length - 1})`}
+                                            </button>
+                                          )}
+                                        </>
+                                      );
+                                    })()}
                                   </ul>
                                 </div>
 
@@ -2013,7 +2038,7 @@ export default function ParentEnquiryForm() {
                               </div>
 
                               {/* Pricing option matrix selection */}
-                              <div className="flex flex-col justify-between rounded-2xl border border-slate-100 bg-slate-50 p-4 shadow-inner">
+                              <div className="flex flex-col justify-start rounded-2xl border border-slate-100 bg-slate-50 p-4 shadow-inner self-start w-full">
                                 <div>
                                   <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Select Pricing Option</h4>
                                   <div className="space-y-2">
@@ -2159,17 +2184,6 @@ export default function ParentEnquiryForm() {
 
                                     return null;
                                   })()}
-
-                                  <p className="mt-3 text-[9px] leading-relaxed text-slate-400 font-semibold">
-                                    * {activePlanData.fullDetails.additionalInfo}
-                                  </p>
-                                  <p className="mt-2 text-[8px] leading-relaxed text-slate-500 font-semibold">
-                                    {activePlanData.id === 'elite' ? (
-                                      "Estimated monthly tuition fees are calculated using the selected board, class, session duration and weekly schedule. Final tuition fees may vary after the demo session depending on the student's learning level, syllabus complexity, parents' expectations, tutor availability, travel distance (if applicable) and the overall academic support required."
-                                    ) : (
-                                      "Final tuition fees may vary after the demo session depending on the student's learning level, syllabus complexity, parents' expectations, teacher availability, travel distance (if applicable), and the overall academic effort required."
-                                    )}
-                                  </p>
                                 </div>
 
                                 <div className="mt-4">

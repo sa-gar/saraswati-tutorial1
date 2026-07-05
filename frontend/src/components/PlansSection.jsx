@@ -854,6 +854,11 @@ function PlanCard({ plan, isActive, isSelectedAny, isCenter, position, onClick }
           {/* Plan Name */}
           <h3 className="text-[17px] sm:text-[20px] md:text-2xl font-black tracking-tight leading-snug">{plan.title}</h3>
 
+          {/* Key Benefit tag line */}
+          <p className="mt-1 text-[10px] sm:text-[11px] font-bold leading-snug opacity-90">
+            {plan.keyBenefit}
+          </p>
+
           {/* Description */}
           <p className="mt-1.5 sm:mt-2 text-[10px] sm:text-[11px] leading-relaxed font-medium opacity-70">
             {plan.description}
@@ -1095,10 +1100,13 @@ const ExperienceSVG = () => (
 const getBenefitIcon = (title) => {
   switch (title) {
     case "Tutor Verification":
+    case "Background Verified Tutors":
+    case "Accuracy & Result Oriented":
       return <VerificationSVG />;
     case "Tutor Location":
       return <LocationSVG />;
     case "24 Hours Doubt Support":
+    case "24-Hour Doubt Support":
       return <DoubtSupportSVG />;
     case "Tutor Replacement Support":
       return <ReplacementSVG />;
@@ -1109,6 +1117,7 @@ const getBenefitIcon = (title) => {
     case "Daily Practice":
       return <PracticeSVG />;
     case "Tutor Experience":
+    case "Entry Level Tutors":
       return <ExperienceSVG />;
     default:
       return <VerificationSVG />;
@@ -1253,19 +1262,6 @@ function PlanDetails({ plan, onCTA, selectedClass, selectedBoard }) {
               })}
             </tbody>
           </table>
-          <p className="mt-6 text-[11px] leading-relaxed text-slate-500 border-t border-white/5 pt-4">
-            * {fullDetails.additionalInfo}
-          </p>
-          <div className="mt-5 pt-4 border-t border-white/5 flex items-start gap-2.5 text-xs text-slate-450">
-            <Info className="h-4 w-4 text-slate-455 shrink-0 mt-0.5" />
-            <p className="leading-relaxed font-semibold text-[10px] text-slate-550">
-              {plan.id === 'elite' ? (
-                "Estimated monthly tuition fees are calculated using the selected board, class, session duration and weekly schedule. Final tuition fees may vary after the demo session depending on the student's learning level, syllabus complexity, parents' expectations, tutor availability, travel distance (if applicable) and the overall academic support required."
-              ) : (
-                "Final tuition fees may vary after the demo session depending on the student's learning level, syllabus complexity, parents' expectations, teacher availability, travel distance (if applicable), and the overall academic effort required."
-              )}
-            </p>
-          </div>
         </div>
 
         <button
@@ -1275,6 +1271,7 @@ function PlanDetails({ plan, onCTA, selectedClass, selectedBoard }) {
           Book Demo
           <ArrowRight className="h-4 w-4" />
         </button>
+
       </div>
     </div>
   );

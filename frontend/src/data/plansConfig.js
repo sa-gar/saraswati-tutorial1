@@ -185,12 +185,11 @@ export const PLANS = [
     price: "₹6,353",
     gradient: "from-[#F8FAFC] to-[#CBD5E1]",
     textColor: "text-slate-800",
-    textDarkColor: "text-slate-900",
     badgeTheme: "bg-slate-900/10 text-slate-800 border-slate-900/20",
-    keyBenefit: "Daily homework support & consistent practice",
+    keyBenefit: "Verified Tutors, Homework, Basic Support",
     cardBenefits: [
       "Daily Homework Support & Consistent Practice",
-      "Tutor Experience: 1–3 Years"
+      "Tutor Experience: 0–1 Year"
     ],
     pricingOptions: [
       { days: 3, hours: 1.5, price: 6353 },
@@ -205,19 +204,18 @@ export const PLANS = [
         { label: "Savings aspect", value: "Save up to 18%" }
       ],
       benefits: [
-        { title: "Consistent Guidance", desc: "Regular classes focusing on fundamental basics." },
-        { title: "Homework Support", desc: "Assistance in managing daily school assignments." },
-        { title: "Daily Practice", desc: "Fostering academic discipline through systematic schedules." },
-        { title: "Tutor Experience", desc: "Tutors with 1–3 years of teaching experience." }
+        { title: "Background Verified Tutors", desc: "All tutors are thoroughly vetted and background-checked for absolute safety." },
+        { title: "Entry Level Tutors", desc: "Affordable sessions guided by enthusiastic tutors with 0–1 year experience." }
       ],
       features: [
+        "Homework Support",
         "Monthly syllabus alignment review",
         "Access to digital learning sheets & practice banks",
         "Basic monthly progress report for parents"
       ],
       faqs: [
         { q: "Can we change classes if we miss a session?", a: "Yes, rescheduling is permitted with a 24-hour notice to the tutor." },
-        { q: "Who are the tutors for this plan?", a: "Vetted tutors and university graduates with 1–3 years of teaching experience who excel in explaining core academic concepts." },
+        { q: "Who are the tutors for this plan?", a: "Vetted tutors and university graduates with 0–1 year of teaching experience who excel in explaining core academic concepts." },
         { q: "Is there a curriculum choice?", a: "Supports CBSE, ICSE, IGCSE, IB, NIOS and State Boards." }
       ],
       additionalInfo: "Minimum commitment of 1 month. Free initial coordinator consultation to assess student learning style."
@@ -232,9 +230,9 @@ export const PLANS = [
     price: "₹9,130",
     gradient: "from-[#FFD700] to-[#F59E0B]",
     textColor: "text-slate-955",
-    textDarkColor: "text-slate-950",
+    textDarkColor: "text-slate-955",
     badgeTheme: "bg-black/10 text-slate-950 border-black/20",
-    keyBenefit: "Experienced tutors with concept clarity focus",
+    keyBenefit: "Focused Growth (Planning, Practice, Assessments)",
     cardBenefits: [
       "Tutor Experience: 3–10 Years",
       "Customized School Syllabus Tracking"
@@ -253,14 +251,14 @@ export const PLANS = [
       ],
       benefits: [
         { title: "Tutor Verification", desc: "Thoroughly vetted and background-verified home tutors with 3–10 years experience." },
-        { title: "Tutor Location", desc: "Premium local tutors mapped within a 1–3 km radius for prompt sessions." },
+        { title: "Tutor Location", desc: "Assigning local tutors within a 5 km – 8 km location radius." },
         { title: "24-Hour Doubt Support", desc: "Instant academic assistance and doubt solving available round the clock." },
-        { title: "Tutor Replacement Support", desc: "Tutor replacement within 3–5 Days if style doesn't match student needs." }
+        { title: "Tutor Replacement Support", desc: "Tutor replacement within 3–5 days if teaching style doesn't match." }
       ],
       features: [
-        "Practice & Revision Support",
-        "Academic Tests (Monthly)",
-        "Academic Planning & Strategy",
+        "Consistent Guidance & Regular Practice",
+        "Internal Test – Monthly",
+        "Academic Strategy & Deadlines",
         "Performance Review Sessions (Monthly)",
         "Progress Tracking (Monthly)",
         "Parent Progress Updates (Monthly)"
@@ -285,7 +283,7 @@ export const PLANS = [
     textDarkColor: "text-white",
     badgeTheme: "bg-white/10 text-white border-white/10",
     experience: "10+ Years",
-    keyBenefit: "Veteran mentors with 10+ Years Experience",
+    keyBenefit: "Certain Performance (Priority, Faster Support, Monitoring & Personal Mentoring)",
     cardBenefits: [
       "Veteran School Teachers & Board Examiners",
       "Tutor Experience: 10+ Years",
@@ -304,15 +302,15 @@ export const PLANS = [
         { label: "Tutor matching", value: "Veteran mentors only" }
       ],
       benefits: [
-        { title: "Tutor Verification", desc: "Top-tier school teachers, board examiners, and veteran mentors with 10+ years experience." },
-        { title: "Tutor Location", desc: "Premium local mentors mapped within a 0–3 km radius for prompt sessions." },
-        { title: "24-Hour Doubt Support", desc: "Priority 24/7 dedicated support and direct feedback channels with coordinators." },
-        { title: "Tutor Replacement Support", desc: "Instant coordinator-guided replacement within 24–48 Hours to ensure uninterrupted prep." }
+        { title: "Accuracy & Result Oriented", desc: "Target-oriented sessions focusing on high academic precision and results." },
+        { title: "Tutor Experience", desc: "Tutors with 10–15+ years of teaching experience." },
+        { title: "Tutor Location", desc: "Assigning tutors from area within 1 km – 3 km." },
+        { title: "24-Hour Doubt Support", desc: "24 Hrs WhatsApp Support (After tuition) for student doubts." },
+        { title: "Tutor Replacement Support", desc: "Hassle-free tutor replacement within 48 hours." },
+        { title: "Access of Attendance Record & Communication Details", desc: "Real-time access to student attendance and direct communication details." }
       ],
       features: [
-        "Practice & Revision Support",
-        "Academic Tests (Bi-weekly)",
-        "Academic Planning & Strategy",
+        "Internal Test – Biweekly",
         "Performance Review Sessions (Bi-weekly)",
         "Progress Tracking (Bi-weekly)",
         "Parent Progress Updates (Bi-weekly)",
