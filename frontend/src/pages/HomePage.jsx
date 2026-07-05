@@ -1032,7 +1032,7 @@ export default function HomePage() {
     {
       title: "Graduation Tuition",
       desc: "Expert guidance for university courses, engineering, commerce, sciences, and degree syllabus matching.",
-      image: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&q=80&w=400"
+      image: "https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&q=80&w=400"
     }
   ];
 

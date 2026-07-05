@@ -392,7 +392,7 @@ export default function MumbaiPage() {
     {
       title: "Graduation Tuition",
       desc: "Expert guidance for university courses, engineering, commerce, sciences, and degree syllabus matching.",
-      image: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&q=80&w=400"
+      image: "https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&q=80&w=400"
     }
   ];
 
@@ -404,22 +404,22 @@ export default function MumbaiPage() {
 
   const testimonials = [
     {
-      name: "Mrs. Ritu Sharma",
-      location: "Andheri",
-      role: "Parent of Class 10 CBSE Student",
-      text: "Saraswati Tutorials helped my son improve his Class 10 CBSE Math score from 65% to 92%. The tutor from Andheri was extremely patient and focused on solving past papers."
+      name: "Mrs. Ananya Sen",
+      location: "Bandra",
+      role: "Parent of Class 9 ICSE Student",
+      text: "The ICSE curriculum is very demanding. We hired an Advance plan home tutor for history and chemistry. The tutor from Bandra did a phenomenal job mapping lessons to class notes and conducting weekly practice tests."
     },
     {
-      name: "Mr. Anil Mehta",
+      name: "Mr. Vikram Malhotra",
+      location: "Andheri West",
+      role: "Parent of Class 12 IB HL Math Student",
+      text: "Saraswati Tutorials matched us with an exceptional veteran IB Diploma tutor in Andheri West. Under their guidance, my daughter's score improved from a 4 to a 7 in HL Math. High precision mentoring!"
+    },
+    {
+      name: "Mrs. Priya Gokhale",
       location: "Powai",
-      role: "Parent of IB Physics Student",
-      text: "Finding a quality IB Physics tutor in Powai was a major challenge. The tutor recommended by Saraswati Tutorials has been outstanding. Conceptual clarity has improved drastically."
-    },
-    {
-      name: "Mrs. Deepa Kulkarni",
-      location: "Thane",
-      role: "Parent of Class 12 HSC Student",
-      text: "My daughter was struggling with Maharashtra State Board Chemistry for Class 12. The home tutor from Thane cleared her basics and regularly conducted test series. Highly recommended!"
+      role: "Parent of Class 10 CBSE Science Student",
+      text: "We had a wonderful experience. The science tutor from Powai has a unique teaching method that turned complex physics and chemistry concepts into simple everyday models. Grade-wise mock tests were extremely helpful."
     }
   ];
 
