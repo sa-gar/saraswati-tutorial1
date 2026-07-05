@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { motion, AnimatePresence } from "framer-motion";
-import ChatBot from "../components/ChatBot";
 import PlansSection from "../components/PlansSection";
 import { API_BASE } from "../config";
 import { trackEvent } from "../utils/analytics";
@@ -100,34 +99,121 @@ const handleLocationRedirect = (city) => {
 };
 
 function LocationSelector({ activeCity }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const displayLabel = activeCity === "Bangalore" ? "BLR" : activeCity === "Mumbai" ? "MUM" : activeCity;
+
   return (
-    <div className="flex items-center gap-2 z-10 select-none">
-      {[
-        { id: "Bangalore", label: "Bangalore" },
-        { id: "Mumbai", label: "Mumbai" }
-      ].map((city) => {
-        const isSelected = activeCity === city.id;
-        return (
-          <button
-            key={city.id}
-            type="button"
-            onClick={() => {
-              if (activeCity !== city.id) {
-                handleLocationRedirect(city.id);
-              }
-            }}
-            className={`flex items-center gap-1.5 py-1.5 px-3.5 text-xs font-bold rounded-xl border transition-all duration-300 cursor-pointer ${
-              isSelected 
-                ? "text-white bg-gradient-to-r from-blue-600 to-indigo-600 border-transparent shadow-md shadow-blue-500/10 scale-105" 
-                : "text-slate-655 bg-white border-slate-200 hover:border-slate-350 hover:bg-slate-50 hover:text-slate-900"
-            }`}
+    <div ref={dropdownRef} className="relative inline-block z-30 select-none">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-1.5 py-1.5 px-2.5 text-xs font-black rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 transition duration-300 cursor-pointer shadow-sm hover:border-slate-350"
+      >
+        <MapPin className="h-3.5 w-3.5 text-blue-600 animate-pulse" />
+        <span>{displayLabel}</span>
+        <ChevronDown className={`h-3 w-3 text-slate-500 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute left-0 mt-1.5 w-36 rounded-2xl bg-white border border-slate-100 shadow-xl py-1.5 text-slate-700 animate-slideFade">
+          {[
+            { id: "Bangalore", label: "Bangalore / BLR" },
+            { id: "Mumbai", label: "Mumbai" }
+          ].map((city) => {
+            const isSelected = activeCity === city.id;
+            return (
+              <button
+                key={city.id}
+                type="button"
+                onClick={() => {
+                  setIsOpen(false);
+                  if (activeCity !== city.id) {
+                    handleLocationRedirect(city.id);
+                  }
+                }}
+                className={`flex items-center justify-between w-full text-left px-3.5 py-2 text-xs font-bold transition duration-150 cursor-pointer ${
+                  isSelected 
+                    ? "text-blue-600 bg-blue-50/50" 
+                    : "hover:bg-slate-50 text-slate-755 hover:text-slate-900"
+                }`}
+              >
+                <span>{city.label}</span>
+                {isSelected && <Check className="h-3.5 w-3.5 text-blue-600" />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ResourcesDropdown({ activeSection }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const isResourcesActive = activeSection === "faqs" || window.location.pathname.startsWith("/blogs");
+
+  return (
+    <div ref={dropdownRef} className="relative inline-block z-30 select-none">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={`flex items-center gap-1 py-1.5 transition duration-300 whitespace-nowrap shrink-0 font-bold cursor-pointer relative ${
+          isResourcesActive ? "text-blue-600 font-extrabold" : "text-slate-655 hover:text-slate-950"
+        }`}
+      >
+        <span>Resources</span>
+        <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-300 ${isOpen ? "rotate-180" : ""} ${isResourcesActive ? "text-blue-600" : "text-slate-500"}`} />
+        {isResourcesActive && (
+          <motion.div
+            layoutId="navUnderline"
+            className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-blue-600 rounded-full"
+            transition={{ type: "spring", stiffness: 380, damping: 30 }}
+          />
+        )}
+      </button>
+
+      {isOpen && (
+        <div className="absolute left-0 mt-1.5 w-32 rounded-2xl bg-white border border-slate-100 shadow-xl py-1.5 text-slate-700 animate-slideFade">
+          <a
+            href="#faqs"
+            onClick={() => setIsOpen(false)}
+            className="block w-full text-left px-4 py-2 text-xs font-bold hover:bg-slate-50 text-slate-755 hover:text-slate-900 transition duration-150"
           >
-            <MapPin className={`h-3.5 w-3.5 ${isSelected ? "text-white animate-pulse" : "text-slate-400"}`} />
-            <span>{city.label}</span>
-            {isSelected && <ChevronDown className="h-3 w-3 text-white/90" />}
-          </button>
-        );
-      })}
+            FAQ
+          </a>
+          <Link
+            to="/blogs"
+            onClick={() => setIsOpen(false)}
+            className="block w-full text-left px-4 py-2 text-xs font-bold hover:bg-slate-50 text-slate-755 hover:text-slate-900 transition duration-150"
+          >
+            Blog
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
@@ -609,6 +695,7 @@ export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileResourcesOpen, setMobileResourcesOpen] = useState(false);
   const [onlineOnly, setOnlineOnly] = useState(false);
   const [tutors, setTutors] = useState([]);
   const [selectedTutor, setSelectedTutor] = useState(null);
@@ -825,11 +912,16 @@ export default function HomePage() {
     { title: "Verified & Experienced Tutors", desc: "All our tutors undergo strict background checks and academic evaluations.", icon: ShieldCheck },
     { title: "One-to-One Personalized Classes", desc: "Customized attention mapping to your child's learning pace.", icon: Users },
     { title: "Home & Online Tuition Available", desc: "Flexible modes—learn offline at home or online via live interactive classes.", icon: Award },
-    { title: "Regular Tests & Progress Tracking", desc: "Periodic examinations and feedback reports provided to parents.", icon: CheckCircle2 },
+    { title: "Bi-Weekly Tests & Tracking", desc: "Bi-weekly academic tests, progress reviews, and parent updates for close performance monitoring.", icon: CheckCircle2 },
     { title: "Flexible Timings", desc: "Sessions scheduled around your child's school and daily routine.", icon: Clock },
     { title: "Tutors for All Major Boards", desc: "Expert syllabus mapping for CBSE, ICSE, IGCSE, IB, and State Board.", icon: BookOpen },
     { title: "Affordable Fee Structure", desc: "High-quality academic support customized to fit family budgets.", icon: CreditCard },
-    { title: "Free Demo Class Available", desc: "Book a trial class with no commitment to test compatibility.", icon: Sparkles }
+    { title: "Free Demo Class Available", desc: "Book a trial class with no commitment to test compatibility.", icon: Sparkles },
+    { title: "Priority Tutor Allocation", desc: "Accelerated tutor matchmaking from areas near you.", icon: Rocket },
+    { title: "Personalized Academic Planning", desc: "Tailored study maps and milestones designed around the student's curriculum goals.", icon: GraduationCap },
+    { title: "24-Hour Online Support", desc: "Access to online academic guidance and doubt solving within 24 hours.", icon: Clock },
+    { title: "Priority Tutor Replacement", desc: "Hassle-free tutor replacement matching within 24 to 48 hours.", icon: Users },
+    { title: "Performance-Focused Mentoring", desc: "Target-oriented guidance focusing on high academic precision and result orientation.", icon: Star }
   ];
 
   const schoolSubjects = [
@@ -905,37 +997,42 @@ export default function HomePage() {
     {
       title: "Class 6 Home Tuition",
       desc: "Strengthening basics in Maths, Science, and English to transition smoothly to secondary levels.",
-      image: "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?auto=format&fit=crop&q=80&w=400"
+      image: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=400"
     },
     {
       title: "Class 7 Home Tuition",
       desc: "Developing analytical and problem-solving skills for growing academic curriculums.",
-      image: "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&q=80&w=400"
+      image: "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&q=80&w=400"
     },
     {
       title: "Class 8 Home Tuition",
       desc: "Focusing on conceptual depth to prepare a solid launchpad for high school boards.",
-      image: "https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&q=80&w=400"
+      image: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&q=80&w=400"
     },
     {
       title: "Class 9 Home Tuition",
       desc: "Crucial concept building mapping directly to class 10 boards and foundation exams.",
-      image: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=400"
+      image: "https://images.unsplash.com/photo-1516979187457-637abb4f9353?auto=format&fit=crop&q=80&w=400"
     },
     {
       title: "Class 10 Home Tuition",
       desc: "Rigorous mock tests, revision cycles, and board paper solving to secure top grades.",
-      image: "https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&q=80&w=400"
+      image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=400"
     },
     {
       title: "Class 11 Home Tuition",
       desc: "Specialized guidance for Science (PCM/B) and Commerce streams during the board transition.",
-      image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=400"
+      image: "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&q=80&w=400"
     },
     {
       title: "Class 12 Home Tuition",
       desc: "Dedicated syllabus completion, revision, and practice to score maximum percentages.",
-      image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=400"
+      image: "https://images.unsplash.com/photo-1506880018603-83d5b814b5a6?auto=format&fit=crop&q=80&w=400"
+    },
+    {
+      title: "Graduation Tuition",
+      desc: "Expert guidance for university courses, engineering, commerce, sciences, and degree syllabus matching.",
+      image: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&q=80&w=400"
     }
   ];
 
@@ -1011,12 +1108,12 @@ export default function HomePage() {
               <motion.div
                 whileHover={{ scale: 1.08, rotate: [0, -3, 3, 0] }}
                 transition={{ type: "spring", stiffness: 400, damping: 15 }}
-                className="h-12 w-12 shrink-0 bg-white rounded-xl border border-slate-200/60 shadow-sm flex items-center justify-center cursor-pointer"
+                className="h-15 w-15 shrink-0 bg-white rounded-2xl border border-slate-200/60 shadow-sm flex items-center justify-center cursor-pointer"
               >
                 <img
                   src="/logo.png"
                   alt="ST"
-                  className="h-9 w-9 rounded-lg object-contain"
+                  className="h-12 w-12 rounded-xl object-contain"
                   onError={(e) => {
                     e.target.src = "https://placehold.co/100x100?text=ST";
                   }}
@@ -1025,12 +1122,12 @@ export default function HomePage() {
               <div className="shrink-0 leading-tight">
                 <motion.div 
                   whileHover={{ x: 2 }}
-                  className="text-base xl:text-lg font-black tracking-tight text-slate-900 transition-all duration-300 group-hover:text-blue-600"
+                  className="text-lg xl:text-xl font-black tracking-tight text-slate-900 transition-all duration-300 group-hover:text-blue-600"
                 >
                   Saraswati Tutorials
                 </motion.div>
-                <div className="text-[9px] xl:text-[10px] font-black uppercase tracking-widest text-blue-600">
-                  Premium Home Tutors
+                <div className="text-[10px] xl:text-[11px] font-black uppercase tracking-widest text-blue-600">
+                  “Beyond Tuition”
                 </div>
               </div>
             </Link>
@@ -1051,7 +1148,6 @@ export default function HomePage() {
               { href: "#subjects", label: "Subjects", id: "subjects" },
               { href: "#boards", label: "Boards", id: "boards" },
               { href: "#areas", label: "Areas", id: "areas" },
-              { href: "#faqs", label: "FAQs", id: "faqs" },
             ].map((link) => {
               const isActive = activeSection === link.id;
               return (
@@ -1073,35 +1169,30 @@ export default function HomePage() {
                 </a>
               );
             })}
-            <Link
-              to="/blogs"
-              className="relative py-1.5 transition duration-300 whitespace-nowrap shrink-0 text-slate-600 hover:text-slate-950"
-            >
-              Blog
-            </Link>
+            <ResourcesDropdown activeSection={activeSection} />
           </nav>
 
           <div className="hidden items-center gap-2 xl:gap-3 xl:flex shrink-0">
             <MotionLink
               to="/parent-enquiry"
               onClick={() => trackEvent("book_demo")}
-              whileHover={{ scale: 1.05, translateY: -2, boxShadow: "0 10px 20px rgba(59,130,246,0.12)" }}
+              whileHover={{ scale: 1.05, translateY: -2, boxShadow: "0 10px 20px rgba(37,99,235,0.25)" }}
               whileTap={{ scale: 0.97 }}
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
-              className="whitespace-nowrap flex items-center gap-1.5 xl:gap-2 rounded-xl xl:rounded-[14px] border border-slate-200 bg-white px-3.5 xl:px-5 py-2 xl:py-2.5 text-[11px] xl:text-xs font-black text-slate-800 shadow-sm transition-all duration-300 hover:bg-slate-50 hover:border-slate-350 shrink-0"
+              className="whitespace-nowrap flex items-center gap-1.5 xl:gap-2 rounded-xl xl:rounded-[14px] bg-blue-600 px-4 xl:px-5.5 py-2 xl:py-2.5 text-[11px] xl:text-xs font-black text-white shadow-md transition-all duration-300 hover:bg-blue-700 shrink-0"
             >
-              <Calendar className="h-3.5 w-3.5 xl:h-4 xl:w-4 text-slate-500" />
+              <Calendar className="h-3.5 w-3.5 xl:h-4 xl:w-4 text-white" />
               Book Demo
             </MotionLink>
             <MotionLink
               to="/tutor-register"
               onClick={() => trackEvent("become_tutor")}
-              whileHover={{ scale: 1.05, translateY: -2, boxShadow: "0 12px 24px rgba(37,99,235,0.3)" }}
+              whileHover={{ scale: 1.05, translateY: -2, boxShadow: "0 8px 16px rgba(15,23,42,0.06)" }}
               whileTap={{ scale: 0.97 }}
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
-              className="whitespace-nowrap flex items-center gap-1.5 xl:gap-2 rounded-xl xl:rounded-[14px] border border-transparent bg-gradient-to-r from-blue-600 to-indigo-700 px-3.5 xl:px-5 py-2 xl:py-2.5 text-[11px] xl:text-xs font-black text-white shadow-md transition-all duration-300 shrink-0"
+              className="whitespace-nowrap flex items-center gap-1.5 xl:gap-2 rounded-xl xl:rounded-[14px] border border-slate-200 bg-white px-3.5 xl:px-5 py-2 xl:py-2.5 text-[11px] xl:text-xs font-black text-slate-800 shadow-sm transition-all duration-300 hover:bg-slate-50 hover:border-slate-350 shrink-0"
             >
-              <User className="h-3.5 w-3.5 xl:h-4 xl:w-4 text-white/90" />
+              <User className="h-3.5 w-3.5 xl:h-4 xl:w-4 text-slate-500" />
               Become a Tutor
             </MotionLink>
           </div>
@@ -1136,14 +1227,30 @@ export default function HomePage() {
                 <a href="#subjects" onClick={() => setMenuOpen(false)} className="py-2">Subjects</a>
                 <a href="#boards" onClick={() => setMenuOpen(false)} className="py-2">Boards</a>
                 <a href="#areas" onClick={() => setMenuOpen(false)} className="py-2">Areas We Serve</a>
-                <a href="#faqs" onClick={() => setMenuOpen(false)} className="py-2">FAQs</a>
-                <Link to="/blogs" onClick={() => setMenuOpen(false)} className="py-2">Blog</Link>
+                
+                <div className="flex flex-col">
+                  <button 
+                    type="button"
+                    onClick={() => setMobileResourcesOpen(!mobileResourcesOpen)}
+                    className="flex items-center justify-between py-2 text-left font-bold text-slate-800"
+                  >
+                    <span>Resources</span>
+                    <ChevronDown className={`h-4 w-4 text-slate-500 transition-transform duration-200 ${mobileResourcesOpen ? "rotate-180" : ""}`} />
+                  </button>
+                  {mobileResourcesOpen && (
+                    <div className="pl-4 flex flex-col gap-2 border-l border-slate-100 my-1 animate-slideFade">
+                      <a href="#faqs" onClick={() => { setMenuOpen(false); setMobileResourcesOpen(false); }} className="py-1.5 text-slate-600 font-bold text-sm">FAQ</a>
+                      <Link to="/blogs" onClick={() => { setMenuOpen(false); setMobileResourcesOpen(false); }} className="py-1.5 text-slate-600 font-bold text-sm">Blog</Link>
+                    </div>
+                  )}
+                </div>
+
                 <MotionLink
                   to="/parent-enquiry"
                   onClick={() => { setMenuOpen(false); trackEvent("book_demo"); }}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="rounded-xl border border-transparent bg-slate-950 py-3 text-center text-white font-black transition-all duration-300"
+                  className="rounded-xl border border-transparent bg-blue-600 py-3 text-center text-white font-black transition-all duration-300 shadow-md"
                 >
                   Book Demo
                 </MotionLink>
@@ -1152,7 +1259,7 @@ export default function HomePage() {
                   onClick={() => { setMenuOpen(false); trackEvent("become_tutor"); }}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="rounded-xl border border-transparent bg-gradient-to-r from-blue-600 to-indigo-600 py-3 text-center text-white font-black transition-all duration-300"
+                  className="rounded-xl border border-slate-200 bg-white py-3 text-center text-slate-800 font-black transition-all duration-300 shadow-sm"
                 >
                   Become a Tutor
                 </MotionLink>
@@ -1179,11 +1286,11 @@ export default function HomePage() {
               {/* Eyebrow Pill */}
               <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-1.5 text-xs font-semibold text-blue-400 mb-6">
                 <Star className="h-3.5 w-3.5 fill-current text-blue-400" />
-                <span>TRUSTED BY 1000+ PARENTS</span>
+                <span>TRUSTED BY 10,623+ PARENTS</span>
               </div>
 
               <h1 className="text-4xl font-black tracking-tight text-white md:text-6xl lg:leading-tight">
-                Home Tuition in <span className="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">Bangalore</span> for Class 6 to 12
+                Home Tuition in <span className="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">Bangalore</span> for Class 6 to 12 → Graduation
               </h1>
 
               {/* Tagline Description with connector line */}
@@ -1233,7 +1340,7 @@ export default function HomePage() {
                     </svg>
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="text-lg xl:text-xl font-extrabold text-blue-400">100+</div>
+                    <div className="text-lg xl:text-xl font-extrabold text-blue-400">3200+</div>
                     <div className="text-[11px] font-semibold text-slate-300 leading-tight">Verified Tutors</div>
                   </div>
                 </div>
@@ -2172,8 +2279,6 @@ export default function HomePage() {
           </motion.div>
         ) : null}
       </AnimatePresence>
-
-      <ChatBot />
     </div>
   );
 }
