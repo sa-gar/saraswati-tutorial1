@@ -912,11 +912,11 @@ function PlanCard({ plan, isActive, isSelectedAny, isCenter, position, onClick }
 // Premium SVG Icon Components for Core Benefits
 // ==========================================
 const VerificationSVG = () => (
-  <svg width="80" height="80" viewBox="0 0 80 80" fill="none" className="shrink-0 drop-shadow-[0_4px_10px_rgba(30,58,138,0.3)]">
+  <svg width="56" height="56" viewBox="0 0 80 80" fill="none" className="shrink-0 drop-shadow-[0_4px_10px_rgba(30,58,138,0.3)]">
     <defs>
       <linearGradient id="shieldGrad" x1="10" y1="10" x2="70" y2="70" gradientUnits="userSpaceOnUse">
-        <stop offset="0%" stopColor="#1E3A8A" stopOpacity="0.8" />
-        <stop offset="100%" stopColor="#0B132B" stopOpacity="0.9" />
+        <stop offset="0%" stopColor="#1E3A8A" opacity="0.8" />
+        <stop offset="100%" stopColor="#0B132B" opacity="0.9" />
       </linearGradient>
       <linearGradient id="goldGrad" x1="20" y1="20" x2="60" y2="60" gradientUnits="userSpaceOnUse">
         <stop offset="0%" stopColor="#F59E0B" />
@@ -938,7 +938,7 @@ const VerificationSVG = () => (
 );
 
 const LocationSVG = () => (
-  <svg width="80" height="80" viewBox="0 0 80 80" fill="none" className="shrink-0 drop-shadow-[0_4px_10px_rgba(245,158,11,0.25)]">
+  <svg width="56" height="56" viewBox="0 0 80 80" fill="none" className="shrink-0 drop-shadow-[0_4px_10px_rgba(245,158,11,0.25)]">
     <defs>
       <linearGradient id="pinGrad" x1="40" y1="12" x2="40" y2="52" gradientUnits="userSpaceOnUse">
         <stop offset="0%" stopColor="#FFE082" />
@@ -963,7 +963,7 @@ const LocationSVG = () => (
 );
 
 const DoubtSupportSVG = () => (
-  <svg width="80" height="80" viewBox="0 0 80 80" fill="none" className="shrink-0 drop-shadow-[0_4px_10px_rgba(59,130,246,0.3)]">
+  <svg width="56" height="56" viewBox="0 0 80 80" fill="none" className="shrink-0 drop-shadow-[0_4px_10px_rgba(59,130,246,0.3)]">
     <defs>
       <linearGradient id="clockGrad" x1="15" y1="15" x2="65" y2="65" gradientUnits="userSpaceOnUse">
         <stop offset="0%" stopColor="#1E293B" />
@@ -986,7 +986,7 @@ const DoubtSupportSVG = () => (
 );
 
 const ReplacementSVG = () => (
-  <svg width="80" height="80" viewBox="0 0 80 80" fill="none" className="shrink-0 drop-shadow-[0_4px_10px_rgba(30,58,138,0.3)]">
+  <svg width="56" height="56" viewBox="0 0 80 80" fill="none" className="shrink-0 drop-shadow-[0_4px_10px_rgba(30,58,138,0.3)]">
     <defs>
       <linearGradient id="userBlue" x1="15" y1="40" x2="45" y2="70" gradientUnits="userSpaceOnUse">
         <stop offset="0%" stopColor="#3B82F6" />
@@ -1013,7 +1013,7 @@ const ReplacementSVG = () => (
 );
 
 const GuidanceSVG = () => (
-  <svg width="80" height="80" viewBox="0 0 80 80" fill="none" className="shrink-0 drop-shadow-[0_4px_10px_rgba(59,130,246,0.3)]">
+  <svg width="56" height="56" viewBox="0 0 80 80" fill="none" className="shrink-0 drop-shadow-[0_4px_10px_rgba(59,130,246,0.3)]">
     <defs>
       <linearGradient id="compGrad" x1="15" y1="15" x2="65" y2="65" gradientUnits="userSpaceOnUse">
         <stop offset="0%" stopColor="#1E293B" />
@@ -1036,7 +1036,7 @@ const GuidanceSVG = () => (
 );
 
 const HomeworkSVG = () => (
-  <svg width="80" height="80" viewBox="0 0 80 80" fill="none" className="shrink-0 drop-shadow-[0_4px_10px_rgba(245,158,11,0.25)]">
+  <svg width="56" height="56" viewBox="0 0 80 80" fill="none" className="shrink-0 drop-shadow-[0_4px_10px_rgba(245,158,11,0.25)]">
     <defs>
       <linearGradient id="bookGrad" x1="20" y1="20" x2="60" y2="60" gradientUnits="userSpaceOnUse">
         <stop offset="0%" stopColor="#1E3A8A" />
@@ -1063,7 +1063,7 @@ const HomeworkSVG = () => (
 );
 
 const PracticeSVG = () => (
-  <svg width="80" height="80" viewBox="0 0 80 80" fill="none" className="shrink-0 drop-shadow-[0_4px_10px_rgba(59,130,246,0.3)]">
+  <svg width="56" height="56" viewBox="0 0 80 80" fill="none" className="shrink-0 drop-shadow-[0_4px_10px_rgba(59,130,246,0.3)]">
     <defs>
       <linearGradient id="targetGrad" x1="15" y1="15" x2="65" y2="65" gradientUnits="userSpaceOnUse">
         <stop offset="0%" stopColor="#1E3A8A" stopOpacity="0.8" />
@@ -1081,7 +1081,7 @@ const PracticeSVG = () => (
 );
 
 const ExperienceSVG = () => (
-  <svg width="80" height="80" viewBox="0 0 80 80" fill="none" className="shrink-0 drop-shadow-[0_4px_10px_rgba(245,158,11,0.25)]">
+  <svg width="56" height="56" viewBox="0 0 80 80" fill="none" className="shrink-0 drop-shadow-[0_4px_10px_rgba(245,158,11,0.25)]">
     <defs>
       <linearGradient id="medalGold" x1="20" y1="20" x2="60" y2="60" gradientUnits="userSpaceOnUse">
         <stop offset="0%" stopColor="#FFE082" />
@@ -1127,6 +1127,7 @@ const getBenefitIcon = (title) => {
 // Plan Details Component
 function PlanDetails({ plan, onCTA, selectedClass, selectedBoard }) {
   const { fullDetails, title, theme } = plan;
+  const [featuresExpanded, setFeaturesExpanded] = useState(false);
 
   const getHeaderBadgeClasses = () => {
     switch (theme) {
@@ -1184,12 +1185,14 @@ function PlanDetails({ plan, onCTA, selectedClass, selectedBoard }) {
               return (
                 <div
                   key={idx}
-                  className="flex gap-5 items-center rounded-3xl bg-gradient-to-br from-[#0B1528] to-[#050B15] border border-blue-900/30 p-6 hover:border-blue-700/40 hover:shadow-[0_8px_30px_rgba(59,130,246,0.08)] transition duration-300 group"
+                  className="flex gap-4 items-start rounded-3xl bg-gradient-to-br from-[#0B1528] to-[#050B15] border border-blue-900/30 p-5 hover:border-blue-700/40 hover:shadow-[0_8px_30px_rgba(59,130,246,0.08)] transition duration-300 group"
                 >
-                  {getBenefitIcon(benefit.title)}
+                  <div className="shrink-0 w-14 h-14 flex items-center justify-center">
+                    {getBenefitIcon(benefit.title)}
+                  </div>
                   <div className="flex-1 min-w-0">
                     <h5 className="text-base font-bold text-white tracking-tight">{benefit.title}</h5>
-                    <div className="h-[2px] w-6 bg-amber-500 rounded-full my-2" />
+                    <div className="h-[2px] w-6 bg-amber-500 rounded-full my-1.5" />
                     <p className="text-xs font-semibold text-slate-400 leading-relaxed">{benefit.desc}</p>
                   </div>
                 </div>
@@ -1204,13 +1207,25 @@ function PlanDetails({ plan, onCTA, selectedClass, selectedBoard }) {
           <div>
             <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">What's Included</h4>
             <ul className="space-y-3">
-              {fullDetails.features.map((feature, idx) => (
-                <li key={idx} className="flex items-start gap-2 text-xs text-slate-300">
-                  <Check className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <span>{feature}</span>
-                </li>
-              ))}
+              {fullDetails.features
+                .slice(0, featuresExpanded ? undefined : 4)
+                .map((feature, idx) => (
+                  <li key={idx} className="flex items-start gap-2 text-xs text-slate-300">
+                    <Check className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+                    <span>{feature}</span>
+                  </li>
+                ))}
             </ul>
+            {fullDetails.features.length > 4 && (
+              <button
+                type="button"
+                onClick={() => setFeaturesExpanded(!featuresExpanded)}
+                className="mt-3 text-xs font-bold text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1 cursor-pointer"
+              >
+                <span>{featuresExpanded ? "See Less" : "See More"}</span>
+                <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${featuresExpanded ? "rotate-180" : ""}`} />
+              </button>
+            )}
           </div>
 
           {/* FAQs */}
@@ -1222,7 +1237,7 @@ function PlanDetails({ plan, onCTA, selectedClass, selectedBoard }) {
       </div>
 
       {/* Right Column: Pricing Table & CTA */}
-      <div className="rounded-3xl border border-white/5 bg-slate-950/70 p-6 flex flex-col justify-between h-full min-h-[380px]">
+      <div className="rounded-3xl border border-white/5 bg-slate-950/70 p-6 flex flex-col justify-between h-fit lg:sticky lg:top-28">
         <div>
           <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-6">Complete Pricing Breakdown</h4>
           
