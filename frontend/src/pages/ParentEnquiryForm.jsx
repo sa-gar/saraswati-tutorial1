@@ -1934,7 +1934,7 @@ export default function ParentEnquiryForm() {
 
                             {/* Modal Body */}
                             <div className="p-5 md:p-6 grid gap-6 md:grid-cols-[1.4fr_0.6fr] flex-1 overflow-y-auto">
-                              <div className="space-y-5">
+                              <div className="space-y-5 order-2 md:order-1">
                                 {/* Benefits */}
                                 <div>
                                   <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2.5">Core Benefits</h4>
@@ -2038,7 +2038,7 @@ export default function ParentEnquiryForm() {
                               </div>
 
                               {/* Pricing option matrix selection */}
-                              <div className="flex flex-col justify-start rounded-2xl border border-slate-100 bg-slate-50 p-4 shadow-inner self-start w-full">
+                              <div className="flex flex-col justify-start rounded-2xl border border-slate-100 bg-slate-50 p-4 shadow-inner self-start w-full order-1 md:order-2">
                                 <div>
                                   <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Select Pricing Option</h4>
                                   <div className="space-y-2">

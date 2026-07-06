@@ -1161,7 +1161,7 @@ function PlanDetails({ plan, onCTA, selectedClass, selectedBoard }) {
   return (
     <div className="grid gap-8 lg:grid-cols-[1.3fr_0.7fr] text-white">
       {/* Left Column: Benefits, Features & FAQs */}
-      <div className="space-y-8">
+      <div className="space-y-8 order-2 lg:order-1">
         <div>
           <h3 className="text-3xl font-black tracking-tight text-white md:text-4xl">
             Complete Plan Overview
@@ -1237,7 +1237,7 @@ function PlanDetails({ plan, onCTA, selectedClass, selectedBoard }) {
       </div>
 
       {/* Right Column: Pricing Table & CTA */}
-      <div className="rounded-3xl border border-white/5 bg-slate-950/70 p-6 flex flex-col justify-between h-fit lg:sticky lg:top-28">
+      <div className="order-1 lg:order-2 rounded-3xl border border-white/5 bg-slate-950/70 p-6 flex flex-col justify-between h-fit lg:sticky lg:top-28">
         <div>
           <h4 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-6">Complete Pricing Breakdown</h4>
           
