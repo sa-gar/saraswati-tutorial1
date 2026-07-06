@@ -368,8 +368,8 @@ function TutorCard({ tutor, onViewProfile, onBook, swipeMode = false }) {
               </svg>
             </div>
 
-            <div className="relative flex items-center justify-between gap-4 z-10">
-              <div className="flex min-w-0 items-center gap-4">
+            <div className="relative flex flex-wrap items-center justify-between gap-3 sm:gap-4 z-10">
+              <div className="flex min-w-0 items-center gap-3 sm:gap-4">
                 {/* Hexagon image container */}
                 <div className="relative shrink-0 select-none">
                   <div 
@@ -408,8 +408,8 @@ function TutorCard({ tutor, onViewProfile, onBook, swipeMode = false }) {
                 </div>
 
                 <div className="min-w-0 leading-tight">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="text-xl font-black text-white tracking-tight truncate max-w-[150px] sm:max-w-[200px]">
+                  <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                    <h3 className="text-lg sm:text-xl font-black text-white tracking-tight truncate max-w-[130px] sm:max-w-[200px]">
                       {tutor.name || "Expert Tutor"}
                     </h3>
 
@@ -1119,7 +1119,7 @@ export default function HomePage() {
                   }}
                 />
               </motion.div>
-              <div className="shrink-0 leading-tight">
+              <div className="hidden sm:block shrink-0 leading-tight">
                 <motion.div 
                   whileHover={{ x: 2 }}
                   className="text-lg xl:text-xl font-black tracking-tight text-slate-900 transition-all duration-300 group-hover:text-blue-600"
@@ -1432,8 +1432,8 @@ export default function HomePage() {
               transition={{ duration: 0.6, delay: 0.1 }}
               className="lg:col-span-5 w-full mt-10 lg:mt-0"
             >
-              <div className="relative overflow-hidden rounded-[2.5rem] border border-slate-800 bg-[#081229]/80 p-5 shadow-2xl backdrop-blur-xl">
-                <div className="relative h-60 w-full overflow-hidden rounded-[2rem] shadow-inner">
+              <div className="relative overflow-hidden rounded-[1.5rem] sm:rounded-[2.5rem] border border-slate-800 bg-[#081229]/80 p-4 sm:p-5 shadow-2xl backdrop-blur-xl">
+                <div className="relative h-60 w-full overflow-hidden rounded-[1.2rem] sm:rounded-[2rem] shadow-inner">
                   <img
                     src="/bangalore_tutor_hero.png"
                     alt="Saraswati Home Tuition in Bangalore"
@@ -1507,7 +1507,7 @@ export default function HomePage() {
         </div>
 
         {/* Dynamic Filters Control Panel */}
-        <div className="mb-8 rounded-[2.5rem] border border-white/50 bg-white/30 backdrop-blur-xl p-6 shadow-xl shadow-slate-100/10">
+        <div className="mb-8 rounded-[1.5rem] sm:rounded-[2.5rem] border border-white/50 bg-white/30 backdrop-blur-xl p-4 sm:p-6 shadow-xl shadow-slate-100/10">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 items-center">
             {/* Search Input */}
             <div className="relative">
@@ -1619,7 +1619,7 @@ export default function HomePage() {
 
       {/* SEO Intro Section */}
       <section className="mx-auto max-w-7xl px-6 py-16">
-        <div className="rounded-[2.5rem] border border-white/50 bg-white/30 backdrop-blur-xl p-8 shadow-xl shadow-slate-100/10 md:p-12">
+        <div className="rounded-[1.5rem] sm:rounded-[2.5rem] border border-white/50 bg-white/30 backdrop-blur-xl p-5 sm:p-8 shadow-xl shadow-slate-100/10 md:p-12">
           <div className="max-w-4xl">
             <h2 className="text-xs font-black uppercase tracking-[0.2em] text-blue-600">Overview</h2>
             <h3 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-4xl">

@@ -14,10 +14,10 @@ export default function PaymentPage() {
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#dbeafe,transparent_32%),radial-gradient(circle_at_top_right,#dcfce7,transparent_28%),linear-gradient(135deg,#f8fafc,#eef2ff)] px-4 py-10">
       <div className="mx-auto max-w-5xl">
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-8 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
           <Link
             to="/"
-            className="inline-flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-50"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm font-bold text-slate-700 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-50"
           >
             <Home className="h-4 w-4" />
             Back to Home
@@ -27,15 +27,15 @@ export default function PaymentPage() {
             href="https://wa.me/918904457689"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-2xl bg-green-500 px-4 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-green-600"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-green-500 px-4 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-green-600"
           >
             <MessageCircle className="h-4 w-4" />
             WhatsApp
           </a>
         </div>
 
-        <div className="overflow-hidden rounded-[2.5rem] bg-slate-950 shadow-2xl">
-          <div className="relative grid gap-8 p-6 text-white md:grid-cols-[1.1fr_0.9fr] md:p-10">
+        <div className="overflow-hidden rounded-[1.5rem] sm:rounded-[2.5rem] bg-slate-950 shadow-2xl">
+          <div className="relative grid gap-8 p-4 sm:p-6 text-white md:grid-cols-[1.1fr_0.9fr] md:p-10">
             <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-blue-500/30 blur-3xl" />
             <div className="absolute bottom-0 left-1/3 h-48 w-48 rounded-full bg-emerald-400/20 blur-3xl" />
 
@@ -45,7 +45,7 @@ export default function PaymentPage() {
                 Demo Class Payment
               </div>
 
-              <h1 className="text-4xl font-black tracking-tight md:text-6xl">
+              <h1 className="text-3xl sm:text-4xl font-black tracking-tight md:text-6xl">
                 Complete your demo class payment securely
               </h1>
 
@@ -76,7 +76,7 @@ export default function PaymentPage() {
               </div>
             </div>
 
-            <div className="relative z-10 rounded-[2rem] bg-white p-6 text-slate-950 shadow-2xl">
+            <div className="relative z-10 rounded-[1.2rem] sm:rounded-[2rem] bg-white p-6 text-slate-950 shadow-2xl">
               <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-3xl bg-emerald-50 text-emerald-600">
                 <ShieldCheck className="h-8 w-8" />
               </div>

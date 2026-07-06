@@ -214,7 +214,7 @@ export default function BlogPage() {
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between px-4 sm:px-6 py-4">
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Blog & Insights</h1>
             <p className="text-sm text-slate-500">

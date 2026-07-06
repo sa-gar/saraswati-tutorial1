@@ -631,8 +631,8 @@ export default function TutorRegistration() {
 
       <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#dbeafe,transparent_30%),radial-gradient(circle_at_top_right,#e0e7ff,transparent_28%),linear-gradient(135deg,#f8fafc,#eef2ff)] px-4 py-8 md:px-6 md:py-12">
         <div className="mx-auto max-w-6xl">
-          <div className="mb-8 overflow-hidden rounded-[2.5rem] bg-slate-950 shadow-2xl">
-            <div className="relative p-6 text-white md:p-10">
+          <div className="mb-8 overflow-hidden rounded-[1.5rem] md:rounded-[2.5rem] bg-slate-950 shadow-2xl">
+            <div className="relative p-4 sm:p-6 text-white md:p-10">
               <div className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-blue-500/30 blur-3xl" />
               <div className="absolute bottom-0 left-1/3 h-44 w-44 rounded-full bg-emerald-400/20 blur-3xl" />
 
@@ -677,7 +677,7 @@ export default function TutorRegistration() {
             </div>
           </div>
 
-          <div className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-4">
+          <div className="mb-8 grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-4">
             {steps.map((item) => {
               const Icon = item.icon;
               const active = step === item.number;
@@ -686,7 +686,7 @@ export default function TutorRegistration() {
               return (
                 <div
                   key={item.number}
-                  className={`rounded-[1.5rem] border p-4 transition ${
+                  className={`rounded-[1.2rem] sm:rounded-[1.5rem] border p-3 sm:p-4 transition ${
                     active
                       ? "border-slate-950 bg-slate-950 text-white shadow-xl shadow-slate-300"
                       : done
@@ -709,7 +709,7 @@ export default function TutorRegistration() {
             })}
           </div>
 
-          <div className="rounded-[2.5rem] border border-white/70 bg-white/85 p-5 shadow-2xl shadow-slate-200 backdrop-blur-xl md:p-8">
+          <div className="rounded-[1.5rem] md:rounded-[2.5rem] border border-white/70 bg-white/85 p-4 sm:p-5 shadow-2xl shadow-slate-200 backdrop-blur-xl md:p-8">
             {step === 1 && (
               <section className="animate-fadeIn">
                 <StepHeader

@@ -1134,8 +1134,8 @@ export default function ParentEnquiryForm() {
       `}</style>
 
       <div className="mx-auto max-w-6xl">
-        <div className="mb-8 overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 shadow-xl shadow-slate-100/70">
-          <div className="relative p-6 text-slate-800 md:p-10">
+        <div className="mb-8 overflow-hidden rounded-[1.5rem] md:rounded-[2.5rem] bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 shadow-xl shadow-slate-100/70">
+          <div className="relative p-4 sm:p-6 text-slate-800 md:p-10">
             <div className="absolute right-0 top-0 h-48 w-48 rounded-full bg-blue-500/5 blur-3xl pointer-events-none" />
             <div className="absolute bottom-0 left-1/3 h-40 w-40 rounded-full bg-indigo-500/5 blur-3xl pointer-events-none" />
 
@@ -1232,7 +1232,7 @@ export default function ParentEnquiryForm() {
           />
         </div>        <form
           onSubmit={(e) => e.preventDefault()}
-          className="glass-card rounded-[2.5rem] border border-white/70 p-5 shadow-2xl shadow-slate-200/80 md:p-8"
+          className="glass-card rounded-[1.5rem] md:rounded-[2.5rem] border border-white/70 p-4 sm:p-5 shadow-2xl shadow-slate-200/80 md:p-8"
         >
           <AnimatePresence mode="wait">
             {/* STEP 1: Parent Details */}
@@ -1896,7 +1896,7 @@ export default function ParentEnquiryForm() {
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
                             transition={{ duration: 0.35 }}
-                            className="relative w-full max-w-3xl md:max-w-4xl lg:max-w-5xl max-h-[90vh] rounded-[2rem] bg-white shadow-2xl border border-slate-100 flex flex-col overflow-hidden"
+                            className="relative w-full max-w-3xl md:max-w-4xl lg:max-w-5xl max-h-[90vh] rounded-[1.2rem] sm:rounded-[2rem] bg-white shadow-2xl border border-slate-100 flex flex-col overflow-hidden"
                             onClick={(e) => e.stopPropagation()}
                           >
                             {/* Modal Header */}
@@ -2546,7 +2546,7 @@ export default function ParentEnquiryForm() {
 function StepBox({ number, active, done, title, subtitle, icon: Icon }) {
   return (
     <div
-      className={`relative overflow-hidden rounded-[1.8rem] border p-3.5 transition-all duration-300 flex items-center gap-3.5 cursor-default ${
+      className={`relative overflow-hidden rounded-[1.2rem] sm:rounded-[1.8rem] border p-2 sm:p-3.5 transition-all duration-300 flex items-center gap-2 sm:gap-3.5 cursor-default ${
         active
           ? "border-slate-900 bg-slate-900 text-white shadow-lg shadow-slate-900/10 scale-[1.02]"
           : done
@@ -2558,7 +2558,7 @@ function StepBox({ number, active, done, title, subtitle, icon: Icon }) {
         <div className="absolute top-0 right-0 h-16 w-16 rounded-full bg-blue-500/15 blur-xl pointer-events-none" />
       )}
       <div
-        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl transition-all duration-300 ${
+        className={`flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl sm:rounded-2xl transition-all duration-300 ${
           active
             ? "bg-blue-600 text-white font-extrabold"
             : done
@@ -2566,7 +2566,7 @@ function StepBox({ number, active, done, title, subtitle, icon: Icon }) {
             : "bg-slate-50 text-slate-450"
         }`}
       >
-        {done ? <Check className="h-5 w-5" /> : Icon ? <Icon className="h-5 w-5" /> : <span>{number}</span>}
+        {done ? <Check className="h-4.5 w-4.5 sm:h-5 sm:w-5" /> : Icon ? <Icon className="h-4.5 w-4.5 sm:h-5 sm:w-5" /> : <span>{number}</span>}
       </div>
       <div className="hidden sm:block">
         <p className="text-[9px] font-black uppercase tracking-wider opacity-60">
