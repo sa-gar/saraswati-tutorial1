@@ -332,19 +332,39 @@ export async function trackEvent(action, planClicked = "", enquirySubmitted = fa
 // Trigger Google Ads Conversion & Google Analytics generate_lead verified events
 export async function trackLeadConversion() {
   if (sessionStorage.getItem("conversion_fired")) {
-    console.log("Conversion already fired in this session.");
+    if (import.meta.env.DEV) {
+      console.log("[Analytics Debug] Conversion blocked as duplicate. Already fired in this session.");
+    } else {
+      console.log("Conversion already fired in this session.");
+    }
     return;
   }
-  sessionStorage.setItem("conversion_fired", "true");
 
   const adsId = import.meta.env.VITE_GOOGLE_ADS_ID || "AW-17166473673";
   const conversionLabel = import.meta.env.VITE_GOOGLE_ADS_CONVERSION_LABEL || "1bJTCL7i4cYcEMmzzvk_";
+
+  if (import.meta.env.DEV) {
+    console.log("[Analytics Debug] trackLeadConversion attempted.", { adsId, conversionLabel });
+    if (!import.meta.env.VITE_GOOGLE_ADS_ID) {
+      console.warn("[Analytics Debug] Missing environment variable VITE_GOOGLE_ADS_ID in trackLeadConversion. Falling back to default: AW-17166473673");
+    }
+    if (!import.meta.env.VITE_GOOGLE_ADS_CONVERSION_LABEL) {
+      console.warn("[Analytics Debug] Missing environment variable VITE_GOOGLE_ADS_CONVERSION_LABEL in trackLeadConversion. Falling back to default: 1bJTCL7i4cYcEMmzzvk_");
+    }
+  }
+
+  sessionStorage.setItem("conversion_fired", "true");
 
   // Google Ads Conversion Event
   if (window.gtag && adsId && conversionLabel) {
     window.gtag("event", "conversion", {
       send_to: `${adsId}/${conversionLabel}`,
     });
+    if (import.meta.env.DEV) {
+      console.log(`[Analytics Debug] Sent Google Ads conversion event to: ${adsId}/${conversionLabel}`);
+    }
+  } else if (import.meta.env.DEV) {
+    console.warn("[Analytics Debug] Google Ads conversion event NOT sent. window.gtag:", !!window.gtag, "adsId:", adsId, "conversionLabel:", conversionLabel);
   }
 
   // Google Analytics generate_lead Event
@@ -353,6 +373,9 @@ export async function trackLeadConversion() {
       event_category: "engagement",
       event_label: "Enquiry Form Submitted",
     });
+    if (import.meta.env.DEV) {
+      console.log("[Analytics Debug] Sent Google Analytics 'generate_lead' event");
+    }
   }
 
   // GTM Event
@@ -365,6 +388,9 @@ export async function trackLeadConversion() {
     window.dataLayer.push({
       event: "demo_booking_completed"
     });
+    if (import.meta.env.DEV) {
+      console.log("[Analytics Debug] Pushed 'generate_lead' and 'demo_booking_completed' to GTM dataLayer");
+    }
   }
 
   // Database logs to trigger the funnel steps:
@@ -374,4 +400,8 @@ export async function trackLeadConversion() {
   await trackEvent("google_ads_conversion", "", true);
   await trackEvent("ga_generate_lead", "", true);
   await trackEvent("lead_recorded", "", true);
+  
+  if (import.meta.env.DEV) {
+    console.log("[Analytics Debug] Conversion events logged successfully to database analytics endpoints.");
+  }
 }
