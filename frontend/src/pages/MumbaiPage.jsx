@@ -468,12 +468,12 @@ export default function MumbaiPage() {
               <motion.div
                 whileHover={{ scale: 1.08, rotate: [0, -3, 3, 0] }}
                 transition={{ type: "spring", stiffness: 400, damping: 15 }}
-                className="h-18 w-18 sm:h-15 sm:w-15 shrink-0 bg-white rounded-2xl border border-slate-200/60 shadow-sm flex items-center justify-center cursor-pointer"
+                className="h-[72px] w-[72px] sm:h-[60px] sm:w-[60px] shrink-0 bg-white rounded-2xl border border-slate-200/60 shadow-sm flex items-center justify-center cursor-pointer"
               >
                 <img
                   src="/logo.png"
                   alt="ST"
-                  className="h-14 w-14 sm:h-12 sm:w-12 rounded-xl object-contain"
+                  className="h-[56px] w-[56px] sm:h-[48px] sm:w-[48px] rounded-xl object-contain"
                   onError={(e) => {
                     e.target.src = "https://placehold.co/100x100?text=ST";
                   }}
