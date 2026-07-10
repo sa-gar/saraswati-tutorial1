@@ -181,15 +181,16 @@ export const PLANS = [
     title: "Foundation Plan",
     theme: "silver",
     badge: "SAVE UP TO 18%",
-    description: "Affordable and practice-focused plan designed for students seeking consistent academic support.",
+    description: "",
     price: "₹6,353",
     gradient: "from-[#F8FAFC] to-[#CBD5E1]",
     textColor: "text-slate-800",
     badgeTheme: "bg-slate-900/10 text-slate-800 border-slate-900/20",
-    keyBenefit: "Verified Tutors, Homework, Basic Support",
+    keyBenefit: "Background Verified, Homework Support & Beginner-Friendly",
     cardBenefits: [
-      "Daily Homework Support & Consistent Practice",
-      "Tutor Experience: 0–1 Year"
+      "Background Verified Tutors",
+      "Homework Support",
+      "Beginner-Friendly Tutors"
     ],
     pricingOptions: [
       { days: 3, hours: 1.5, price: 6353 },
@@ -204,15 +205,11 @@ export const PLANS = [
         { label: "Savings aspect", value: "Save up to 18%" }
       ],
       benefits: [
-        { title: "Background Verified Tutors", desc: "All tutors are thoroughly vetted and background-checked for absolute safety." },
-        { title: "Entry Level Tutors", desc: "Affordable sessions guided by enthusiastic tutors with 0–1 year experience." }
+        { title: "Background Verified Tutors" },
+        { title: "Homework Support" },
+        { title: "Beginner-Friendly Tutors" }
       ],
-      features: [
-        "Homework Support",
-        "Monthly syllabus alignment review",
-        "Access to digital learning sheets & practice banks",
-        "Basic monthly progress report for parents"
-      ],
+      features: [],
       faqs: [
         { q: "Can we change classes if we miss a session?", a: "Yes, rescheduling is permitted with a 24-hour notice to the tutor." },
         { q: "Who are the tutors for this plan?", a: "Vetted tutors and university graduates with 0–1 year of teaching experience who excel in explaining core academic concepts." },
@@ -226,16 +223,19 @@ export const PLANS = [
     title: "Advance Growth Plan",
     theme: "gold",
     badge: "Most Recommended",
-    description: "Enhanced learning experience with experienced tutors, structured guidance and additional academic support.",
+    description: "",
     price: "₹9,130",
-    gradient: "from-[#FFD700] to-[#F59E0B]",
+    gradient: "from-[#FFE082] via-[#F59E0B] to-[#D97706]",
     textColor: "text-slate-955",
     textDarkColor: "text-slate-955",
     badgeTheme: "bg-black/10 text-slate-950 border-black/20",
-    keyBenefit: "Focused Growth (Planning, Practice, Assessments)",
+    keyBenefit: "Strategy, Monthly Tests, Guidance, Allocation & Support",
     cardBenefits: [
-      "Tutor Experience: 3–10 Years",
-      "Customized School Syllabus Tracking"
+      "Academic Strategy & Deadlines",
+      "Internal Test/Assignment — Monthly",
+      "Consistent Guidance & Regular Practice",
+      "Tutor Allocation (5–8 km)",
+      "Tutor Replacement Within 5 Days"
     ],
     pricingOptions: [
       { days: 3, hours: 1.5, price: 9130 },
@@ -250,19 +250,13 @@ export const PLANS = [
         { label: "Investment diff", value: "Only +18% vs Base Plan" }
       ],
       benefits: [
-        { title: "Tutor Verification", desc: "Thoroughly vetted and background-verified home tutors with 3–10 years experience." },
-        { title: "Tutor Location", desc: "Assigning local tutors within a 5 km – 8 km location radius." },
-        { title: "24-Hour Doubt Support", desc: "Instant academic assistance and doubt solving available round the clock." },
-        { title: "Tutor Replacement Support", desc: "Tutor replacement within 3–5 days if teaching style doesn't match." }
+        { title: "Academic Strategy & Deadlines" },
+        { title: "Internal Test/Assignment — Monthly" },
+        { title: "Consistent Guidance & Regular Practice" },
+        { title: "Tutor Allocation (5–8 km)" },
+        { title: "Tutor Replacement Within 5 Days" }
       ],
-      features: [
-        "Consistent Guidance & Regular Practice",
-        "Internal Test – Monthly",
-        "Academic Strategy & Deadlines",
-        "Performance Review Sessions (Monthly)",
-        "Progress Tracking (Monthly)",
-        "Parent Progress Updates (Monthly)"
-      ],
+      features: [],
       faqs: [
         { q: "How are tutors selected for this plan?", a: "We match tutors with 3 to 10 years of teaching experience, specifically verified for secondary grades." },
         { q: "What if a student struggles with a specific topic?", a: "Tutors will modify the lesson plan to dedicate additional time for remedial teaching." },
@@ -276,18 +270,21 @@ export const PLANS = [
     title: "Elite Mentor Plan",
     theme: "black",
     badge: "Best Choice",
-    description: "Premium mentorship with highly experienced tutors and personalized academic guidance.",
+    description: "",
     price: "₹10,000",
     gradient: "from-[#111827] to-[#000000]",
     textColor: "text-white",
     textDarkColor: "text-white",
     badgeTheme: "bg-white/10 text-white border-white/10",
     experience: "10+ Years",
-    keyBenefit: "Certain Performance (Priority, Faster Support, Monitoring & Personal Mentoring)",
+    keyBenefit: "Priority Allocation, Result-Oriented Mentorship & Support",
     cardBenefits: [
-      "Veteran School Teachers & Board Examiners",
-      "Tutor Experience: 10+ Years",
-      "Dedicated Academic Counselor & Advanced Test Series"
+      "Priority Tutor Allocation",
+      "Clean Result-Oriented Learning",
+      "Online Academic Doubt Support",
+      "Bi-Weekly Test/Assignment",
+      "Priority Tutor Replacement",
+      "Attendance & Compensation Access"
     ],
     pricingOptions: [
       { days: 3, hours: 1, price: 10000 },
@@ -302,21 +299,14 @@ export const PLANS = [
         { label: "Tutor matching", value: "Veteran mentors only" }
       ],
       benefits: [
-        { title: "Accuracy & Result Oriented", desc: "Target-oriented sessions focusing on high academic precision and results." },
-        { title: "Tutor Experience", desc: "Tutors with 10–15+ years of teaching experience." },
-        { title: "Tutor Location", desc: "Assigning tutors from area within 1 km – 3 km." },
-        { title: "24-Hour Doubt Support", desc: "24 Hrs WhatsApp Support (After tuition) for student doubts." },
-        { title: "Tutor Replacement Support", desc: "Hassle-free tutor replacement within 48 hours." },
-        { title: "Access of Attendance Record & Communication Details", desc: "Real-time access to student attendance and direct communication details." }
+        { title: "Priority Tutor Allocation", desc: "Nearest tutor matching from parents' location" },
+        { title: "Clean Result-Oriented Learning", desc: "Accuracy, strategy & exam-focused preparation" },
+        { title: "Online Academic Doubt Support", desc: "WhatsApp doubt support with the same tutor" },
+        { title: "Bi-Weekly Test/Assignment", desc: "Bi-weekly tests and performance tracking" },
+        { title: "Priority Tutor Replacement", desc: "Replacement support within 24–48 hours" },
+        { title: "Attendance & Compensation Access", desc: "Attendance tracking & missed class support" }
       ],
-      features: [
-        "Internal Test – Biweekly",
-        "Performance Review Sessions (Bi-weekly)",
-        "Progress Tracking (Bi-weekly)",
-        "Parent Progress Updates (Bi-weekly)",
-        "Dedicated Counselor",
-        "Priority Scheduling Support"
-      ],
+      features: [],
       faqs: [
         { q: "Who are the Elite Mentors?", a: "They are school coordinators, board examiners, and veteran teachers with 10+ years of teaching experience." },
         { q: "Is the schedule highly flexible?", a: "Yes, elite members receive priority slots, meaning schedules can be adjusted dynamically." },

@@ -180,7 +180,7 @@ export default function MumbaiPage() {
 
   useEffect(() => {
     const handleScroll = () => {
-      const sections = ["home", "why-choose", "subjects", "boards", "areas", "faqs"];
+      const sections = ["home", "why-choose", "plans", "subjects", "boards", "areas", "faqs"];
       const scrollPosition = window.scrollY + 160;
 
       for (const section of sections) {
@@ -504,6 +504,7 @@ export default function MumbaiPage() {
             {[
               { href: "#home", label: "Home", id: "home" },
               { href: "#why-choose", label: "Why Us", id: "why-choose" },
+              { href: "#plans", label: "Plans", id: "plans" },
               { href: "#subjects", label: "Subjects", id: "subjects" },
               { href: "#boards", label: "Boards", id: "boards" },
               { href: "#areas", label: "Areas", id: "areas" },
@@ -582,6 +583,7 @@ export default function MumbaiPage() {
                 </div>
                 <a href="#home" onClick={() => setMenuOpen(false)} className="py-2">Home</a>
                 <a href="#why-choose" onClick={() => setMenuOpen(false)} className="py-2">Why Us</a>
+                <a href="#plans" onClick={() => setMenuOpen(false)} className="py-2">Plans</a>
                 <a href="#subjects" onClick={() => setMenuOpen(false)} className="py-2">Subjects</a>
                 <a href="#boards" onClick={() => setMenuOpen(false)} className="py-2">Boards</a>
                 <a href="#areas" onClick={() => setMenuOpen(false)} className="py-2">Areas We Serve</a>

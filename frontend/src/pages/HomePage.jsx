@@ -707,7 +707,7 @@ export default function HomePage() {
 
   useEffect(() => {
     const handleScroll = () => {
-      const sections = ["home", "tutors", "why-choose", "subjects", "boards", "areas", "faqs"];
+      const sections = ["home", "tutors", "why-choose", "plans", "subjects", "boards", "areas", "faqs"];
       const scrollPosition = window.scrollY + 160;
 
       for (const section of sections) {
@@ -1145,6 +1145,7 @@ export default function HomePage() {
               { href: "#home", label: "Home", id: "home" },
               { href: "#tutors", label: "Tutors", id: "tutors" },
               { href: "#why-choose", label: "Why Us", id: "why-choose" },
+              { href: "#plans", label: "Plans", id: "plans" },
               { href: "#subjects", label: "Subjects", id: "subjects" },
               { href: "#boards", label: "Boards", id: "boards" },
               { href: "#areas", label: "Areas", id: "areas" },
@@ -1224,6 +1225,7 @@ export default function HomePage() {
                 <a href="#home" onClick={() => setMenuOpen(false)} className="py-2">Home</a>
                 <a href="#tutors" onClick={() => setMenuOpen(false)} className="py-2">Tutors</a>
                 <a href="#why-choose" onClick={() => setMenuOpen(false)} className="py-2">Why Us</a>
+                <a href="#plans" onClick={() => setMenuOpen(false)} className="py-2">Plans</a>
                 <a href="#subjects" onClick={() => setMenuOpen(false)} className="py-2">Subjects</a>
                 <a href="#boards" onClick={() => setMenuOpen(false)} className="py-2">Boards</a>
                 <a href="#areas" onClick={() => setMenuOpen(false)} className="py-2">Areas We Serve</a>

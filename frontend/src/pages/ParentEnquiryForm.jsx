@@ -28,7 +28,12 @@ import {
   Laptop,
   Home,
   Video,
-  Users
+  Users,
+  Smile,
+  Compass,
+  TrendingUp,
+  RefreshCw,
+  MessageSquare
 } from "lucide-react";
 import { PLANS, calculatePrice, calculateEliteHourlyPrice, calculateEliteMonthlyPrice } from "../data/plansConfig";
 import { API_BASE } from "../config";
@@ -315,221 +320,210 @@ const getDynamicCalculation = (planId, option, classGrade = "6", curriculum = "C
   return null;
 };
 
-// ==========================================
-// Premium SVG Icon Components for Core Benefits
-// ==========================================
-const VerificationSVG = () => (
-  <svg width="80" height="80" viewBox="0 0 80 80" fill="none" className="shrink-0 drop-shadow-[0_4px_10px_rgba(30,58,138,0.3)]">
-    <defs>
-      <linearGradient id="shieldGrad" x1="10" y1="10" x2="70" y2="70" gradientUnits="userSpaceOnUse">
-        <stop offset="0%" stopColor="#1E3A8A" stopOpacity="0.8" />
-        <stop offset="100%" stopColor="#0B132B" stopOpacity="0.9" />
-      </linearGradient>
-      <linearGradient id="goldGrad" x1="20" y1="20" x2="60" y2="60" gradientUnits="userSpaceOnUse">
-        <stop offset="0%" stopColor="#F59E0B" />
-        <stop offset="50%" stopColor="#FBBF24" />
-        <stop offset="100%" stopColor="#B45309" />
-      </linearGradient>
-      <linearGradient id="borderGrad" x1="10" y1="10" x2="70" y2="70" gradientUnits="userSpaceOnUse">
-        <stop offset="0%" stopColor="#60A5FA" />
-        <stop offset="100%" stopColor="#1D4ED8" />
-      </linearGradient>
-    </defs>
-    <path d="M40 10 C48 10 65 14 65 26 C65 50 48 68 40 72 C32 68 15 50 15 26 C15 14 32 10 40 10 Z" fill="url(#shieldGrad)" stroke="url(#borderGrad)" strokeWidth="2.5" />
-    <path d="M40 45 C47.732 45 54 51.268 54 59 H26 C26 51.268 32.268 45 40 45 Z" fill="url(#goldGrad)" opacity="0.8" />
-    <circle cx="40" cy="32" r="9" fill="url(#goldGrad)" />
-    <circle cx="58" cy="56" r="10" fill="#0B132B" stroke="url(#goldGrad)" strokeWidth="2" />
-    <circle cx="58" cy="56" r="8" fill="url(#goldGrad)" />
-    <path d="M54 56.5 L56.5 59 L62 53.5" stroke="#0B132B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-  </svg>
-);
-
-const LocationSVG = () => (
-  <svg width="80" height="80" viewBox="0 0 80 80" fill="none" className="shrink-0 drop-shadow-[0_4px_10px_rgba(245,158,11,0.25)]">
-    <defs>
-      <linearGradient id="pinGrad" x1="40" y1="12" x2="40" y2="52" gradientUnits="userSpaceOnUse">
-        <stop offset="0%" stopColor="#FFE082" />
-        <stop offset="50%" stopColor="#F59E0B" />
-        <stop offset="100%" stopColor="#D97706" />
-      </linearGradient>
-      <linearGradient id="mapGrad" x1="15" y1="45" x2="65" y2="70" gradientUnits="userSpaceOnUse">
-        <stop offset="0%" stopColor="#1E3A8A" stopOpacity="0.4" />
-        <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.1" />
-      </linearGradient>
-    </defs>
-    <path d="M15 55 L40 45 L65 55 L40 65 Z" fill="url(#mapGrad)" stroke="#3B82F6" strokeWidth="1.5" strokeOpacity="0.6" />
-    <path d="M27.5 50 L52.5 60" stroke="#3B82F6" strokeWidth="1" strokeOpacity="0.4" />
-    <path d="M27.5 60 L52.5 50" stroke="#3B82F6" strokeWidth="1" strokeOpacity="0.4" />
-    <ellipse cx="40" cy="55" rx="16" ry="6" stroke="#3B82F6" strokeWidth="1" strokeDasharray="3 3" strokeOpacity="0.8" />
-    <ellipse cx="40" cy="55" rx="8" ry="3" stroke="#FFE082" strokeWidth="1" strokeOpacity="0.8" />
-    <g transform="translate(0, -4)">
-      <path d="M40 52 C38 52 26 40 26 28 C26 20.268 32.268 14 40 14 C47.732 14 54 20.268 54 28 C54 40 42 52 40 52 Z" fill="url(#pinGrad)" />
-      <circle cx="40" cy="28" r="6" fill="#0B132B" />
-    </g>
-  </svg>
-);
-
-const DoubtSupportSVG = () => (
-  <svg width="80" height="80" viewBox="0 0 80 80" fill="none" className="shrink-0 drop-shadow-[0_4px_10px_rgba(59,130,246,0.3)]">
-    <defs>
-      <linearGradient id="clockGrad" x1="15" y1="15" x2="65" y2="65" gradientUnits="userSpaceOnUse">
-        <stop offset="0%" stopColor="#1E293B" />
-        <stop offset="100%" stopColor="#0B132B" />
-      </linearGradient>
-      <linearGradient id="goldArrow" x1="20" y1="20" x2="60" y2="60" gradientUnits="userSpaceOnUse">
-        <stop offset="0%" stopColor="#FBBF24" />
-        <stop offset="100%" stopColor="#D97706" />
-      </linearGradient>
-    </defs>
-    <circle cx="40" cy="40" r="26" fill="url(#clockGrad)" stroke="#3B82F6" strokeWidth="2.5" />
-    <path d="M40 40 L40 24" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" />
-    <path d="M40 40 L52 40" stroke="#F59E0B" strokeWidth="2.5" strokeLinecap="round" />
-    <circle cx="40" cy="40" r="3" fill="#FFFFFF" />
-    <path d="M68 40 C68 55.464 55.464 68 40 68 C24.536 68 12 55.464 12 40 C12 24.536 24.536 12 40 12 C48.5 12 56 16 61 22.5" stroke="url(#goldArrow)" strokeWidth="2" strokeLinecap="round" strokeDasharray="3 2" />
-    <path d="M57 23 L63 23 L63 17" stroke="url(#goldArrow)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-    <rect x="42" y="52" width="28" height="15" rx="7.5" fill="#0B132B" stroke="#3B82F6" strokeWidth="1.5" />
-    <text x="56" y="63" fill="#FFFFFF" fontSize="8" fontWeight="bold" textAnchor="middle" fontFamily="sans-serif">24/7</text>
-  </svg>
-);
-
-const ReplacementSVG = () => (
-  <svg width="80" height="80" viewBox="0 0 80 80" fill="none" className="shrink-0 drop-shadow-[0_4px_10px_rgba(30,58,138,0.3)]">
-    <defs>
-      <linearGradient id="userBlue" x1="15" y1="40" x2="45" y2="70" gradientUnits="userSpaceOnUse">
-        <stop offset="0%" stopColor="#3B82F6" />
-        <stop offset="100%" stopColor="#1E3B8B" />
-      </linearGradient>
-      <linearGradient id="userGold" x1="45" y1="45" x2="65" y2="65" gradientUnits="userSpaceOnUse">
-        <stop offset="0%" stopColor="#FBBF24" />
-        <stop offset="100%" stopColor="#D97706" />
-      </linearGradient>
-      <linearGradient id="arrowGrad" x1="20" y1="20" x2="60" y2="20" gradientUnits="userSpaceOnUse">
-        <stop offset="0%" stopColor="#F59E0B" />
-        <stop offset="100%" stopColor="#3B82F6" />
-      </linearGradient>
-    </defs>
-    <path d="M30 46 C37.732 46 44 52.268 44 60 H16 C16 52.268 22.268 46 30 46 Z" fill="url(#userBlue)" stroke="#1E4ED8" strokeWidth="1.5" />
-    <circle cx="30" cy="33" r="8" fill="url(#userBlue)" stroke="#1E4ED8" strokeWidth="1.5" />
-    <path d="M54 50 C60.627 50 66 55.373 66 62 H42 C42 55.373 47.373 50 54 50 Z" fill="url(#userGold)" stroke="#B45309" strokeWidth="1" />
-    <circle cx="54" cy="39" r="6" fill="url(#userGold)" stroke="#B45309" strokeWidth="1" />
-    <path d="M22 26 C30 18 50 18 58 26" stroke="url(#arrowGrad)" strokeWidth="2" strokeLinecap="round" fill="none" />
-    <path d="M58 20 L58 26 L52 26" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-    <path d="M58 60 C50 68 30 68 22 60" stroke="url(#arrowGrad)" strokeWidth="2" strokeLinecap="round" fill="none" />
-    <path d="M22 66 L22 60 L28 60" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-  </svg>
-);
-
-const GuidanceSVG = () => (
-  <svg width="80" height="80" viewBox="0 0 80 80" fill="none" className="shrink-0 drop-shadow-[0_4px_10px_rgba(59,130,246,0.3)]">
-    <defs>
-      <linearGradient id="compGrad" x1="15" y1="15" x2="65" y2="65" gradientUnits="userSpaceOnUse">
-        <stop offset="0%" stopColor="#1E293B" />
-        <stop offset="100%" stopColor="#0B132B" />
-      </linearGradient>
-      <linearGradient id="needleGold" x1="40" y1="25" x2="40" y2="55" gradientUnits="userSpaceOnUse">
-        <stop offset="0%" stopColor="#FBBF24" />
-        <stop offset="100%" stopColor="#D97706" />
-      </linearGradient>
-    </defs>
-    <circle cx="40" cy="40" r="26" fill="url(#compGrad)" stroke="#3B82F6" strokeWidth="2.5" />
-    <path d="M40 18 L46 40 L40 45 L34 40 Z" fill="url(#needleGold)" />
-    <path d="M40 62 L34 40 L40 45 L46 40 Z" fill="#60A5FA" opacity="0.8" />
-    <circle cx="40" cy="40" r="3" fill="#FFFFFF" />
-    <line x1="40" y1="18" x2="40" y2="22" stroke="#FFFFFF" strokeWidth="1.5" />
-    <line x1="40" y1="58" x2="40" y2="62" stroke="#FFFFFF" strokeWidth="1.5" />
-    <line x1="18" y1="40" x2="22" y2="40" stroke="#FFFFFF" strokeWidth="1.5" />
-    <line x1="58" y1="40" x2="62" y2="40" stroke="#FFFFFF" strokeWidth="1.5" />
-  </svg>
-);
-
-const HomeworkSVG = () => (
-  <svg width="80" height="80" viewBox="0 0 80 80" fill="none" className="shrink-0 drop-shadow-[0_4px_10px_rgba(245,158,11,0.25)]">
-    <defs>
-      <linearGradient id="bookGrad" x1="20" y1="20" x2="60" y2="60" gradientUnits="userSpaceOnUse">
-        <stop offset="0%" stopColor="#1E3A8A" />
-        <stop offset="100%" stopColor="#0B132B" />
-      </linearGradient>
-      <linearGradient id="pencilGold" x1="45" y1="20" x2="65" y2="40" gradientUnits="userSpaceOnUse">
-        <stop offset="0%" stopColor="#FFE082" />
-        <stop offset="50%" stopColor="#F59E0B" />
-        <stop offset="100%" stopColor="#D97706" />
-      </linearGradient>
-    </defs>
-    <path d="M22 25 C22 22 25 20 38 20 C51 20 58 24 58 24 L58 58 C58 58 51 54 38 54 C25 54 22 56 22 56 Z" fill="url(#bookGrad)" stroke="#3B82F6" strokeWidth="2" />
-    <path d="M38 20 C38 20 45 23 58 23" stroke="#3B82F6" strokeWidth="1.5" />
-    <path d="M22 56 C22 56 29 53 38 53 L38 20" stroke="#3B82F6" strokeWidth="2" />
-    <line x1="28" y1="30" x2="34" y2="30" stroke="#60A5FA" strokeWidth="1.5" strokeOpacity="0.6" />
-    <line x1="28" y1="36" x2="34" y2="36" stroke="#60A5FA" strokeWidth="1.5" strokeOpacity="0.6" />
-    <line x1="28" y1="42" x2="34" y2="42" stroke="#60A5FA" strokeWidth="1.5" strokeOpacity="0.6" />
-    <g transform="translate(6, 2) rotate(15 50 30)">
-      <path d="M48 20 L54 20 L54 45 L48 45 Z" fill="url(#pencilGold)" />
-      <path d="M48 20 L51 14 L54 20 Z" fill="#FFE57F" />
-      <path d="M50.5 14 L51.5 14 L51 17 Z" fill="#0B132B" />
-      <rect x="48" y="43" width="6" height="4" rx="1" fill="#EF4444" />
-    </g>
-  </svg>
-);
-
-const PracticeSVG = () => (
-  <svg width="80" height="80" viewBox="0 0 80 80" fill="none" className="shrink-0 drop-shadow-[0_4px_10px_rgba(59,130,246,0.3)]">
-    <defs>
-      <linearGradient id="targetGrad" x1="15" y1="15" x2="65" y2="65" gradientUnits="userSpaceOnUse">
-        <stop offset="0%" stopColor="#1E3A8A" stopOpacity="0.8" />
-        <stop offset="100%" stopColor="#0B132B" stopOpacity="0.9" />
-      </linearGradient>
-    </defs>
-    <circle cx="40" cy="40" r="26" fill="url(#targetGrad)" stroke="#3B82F6" strokeWidth="2.5" />
-    <circle cx="40" cy="40" r="18" stroke="#FFE082" strokeWidth="2" strokeDasharray="4 2" />
-    <circle cx="40" cy="40" r="10" stroke="#F59E0B" strokeWidth="2" />
-    <circle cx="40" cy="40" r="4" fill="#F59E0B" />
-    <path d="M58 22 L42 38" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" />
-    <path d="M42 38 L48 38 L42 44 Z" fill="#FFFFFF" />
-    <path d="M55 21 L59 17 M57 23 L61 19" stroke="#60A5FA" strokeWidth="2" strokeLinecap="round" />
-  </svg>
-);
-
-const ExperienceSVG = () => (
-  <svg width="80" height="80" viewBox="0 0 80 80" fill="none" className="shrink-0 drop-shadow-[0_4px_10px_rgba(245,158,11,0.25)]">
-    <defs>
-      <linearGradient id="medalGold" x1="20" y1="20" x2="60" y2="60" gradientUnits="userSpaceOnUse">
-        <stop offset="0%" stopColor="#FFE082" />
-        <stop offset="50%" stopColor="#F59E0B" />
-        <stop offset="100%" stopColor="#D97706" />
-      </linearGradient>
-    </defs>
-    <path d="M32 40 L24 65 L36 60 L44 40 Z" fill="#3B82F6" opacity="0.8" />
-    <path d="M48 40 L56 65 L44 60 L36 40 Z" fill="#1D4ED8" />
-    <circle cx="40" cy="34" r="20" fill="url(#medalGold)" stroke="#FFFFFF" strokeWidth="2" />
-    <circle cx="40" cy="34" r="16" fill="#0B132B" />
-    <path d="M40 23 L43.5 30 L51 31 L45.5 36 L47 43.5 L40 40 L33 43.5 L34.5 36 L29 31 L36.5 30 Z" fill="url(#medalGold)" />
-  </svg>
-);
-
-const getBenefitIcon = (title) => {
-  switch (title) {
-    case "Tutor Verification":
-    case "Background Verified Tutors":
-    case "Accuracy & Result Oriented":
-      return <VerificationSVG />;
-    case "Tutor Location":
-      return <LocationSVG />;
-    case "24 Hours Doubt Support":
-    case "24-Hour Doubt Support":
-      return <DoubtSupportSVG />;
-    case "Tutor Replacement Support":
-      return <ReplacementSVG />;
-    case "Consistent Guidance":
-      return <GuidanceSVG />;
-    case "Homework Support":
-      return <HomeworkSVG />;
-    case "Daily Practice":
-      return <PracticeSVG />;
-    case "Tutor Experience":
-    case "Entry Level Tutors":
-      return <ExperienceSVG />;
-    default:
-      return <VerificationSVG />;
+const SimpleBenefitIcon = ({ title, planTheme }) => {
+  const t = String(title || "").trim().toLowerCase();
+  
+  // Choose theme values based on planTheme
+  let glowColor = "#64748B";       // Silver default
+  let glassStart = "#F8FAFC";
+  let glassMid = "#CBD5E1";
+  let glassEnd = "#475569";
+  let themeLight = "#E2E8F0";
+  
+  if (planTheme === "gold") {
+    // Rich warm molten liquid gold theme colors
+    glowColor = "#F59E0B";
+    glassStart = "#FFF9DB";
+    glassMid = "#F59E0B";
+    glassEnd = "#B45309";
+    themeLight = "#FBBF24";
+  } else if (planTheme === "black") {
+    // Elite uses high-end premium blue glass glow to contrast with dark theme card
+    glowColor = "#3B82F6";
+    glassStart = "#EFF6FF";
+    glassMid = "#3B82F6";
+    glassEnd = "#1D4ED8";
+    themeLight = "#60A5FA";
   }
+  
+  // Decide which inner path markup to render
+  let innerPaths = null;
+  
+  if (t.includes("verified") && !t.includes("allocation")) {
+    // ShieldCheck
+    innerPaths = (
+      <>
+        <path d="M40 22 C40 22 52 26 52 32 V44 C52 50 44 56 40 58 C36 56 28 50 28 44 V32 C28 26 40 22 40 22 Z" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+        <path d="M34 38 L38 42 L46 34" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      </>
+    );
+  } else if (t.includes("homework")) {
+    // BookOpen
+    innerPaths = (
+      <>
+        <path d="M40 52 V26 C40 26 34 22 26 22 H24 V48 C24 48 30 48 38 52 Z" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+        <path d="M40 52 V26 C40 26 46 22 54 22 H56 V48 C56 48 50 48 42 52 Z" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      </>
+    );
+  } else if (t.includes("beginner-friendly")) {
+    // Smile
+    innerPaths = (
+      <>
+        <circle cx="40" cy="40" r="16" stroke="white" strokeWidth="3.5" fill="none" />
+        <circle cx="34" cy="36" r="2.5" fill="white" />
+        <circle cx="46" cy="36" r="2.5" fill="white" />
+        <path d="M32 44 Q40 50 48 44" stroke="white" strokeWidth="3.5" strokeLinecap="round" fill="none" />
+      </>
+    );
+  } else if (t.includes("strategy") || t.includes("deadline")) {
+    // Compass
+    innerPaths = (
+      <>
+        <circle cx="40" cy="40" r="16" stroke="white" strokeWidth="3.5" fill="none" />
+        <path d="M40 28 L45 39 L40 43 L35 39 Z" fill="white" />
+        <circle cx="40" cy="40" r="1.5" fill="#111827" />
+      </>
+    );
+  } else if (t.includes("internal test") || t.includes("bi-weekly test") || t.includes("assignment")) {
+    // FileText
+    innerPaths = (
+      <>
+        <rect x="28" y="24" width="24" height="32" rx="3" stroke="white" strokeWidth="3.5" fill="none" />
+        <line x1="34" y1="32" x2="46" y2="32" stroke="white" strokeWidth="3.5" strokeLinecap="round" />
+        <line x1="34" y1="40" x2="46" y2="40" stroke="white" strokeWidth="3.5" strokeLinecap="round" />
+        <line x1="34" y1="48" x2="40" y2="48" stroke="white" strokeWidth="3.5" strokeLinecap="round" />
+      </>
+    );
+  } else if (t.includes("guidance") || t.includes("practice")) {
+    // TrendingUp
+    innerPaths = (
+      <>
+        <path d="M26 46 L34 38 L40 44 L54 28" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+        <path d="M46 28 H54 V36" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      </>
+    );
+  } else if (t.includes("allocation") || t.includes("km")) {
+    // Premium Location Pin with pulse ring
+    innerPaths = (
+      <>
+        {/* Outer pulse ring */}
+        <circle cx="40" cy="33" r="14" stroke="white" strokeWidth="1.2" strokeOpacity="0.35" fill="none" strokeDasharray="3 3" />
+        {/* Pin body */}
+        <path d="M40 57 C40 57 27 44 27 34 C27 26.82 32.82 21 40 21 C47.18 21 53 26.82 53 34 C53 44 40 57 40 57 Z" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="white" fillOpacity="0.15" />
+        {/* Inner filled dot */}
+        <circle cx="40" cy="34" r="5.5" fill="white" />
+        {/* Inner ring around dot */}
+        <circle cx="40" cy="34" r="9" stroke="white" strokeWidth="1.5" fill="none" strokeOpacity="0.5" />
+      </>
+    );
+  } else if (t.includes("replacement")) {
+    // Premium circular sync — center(40,40) r=21, each arc 150°, 30° gap
+    // Arc 1: 165°(20,45) → clockwise over TOP → 315°(55,25) [arrowhead V tangent-aligned]
+    // Arc 2: 345°(60,35) → clockwise under BOTTOM → 135°(25,55) [arrowhead V tangent-aligned]
+    innerPaths = (
+      <>
+        {/* Arc 1: over the top */}
+        <path d="M 20 45 A 21 21 0 0 1 55 25" stroke="white" strokeWidth="3.5" strokeLinecap="round" fill="none" />
+        {/* V arrowhead at 315° (55,25): both arms go backward = upper-left; tip points lower-right ↘ */}
+        <polyline points="47,24 55,25 54,17" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+        {/* Arc 2: under the bottom */}
+        <path d="M 60 35 A 21 21 0 0 1 25 55" stroke="white" strokeWidth="3.5" strokeLinecap="round" fill="none" />
+        {/* V arrowhead at 135° (25,55): tangent direction 225° = upper-left */}
+        <polyline points="33,56 25,55 26,63" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      </>
+    );
+  } else if (t.includes("result-oriented") || t.includes("learning")) {
+    // Award
+    innerPaths = (
+      <>
+        <circle cx="40" cy="32" r="9" stroke="white" strokeWidth="3.5" fill="none" />
+        <path d="M35 41 L31 58 L40 52 L49 58 L45 41" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      </>
+    );
+  } else if (t.includes("doubt")) {
+    // MessageSquare
+    innerPaths = (
+      <>
+        <path d="M52 25 H28 C25.8 25 24 26.8 24 29 V43 C24 45.2 25.8 47 28 47 H44 L52 53 V29 C52 26.8 50.2 25 48 25 Z" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      </>
+    );
+  } else if (t.includes("attendance") || t.includes("compensation")) {
+    // Calendar
+    innerPaths = (
+      <>
+        <rect x="26" y="24" width="28" height="28" rx="3" stroke="white" strokeWidth="3.5" fill="none" />
+        <line x1="26" y1="34" x2="54" y2="34" stroke="white" strokeWidth="3.5" />
+        <line x1="33" y1="20" x2="33" y2="26" stroke="white" strokeWidth="3.5" strokeLinecap="round" />
+        <line x1="47" y1="20" x2="47" y2="26" stroke="white" strokeWidth="3.5" strokeLinecap="round" />
+      </>
+    );
+  }
+  
+  const cleanId = planTheme + t.replace(/[^a-z]/g, "");
+
+  return (
+    <svg viewBox="0 0 80 80" className="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        {/* Soft colorful glowing drop shadow */}
+        <filter id={`glassShad-${cleanId}`} x="-40%" y="-40%" width="180%" height="180%">
+          <feDropShadow dx="0" dy="8" stdDeviation="6" floodColor={glowColor} floodOpacity="0.45" />
+          <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor="#000000" floodOpacity="0.22" />
+        </filter>
+        
+        {/* Inner raised white icon emboss shadow */}
+        <filter id={`iconShad-${cleanId}`} x="-35%" y="-35%" width="170%" height="170%">
+          <feDropShadow dx="0" dy="3.5" stdDeviation="2" floodColor="#000000" floodOpacity="0.5" />
+        </filter>
+        
+        {/* Glass base radial gradient representing volumetric light reflection */}
+        <radialGradient id={`glassBody-${cleanId}`} cx="30" cy="30" r="45" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor={glassStart} stopOpacity="0.95" />
+          <stop offset="60%" stopColor={glassMid} stopOpacity="0.75" />
+          <stop offset="100%" stopColor={glassEnd} stopOpacity="0.35" />
+        </radialGradient>
+        
+        {/* Glass border gradient representing refraction edges */}
+        <linearGradient id={`glassBorder-${cleanId}`} x1="20" y1="10" x2="60" y2="70" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.95" />
+          <stop offset="30%" stopColor={themeLight} stopOpacity="0.55" />
+          <stop offset="70%" stopColor="#000000" stopOpacity="0.25" />
+          <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0.65" />
+        </linearGradient>
+        
+        {/* Dynamic diagonal glossy sheen */}
+        <linearGradient id={`glossSheen-${cleanId}`} x1="16" y1="16" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.6" />
+          <stop offset="35%" stopColor="#FFFFFF" stopOpacity="0.22" />
+          <stop offset="35.1%" stopColor="#FFFFFF" stopOpacity="0" />
+          <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      
+      {/* Outer ambient border ring */}
+      <circle cx="40" cy="40" r="33.5" stroke={themeLight} strokeWidth="1.2" strokeOpacity="0.25" fill="none" />
+      
+      {/* 3D Glassy base circle */}
+      <circle cx="40" cy="40" r="32" fill={`url(#glassBody-${cleanId})`} filter={`url(#glassShad-${cleanId})`} />
+      
+      {/* Bevel reflection ring */}
+      <circle cx="40" cy="40" r="31.8" stroke={`url(#glassBorder-${cleanId})`} strokeWidth="2" fill="none" />
+      
+      {/* Gel-button highlight overlay */}
+      <path d="M11.6 34 C 18 18, 62 18, 68.4 34 A 32 32 0 0 0 11.6 34 Z" fill={`url(#glossSheen-${cleanId})`} />
+      
+      {/* Volumetric bottom shadow overlay */}
+      <path d="M11.6 46 A 32 32 0 0 0 68.4 46 A 34 34 0 0 1 11.6 46 Z" fill="#000000" opacity="0.32" />
+      
+      {/* Raised white 3D Embossed Icon */}
+      <g filter={`url(#iconShad-${cleanId})`}>
+        {innerPaths}
+      </g>
+    </svg>
+  );
+};
+
+const getBenefitIcon = (title, planTheme) => {
+  return <SimpleBenefitIcon title={title} planTheme={planTheme} />;
 };
 
 export default function ParentEnquiryForm() {
@@ -1938,67 +1932,40 @@ export default function ParentEnquiryForm() {
                                 {/* Benefits */}
                                 <div>
                                   <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2.5">Core Benefits</h4>
-                                  <div className="grid gap-3 sm:grid-cols-2">
+                                  <div className="grid gap-2.5 sm:grid-cols-2">
                                     {activePlanData.fullDetails.benefits.map((benefit, idx) => {
                                       const isDarkModal = activePlanData.theme === 'black';
                                       return (
                                         <div
                                           key={idx}
-                                          className={`flex gap-3.5 items-start rounded-2xl p-4 transition duration-300 ${
+                                          className={`flex gap-2.5 sm:gap-3 rounded-2xl p-2.5 sm:p-3 transition duration-300 ${
+                                            benefit.desc ? 'items-start' : 'items-center'
+                                          } ${
                                             isDarkModal
                                               ? 'bg-gradient-to-br from-[#0B1528] to-[#050B15] border border-blue-900/30 text-white hover:border-blue-700/40'
                                               : 'bg-gradient-to-br from-[#F8FAFC] to-[#F1F5F9] border border-slate-200 text-slate-800 hover:border-slate-300 hover:shadow-sm'
                                           }`}
                                         >
-                                          {/* Scale down the SVG for the modal and align it to the top */}
-                                          <div className="w-12 h-12 shrink-0 overflow-hidden relative mt-0.5">
-                                            <div className="scale-[0.6] origin-top-left absolute top-0 left-0">
-                                              {getBenefitIcon(benefit.title)}
-                                            </div>
+                                          <div className="w-10 h-10 shrink-0 flex items-center justify-center">
+                                            {getBenefitIcon(benefit.title, activePlanData.theme)}
                                           </div>
                                           <div className="flex-1 min-w-0">
-                                            <h5 className={`text-xs font-bold leading-tight ${isDarkModal ? 'text-white' : 'text-slate-800'}`}>
+                                            <h5 className={`text-xs font-bold leading-snug ${isDarkModal ? 'text-white' : 'text-slate-800'}`}>
                                               {benefit.title}
                                             </h5>
-                                            <div className="h-[2px] w-5 bg-amber-500 rounded-full my-1.5" />
-                                            <p className={`text-[10px] leading-normal font-semibold ${isDarkModal ? 'text-slate-400' : 'text-slate-500'}`}>
-                                              {benefit.desc}
-                                            </p>
+                                            {benefit.desc && (
+                                              <>
+                                                <div className="h-[1.5px] w-5 bg-amber-500 rounded-full my-1" />
+                                                <p className={`text-[10px] leading-normal font-semibold ${isDarkModal ? 'text-slate-400' : 'text-slate-500'}`}>
+                                                  {benefit.desc}
+                                                </p>
+                                              </>
+                                            )}
                                           </div>
                                         </div>
                                       );
                                     })}
                                   </div>
-                                </div>
-
-                                {/* Features */}
-                                <div>
-                                  <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">What's Included</h4>
-                                  <ul className="space-y-1.5">
-                                    {(() => {
-                                      const features = activePlanData.fullDetails.features || [];
-                                      const displayedFeatures = showAllFeatures ? features : features.slice(0, 1);
-                                      return (
-                                        <>
-                                          {displayedFeatures.map((feature, idx) => (
-                                            <li key={idx} className="flex items-start gap-1.5 text-[11px] text-slate-600 animate-slideFade">
-                                              <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0 mt-0.5" />
-                                              <span>{feature}</span>
-                                            </li>
-                                          ))}
-                                          {features.length > 1 && (
-                                            <button
-                                              type="button"
-                                              onClick={() => setShowAllFeatures(!showAllFeatures)}
-                                              className="mt-1 text-[10px] font-bold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1 cursor-pointer focus:outline-none"
-                                            >
-                                              {showAllFeatures ? "See Less" : `See More (+${features.length - 1})`}
-                                            </button>
-                                          )}
-                                        </>
-                                      );
-                                    })()}
-                                  </ul>
                                 </div>
 
                                 {/* FAQs */}

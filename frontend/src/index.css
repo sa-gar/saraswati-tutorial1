@@ -1,18 +1,26 @@
 @import "tailwindcss";
 
-@utility backdrop-blur-sm {
+.backdrop-blur-sm {
   -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
 }
-@utility backdrop-blur-md {
+.backdrop-blur-md {
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
 }
-@utility backdrop-blur-lg {
+.backdrop-blur-lg {
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
 }
-@utility backdrop-blur-xl {
+.backdrop-blur-xl {
   -webkit-backdrop-filter: blur(24px);
   backdrop-filter: blur(24px);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeIn {
+  animation: fadeIn 0.25s ease-out forwards;
 }
