@@ -1113,7 +1113,7 @@ export default function HomePage() {
                 <img
                   src="/logo.png"
                   alt="ST"
-                  className="h-[56px] w-[56px] sm:h-[48px] sm:w-[48px] rounded-xl object-contain"
+                  className="h-[68px] w-[68px] sm:h-[48px] sm:w-[48px] rounded-xl object-contain"
                   onError={(e) => {
                     e.target.src = "https://placehold.co/100x100?text=ST";
                   }}
