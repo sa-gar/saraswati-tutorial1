@@ -42,6 +42,10 @@ const broadcastLogSchema = new mongoose.Schema(
       enum: ["Sent", "Delivered", "Failed"],
       default: "Sent",
     },
+    error: {
+      type: String,
+      default: "",
+    },
     responseStatus: {
       type: String,
       enum: ["Interested", "Not Interested", "No Response", "Follow-up Required", "Busy", "Pending"],

@@ -2249,6 +2249,11 @@ export default function AdminDashboard() {
                                 }`}>
                                   {log.status}
                                 </span>
+                                {log.status === "Failed" && log.error && (
+                                  <span className="block text-[9px] text-rose-500 font-semibold mt-1 max-w-[180px] whitespace-normal break-words leading-tight">
+                                    {log.error}
+                                  </span>
+                                )}
                               </td>
                               <td className="p-4">
                                 <select

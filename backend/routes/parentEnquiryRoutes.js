@@ -459,9 +459,31 @@ router.post("/:id/broadcast", verifyToken(["admin"]), async (req, res) => {
           .replace(/\{\{RequirementID\}\}/g, reqId);
       }
 
-      // Mock delivery status selection
-      const statuses = ["Sent", "Delivered", "Failed"];
-      const finalStatus = Math.random() < 0.9 ? "Delivered" : "Failed";
+      let odooSuccess = false;
+      let odooMsgId = null;
+      let odooError = "";
+
+      if (type === "whatsapp") {
+        const tutorPhone = tutor.phone || tutor.whatsapp || "";
+        if (tutorPhone) {
+          try {
+            const odooRes = await sendOdooWhatsApp(tutorPhone, message, tutor.name);
+            if (odooRes.success) {
+              odooSuccess = true;
+              odooMsgId = odooRes.id;
+            } else {
+              odooError = odooRes.error || "";
+            }
+          } catch (err) {
+            console.error(`[ManualBroadcast] Failed sending message to Odoo for ${tutor.name}:`, err.message);
+            odooError = err.message;
+          }
+        } else {
+          odooError = "Invalid Phone Number: Tutor has no phone number.";
+        }
+      } else {
+        odooSuccess = true;
+      }
 
       const log = new BroadcastLog({
         tutorId: tutor._id,
@@ -471,7 +493,9 @@ router.post("/:id/broadcast", verifyToken(["admin"]), async (req, res) => {
         leadId: lead._id,
         type: type || "whatsapp",
         message: message,
-        status: finalStatus,
+        status: odooSuccess ? "Sent" : "Failed",
+        error: odooError,
+        responseStatus: "No Response"
       });
       await log.save();
       logs.push(log);
@@ -701,14 +725,18 @@ async function triggerAutoBroadcast(leadId) {
 
       let odooSuccess = false;
       let odooMsgId = null;
+      let odooError = "";
       try {
         const odooRes = await sendOdooWhatsApp(tutorPhone, message, tutor.name);
         if (odooRes.success) {
           odooSuccess = true;
           odooMsgId = odooRes.id;
+        } else {
+          odooError = odooRes.error || "";
         }
       } catch (err) {
         console.error(`[AutoBroadcast] Failed sending message to Odoo for ${tutor.name}:`, err.message);
+        odooError = err.message;
       }
 
       // Create Broadcast Log
@@ -721,11 +749,12 @@ async function triggerAutoBroadcast(leadId) {
         type: "whatsapp",
         message: message,
         status: odooSuccess ? "Sent" : "Failed",
+        error: odooError,
         responseStatus: "No Response"
       });
       
       await log.save();
-      console.log(`[AutoBroadcast] Logged broadcast to ${tutor.name} (Status: ${log.status})`);
+      console.log(`[AutoBroadcast] Logged broadcast to ${tutor.name} (Status: ${log.status}, Error: ${odooError || "None"})`);
     }
 
     console.log(`[AutoBroadcast] Completed automatic broadcast workflow for Lead ID: ${leadId}`);
