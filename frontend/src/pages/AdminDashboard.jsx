@@ -1475,7 +1475,7 @@ export default function AdminDashboard() {
                                 </div>
                               ) : (
                                 <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1">
-                                  {matchedTutors.map(t => {
+                                  {matchedTutors.map((t, index) => {
                                     const isSelected = selectedTutorIds.includes(t._id);
                                     return (
                                       <div
@@ -1511,7 +1511,14 @@ export default function AdminDashboard() {
                                           )}
 
                                           <div>
-                                            <p className="font-extrabold text-slate-900 text-sm">{t.name}</p>
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                              <p className="font-extrabold text-slate-900 text-sm">#{index + 1} - {t.name}</p>
+                                              {t.matchPercentage !== undefined && (
+                                                <span className="inline-flex items-center rounded-full bg-indigo-50 border border-indigo-200 px-2 py-0.5 text-[10px] font-black text-indigo-700">
+                                                  {t.matchCategory || "Closest Match"} ({t.matchPercentage}%)
+                                                </span>
+                                              )}
+                                            </div>
                                             <div className="mt-1 flex flex-wrap gap-2 text-[10px] text-slate-500 font-bold">
                                               <span className="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">
                                                 Exp: {t.experience || "N/A"}

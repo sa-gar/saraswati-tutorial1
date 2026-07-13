@@ -5,7 +5,8 @@ import fetch from "node-fetch";
 import { createLead, upsertMasterTutor } from "../utils/odooService.js";
 import { verifyToken } from "../middleware/authMiddleware.js";
 import jwt from "jsonwebtoken";
-import { buildCentralizedQuery } from "../utils/matchingEngine.js";
+import { buildCentralizedQuery, calculateTutorScore, parseAddress } from "../utils/matchingEngine.js";
+import mongoose from "mongoose";
 
 const router = express.Router();
 
@@ -96,28 +97,41 @@ router.post("/match", async (req, res) => {
 
     // If leadId is provided, resolve and extract lead variables from database
     if (params.leadId) {
-      const lead = await ParentEnquiry.findById(params.leadId);
+      let lead = null;
+      
+      // Check if it's a valid MongoDB ObjectId
+      if (mongoose.Types.ObjectId.isValid(params.leadId)) {
+        lead = await ParentEnquiry.findById(params.leadId);
+      }
+      
+      // If not resolved by ObjectId, try to query by Odoo Lead ID
+      if (!lead) {
+        const numericOdooId = parseInt(params.leadId);
+        if (!isNaN(numericOdooId)) {
+          lead = await ParentEnquiry.findOne({
+            $or: [
+              { odooLeadId: numericOdooId },
+              { odooLeadId: String(numericOdooId) }
+            ]
+          });
+        }
+      }
+
       if (!lead) {
         return res.status(404).json({ message: "Parent Enquiry lead not found" });
       }
 
       const firstWard = lead.wards?.[0] || {};
-      
-      // Intelligent extraction of location fields
-      const pincode = lead.pincode || "";
-      const area = lead.area || lead.address || "";
-      
-      // City extraction from address
-      let city = "";
-      if (lead.address && lead.address.includes(",")) {
-        const parts = lead.address.split(",");
-        city = parts[parts.length - 2]?.trim() || parts[parts.length - 1]?.trim() || "";
-      }
+      const parsedAddr = parseAddress(lead.address);
       
       params = {
-        pincode: pincode,
-        area: area,
-        city: city || lead.geoInfo?.city || "",
+        pincode: lead.pincode || parsedAddr.pincode || "",
+        area: lead.area || parsedAddr.area || "",
+        locality: lead.locality || parsedAddr.locality || "",
+        landmark: lead.landmark || parsedAddr.landmark || "",
+        city: lead.city || parsedAddr.city || lead.geoInfo?.city || "",
+        district: lead.district || parsedAddr.district || "",
+        state: lead.state || parsedAddr.state || lead.geoInfo?.region || "",
         grade: firstWard.classGrade || "",
         timing: lead.preferredTime || "",
         gender: lead.preferredGender || "No Preference"
@@ -125,20 +139,50 @@ router.post("/match", async (req, res) => {
     }
 
     const query = buildCentralizedQuery(params);
-    const tutors = await Tutor.find(query).sort({ createdAt: -1 });
+    const tutors = await Tutor.find(query);
 
     // Append performance stats dynamically for matched tutors
     const tutorsWithStats = await Promise.all(tutors.map(appendStatsToTutor));
 
-    // Extract Odoo record IDs
-    const matchedOdooIds = tutors
+    // Calculate match scores and filter/rank in-memory
+    const scoredTutors = tutorsWithStats
+      .map(tutor => {
+        const scoreInfo = calculateTutorScore(params, tutor);
+        return {
+          ...tutor,
+          matchScore: scoreInfo.score,
+          matchPercentage: scoreInfo.percentage,
+          locationScore: scoreInfo.locationScore,
+          matchCategory: scoreInfo.matchCategory
+        };
+      })
+      .filter(tutor => {
+        // Filter by location score if location criteria was specified
+        const hasLocationCriteria = !!(
+          params.pincode ||
+          params.area ||
+          params.locality ||
+          params.landmark ||
+          params.city ||
+          params.district ||
+          params.state
+        );
+        if (hasLocationCriteria && tutor.locationScore === 0) {
+          return false;
+        }
+        return tutor.matchPercentage > 0;
+      })
+      .sort((a, b) => b.matchPercentage - a.matchPercentage);
+
+    // Extract Odoo record IDs in sorted order
+    const matchedOdooIds = scoredTutors
       .map(t => t.odooLeadId)
       .filter(id => id !== null && id !== undefined && !isNaN(parseInt(id)))
       .map(id => parseInt(id));
 
     res.json({
       success: true,
-      tutors: tutorsWithStats,
+      tutors: scoredTutors,
       matched_ids: matchedOdooIds
     });
   } catch (error) {

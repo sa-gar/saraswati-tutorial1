@@ -81,6 +81,18 @@ const parentEnquirySchema = new mongoose.Schema(
       trim: true,
     },
 
+    area: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    pincode: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
     startTime: {
       type: String,
       default: "",
