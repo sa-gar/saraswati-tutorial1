@@ -2292,7 +2292,7 @@ export default function ParentEnquiryForm() {
                   <div className="rounded-3xl border border-slate-200/80 bg-white/70 backdrop-blur-md p-6 shadow-sm border-l-4 border-l-indigo-600">
                     <div className="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">
                       <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
-                        <Settings className="h-5 w-5 text-indigo-650" /> 3. Tutor Preferences & Plan
+                        <Settings className="h-5 w-5 text-indigo-600" /> 3. Tutor Preferences & Plan
                       </h3>
                       <button
                         type="button"

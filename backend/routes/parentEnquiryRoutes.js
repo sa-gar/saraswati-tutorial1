@@ -5,6 +5,8 @@ import AnalyticsLog from "../models/AnalyticsLog.js";
 import { createLead, updateLead } from "../utils/odooService.js";
 import { verifyToken } from "../middleware/authMiddleware.js";
 import { resolveGeo } from "../utils/geoLookup.js";
+import Tutor from "../models/Tutor.js";
+import BroadcastLog from "../models/BroadcastLog.js";
 
 const router = express.Router();
 
@@ -201,10 +203,23 @@ router.post("/", async (req, res) => {
       console.error("Odoo create parent lead error:", err.message);
     }
 
+    let requirementId = odooRes && typeof odooRes === "object" ? odooRes.requirementId : "";
+    if (!requirementId) {
+      try {
+        const count = await ParentEnquiry.countDocuments({});
+        requirementId = `REQ-${String(count + 1).padStart(5, "0")}`;
+        console.log("[Fallback] Generated sequential Requirement ID:", requirementId);
+      } catch (seqErr) {
+        console.error("[Fallback] Failed to generate Requirement ID:", seqErr.message);
+        requirementId = `REQ-${String(Date.now()).slice(-5)}`;
+      }
+    }
+
     const enquiry = new ParentEnquiry({
       ...req.body,
       status: req.body.status || "New Lead",
-      odooLeadId: odooRes,
+      odooLeadId: odooRes && typeof odooRes === "object" ? odooRes.id : odooRes,
+      requirementId: requirementId,
     });
 
     const saved = await enquiry.save();
@@ -265,12 +280,26 @@ router.put("/:id", verifyToken(["admin"]), async (req, res) => {
       adminNotes: req.body.adminNotes,
       nextFollowUpDate: req.body.nextFollowUpDate,
       assignedTutor: req.body.assignedTutor,
+      assignedTutorId: req.body.assignedTutorId,
       demoDate: req.body.demoDate,
       demoTime: req.body.demoTime,
       feesFinalized: req.body.feesFinalized,
       finalFees: req.body.finalFees,
       lostReason: req.body.lostReason,
     };
+
+    if (req.body.assignedTutor !== undefined) {
+      if (req.body.assignedTutor) {
+        const tutor = await Tutor.findOne({ name: req.body.assignedTutor });
+        if (tutor) {
+          allowedUpdates.assignedTutorId = tutor._id;
+        } else {
+          allowedUpdates.assignedTutorId = null;
+        }
+      } else {
+        allowedUpdates.assignedTutorId = null;
+      }
+    }
 
     Object.keys(allowedUpdates).forEach((key) => {
       if (allowedUpdates[key] === undefined) {
@@ -361,6 +390,156 @@ router.delete("/:id", verifyToken(["admin"]), async (req, res) => {
     res.status(500).json({
       message: error.message,
     });
+  }
+});
+
+/**
+ * GET all broadcast logs
+ * GET /api/parent-enquiries/broadcast-logs
+ */
+router.get("/broadcast-logs", verifyToken(["admin"]), async (req, res) => {
+  try {
+    const logs = await BroadcastLog.find().sort({ time: -1 });
+    res.json(logs);
+  } catch (error) {
+    console.error("Fetch broadcast logs error:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+/**
+ * POST broadcast to selected tutors
+ * POST /api/parent-enquiries/:id/broadcast
+ */
+router.post("/:id/broadcast", verifyToken(["admin"]), async (req, res) => {
+  try {
+    const leadId = req.params.id;
+    const { tutorIds, messageTemplate, type } = req.body;
+
+    if (!Array.isArray(tutorIds) || tutorIds.length === 0) {
+      return res.status(400).json({ message: "At least one tutor must be selected." });
+    }
+
+    const lead = await ParentEnquiry.findById(leadId);
+    if (!lead) {
+      return res.status(404).json({ message: "Lead not found." });
+    }
+
+    const firstWard = lead.wards?.[0] || {};
+    const parentGrade = firstWard.classGrade ? `Class ${firstWard.classGrade}` : "N/A";
+    const parentLocation = lead.address || lead.area || "N/A";
+    const parentTiming = lead.preferredTime || "N/A";
+    const reqId = lead.requirementId || "REQ-XXXXX";
+
+    const logs = [];
+
+    for (const tId of tutorIds) {
+      const tutor = await Tutor.findById(tId);
+      if (!tutor) continue;
+
+      let message = messageTemplate || "";
+      if (type === "whatsapp") {
+        message = message
+          .replace(/\{\{TutorName\}\}/g, tutor.name)
+          .replace(/\{\{ParentGrade\}\}/g, parentGrade)
+          .replace(/\{\{Location\}\}/g, parentLocation)
+          .replace(/\{\{Timing\}\}/g, parentTiming)
+          .replace(/\{\{RequirementID\}\}/g, reqId);
+      }
+
+      // Mock delivery status selection
+      const statuses = ["Sent", "Delivered", "Failed"];
+      const finalStatus = Math.random() < 0.9 ? "Delivered" : "Failed";
+
+      const log = new BroadcastLog({
+        tutorId: tutor._id,
+        tutorName: tutor.name,
+        tutorPhone: tutor.phone || tutor.whatsapp || "",
+        requirementId: reqId,
+        leadId: lead._id,
+        type: type || "whatsapp",
+        message: message,
+        status: finalStatus,
+      });
+      await log.save();
+      logs.push(log);
+    }
+
+    res.json({ message: "Broadcast dispatched successfully", logs });
+  } catch (error) {
+    console.error("Tutor broadcast error:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+/**
+ * POST assign tutor to parent lead
+ * POST /api/parent-enquiries/:id/assign-tutor
+ */
+router.post("/:id/assign-tutor", verifyToken(["admin"]), async (req, res) => {
+  try {
+    const leadId = req.params.id;
+    const { tutorId } = req.body;
+
+    const lead = await ParentEnquiry.findById(leadId);
+    if (!lead) {
+      return res.status(404).json({ message: "Lead not found." });
+    }
+
+    const tutor = await Tutor.findById(tutorId);
+    if (!tutor) {
+      return res.status(404).json({ message: "Tutor not found." });
+    }
+
+    lead.assignedTutor = tutor.name;
+    lead.assignedTutorId = tutor._id;
+    await lead.save();
+
+    // Update Odoo
+    if (lead.odooLeadId) {
+      try {
+        await updateLead(lead.odooLeadId, {
+          x_studio_assigned_tutor: tutor.name,
+        });
+      } catch (err) {
+        console.error("Odoo update assigned tutor error:", err.message);
+      }
+    }
+
+    res.json({ message: "Tutor assigned successfully", lead });
+  } catch (error) {
+    console.error("Assign tutor error:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+/**
+ * PUT update broadcast log response status
+ * PUT /api/parent-enquiries/broadcast-logs/:logId/response
+ */
+router.put("/broadcast-logs/:logId/response", verifyToken(["admin"]), async (req, res) => {
+  try {
+    const { responseStatus } = req.body;
+    const allowedResponses = ["Interested", "Not Interested", "No Response", "Follow-up Required"];
+    
+    if (!allowedResponses.includes(responseStatus)) {
+      return res.status(400).json({ message: "Invalid response status." });
+    }
+
+    const log = await BroadcastLog.findByIdAndUpdate(
+      req.params.logId,
+      { responseStatus },
+      { new: true }
+    );
+
+    if (!log) {
+      return res.status(404).json({ message: "Broadcast log not found." });
+    }
+
+    res.json(log);
+  } catch (error) {
+    console.error("Update broadcast log response error:", error);
+    res.status(500).json({ message: error.message });
   }
 });
 

@@ -170,6 +170,23 @@ export async function createLead(data) {
       if (curriculumVal) leadPayload.x_studio_curriculumboard = curriculumVal;
       if (daysWeekVal) leadPayload.x_studio_daysweek = daysWeekVal;
       if (hoursDaysVal) leadPayload.x_studio_hoursdays = hoursDaysVal;
+
+      console.log("[Odoo] Generating sequential Requirement ID...");
+      try {
+        const count = await callOdoo("object", "execute_kw", [
+          DB,
+          uid,
+          PASSWORD,
+          "crm.lead",
+          "search_count",
+          [[["x_studio_type", "=", "Parent"]]],
+        ]);
+        const reqId = `REQ-${String(count + 1).padStart(5, "0")}`;
+        leadPayload.x_studio_requirement_id = reqId;
+        console.log("[Odoo] Generated Requirement ID:", reqId);
+      } catch (seqErr) {
+        console.error("[Odoo] Failed to generate Requirement ID:", seqErr);
+      }
     }
 
     console.log("[Odoo] Creating lead for:", data.userType);
@@ -187,7 +204,7 @@ export async function createLead(data) {
     ]);
 
     console.log("[Odoo] Lead created with ID:", leadId);
-    return leadId;
+    return { id: leadId, requirementId: leadPayload.x_studio_requirement_id || "" };
 
   } catch (err) {
 
@@ -232,3 +249,134 @@ export async function updateLead(leadId, values) {
     throw err;
   }
 }
+
+export async function upsertMasterTutor(data) {
+  try {
+    const uid = await callOdoo("common", "authenticate", [
+      DB,
+      USERNAME,
+      PASSWORD,
+      {},
+    ]);
+
+    if (!uid) {
+      throw new Error("Odoo login failed");
+    }
+
+    // Convert photo URL to base64 for Odoo binary field if present
+    let photoBase64 = false;
+    if (data.photo && data.photo.startsWith("http")) {
+      try {
+        const response = await fetch(data.photo);
+        const arrayBuffer = await response.arrayBuffer();
+        photoBase64 = Buffer.from(arrayBuffer).toString("base64");
+      } catch (err) {
+        console.error("[Odoo] Failed to fetch photo for base64 conversion:", err.message);
+      }
+    }
+
+    // Standardize gender value
+    let genderMapped = "";
+    if (data.gender) {
+      const g = data.gender.trim().toLowerCase();
+      if (g === "male") genderMapped = "Male";
+      else if (g === "female") genderMapped = "Female";
+      else if (g === "other" || g === "both") genderMapped = "Other";
+    }
+
+    // Format DOB to YYYY-MM-DD
+    let dobFormatted = false;
+    if (data.dob) {
+      try {
+        dobFormatted = new Date(data.dob).toISOString().split("T")[0];
+      } catch (e) {
+        console.error("[Odoo] Failed parsing date of birth:", data.dob);
+      }
+    }
+
+    const payload = {
+      x_name: data.name || "",
+      x_gender: genderMapped || "Male",
+      x_mobile: data.phone || "",
+      x_whatsapp: data.whatsapp || data.phone || "",
+      x_email: data.email || "",
+      x_city: data.city || "",
+      x_area: data.area || "",
+      x_full_address: data.fullAddress || "",
+      x_pincode: data.pincode || "",
+      x_grades: Array.isArray(data.grades) ? data.grades.join(", ") : (data.grades || ""),
+      x_boards: Array.isArray(data.boards) ? data.boards.join(", ") : (data.boards || ""),
+      x_subjects: Array.isArray(data.subjects) ? data.subjects.join(", ") : (data.subjects || ""),
+      x_preferred_timings: Array.isArray(data.timings) ? data.timings.join(", ") : (data.timings || ""),
+      x_max_travel_distance: data.maxTravelDistance || "",
+      x_experience: data.experience || "",
+      x_qualification: data.qualification || "",
+      x_availability: data.availabilityStatus || "Available",
+      x_locations_can_teach: Array.isArray(data.locations) ? data.locations.join(", ") : (data.locations || "")
+    };
+
+    if (photoBase64) {
+      payload.x_profile_photo = photoBase64;
+    }
+    if (dobFormatted) {
+      payload.x_dob = dobFormatted;
+    }
+
+    console.log("[Odoo] Searching for existing tutor with mobile:", data.phone);
+    const existing = await callOdoo("object", "execute_kw", [
+      DB,
+      uid,
+      PASSWORD,
+      "x_master_tutors",
+      "search_read",
+      [[["x_mobile", "=", data.phone]]],
+      { fields: ["id", "x_tutor_id"] }
+    ]);
+
+    if (existing && existing.length > 0) {
+      const recordId = existing[0].id;
+      const tutorCode = existing[0].x_tutor_id;
+      console.log("[Odoo] Duplicate tutor found. Updating record ID:", recordId, "Tutor ID:", tutorCode);
+      
+      await callOdoo("object", "execute_kw", [
+        DB,
+        uid,
+        PASSWORD,
+        "x_master_tutors",
+        "write",
+        [[recordId], payload]
+      ]);
+
+      return { id: recordId, tutorCode };
+    } else {
+      console.log("[Odoo] No existing tutor found. Generating sequential Tutor ID...");
+      const count = await callOdoo("object", "execute_kw", [
+        DB,
+        uid,
+        PASSWORD,
+        "x_master_tutors",
+        "search_count",
+        [[]]
+      ]);
+
+      const tutorCode = `TUT${String(count + 1).padStart(4, "0")}`;
+      payload.x_tutor_id = tutorCode;
+
+      console.log("[Odoo] Creating new Master Tutor record with Tutor ID:", tutorCode);
+      const recordId = await callOdoo("object", "execute_kw", [
+        DB,
+        uid,
+        PASSWORD,
+        "x_master_tutors",
+        "create",
+        [payload]
+      ]);
+
+      return { id: recordId, tutorCode };
+    }
+
+  } catch (err) {
+    console.error("[Odoo] Error in upsertMasterTutor:", err);
+    throw err;
+  }
+}

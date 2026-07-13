@@ -43,6 +43,18 @@ const initialFormData = {
   photo: null,
   timings: [],
   agreement: false,
+  gender: "",
+  dob: "",
+  whatsapp: "",
+  city: "",
+  area: "",
+  fullAddress: "",
+  pincode: "",
+  grades: [],
+  boards: [],
+  subjects: [],
+  maxTravelDistance: "",
+  qualification: "",
 };
 
 const steps = [
@@ -94,6 +106,28 @@ const occupationOptions = [
   "Freelancer",
   "Working Professional",
   "Other",
+];
+
+const genderOptions = ["Male", "Female", "Other"];
+const cityOptions = ["Bangalore", "Mumbai"];
+const travelDistanceOptions = ["5 km", "10 km", "15 km", "20+ km"];
+const gradeOptions = [
+  "Class 1-5 (Primary)",
+  "Class 6-8 (Middle)",
+  "Class 9-10 (Secondary)",
+  "Class 11-12 (Senior Secondary)",
+];
+const boardOptions = ["CBSE", "ICSE", "IB", "IGCSE", "State Board"];
+const subjectOptions = [
+  "Mathematics",
+  "Science",
+  "Physics",
+  "Chemistry",
+  "Biology",
+  "English",
+  "Hindi",
+  "Commerce",
+  "Social Studies",
 ];
 
 const timingGroups = {
@@ -243,6 +277,20 @@ export default function TutorRegistration() {
   const [touched, setTouched] = useState({});
   const [previewPhoto, setPreviewPhoto] = useState(null);
   const [openGroup, setOpenGroup] = useState(isMumbai ? "Western Suburbs" : "East Bangalore");
+  const [sameAsMobile, setSameAsMobile] = useState(true);
+
+  useEffect(() => {
+    if (sameAsMobile) {
+      setFormData((prev) => ({
+        ...prev,
+        whatsapp: prev.phone,
+      }));
+      setErrors((prev) => ({
+        ...prev,
+        whatsapp: "",
+      }));
+    }
+  }, [formData.phone, sameAsMobile]);
 
   useEffect(() => {
     if (!formData.photo) {
@@ -297,6 +345,46 @@ export default function TutorRegistration() {
       if (!value) return "Select experience";
     }
 
+    if (name === "gender") {
+      if (!value) return "Select gender";
+    }
+
+    if (name === "dob") {
+      if (!value) return "Enter date of birth";
+    }
+
+    if (name === "whatsapp") {
+      if (!value) return "WhatsApp number is required";
+      const phoneRegex = /^\d{10}$/;
+      if (!phoneRegex.test(value)) return "Enter a valid 10-digit WhatsApp number";
+    }
+
+    if (name === "qualification") {
+      if (!value || value.trim().length < 2) return "Enter your qualification";
+    }
+
+    if (name === "maxTravelDistance") {
+      if (!value) return "Select maximum travel distance";
+    }
+
+    if (name === "city") {
+      if (!value) return "Select city";
+    }
+
+    if (name === "area") {
+      if (!value || value.trim().length < 2) return "Enter area";
+    }
+
+    if (name === "fullAddress") {
+      if (!value || value.trim().length < 10) return "Enter full address (min 10 characters)";
+    }
+
+    if (name === "pincode") {
+      if (!value) return "Enter pincode";
+      const pincodeRegex = /^\d{6}$/;
+      if (!pincodeRegex.test(value)) return "Enter a valid 6-digit pincode";
+    }
+
     return "";
   };
 
@@ -337,7 +425,9 @@ export default function TutorRegistration() {
       name: validateField("name", formData.name),
       phone: validateField("phone", formData.phone),
       email: validateField("email", formData.email),
-      experience: validateField("experience", formData.experience),
+      gender: validateField("gender", formData.gender),
+      dob: validateField("dob", formData.dob),
+      whatsapp: sameAsMobile ? "" : validateField("whatsapp", formData.whatsapp),
     };
 
     const cleaned = Object.fromEntries(
@@ -354,7 +444,9 @@ export default function TutorRegistration() {
       name: true,
       phone: true,
       email: true,
-      experience: true,
+      gender: true,
+      dob: true,
+      whatsapp: true,
     }));
 
     if (Object.keys(cleaned).length > 0) {
@@ -365,55 +457,72 @@ export default function TutorRegistration() {
   };
 
   const validateStep2 = () => {
-    if (!formData.locations.length) {
-      setErrors((prev) => ({
-        ...prev,
-        locations: "Select at least one teaching location",
-      }));
-      return "Select at least one teaching location";
-    }
+    const nextErrors = {
+      experience: validateField("experience", formData.experience),
+      qualification: validateField("qualification", formData.qualification),
+      maxTravelDistance: validateField("maxTravelDistance", formData.maxTravelDistance),
+    };
+
+    if (!formData.grades.length) nextErrors.grades = "Select at least one grade";
+    if (!formData.boards.length) nextErrors.boards = "Select at least one board";
+    if (!formData.subjects.length) nextErrors.subjects = "Select at least one subject";
 
     if (!formData.hasOccupation) {
-      setErrors((prev) => ({
-        ...prev,
-        hasOccupation: "Please select if you have school/college experience",
-      }));
-      return "Please select if you have school/college experience";
+      nextErrors.hasOccupation = "Please select if you have school/college experience";
+    } else if (formData.hasOccupation === "yes" && !formData.occupation) {
+      nextErrors.occupation = "Please select your occupation";
     }
 
-    if (formData.hasOccupation === "yes" && !formData.occupation) {
-      setErrors((prev) => ({
-        ...prev,
-        occupation: "Please select your occupation",
-      }));
-      return "Please select your occupation";
-    }
+    const cleaned = Object.fromEntries(
+      Object.entries(nextErrors).filter(([, value]) => value)
+    );
 
-    if (!formData.hasVehicle) {
-      setErrors((prev) => ({
-        ...prev,
-        hasVehicle: "Please select vehicle availability",
-      }));
-      return "Please select vehicle availability";
-    }
+    setErrors((prev) => ({
+      ...prev,
+      ...cleaned,
+    }));
 
-    if (formData.hasVehicle === "yes" && !formData.vehicleNumber.trim()) {
-      setErrors((prev) => ({
-        ...prev,
-        vehicleNumber: "Enter vehicle number",
-      }));
-      return "Enter vehicle number";
+    if (Object.keys(cleaned).length > 0) {
+      return Object.values(cleaned)[0];
     }
 
     return null;
   };
 
   const validateStep3 = () => {
+    const nextErrors = {
+      city: validateField("city", formData.city),
+      area: validateField("area", formData.area),
+      fullAddress: validateField("fullAddress", formData.fullAddress),
+      pincode: validateField("pincode", formData.pincode),
+    };
+
+    if (formData.hasVehicle === "yes" && !formData.vehicleNumber.trim()) {
+      nextErrors.vehicleNumber = "Enter vehicle number";
+    }
+
+    if (!formData.locations.length) {
+      nextErrors.locations = "Select at least one teaching location";
+    }
+
     if (!formData.photo) return "Profile photo is required";
     if (!formData.idProof) return "ID Proof is required";
     if (!formData.expCert) return "Education Certificate is required";
     if (!formData.timings.length) return "Select at least one available timing";
     if (!formData.agreement) return "You must agree to the terms";
+
+    const cleaned = Object.fromEntries(
+      Object.entries(nextErrors).filter(([, value]) => value)
+    );
+
+    setErrors((prev) => ({
+      ...prev,
+      ...cleaned,
+    }));
+
+    if (Object.keys(cleaned).length > 0) {
+      return Object.values(cleaned)[0];
+    }
 
     return null;
   };
@@ -591,25 +700,47 @@ export default function TutorRegistration() {
     formData.name &&
     formData.phone &&
     formData.email &&
-    formData.experience &&
+    formData.gender &&
+    formData.dob &&
+    (sameAsMobile || formData.whatsapp) &&
     !errors.name &&
     !errors.phone &&
     !errors.email &&
-    !errors.experience;
+    !errors.gender &&
+    !errors.dob &&
+    (sameAsMobile || !errors.whatsapp);
 
   const isStep2Ready =
+    formData.experience &&
+    formData.qualification &&
+    formData.grades.length > 0 &&
+    formData.boards.length > 0 &&
+    formData.subjects.length > 0 &&
+    formData.maxTravelDistance &&
+    formData.hasOccupation &&
+    (formData.hasOccupation === "no" || formData.occupation) &&
+    !errors.experience &&
+    !errors.qualification &&
+    !errors.maxTravelDistance;
+
+  const isStep3Ready =
+    formData.city &&
+    formData.area &&
+    formData.fullAddress &&
+    formData.pincode &&
     formData.locations.length > 0 &&
     formData.hasVehicle &&
     (formData.hasVehicle === "no" || formData.vehicleNumber.trim()) &&
-    formData.hasOccupation &&
-    (formData.hasOccupation === "no" || formData.occupation);
-
-  const isStep3Ready =
     formData.photo &&
     formData.idProof &&
     formData.expCert &&
     formData.timings.length > 0 &&
-    formData.agreement;
+    formData.agreement &&
+    !errors.city &&
+    !errors.area &&
+    !errors.fullAddress &&
+    !errors.pincode &&
+    (formData.hasVehicle === "no" || !errors.vehicleNumber);
 
   return (
     <>
@@ -715,7 +846,7 @@ export default function TutorRegistration() {
                 <StepHeader
                   eyebrow="Step 01"
                   title="Basic Tutor Details"
-                  description="Enter your personal and teaching profile information."
+                  description="Enter your personal and contact details."
                 />
 
                 <div className="grid gap-5 md:grid-cols-2">
@@ -732,19 +863,6 @@ export default function TutorRegistration() {
                   />
 
                   <InputField
-                    icon={Phone}
-                    label="Phone Number"
-                    required
-                    name="phone"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    placeholder="10-digit mobile number"
-                    error={touched.phone ? errors.phone : ""}
-                  />
-
-                  <InputField
                     icon={Mail}
                     label="Email ID"
                     required
@@ -757,17 +875,68 @@ export default function TutorRegistration() {
                     error={touched.email ? errors.email : ""}
                   />
 
-                  <SelectField
-                    icon={GraduationCap}
-                    label="Experience"
+                  <InputField
+                    icon={Phone}
+                    label="Phone Number"
                     required
-                    name="experience"
-                    value={formData.experience}
+                    name="phone"
+                    type="tel"
+                    value={formData.phone}
                     onChange={handleChange}
                     onBlur={handleBlur}
-                    error={touched.experience ? errors.experience : ""}
-                    options={experienceOptions}
-                    placeholder="Select Experience"
+                    placeholder="10-digit mobile number"
+                    error={touched.phone ? errors.phone : ""}
+                  />
+
+                  <div>
+                    <InputField
+                      icon={Phone}
+                      label="WhatsApp Number"
+                      required={!sameAsMobile}
+                      name="whatsapp"
+                      type="tel"
+                      value={sameAsMobile ? formData.phone : formData.whatsapp}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      disabled={sameAsMobile}
+                      placeholder="10-digit WhatsApp number"
+                      error={touched.whatsapp ? errors.whatsapp : ""}
+                      className={sameAsMobile ? "opacity-60" : ""}
+                    />
+                    <label className="mt-2 flex cursor-pointer items-center gap-2 text-xs font-bold text-slate-650">
+                      <input
+                        type="checkbox"
+                        checked={sameAsMobile}
+                        onChange={(e) => setSameAsMobile(e.target.checked)}
+                        className="rounded border-slate-350 accent-slate-900"
+                      />
+                      Same as phone number
+                    </label>
+                  </div>
+
+                  <SelectField
+                    icon={User}
+                    label="Gender"
+                    required
+                    name="gender"
+                    value={formData.gender}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    error={touched.gender ? errors.gender : ""}
+                    options={genderOptions}
+                    placeholder="Select Gender"
+                  />
+
+                  <InputField
+                    icon={Clock3}
+                    label="Date of Birth"
+                    required
+                    name="dob"
+                    type="date"
+                    value={formData.dob}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    error={touched.dob ? errors.dob : ""}
                   />
                 </div>
 
@@ -784,11 +953,134 @@ export default function TutorRegistration() {
               <section className="animate-fadeIn">
                 <StepHeader
                   eyebrow="Step 02"
-                  title="Teaching Areas & Travel"
-                  description="Tell us your current teaching background and where you can take classes."
+                  title="Professional & Teaching Details"
+                  description="Tell us about your qualifications, experience, and what you teach."
                 />
 
                 <div className="space-y-6">
+                  <div className="grid gap-5 md:grid-cols-2">
+                    <SelectField
+                      icon={GraduationCap}
+                      label="Experience"
+                      required
+                      name="experience"
+                      value={formData.experience}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      error={touched.experience ? errors.experience : ""}
+                      options={experienceOptions}
+                      placeholder="Select Experience"
+                    />
+
+                    <InputField
+                      icon={GraduationCap}
+                      label="Qualification"
+                      required
+                      name="qualification"
+                      value={formData.qualification}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      placeholder="e.g. B.Ed, M.Sc in Physics, B.Tech"
+                      error={touched.qualification ? errors.qualification : ""}
+                    />
+
+                    <SelectField
+                      icon={MapPin}
+                      label="Maximum Travel Distance"
+                      required
+                      name="maxTravelDistance"
+                      value={formData.maxTravelDistance}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      error={touched.maxTravelDistance ? errors.maxTravelDistance : ""}
+                      options={travelDistanceOptions}
+                      placeholder="Select Max Travel Distance"
+                    />
+                  </div>
+
+                  <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+                    <div className="space-y-2">
+                      <label className="block text-sm font-black text-slate-700">
+                        Grades Can Teach <span className="text-red-550">*</span>
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {gradeOptions.map((opt) => {
+                          const active = formData.grades.includes(opt);
+                          return (
+                            <button
+                              key={opt}
+                              type="button"
+                              onClick={() => handleMulti("grades", opt)}
+                              className={`rounded-2xl px-4 py-2.5 text-sm font-bold border transition ${
+                                active
+                                  ? "border-blue-300 bg-blue-50 text-blue-700"
+                                  : "border-slate-200 bg-white text-slate-650 hover:bg-slate-50"
+                              }`}
+                            >
+                              {active ? "✓ " : ""}
+                              {opt}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {errors.grades && <p className="text-xs font-bold text-red-600">{errors.grades}</p>}
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="block text-sm font-black text-slate-700">
+                        Boards Can Teach <span className="text-red-550">*</span>
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {boardOptions.map((opt) => {
+                          const active = formData.boards.includes(opt);
+                          return (
+                            <button
+                              key={opt}
+                              type="button"
+                              onClick={() => handleMulti("boards", opt)}
+                              className={`rounded-2xl px-4 py-2.5 text-sm font-bold border transition ${
+                                active
+                                  ? "border-blue-300 bg-blue-50 text-blue-700"
+                                  : "border-slate-200 bg-white text-slate-655 hover:bg-slate-50"
+                              }`}
+                            >
+                              {active ? "✓ " : ""}
+                              {opt}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {errors.boards && <p className="text-xs font-bold text-red-600">{errors.boards}</p>}
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="block text-sm font-black text-slate-700">
+                        Subjects <span className="text-red-550">*</span>
+                      </label>
+                      <div className="flex flex-wrap gap-2">
+                        {subjectOptions.map((opt) => {
+                          const active = formData.subjects.includes(opt);
+                          return (
+                            <button
+                              key={opt}
+                              type="button"
+                              onClick={() => handleMulti("subjects", opt)}
+                              className={`rounded-2xl px-4 py-2.5 text-sm font-bold border transition ${
+                                active
+                                  ? "border-blue-300 bg-blue-50 text-blue-700"
+                                  : "border-slate-200 bg-white text-slate-655 hover:bg-slate-50"
+                              }`}
+                            >
+                              {active ? "✓ " : ""}
+                              {opt}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {errors.subjects && <p className="text-xs font-bold text-red-650">{errors.subjects}</p>}
+                    </div>
+                  </div>
+
                   <div className="rounded-[2rem] border border-slate-200 bg-slate-50 p-5">
                     <p className="mb-3 text-sm font-black text-slate-800">
                       Have you worked or are you working in any school, college,
@@ -817,7 +1109,7 @@ export default function TutorRegistration() {
                     />
 
                     {errors.hasOccupation && (
-                      <p className="mt-2 text-sm font-bold text-red-650">
+                      <p className="mt-2 text-sm font-bold text-red-600">
                         {errors.hasOccupation}
                       </p>
                     )}
@@ -847,7 +1139,86 @@ export default function TutorRegistration() {
                       </div>
                     )}
                   </div>
+                </div>
 
+                <NavigationFooter>
+                  <SecondaryButton onClick={goBack}>
+                    <ChevronLeft className="h-4 w-4" />
+                    Previous
+                  </SecondaryButton>
+                  <PrimaryButton disabled={!isStep2Ready} onClick={goNext}>
+                    Next <ChevronRight className="h-4 w-4" />
+                  </PrimaryButton>
+                </NavigationFooter>
+              </section>
+            )}
+
+            {step === 3 && (
+              <section className="animate-fadeIn">
+                <StepHeader
+                  eyebrow="Step 03"
+                  title="Address, Availability & Verification"
+                  description="Provide your address, travel preference, select timings, and upload documents."
+                />
+
+                <div className="space-y-6">
+                  {/* Address Section */}
+                  <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+                    <h3 className="text-xl font-black text-slate-900">Address Details</h3>
+                    <div className="grid gap-5 md:grid-cols-2">
+                      <SelectField
+                        icon={MapPin}
+                        label="City"
+                        required
+                        name="city"
+                        value={formData.city}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        error={touched.city ? errors.city : ""}
+                        options={cityOptions}
+                        placeholder="Select City"
+                      />
+
+                      <InputField
+                        icon={MapPin}
+                        label="Area"
+                        required
+                        name="area"
+                        value={formData.area}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        placeholder="e.g. Indiranagar, Bandra West"
+                        error={touched.area ? errors.area : ""}
+                      />
+
+                      <InputField
+                        icon={MapPin}
+                        label="Pincode"
+                        required
+                        name="pincode"
+                        value={formData.pincode}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        placeholder="6-digit pincode"
+                        error={touched.pincode ? errors.pincode : ""}
+                      />
+                    </div>
+
+                    <InputField
+                      icon={MapPin}
+                      label="Full Address"
+                      required
+                      name="fullAddress"
+                      type="textarea"
+                      value={formData.fullAddress}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      placeholder="Enter your complete house/flat number, building name, street and landmark"
+                      error={touched.fullAddress ? errors.fullAddress : ""}
+                    />
+                  </div>
+
+                  {/* Teaching Locations Picker */}
                   <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
                     <div className="mb-4 flex flex-col justify-between gap-3 md:flex-row md:items-center">
                       <div>
@@ -855,8 +1226,7 @@ export default function TutorRegistration() {
                           Select Locations Where You Can Teach
                         </h3>
                         <p className="mt-1 text-sm text-slate-500">
-                          Choose all preferred areas. Parents will see your
-                          preferred locations.
+                          Choose all preferred areas. Parents will see your preferred locations.
                         </p>
                       </div>
 
@@ -896,7 +1266,7 @@ export default function TutorRegistration() {
                       />
                     </div>
 
-                    <div className="max-h-[360px] space-y-3 overflow-y-auto pr-1">
+                    <div className="max-h-[300px] space-y-3 overflow-y-auto pr-1">
                       {Object.entries(areaGroups).map(([group, locations]) => {
                         const filtered = locations.filter((area) =>
                           area.toLowerCase().includes(search.toLowerCase())
@@ -927,16 +1297,13 @@ export default function TutorRegistration() {
                             {openGroup === group && (
                               <div className="grid gap-2 p-4 sm:grid-cols-2 md:grid-cols-3">
                                 {filtered.map((area) => {
-                                  const active =
-                                    formData.locations.includes(area);
+                                  const active = formData.locations.includes(area);
 
                                   return (
                                     <button
                                       type="button"
                                       key={area}
-                                      onClick={() =>
-                                        handleMulti("locations", area)
-                                      }
+                                      onClick={() => handleMulti("locations", area)}
                                       className={`rounded-2xl border px-3 py-3 text-left text-sm font-bold transition ${
                                         active
                                           ? "border-blue-300 bg-blue-50 text-blue-700"
@@ -972,6 +1339,7 @@ export default function TutorRegistration() {
                     )}
                   </div>
 
+                  {/* Vehicle Availability */}
                   <div className="rounded-[2rem] border border-slate-200 bg-slate-50 p-5">
                     <div className="mb-3 flex items-center gap-2">
                       <Car className="h-5 w-5 text-slate-700" />
@@ -990,14 +1358,13 @@ export default function TutorRegistration() {
                         setFormData((prev) => ({
                           ...prev,
                           hasVehicle: value,
-                          vehicleNumber:
-                            value === "no" ? "" : prev.vehicleNumber,
+                          vehicleNumber: value === "no" ? "" : prev.vehicleNumber,
                         }))
                       }
                     />
 
                     {errors.hasVehicle && (
-                      <p className="mt-2 text-sm font-bold text-red-600">
+                      <p className="mt-2 text-sm font-bold text-red-650">
                         {errors.hasVehicle}
                       </p>
                     )}
@@ -1016,174 +1383,151 @@ export default function TutorRegistration() {
                       </div>
                     )}
                   </div>
-                </div>
 
-                <NavigationFooter>
-                  <SecondaryButton onClick={goBack}>
-                    <ChevronLeft className="h-4 w-4" />
-                    Previous
-                  </SecondaryButton>
-                  <PrimaryButton disabled={!isStep2Ready} onClick={goNext}>
-                    Next <ChevronRight className="h-4 w-4" />
-                  </PrimaryButton>
-                </NavigationFooter>
-              </section>
-            )}
+                  {/* Document Upload Section */}
+                  <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm space-y-4">
+                    <h3 className="text-xl font-black text-slate-900">Upload Verification Documents</h3>
+                    <div className="grid gap-5 md:grid-cols-2">
+                      <FileUploadCard
+                        icon={Camera}
+                        title="Profile Photo"
+                        subtitle="Visible to parents"
+                        required
+                        inputId="photo"
+                        file={formData.photo}
+                        accept="image/*"
+                        preview={previewPhoto}
+                        onChange={(file) => setFormData((prev) => ({ ...prev, photo: file }))}
+                      />
 
-            {step === 3 && (
-              <section className="animate-fadeIn">
-                <StepHeader
-                  eyebrow="Step 03"
-                  title="Verification Documents"
-                  description="Upload required documents and select your available teaching timings."
-                />
+                      <FileUploadCard
+                        icon={FileCheck2}
+                        title="ID Proof"
+                        subtitle="Aadhaar, PAN, Passport, or other valid ID"
+                        required
+                        inputId="idProof"
+                        file={formData.idProof}
+                        accept="image/*,.pdf"
+                        onChange={(file) => setFormData((prev) => ({ ...prev, idProof: file }))}
+                      />
 
-                <div className="grid gap-5 md:grid-cols-2">
-                  <FileUploadCard
-                    icon={Camera}
-                    title="Profile Photo"
-                    subtitle="Visible to parents"
-                    required
-                    inputId="photo"
-                    file={formData.photo}
-                    accept="image/*"
-                    preview={previewPhoto}
-                    onChange={(file) =>
-                      setFormData((prev) => ({ ...prev, photo: file }))
-                    }
-                  />
+                      <FileUploadCard
+                        icon={GraduationCap}
+                        title="Education Certificate"
+                        subtitle="Degree, marksheet, or qualification proof"
+                        required
+                        inputId="expCert"
+                        file={formData.expCert}
+                        accept="image/*,.pdf"
+                        onChange={(file) => setFormData((prev) => ({ ...prev, expCert: file }))}
+                      />
 
-                  <FileUploadCard
-                    icon={FileCheck2}
-                    title="ID Proof"
-                    subtitle="Aadhaar, PAN, Passport, or other valid ID"
-                    required
-                    inputId="idProof"
-                    file={formData.idProof}
-                    accept="image/*,.pdf"
-                    onChange={(file) =>
-                      setFormData((prev) => ({ ...prev, idProof: file }))
-                    }
-                  />
-
-                  <FileUploadCard
-                    icon={GraduationCap}
-                    title="Education Certificate"
-                    subtitle="Degree, marksheet, or qualification proof"
-                    required
-                    inputId="expCert"
-                    file={formData.expCert}
-                    accept="image/*,.pdf"
-                    onChange={(file) =>
-                      setFormData((prev) => ({ ...prev, expCert: file }))
-                    }
-                  />
-
-                  <FileUploadCard
-                    icon={UploadCloud}
-                    title="Experience / Appraisal Document"
-                    subtitle="Optional supporting document"
-                    inputId="otherDoc"
-                    file={formData.otherDoc}
-                    accept="image/*,.pdf"
-                    onChange={(file) =>
-                      setFormData((prev) => ({ ...prev, otherDoc: file }))
-                    }
-                  />
-                </div>
-
-                <div className="mt-6 rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
-                  <div className="mb-5 flex items-center justify-between">
-                    <div>
-                      <h3 className="text-xl font-black text-slate-900">
-                        Select Available Timings
-                      </h3>
-                      <p className="mt-1 text-sm text-slate-500">
-                        Choose slots where you are generally available for
-                        teaching.
-                      </p>
+                      <FileUploadCard
+                        icon={UploadCloud}
+                        title="Experience / Appraisal Document"
+                        subtitle="Optional supporting document"
+                        inputId="otherDoc"
+                        file={formData.otherDoc}
+                        accept="image/*,.pdf"
+                        onChange={(file) => setFormData((prev) => ({ ...prev, otherDoc: file }))}
+                      />
                     </div>
-                    <Clock3 className="h-6 w-6 text-slate-500" />
                   </div>
 
-                  <div className="space-y-5">
-                    {Object.entries(timingGroups).map(([group, timings]) => (
-                      <div key={group}>
-                        <p className="mb-3 text-sm font-black text-slate-700">
-                          {group}
+                  {/* Available Timings Section */}
+                  <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
+                    <div className="mb-5 flex items-center justify-between">
+                      <div>
+                        <h3 className="text-xl font-black text-slate-900">
+                          Select Available Timings
+                        </h3>
+                        <p className="mt-1 text-sm text-slate-500">
+                          Choose slots where you are generally available for teaching.
                         </p>
-
-                        <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3">
-                          {timings.map((time) => {
-                            const active = formData.timings.includes(time);
-
-                            return (
-                              <button
-                                type="button"
-                                key={time}
-                                onClick={() => handleMulti("timings", time)}
-                                className={`rounded-2xl border px-4 py-3 text-sm font-bold transition ${
-                                  active
-                                    ? "border-blue-300 bg-blue-50 text-blue-700"
-                                    : "border-slate-200 bg-slate-50 text-slate-600 hover:bg-white"
-                                }`}
-                              >
-                                {active ? "✓ " : ""}
-                                {time}
-                              </button>
-                            );
-                          })}
-                        </div>
                       </div>
-                    ))}
+                      <Clock3 className="h-6 w-6 text-slate-500" />
+                    </div>
+
+                    <div className="space-y-5">
+                      {Object.entries(timingGroups).map(([group, timings]) => (
+                        <div key={group}>
+                          <p className="mb-3 text-sm font-black text-slate-700">
+                            {group}
+                          </p>
+
+                          <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-3">
+                            {timings.map((time) => {
+                              const active = formData.timings.includes(time);
+
+                              return (
+                                <button
+                                  type="button"
+                                  key={time}
+                                  onClick={() => handleMulti("timings", time)}
+                                  className={`rounded-2xl border px-4 py-3 text-sm font-bold transition ${
+                                    active
+                                      ? "border-blue-300 bg-blue-50 text-blue-700"
+                                      : "border-slate-200 bg-slate-50 text-slate-600 hover:bg-white"
+                                  }`}
+                                >
+                                  {active ? "✓ " : ""}
+                                  {time}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {formData.timings.length > 0 && (
+                      <p className="mt-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700">
+                        Selected: {formData.timings.join(", ")}
+                      </p>
+                    )}
                   </div>
 
-                  {formData.timings.length > 0 && (
-                    <p className="mt-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700">
-                      Selected: {formData.timings.join(", ")}
-                    </p>
-                  )}
-                </div>
+                  {/* Fee Agreement */}
+                  <div
+                    className={`rounded-[2rem] border p-5 transition ${
+                      formData.agreement
+                        ? "border-emerald-200 bg-emerald-50"
+                        : "border-red-200 bg-red-50"
+                    }`}
+                  >
+                    <label className="flex cursor-pointer items-start gap-3">
+                      <input
+                        type="checkbox"
+                        checked={formData.agreement}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            agreement: e.target.checked,
+                          }))
+                        }
+                        className="mt-1 h-5 w-5 accent-emerald-600"
+                      />
 
-                <div
-                  className={`mt-6 rounded-[2rem] border p-5 transition ${
-                    formData.agreement
-                      ? "border-emerald-200 bg-emerald-50"
-                      : "border-red-200 bg-red-50"
-                  }`}
-                >
-                  <label className="flex cursor-pointer items-start gap-3">
-                    <input
-                      type="checkbox"
-                      checked={formData.agreement}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          agreement: e.target.checked,
-                        }))
-                      }
-                      className="mt-1 h-5 w-5 accent-emerald-600"
-                    />
+                      <div className="text-sm leading-7 text-slate-700">
+                        I agree to pay a{" "}
+                        <span className="font-black text-slate-950">
+                          32% Placement, Facilitation & Verification Fee
+                        </span>{" "}
+                        for the{" "}
+                        <span className="font-bold italic">
+                          first two months
+                        </span>{" "}
+                        for each opportunity facilitated by{" "}
+                        <span className="font-black">Saraswati Tutorials</span>.
+                      </div>
+                    </label>
 
-                    <div className="text-sm leading-7 text-slate-700">
-                      I agree to pay a{" "}
-                      <span className="font-black text-slate-950">
-                        32% Placement, Facilitation & Verification Fee
-                      </span>{" "}
-                      for the{" "}
-                      <span className="font-bold italic">
-                        first two months
-                      </span>{" "}
-                      for each opportunity facilitated by{" "}
-                      <span className="font-black">Saraswati Tutorials</span>.
-                    </div>
-                  </label>
-
-                  {!formData.agreement && (
-                    <p className="mt-2 text-xs font-bold text-red-600">
-                      You must agree before submitting.
-                    </p>
-                  )}
+                    {!formData.agreement && (
+                      <p className="mt-2 text-xs font-bold text-red-650">
+                        You must agree before submitting.
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 <NavigationFooter>
@@ -1208,45 +1552,49 @@ export default function TutorRegistration() {
                 />
 
                 <div className="grid gap-5 md:grid-cols-2">
-                  <ReviewCard title="Basic Details" icon={User}>
+                  <ReviewCard title="Basic & Contact Details" icon={User}>
                     <ReviewRow label="Name" value={formData.name} />
+                    <ReviewRow label="Gender" value={formData.gender} />
+                    <ReviewRow label="Date of Birth" value={formData.dob} />
                     <ReviewRow label="Email" value={formData.email} />
                     <ReviewRow label="Phone" value={formData.phone} />
-                    <ReviewRow label="Experience" value={formData.experience} />
+                    <ReviewRow label="WhatsApp" value={sameAsMobile ? formData.phone : formData.whatsapp} />
                   </ReviewCard>
 
-                  <ReviewCard title="Teaching Preference" icon={MapPin}>
+                  <ReviewCard title="Professional & Teaching Details" icon={Briefcase}>
+                    <ReviewRow label="Experience" value={formData.experience} />
+                    <ReviewRow label="Qualification" value={formData.qualification} />
+                    <ReviewRow label="Grades Can Teach" value={formData.grades.join(", ")} />
+                    <ReviewRow label="Boards Can Teach" value={formData.boards.join(", ")} />
+                    <ReviewRow label="Subjects" value={formData.subjects.join(", ")} />
+                    <ReviewRow label="Max Travel Distance" value={formData.maxTravelDistance} />
                     <ReviewRow
-                      label="Locations"
-                      value={formData.locations.join(", ")}
+                      label="Has Institutional Experience"
+                      value={formData.hasOccupation || "Not selected"}
                     />
+                    {formData.hasOccupation === "yes" && (
+                      <>
+                        <ReviewRow label="Occupation" value={formData.occupation} />
+                        <ReviewRow label="Organization" value={formData.organization} />
+                      </>
+                    )}
+                  </ReviewCard>
+
+                  <ReviewCard title="Address & Locations" icon={MapPin}>
+                    <ReviewRow label="City" value={formData.city} />
+                    <ReviewRow label="Area" value={formData.area} />
+                    <ReviewRow label="Pincode" value={formData.pincode} />
+                    <ReviewRow label="Full Address" value={formData.fullAddress} />
+                    <ReviewRow label="Preferred Locations" value={formData.locations.join(", ")} />
                     <ReviewRow
-                      label="Vehicle"
+                      label="Vehicle Available"
                       value={
                         formData.hasVehicle === "yes"
                           ? `Yes (${formData.vehicleNumber})`
                           : "No"
                       }
                     />
-                    <ReviewRow
-                      label="Timings"
-                      value={formData.timings.join(", ")}
-                    />
-                  </ReviewCard>
-
-                  <ReviewCard title="Occupation" icon={Briefcase}>
-                    <ReviewRow
-                      label="Has Experience in Institute"
-                      value={formData.hasOccupation || "Not selected"}
-                    />
-                    <ReviewRow
-                      label="Occupation"
-                      value={formData.occupation || "Not provided"}
-                    />
-                    <ReviewRow
-                      label="Organization"
-                      value={formData.organization || "Not provided"}
-                    />
+                    <ReviewRow label="Available Timings" value={formData.timings.join(", ")} />
                   </ReviewCard>
 
                   <ReviewCard title="Documents" icon={FileCheck2}>
@@ -1346,6 +1694,7 @@ function InputField({
   required,
   error,
   className = "",
+  type = "text",
   ...props
 }) {
   return (
@@ -1355,20 +1704,31 @@ function InputField({
       </label>
 
       <div
-        className={`flex h-14 items-center gap-3 rounded-3xl border bg-white px-4 transition focus-within:ring-4 ${
+        className={`flex items-start gap-3 rounded-3xl border bg-white px-4 py-3 transition focus-within:ring-4 ${
+          type === "textarea" ? "min-h-28" : "h-14 items-center"
+        } ${
           error
             ? "border-red-400 focus-within:ring-red-100"
             : "border-slate-200 focus-within:border-slate-950 focus-within:ring-slate-100"
         }`}
       >
-        {Icon && <Icon className="h-5 w-5 text-slate-400" />}
-        <input
-          {...props}
-          className="h-full w-full bg-transparent text-sm font-semibold text-slate-800 outline-none placeholder:text-slate-400"
-        />
+        {Icon && <Icon className={`h-5 w-5 text-slate-400 ${type === "textarea" ? "mt-1" : ""}`} />}
+        {type === "textarea" ? (
+          <textarea
+            {...props}
+            rows={3}
+            className="h-full w-full bg-transparent text-sm font-semibold text-slate-800 outline-none placeholder:text-slate-400 resize-none"
+          />
+        ) : (
+          <input
+            {...props}
+            type={type}
+            className="h-full w-full bg-transparent text-sm font-semibold text-slate-800 outline-none placeholder:text-slate-400"
+          />
+        )}
       </div>
 
-      {error && <p className="mt-2 text-xs font-bold text-red-600">{error}</p>}
+      {error && <p className="mt-2 text-xs font-bold text-red-650">{error}</p>}
     </div>
   );
 }

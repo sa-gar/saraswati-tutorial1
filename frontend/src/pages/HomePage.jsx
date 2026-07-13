@@ -527,7 +527,7 @@ function TutorCard({ tutor, onViewProfile, onBook, swipeMode = false }) {
 
                 {/* Teaching Mode */}
                 <div className="flex items-center gap-3.5 bg-slate-50/60 border border-slate-100 rounded-2xl p-3.5 shadow-[0_2px_10px_rgba(0,0,0,0.01)]">
-                  <div className="h-10 w-10 rounded-xl bg-indigo-55/5 text-indigo-650 flex items-center justify-center shrink-0 border border-indigo-500/10 shadow-sm">
+                  <div className="h-10 w-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-500/10 shadow-sm">
                     <GraduationCap className="h-5 w-5" />
                   </div>
                   <div className="min-w-0">

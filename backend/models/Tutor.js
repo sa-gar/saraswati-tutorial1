@@ -48,9 +48,38 @@ const tutorSchema = new mongoose.Schema(
 
     adminComment: { type: String, default: "" },
 
+    gender: { type: String, default: "" },
+    dob: { type: String, default: "" },
+    whatsapp: { type: String, default: "", trim: true },
+    city: { type: String, default: "" },
+    area: { type: String, default: "" },
+    fullAddress: { type: String, default: "" },
+    pincode: { type: String, default: "" },
+    grades: { type: [String], default: [] },
+    boards: { type: [String], default: [] },
+    subjects: { type: [String], default: [] },
+    maxTravelDistance: { type: String, default: "" },
+    availabilityStatus: {
+      type: String,
+      enum: ["Available", "Busy", "Inactive", "Archived"],
+      default: "Available"
+    },
+
     odooLeadId: { type: mongoose.Schema.Types.Mixed, default: null }
   },
   { timestamps: true }
 );
+
+// Indexing for scalability and performance
+tutorSchema.index({ name: 1 });
+tutorSchema.index({ status: 1 });
+tutorSchema.index({ phone: 1 });
+tutorSchema.index({ grades: 1 });
+tutorSchema.index({ locations: 1 });
+tutorSchema.index({ gender: 1 });
+tutorSchema.index({ timings: 1 });
+tutorSchema.index({ pincode: 1 });
+tutorSchema.index({ area: 1 });
+tutorSchema.index({ city: 1 });
 
 export default mongoose.model("Tutor", tutorSchema);

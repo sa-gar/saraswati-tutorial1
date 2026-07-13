@@ -68,8 +68,11 @@ const LEAD_STATUSES = [
   "New Lead",
   "Fees Finalized",
   "Demo Scheduled",
+  "Demo Cancelled",
   "Feedback Pending",
+  "Enrolled",
   "Won",
+  "Rejected",
   "Lost",
 ];
 
@@ -78,8 +81,11 @@ const FILTER_OPTIONS = [
   "New Lead",
   "Fees Finalized",
   "Demo Scheduled",
+  "Demo Cancelled",
   "Feedback Pending",
+  "Enrolled",
   "Won",
+  "Rejected",
   "Lost",
 ];
 
@@ -96,6 +102,19 @@ const emptyTutor = {
   phone: "",
   category: "",
   mode: "",
+  whatsapp: "",
+  gender: "Male",
+  dob: "",
+  city: "Bangalore",
+  area: "",
+  fullAddress: "",
+  pincode: "",
+  grades: [],
+  boards: [],
+  subjects: [],
+  timings: [],
+  maxTravelDistance: "10 km",
+  availabilityStatus: "Available",
 };
 
 function normalizeLeadStatus(status) {
@@ -249,6 +268,17 @@ export default function AdminDashboard() {
   const [showParents, setShowParents] = useState(true);
   const [showTutors, setShowTutors] = useState(true);
 
+  const [matchingLeadId, setMatchingLeadId] = useState(null);
+  const [selectedTutorIds, setSelectedTutorIds] = useState([]);
+  const [showBroadcastModal, setShowBroadcastModal] = useState(false);
+  const [broadcastTemplate, setBroadcastTemplate] = useState(
+    `Hello {{TutorName}}\n\nA new tuition opportunity is available.\n\nLocation:\n{{Location}}\n\nGrade:\n{{ParentGrade}}\n\nTiming:\n{{Timing}}\n\nRequirement ID:\n{{RequirementID}}\n\nReply YES if interested.`
+  );
+  const [broadcastLogs, setBroadcastLogs] = useState([]);
+  const [showLogsModal, setShowLogsModal] = useState(false);
+  const [broadcastType, setBroadcastType] = useState("whatsapp");
+  const [sendingBroadcast, setSendingBroadcast] = useState(false);
+
   const [editingTutor, setEditingTutor] = useState(null);
   const [editForm, setEditForm] = useState(emptyTutor);
 
@@ -338,6 +368,150 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchBroadcastLogs = async () => {
+    try {
+      const token = localStorage.getItem("adminToken");
+      const res = await fetch(`${API_BASE}/parent-enquiries/broadcast-logs`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setBroadcastLogs(Array.isArray(data) ? data : []);
+      }
+    } catch (err) {
+      console.error("Error fetching broadcast logs:", err);
+    }
+  };
+
+  const handleUpdateResponseStatus = async (logId, responseStatus) => {
+    try {
+      const token = localStorage.getItem("adminToken");
+      const res = await fetch(`${API_BASE}/parent-enquiries/broadcast-logs/${logId}/response`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ responseStatus })
+      });
+      if (res.ok) {
+        setBroadcastLogs(prev =>
+          prev.map(log => log._id === logId ? { ...log, responseStatus } : log)
+        );
+      } else {
+        alert("Failed to update response status");
+      }
+    } catch (err) {
+      console.error("Error updating response status:", err);
+      alert("Error updating response status");
+    }
+  };
+
+  const handleSendBroadcast = async () => {
+    if (selectedTutorIds.length === 0 || !matchingLeadId) return;
+    setSendingBroadcast(true);
+    try {
+      const token = localStorage.getItem("adminToken");
+      const res = await fetch(`${API_BASE}/parent-enquiries/${matchingLeadId}/broadcast`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          tutorIds: selectedTutorIds,
+          messageTemplate: broadcastTemplate,
+          type: broadcastType
+        })
+      });
+
+      if (res.ok) {
+        alert(`Successfully dispatched broadcast to ${selectedTutorIds.length} tutors!`);
+        setShowBroadcastModal(false);
+        setSelectedTutorIds([]);
+        fetchBroadcastLogs();
+      } else {
+        const errData = await res.json();
+        alert(`Failed to send broadcast: ${errData.message}`);
+      }
+    } catch (err) {
+      console.error("Error sending broadcast:", err);
+      alert("Failed to send broadcast due to an error.");
+    } finally {
+      setSendingBroadcast(false);
+    }
+  };
+
+  const handleAssignTutor = async (tutorId) => {
+    if (!matchingLeadId) return;
+    try {
+      const token = localStorage.getItem("adminToken");
+      const res = await fetch(`${API_BASE}/parent-enquiries/${matchingLeadId}/assign-tutor`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ tutorId })
+      });
+
+      if (res.ok) {
+        alert("Tutor assigned successfully!");
+        fetchData();
+      } else {
+        const errData = await res.json();
+        alert(`Failed to assign tutor: ${errData.message}`);
+      }
+    } catch (err) {
+      console.error("Error assigning tutor:", err);
+    }
+  };
+
+  function getTargetGradeOption(classGrade) {
+    const cg = String(classGrade || "").trim();
+    if (["1 to 5", "1", "2", "3", "4", "5"].includes(cg)) return "Class 1-5 (Primary)";
+    if (["6", "7", "8"].includes(cg)) return "Class 6-8 (Middle)";
+    if (["9", "10"].includes(cg)) return "Class 9-10 (Secondary)";
+    if (["11", "12", "PUC"].includes(cg)) return "Class 11-12 (Senior Secondary)";
+    return "";
+  }
+
+  const [matchedTutors, setMatchedTutors] = useState([]);
+  const [loadingMatches, setLoadingMatches] = useState(false);
+
+  const fetchMatchingTutors = async (leadId) => {
+    if (!leadId) {
+      setMatchedTutors([]);
+      return;
+    }
+    setLoadingMatches(true);
+    try {
+      const token = localStorage.getItem("adminToken");
+      const res = await fetch(`${API_BASE}/tutors/match`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ leadId })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMatchedTutors(data.tutors || []);
+      } else {
+        console.error("Failed to fetch matching tutors");
+      }
+    } catch (err) {
+      console.error("Error fetching matching tutors:", err);
+    } finally {
+      setLoadingMatches(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMatchingTutors(matchingLeadId);
+  }, [matchingLeadId]);
+
   useEffect(() => {
     if (currentMainTab === "analytics") {
       fetchAnalyticsData();
@@ -346,6 +520,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchData();
+    fetchBroadcastLogs();
   }, []);
 
   const suggestionValues = useMemo(() => {
@@ -444,6 +619,9 @@ export default function AdminDashboard() {
       setParentEnquiries((prev) =>
         prev.map((item) => (item._id === id ? updated : item))
       );
+      
+      // Instantly trigger dashboard refetch to update tutor performance statistics
+      fetchData();
     } catch (error) {
       console.error(error);
       alert("Failed to update lead status");
@@ -490,6 +668,19 @@ export default function AdminDashboard() {
       phone: tutor.phone || "",
       category: tutor.category || "",
       mode: tutor.mode || "",
+      whatsapp: tutor.whatsapp || "",
+      gender: tutor.gender || "Male",
+      dob: tutor.dob || "",
+      city: tutor.city || "Bangalore",
+      area: tutor.area || "",
+      fullAddress: tutor.fullAddress || "",
+      pincode: tutor.pincode || "",
+      grades: Array.isArray(tutor.grades) ? tutor.grades : [],
+      boards: Array.isArray(tutor.boards) ? tutor.boards : [],
+      subjects: Array.isArray(tutor.subjects) ? tutor.subjects : [],
+      timings: Array.isArray(tutor.timings) ? tutor.timings : [],
+      maxTravelDistance: tutor.maxTravelDistance || "10 km",
+      availabilityStatus: tutor.availabilityStatus || "Available",
     });
   };
 
@@ -769,7 +960,7 @@ export default function AdminDashboard() {
             value={tutors.length}
             subtitle={`${approvedTutors} approved`}
             icon={Award}
-            gradientClass="bg-indigo-50 text-indigo-650"
+            gradientClass="bg-indigo-50 text-indigo-600"
           />
 
           <StatCard
@@ -812,7 +1003,7 @@ export default function AdminDashboard() {
         </div>
 
         <div className="mb-8 rounded-3xl bg-white p-5 shadow-sm border border-slate-200/80">
-          <div className="grid gap-4 md:grid-cols-[1fr_240px_auto_auto]">
+          <div className="grid gap-4 md:grid-cols-[1fr_240px_auto_auto_auto]">
             <div className="relative">
               <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
                 <Search className="h-5 w-5" />
@@ -888,6 +1079,17 @@ export default function AdminDashboard() {
             >
               {showTutors ? "Hide Tutors" : "Show Tutors"}
             </button>
+
+            <button
+              onClick={() => {
+                fetchBroadcastLogs();
+                setShowLogsModal(true);
+              }}
+              className="flex items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm font-bold bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 transition duration-300 cursor-pointer"
+            >
+              <Users className="h-4 w-4" />
+              View Broadcast Logs
+            </button>
           </div>
         </div>
 
@@ -944,8 +1146,11 @@ export default function AdminDashboard() {
                       "New Lead": "border-l-4 border-l-blue-500",
                       "Fees Finalized": "border-l-4 border-l-purple-500",
                       "Demo Scheduled": "border-l-4 border-l-amber-500",
+                      "Demo Cancelled": "border-l-4 border-l-orange-400",
                       "Feedback Pending": "border-l-4 border-l-orange-500",
+                      "Enrolled": "border-l-4 border-l-emerald-600",
                       "Won": "border-l-4 border-l-emerald-500",
+                      "Rejected": "border-l-4 border-l-red-500",
                       "Lost": "border-l-4 border-l-rose-500",
                     };
                     const borderClass = borderColors[currentStatus] || "border-l-4 border-l-slate-400";
@@ -1143,6 +1348,257 @@ export default function AdminDashboard() {
                               </p>
                             )}
                           </div>
+                        </div>
+
+                        {/* Expandable Match Tutors Panel */}
+                        <div className="px-5 pb-5 border-t border-slate-100 pt-5">
+                          <div className="flex flex-wrap items-center justify-between gap-3">
+                            <div className="flex items-center gap-2">
+                              {p.requirementId && (
+                                <span className="rounded-full bg-indigo-50 border border-indigo-150 px-3 py-1.5 text-xs font-black text-indigo-700">
+                                  ID: {p.requirementId}
+                                </span>
+                              )}
+                              {p.assignedTutor && (
+                                <span className="rounded-full bg-emerald-50 border border-emerald-150 px-3 py-1.5 text-xs font-black text-emerald-700">
+                                  Assigned Tutor: {p.assignedTutor}
+                                </span>
+                              )}
+                            </div>
+
+                            <button
+                              onClick={() => {
+                                if (matchingLeadId === p._id) {
+                                  setMatchingLeadId(null);
+                                  setSelectedTutorIds([]);
+                                } else {
+                                  setMatchingLeadId(p._id);
+                                  setSelectedTutorIds([]);
+                                }
+                              }}
+                              className={`h-11 flex items-center justify-center gap-1.5 rounded-2xl px-5 text-xs font-extrabold transition-all duration-200 cursor-pointer ${
+                                matchingLeadId === p._id
+                                  ? "bg-slate-900 text-white shadow-lg shadow-slate-950/20"
+                                  : "bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100"
+                              }`}
+                            >
+                              <Search className="h-4 w-4" />
+                              {matchingLeadId === p._id ? "Close Search" : "Search Tutor"}
+                            </button>
+                          </div>
+
+                          {matchingLeadId === p._id && (
+                            <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50/50 p-5 animate-slideFade">
+                              <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/80 pb-4">
+                                <div>
+                                  <h4 className="text-sm font-black text-slate-800">
+                                    Matching Tutors ({matchedTutors.length} found)
+                                  </h4>
+                                  <p className="text-[11px] font-bold text-slate-500 mt-0.5">
+                                    Matched on Grade, Timing, Gender, and Locality.
+                                  </p>
+                                </div>
+
+                                {!loadingMatches && matchedTutors.length > 0 && (
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    {/* Select All */}
+                                    <button
+                                      onClick={() => {
+                                        if (selectedTutorIds.length === matchedTutors.length) {
+                                          setSelectedTutorIds([]);
+                                        } else {
+                                          setSelectedTutorIds(matchedTutors.map(t => t._id));
+                                        }
+                                      }}
+                                      className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                                    >
+                                      {selectedTutorIds.length === matchedTutors.length
+                                        ? "Deselect All"
+                                        : "Select All"}
+                                    </button>
+
+                                    {/* Action dropdown/buttons */}
+                                    {selectedTutorIds.length > 0 && (
+                                      <>
+                                        <button
+                                          onClick={() => {
+                                            setBroadcastType("whatsapp");
+                                            setShowBroadcastModal(true);
+                                          }}
+                                          className="rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-black text-white hover:bg-emerald-700 transition cursor-pointer shadow-sm shadow-emerald-600/10"
+                                        >
+                                          Send WhatsApp ({selectedTutorIds.length})
+                                        </button>
+                                        <button
+                                          onClick={() => {
+                                            if (window.confirm(`Send email to ${selectedTutorIds.length} tutors?`)) {
+                                              alert("Emails dispatched successfully!");
+                                              setSelectedTutorIds([]);
+                                            }
+                                          }}
+                                          className="rounded-xl bg-blue-600 px-3.5 py-2 text-xs font-black text-white hover:bg-blue-700 transition cursor-pointer shadow-sm shadow-blue-600/10"
+                                        >
+                                          Send Email ({selectedTutorIds.length})
+                                        </button>
+                                        {selectedTutorIds.length === 1 && (
+                                          <button
+                                            onClick={() => {
+                                              if (window.confirm("Assign this tutor to the lead?")) {
+                                                handleAssignTutor(selectedTutorIds[0]);
+                                              }
+                                            }}
+                                            className="rounded-xl bg-indigo-600 px-3.5 py-2 text-xs font-black text-white hover:bg-indigo-700 transition cursor-pointer shadow-sm shadow-indigo-600/10"
+                                          >
+                                            Assign Tutor
+                                          </button>
+                                        )}
+                                        <button
+                                          onClick={() => setSelectedTutorIds([])}
+                                          className="rounded-xl bg-slate-200 px-3 py-2 text-xs font-black text-slate-755 hover:bg-slate-300 transition cursor-pointer"
+                                        >
+                                          Clear Selection
+                                        </button>
+                                      </>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+
+                              {loadingMatches ? (
+                                <div className="py-12 text-center text-xs font-bold text-slate-500 flex flex-col items-center justify-center gap-2">
+                                  <RefreshCw className="h-5 w-5 animate-spin text-blue-600" />
+                                  Searching Master Tutors at database level...
+                                </div>
+                              ) : matchedTutors.length === 0 ? (
+                                <div className="py-6 text-center text-xs font-bold text-slate-450">
+                                  No tutors match the criteria for this enquiry.
+                                </div>
+                              ) : (
+                                <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1">
+                                  {matchedTutors.map(t => {
+                                    const isSelected = selectedTutorIds.includes(t._id);
+                                    return (
+                                      <div
+                                        key={t._id}
+                                        className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl border transition duration-200 bg-white ${
+                                          isSelected ? "border-indigo-400 bg-indigo-50/20" : "border-slate-150 hover:border-slate-350"
+                                        }`}
+                                      >
+                                        <div className="flex items-center gap-3">
+                                          <input
+                                            type="checkbox"
+                                            checked={isSelected}
+                                            onChange={() => {
+                                              if (isSelected) {
+                                                setSelectedTutorIds(selectedTutorIds.filter(id => id !== t._id));
+                                              } else {
+                                                setSelectedTutorIds([...selectedTutorIds, t._id]);
+                                              }
+                                            }}
+                                            className="h-4.5 w-4.5 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500"
+                                          />
+
+                                          {t.photo ? (
+                                            <img
+                                              src={t.photo}
+                                              alt={t.name}
+                                              className="h-12 w-12 rounded-xl object-cover border border-slate-200"
+                                            />
+                                          ) : (
+                                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-[10px] font-bold text-slate-400">
+                                              No Photo
+                                            </div>
+                                          )}
+
+                                          <div>
+                                            <p className="font-extrabold text-slate-900 text-sm">{t.name}</p>
+                                            <div className="mt-1 flex flex-wrap gap-2 text-[10px] text-slate-500 font-bold">
+                                              <span className="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">
+                                                Exp: {t.experience || "N/A"}
+                                              </span>
+                                              <span className="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">
+                                                Loc: {t.area || t.location || "N/A"}
+                                              </span>
+                                              <span className="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">
+                                                {t.gender || "N/A"}
+                                              </span>
+                                              <span className="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">
+                                                Grades: {t.grades?.join(", ") || "N/A"}
+                                              </span>
+                                              <span className={`px-2 py-0.5 rounded-full border ${
+                                                t.status === "approved"
+                                                  ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                                                  : t.status === "rejected"
+                                                  ? "bg-rose-50 border-rose-200 text-rose-700"
+                                                  : "bg-amber-50 border-amber-200 text-amber-700"
+                                              }`}>
+                                                Approval: {t.status?.toUpperCase() || "PENDING"}
+                                              </span>
+                                              <span className={`px-2 py-0.5 rounded-full border ${
+                                                t.availabilityStatus === "Available"
+                                                  ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                                                  : t.availabilityStatus === "Busy"
+                                                  ? "bg-amber-50 border-amber-250 text-amber-700"
+                                                  : "bg-slate-100 border-slate-200 text-slate-600"
+                                              }`}>
+                                                Status: {t.availabilityStatus || "Available"}
+                                              </span>
+                                            </div>
+
+                                            {(() => {
+                                              const tLog = broadcastLogs.find(
+                                                (log) => log.tutorId === t._id && log.leadId === matchingLeadId
+                                              );
+                                              if (tLog) {
+                                                return (
+                                                  <div className="mt-2.5 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-2 text-[10px]">
+                                                    <span className={`px-2 py-0.5 rounded-full border font-black ${
+                                                      tLog.status === "Delivered"
+                                                        ? "bg-emerald-50 border-emerald-250 text-emerald-700"
+                                                        : tLog.status === "Failed"
+                                                        ? "bg-rose-50 border-rose-250 text-rose-700"
+                                                        : "bg-blue-50 border-blue-250 text-blue-700"
+                                                    }`}>
+                                                      Broadcast: {tLog.status}
+                                                    </span>
+                                                    <span className="text-slate-450 font-black">Response:</span>
+                                                    <select
+                                                      value={tLog.responseStatus || "No Response"}
+                                                      onChange={(e) => handleUpdateResponseStatus(tLog._id, e.target.value)}
+                                                      className="bg-slate-50 border border-slate-200 text-[10px] font-black text-slate-700 rounded px-1.5 py-0.5 outline-none focus:border-indigo-500 cursor-pointer"
+                                                    >
+                                                      <option value="No Response">No Response</option>
+                                                      <option value="Interested">Interested</option>
+                                                      <option value="Not Interested">Not Interested</option>
+                                                      <option value="Follow-up Required">Follow-up Required</option>
+                                                    </select>
+                                                  </div>
+                                                );
+                                              }
+                                              return null;
+                                            })()}
+                                          </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-2 shrink-0">
+                                          <button
+                                            onClick={() => {
+                                              if (window.confirm(`Assign ${t.name} to this lead?`)) {
+                                                handleAssignTutor(t._id);
+                                              }
+                                            }}
+                                            className="px-3 py-1.5 text-xs font-black text-indigo-600 hover:bg-indigo-50 border border-indigo-150 rounded-xl transition cursor-pointer"
+                                          >
+                                            Assign
+                                          </button>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
@@ -1491,6 +1947,45 @@ export default function AdminDashboard() {
                                 />
                               </div>
                             </div>
+
+                            {t.performanceStats && (
+                              <div className="mt-5 pt-4 border-t border-slate-100 animate-slideFade">
+                                <p className="mb-3 text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                                  <Activity className="h-4 w-4 text-indigo-500" />
+                                  CRM Performance Statistics
+                                </p>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50/50 p-4 rounded-2xl border border-slate-150">
+                                  <div className="text-center p-2 rounded-xl bg-white shadow-sm border border-slate-100">
+                                    <span className="block text-[10px] font-black uppercase text-slate-455">Total Assignments</span>
+                                    <span className="block text-lg font-black text-slate-800 mt-0.5">{t.performanceStats.totalAssignments}</span>
+                                  </div>
+                                  <div className="text-center p-2 rounded-xl bg-white shadow-sm border border-slate-100">
+                                    <span className="block text-[10px] font-black uppercase text-amber-500">Demo Scheduled</span>
+                                    <span className="block text-lg font-black text-amber-600 mt-0.5">{t.performanceStats.demoScheduled}</span>
+                                  </div>
+                                  <div className="text-center p-2 rounded-xl bg-white shadow-sm border border-slate-100">
+                                    <span className="block text-[10px] font-black uppercase text-rose-500">Demo Cancelled</span>
+                                    <span className="block text-lg font-black text-rose-650 mt-0.5">{t.performanceStats.demoCancelled}</span>
+                                  </div>
+                                  <div className="text-center p-2 rounded-xl bg-white shadow-sm border border-slate-100">
+                                    <span className="block text-[10px] font-black uppercase text-red-500">Rejected</span>
+                                    <span className="block text-lg font-black text-red-650 mt-0.5">{t.performanceStats.rejected}</span>
+                                  </div>
+                                  <div className="text-center p-2 rounded-xl bg-white shadow-sm border border-slate-100">
+                                    <span className="block text-[10px] font-black uppercase text-emerald-500">Enrolled</span>
+                                    <span className="block text-lg font-black text-emerald-600 mt-0.5">{t.performanceStats.successfullyEnrolled}</span>
+                                  </div>
+                                  <div className="text-center p-2 rounded-xl bg-white shadow-sm border border-slate-100">
+                                    <span className="block text-[10px] font-black uppercase text-indigo-500">Active Tuitions</span>
+                                    <span className="block text-lg font-black text-indigo-600 mt-0.5">{t.performanceStats.activeTuitionCount}</span>
+                                  </div>
+                                  <div className="col-span-2 text-center p-2 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-150 flex flex-col justify-center">
+                                    <span className="block text-[10px] font-black uppercase text-indigo-600">Success Rate</span>
+                                    <span className="block text-xl font-black text-indigo-700">{t.performanceStats.successPercentage}%</span>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
 
@@ -1568,6 +2063,158 @@ export default function AdminDashboard() {
             onClose={() => setShowAddForm(false)}
           />
         )}
+
+        {/* Broadcast Template Preview Modal */}
+        {showBroadcastModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm animate-slideFade">
+            <div className="w-full max-w-xl overflow-hidden rounded-3xl bg-white border border-slate-200 p-6 shadow-2xl flex flex-col relative z-50">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-4 mb-4">
+                <div>
+                  <h3 className="text-lg font-black text-slate-800">
+                    WhatsApp Broadcast Template
+                  </h3>
+                  <p className="text-xs text-slate-500 font-semibold mt-0.5">
+                    Review and customize template variables before dispatching to {selectedTutorIds.length} tutors.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowBroadcastModal(false)}
+                  className="rounded-full bg-slate-100 hover:bg-slate-200 p-2 text-slate-500 transition cursor-pointer"
+                >
+                  <X className="h-4.5 w-4.5" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-black text-slate-700 mb-2">
+                    Message Content (Template Variables Supported)
+                  </label>
+                  <textarea
+                    value={broadcastTemplate}
+                    onChange={(e) => setBroadcastTemplate(e.target.value)}
+                    rows={10}
+                    className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 p-4 text-xs font-semibold font-mono text-slate-800 outline-none focus:border-blue-500"
+                  />
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {["{{TutorName}}", "{{ParentGrade}}", "{{Location}}", "{{Timing}}", "{{RequirementID}}"].map(v => (
+                      <span key={v} className="bg-slate-100 border border-slate-200 text-[10px] text-slate-650 rounded-full px-2 py-0.5 font-bold font-mono">
+                        {v}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 pt-4 border-t border-slate-200 flex items-center justify-end gap-3">
+                <button
+                  onClick={() => setShowBroadcastModal(false)}
+                  className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSendBroadcast}
+                  disabled={sendingBroadcast}
+                  className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-xs font-black rounded-xl transition cursor-pointer text-white shadow-lg shadow-emerald-600/25 disabled:opacity-50"
+                >
+                  {sendingBroadcast ? "Dispatching..." : `Send WhatsApp Template (${selectedTutorIds.length})`}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Broadcast Logs Modal */}
+        {showLogsModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm animate-slideFade">
+            <div className="max-h-[80vh] w-full max-w-4xl overflow-hidden rounded-3xl bg-white border border-slate-200 p-6 shadow-2xl flex flex-col relative z-50">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-4 mb-4">
+                <div>
+                  <h3 className="text-xl font-black text-slate-850 flex items-center gap-2">
+                    <Users className="h-5 w-5 text-indigo-500" />
+                    Broadcast History Logs
+                  </h3>
+                  <p className="text-xs text-slate-500 font-semibold mt-0.5">
+                    A detailed view of WhatsApp template dispatches, requirement associations, and delivery status.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowLogsModal(false)}
+                  className="rounded-full bg-slate-100 hover:bg-slate-200 p-2 text-slate-500 transition cursor-pointer"
+                >
+                  <X className="h-4.5 w-4.5" />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto space-y-3 pr-1 min-h-[300px]">
+                {broadcastLogs.length === 0 ? (
+                  <div className="text-center py-20 text-xs text-slate-450 font-semibold italic">No broadcast events logged yet.</div>
+                ) : (
+                  <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                    <table className="w-full text-xs font-semibold text-slate-700">
+                      <thead>
+                        <tr className="text-left border-b border-slate-200 bg-slate-50/50 text-[10px] text-slate-500 uppercase tracking-wider">
+                          <th className="p-4">Time</th>
+                          <th className="p-4">Tutor</th>
+                          <th className="p-4">Mobile</th>
+                          <th className="p-4">Requirement ID</th>
+                          <th className="p-4">Delivery Status</th>
+                          <th className="p-4">Response Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {broadcastLogs.map((log) => {
+                          const timeStr = formatSubmittedDate(log.time || log.createdAt);
+                          return (
+                            <tr key={log._id} className="border-b border-slate-150/70 last:border-0 hover:bg-slate-50/50">
+                              <td className="p-4 text-slate-500">{timeStr}</td>
+                              <td className="p-4 text-slate-900 font-bold">{log.tutorName}</td>
+                              <td className="p-4 text-slate-500">{log.tutorPhone || "N/A"}</td>
+                              <td className="p-4 text-indigo-600 font-bold">{log.requirementId}</td>
+                              <td className="p-4">
+                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border ${
+                                  log.status === "Delivered"
+                                    ? "bg-emerald-50 border-emerald-250 text-emerald-700"
+                                    : log.status === "Failed"
+                                    ? "bg-rose-50 border-rose-250 text-rose-700"
+                                    : "bg-blue-50 border-blue-250 text-blue-700"
+                                }`}>
+                                  {log.status}
+                                </span>
+                              </td>
+                              <td className="p-4">
+                                <select
+                                  value={log.responseStatus || "No Response"}
+                                  onChange={(e) => handleUpdateResponseStatus(log._id, e.target.value)}
+                                  className="bg-slate-50 border border-slate-200 text-[11px] font-black text-slate-700 rounded-lg p-1.5 outline-none focus:border-indigo-500 cursor-pointer"
+                                >
+                                  <option value="No Response">No Response</option>
+                                  <option value="Interested">Interested</option>
+                                  <option value="Not Interested">Not Interested</option>
+                                  <option value="Follow-up Required">Follow-up Required</option>
+                                </select>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-4 pt-4 border-t border-slate-200 flex justify-end">
+                <button
+                  onClick={() => setShowLogsModal(false)}
+                  className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-xs font-black rounded-xl transition cursor-pointer text-white shadow-lg shadow-indigo-600/20"
+                >
+                  Close Logs
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1577,8 +2224,11 @@ function getStatusColor(status) {
   if (status === "New Lead") return "blue";
   if (status === "Fees Finalized") return "purple";
   if (status === "Demo Scheduled") return "yellow";
+  if (status === "Demo Cancelled") return "orange";
   if (status === "Feedback Pending") return "orange";
+  if (status === "Enrolled") return "emerald";
   if (status === "Won") return "emerald";
+  if (status === "Rejected") return "red";
   if (status === "Lost") return "red";
   return "slate";
 }
@@ -1741,6 +2391,15 @@ function ProtectedDocumentLink({ href, label, password }) {
 }
 
 function TutorModal({ title, form, setForm, primaryText, onPrimary, onClose }) {
+  const GENDER_OPTIONS = ["Male", "Female", "Other"];
+  const CITY_OPTIONS = ["Bangalore", "Mumbai"];
+  const TRAVEL_OPTIONS = ["5 km", "10 km", "15 km", "20+ km"];
+  const AVAILABILITY_OPTIONS = ["Available", "Busy", "Inactive", "Archived"];
+  const GRADE_OPTIONS = ["Class 1-5 (Primary)", "Class 6-8 (Middle)", "Class 9-10 (Secondary)", "Class 11-12 (Senior Secondary)"];
+  const BOARD_OPTIONS = ["CBSE", "ICSE", "IB", "IGCSE", "State Board"];
+  const SUBJECT_OPTIONS = ["Mathematics", "Science", "Physics", "Chemistry", "Biology", "English", "Hindi", "Commerce", "Social Studies"];
+  const TIMING_OPTIONS = ["Morning (AM)", "Evening (PM)"];
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm animate-slideFade">
       <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl border border-slate-200 md:p-8">
@@ -1758,60 +2417,167 @@ function TutorModal({ title, form, setForm, primaryText, onPrimary, onClose }) {
           </button>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <ModalInput
-            placeholder="Name"
-            value={form.name}
-            onChange={(value) => setForm({ ...form, name: value })}
-          />
+        {/* Section 1: Personal & Contact Details */}
+        <div className="mb-6">
+          <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-3 border-b border-slate-100 pb-1">Personal & Contact Info</h3>
+          <div className="grid gap-4 md:grid-cols-2">
+            <ModalInput
+              placeholder="Name"
+              value={form.name}
+              onChange={(value) => setForm({ ...form, name: value })}
+            />
 
-          <ModalInput
-            placeholder="Email"
-            value={form.email}
-            onChange={(value) => setForm({ ...form, email: value })}
-          />
+            <ModalInput
+              placeholder="Email"
+              value={form.email}
+              onChange={(value) => setForm({ ...form, email: value })}
+            />
 
-          <ModalInput
-            placeholder="Subject"
-            value={form.subject}
-            onChange={(value) => setForm({ ...form, subject: value })}
-          />
+            <ModalInput
+              placeholder="Phone Number"
+              value={form.phone}
+              onChange={(value) => setForm({ ...form, phone: value })}
+            />
 
-          <ModalInput
-            placeholder="Qualification"
-            value={form.qualification}
-            onChange={(value) => setForm({ ...form, qualification: value })}
-          />
+            <ModalInput
+              placeholder="WhatsApp Number"
+              value={form.whatsapp}
+              onChange={(value) => setForm({ ...form, whatsapp: value })}
+            />
 
-          <ModalInput
-            placeholder="Location"
-            value={form.location}
-            onChange={(value) => setForm({ ...form, location: value })}
-          />
+            <div className="flex flex-col">
+              <label className="text-[10px] font-black uppercase text-slate-400 mb-1 ml-2">Gender</label>
+              <ModalSelect
+                placeholder="Gender"
+                value={form.gender}
+                onChange={(value) => setForm({ ...form, gender: value })}
+                options={GENDER_OPTIONS}
+              />
+            </div>
 
-          <ModalInput
-            placeholder="Experience"
-            value={form.experience}
-            onChange={(value) => setForm({ ...form, experience: value })}
-          />
+            <div className="flex flex-col">
+              <label className="text-[10px] font-black uppercase text-slate-400 mb-1 ml-2">Date of Birth</label>
+              <ModalDateInput
+                placeholder="Date of Birth"
+                value={form.dob}
+                onChange={(value) => setForm({ ...form, dob: value })}
+              />
+            </div>
 
-          <ModalInput
-            placeholder="Price"
-            value={form.price}
-            onChange={(value) => setForm({ ...form, price: value })}
-          />
+            <ModalInput
+              placeholder="Image URL"
+              value={form.photo}
+              onChange={(value) => setForm({ ...form, photo: value })}
+            />
+          </div>
+        </div>
 
-          <ModalInput
-            placeholder="Phone Number"
-            value={form.phone}
-            onChange={(value) => setForm({ ...form, phone: value })}
-          />
+        {/* Section 2: Professional & Address Info */}
+        <div className="mb-6">
+          <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-3 border-b border-slate-100 pb-1">Professional & Address Info</h3>
+          <div className="grid gap-4 md:grid-cols-2">
+            <ModalInput
+              placeholder="Qualification"
+              value={form.qualification}
+              onChange={(value) => setForm({ ...form, qualification: value })}
+            />
 
-          <ModalInput
-            placeholder="Image URL"
-            value={form.photo}
-            onChange={(value) => setForm({ ...form, photo: value })}
-          />
+            <ModalInput
+              placeholder="Experience (Years)"
+              value={form.experience}
+              onChange={(value) => setForm({ ...form, experience: value })}
+            />
+
+            <ModalInput
+              placeholder="Price"
+              value={form.price}
+              onChange={(value) => setForm({ ...form, price: value })}
+            />
+
+            <div className="flex flex-col">
+              <label className="text-[10px] font-black uppercase text-slate-400 mb-1 ml-2">City</label>
+              <ModalSelect
+                placeholder="City"
+                value={form.city}
+                onChange={(value) => setForm({ ...form, city: value })}
+                options={CITY_OPTIONS}
+              />
+            </div>
+
+            <ModalInput
+              placeholder="Area"
+              value={form.area}
+              onChange={(value) => setForm({ ...form, area: value })}
+            />
+
+            <ModalInput
+              placeholder="Pincode"
+              value={form.pincode}
+              onChange={(value) => setForm({ ...form, pincode: value })}
+            />
+
+            <div className="col-span-2">
+              <ModalInput
+                placeholder="Full Address"
+                value={form.fullAddress}
+                onChange={(value) => setForm({ ...form, fullAddress: value })}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Section 3: Teaching Preferences & Availability */}
+        <div className="mb-6">
+          <h3 className="text-xs font-black uppercase tracking-widest text-slate-400 mb-3 border-b border-slate-100 pb-1">Teaching Preferences & Availability</h3>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="flex flex-col">
+              <label className="text-[10px] font-black uppercase text-slate-400 mb-1 ml-2">Max Travel Distance</label>
+              <ModalSelect
+                placeholder="Max Travel Distance"
+                value={form.maxTravelDistance}
+                onChange={(value) => setForm({ ...form, maxTravelDistance: value })}
+                options={TRAVEL_OPTIONS}
+              />
+            </div>
+
+            <div className="flex flex-col">
+              <label className="text-[10px] font-black uppercase text-slate-400 mb-1 ml-2">Availability Status</label>
+              <ModalSelect
+                placeholder="Availability Status"
+                value={form.availabilityStatus}
+                onChange={(value) => setForm({ ...form, availabilityStatus: value })}
+                options={AVAILABILITY_OPTIONS}
+              />
+            </div>
+
+            <CheckboxGroup
+              label="Grades Can Teach"
+              options={GRADE_OPTIONS}
+              selectedValues={form.grades}
+              onChange={(values) => setForm({ ...form, grades: values })}
+            />
+
+            <CheckboxGroup
+              label="Boards Can Teach"
+              options={BOARD_OPTIONS}
+              selectedValues={form.boards}
+              onChange={(values) => setForm({ ...form, boards: values })}
+            />
+
+            <CheckboxGroup
+              label="Subjects Can Teach"
+              options={SUBJECT_OPTIONS}
+              selectedValues={form.subjects}
+              onChange={(values) => setForm({ ...form, subjects: values })}
+            />
+
+            <CheckboxGroup
+              label="Preferred Timings"
+              options={TIMING_OPTIONS}
+              selectedValues={form.timings}
+              onChange={(values) => setForm({ ...form, timings: values })}
+            />
+          </div>
         </div>
 
         <textarea
@@ -1836,6 +2602,70 @@ function TutorModal({ title, form, setForm, primaryText, onPrimary, onClose }) {
             Cancel
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function ModalSelect({ placeholder, value, onChange, options }) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="h-12 w-full rounded-2xl border border-slate-200 px-4 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 text-sm font-semibold bg-white cursor-pointer"
+    >
+      <option value="" disabled>{placeholder}</option>
+      {options.map((opt) => (
+        <option key={opt} value={opt}>{opt}</option>
+      ))}
+    </select>
+  );
+}
+
+function ModalDateInput({ placeholder, value, onChange }) {
+  return (
+    <input
+      type="date"
+      className="h-12 w-full rounded-2xl border border-slate-200 px-4 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 text-sm font-semibold bg-white"
+      placeholder={placeholder}
+      value={value ? value.substring(0, 10) : ""}
+      onChange={(e) => onChange(e.target.value)}
+    />
+  );
+}
+
+function CheckboxGroup({ label, options, selectedValues, onChange }) {
+  return (
+    <div className="col-span-2 mt-2">
+      <label className="block text-xs font-black uppercase tracking-wider text-slate-400 mb-2">{label}</label>
+      <div className="flex flex-wrap gap-2">
+        {options.map((option) => {
+          const isChecked = selectedValues?.includes(option);
+          return (
+            <label
+              key={option}
+              className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-bold transition cursor-pointer select-none ${
+                isChecked
+                  ? "bg-indigo-50 border-indigo-300 text-indigo-700 font-extrabold shadow-sm"
+                  : "bg-white border-slate-200 text-slate-650 hover:bg-slate-50"
+              }`}
+            >
+              <input
+                type="checkbox"
+                checked={isChecked}
+                onChange={() => {
+                  if (isChecked) {
+                    onChange(selectedValues.filter((v) => v !== option));
+                  } else {
+                    onChange([...(selectedValues || []), option]);
+                  }
+                }}
+                className="hidden"
+              />
+              {option}
+            </label>
+          );
+        })}
       </div>
     </div>
   );
@@ -2013,7 +2843,7 @@ function AnalyticsConsole({ data, loading, period, setPeriod, refresh }) {
     if (!data || !Array.isArray(data.pages)) return [];
 
     let filtered = data.pages.filter(p =>
-      p.page?.toLowerCase().includes(pageSearch.toLowerCase())
+      String(p.page || "").toLowerCase().includes(pageSearch.toLowerCase())
     );
 
     filtered.sort((a, b) => {

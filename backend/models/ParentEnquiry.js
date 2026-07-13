@@ -166,6 +166,11 @@ const parentEnquirySchema = new mongoose.Schema(
       default: null,
     },
 
+    requirementId: {
+      type: String,
+      default: "",
+    },
+
     geoInfo: {
       type: mongoose.Schema.Types.Mixed,
       default: {},
@@ -217,8 +222,11 @@ const parentEnquirySchema = new mongoose.Schema(
         "New Lead",
         "Fees Finalized",
         "Demo Scheduled",
+        "Demo Cancelled",
         "Feedback Pending",
+        "Enrolled",
         "Won",
+        "Rejected",
         "Lost",
       ],
       default: "New Lead",
@@ -237,6 +245,12 @@ const parentEnquirySchema = new mongoose.Schema(
     assignedTutor: {
       type: String,
       default: "",
+    },
+
+    assignedTutorId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Tutor",
+      default: null,
     },
 
     demoDate: {
@@ -266,6 +280,12 @@ const parentEnquirySchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// Indexing for scalability and performance
+parentEnquirySchema.index({ assignedTutor: 1 });
+parentEnquirySchema.index({ assignedTutorId: 1 });
+parentEnquirySchema.index({ status: 1 });
+parentEnquirySchema.index({ createdAt: -1 });
 
 // Synchronized Schema
 export default mongoose.model("ParentEnquiry", parentEnquirySchema);

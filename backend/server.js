@@ -24,6 +24,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:5173",
+      "http://localhost:5174",
       "https://saraswatitutorial.com",
       "https://mumbai.saraswatitutorial.com",
       "https://saraswati-tutorials.odoo.com"
