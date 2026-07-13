@@ -44,7 +44,7 @@ const broadcastLogSchema = new mongoose.Schema(
     },
     responseStatus: {
       type: String,
-      enum: ["Interested", "Not Interested", "No Response", "Follow-up Required"],
+      enum: ["Interested", "Not Interested", "No Response", "Follow-up Required", "Busy", "Pending"],
       default: "No Response",
     },
   },

@@ -8,7 +8,7 @@ const DB = process.env.ODOO_DB;
 const USERNAME = process.env.ODOO_USERNAME;
 const PASSWORD = process.env.ODOO_PASSWORD;
 
-async function callOdoo(service, method, args) {
+export async function callOdoo(service, method, args) {
 
   // console.log("ODOO REQUEST:", {
   //   service,
@@ -378,5 +378,92 @@ export async function upsertMasterTutor(data) {
   } catch (err) {
     console.error("[Odoo] Error in upsertMasterTutor:", err);
     throw err;
+  }
+}
+
+/**
+ * Creates an outbound whatsapp.message record in Odoo to trigger sending a WhatsApp message
+ */
+export async function sendOdooWhatsApp(phone, messageText, tutorName) {
+  try {
+    const uid = await callOdoo("common", "authenticate", [
+      DB,
+      USERNAME,
+      PASSWORD,
+      {},
+    ]);
+
+    const payload = {
+      mobile_number: phone,
+      body: messageText,
+      message_type: "outbound",
+      state: "outgoing",
+      wa_account_id: 2, // Saraswati Tutorials Account ID
+      display_name: tutorName || ""
+    };
+
+    console.log(`[Odoo WhatsApp] Creating message for ${tutorName || ""} (${phone})`);
+    const recordId = await callOdoo("object", "execute_kw", [
+      DB,
+      uid,
+      PASSWORD,
+      "whatsapp.message",
+      "create",
+      [payload]
+    ]);
+
+    console.log(`[Odoo WhatsApp] Message created successfully with ID: ${recordId}`);
+    return { success: true, id: recordId };
+  } catch (err) {
+    console.error("[Odoo WhatsApp Error]:", err.message);
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Fetches recent inbound whatsapp.message records for a specific phone number since a certain date
+ */
+export async function fetchOdooWhatsAppReplies(tutorPhone, sinceDate) {
+  try {
+    const uid = await callOdoo("common", "authenticate", [
+      DB,
+      USERNAME,
+      PASSWORD,
+      {},
+    ]);
+
+    // Clean phone number to compare
+    let cleanPhone = String(tutorPhone).replace(/[^0-9]/g, "");
+    if (cleanPhone.length < 10) {
+      return []; // Skip sync for invalid phone numbers
+    }
+    cleanPhone = cleanPhone.slice(-10);
+
+    // Format sinceDate to Odoo UTC format, subtracting a 5-minute buffer for clock skew
+    const bufferTime = new Date(new Date(sinceDate).getTime() - 5 * 60 * 1000);
+    const utcDateStr = bufferTime.toISOString().replace("T", " ").substring(0, 19);
+
+    const domain = [
+      ["message_type", "=", "inbound"],
+      ["create_date", ">=", utcDateStr],
+      "|",
+      ["mobile_number", "like", cleanPhone],
+      ["mobile_number_formatted", "like", cleanPhone]
+    ];
+
+    const replies = await callOdoo("object", "execute_kw", [
+      DB,
+      uid,
+      PASSWORD,
+      "whatsapp.message",
+      "search_read",
+      [domain],
+      { fields: ["id", "body", "create_date"] }
+    ]);
+
+    return replies;
+  } catch (err) {
+    console.error("[Odoo fetch replies error]:", err.message);
+    return [];
   }
 }

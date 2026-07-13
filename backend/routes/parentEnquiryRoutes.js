@@ -2,11 +2,14 @@ import express from "express";
 import ParentEnquiry from "../models/ParentEnquiry.js";
 import ParentEnquiryDraft from "../models/ParentEnquiryDraft.js";
 import AnalyticsLog from "../models/AnalyticsLog.js";
-import { createLead, updateLead } from "../utils/odooService.js";
+import { createLead, updateLead, sendOdooWhatsApp, fetchOdooWhatsAppReplies } from "../utils/odooService.js";
 import { verifyToken } from "../middleware/authMiddleware.js";
 import { resolveGeo } from "../utils/geoLookup.js";
 import Tutor from "../models/Tutor.js";
 import BroadcastLog from "../models/BroadcastLog.js";
+import { buildCentralizedQuery, calculateTutorScore, parseAddress } from "../utils/matchingEngine.js";
+import fs from "fs";
+import path from "path";
 
 const router = express.Router();
 
@@ -224,6 +227,11 @@ router.post("/", async (req, res) => {
 
     const saved = await enquiry.save();
 
+    // Trigger automatic broadcast workflow asynchronously
+    triggerAutoBroadcast(saved._id).catch(err => {
+      console.error("[AutoBroadcast Trigger Error]:", err.message);
+    });
+
     // Log database saved successfully event
     try {
       const logData = {
@@ -399,6 +407,10 @@ router.delete("/:id", verifyToken(["admin"]), async (req, res) => {
  */
 router.get("/broadcast-logs", verifyToken(["admin"]), async (req, res) => {
   try {
+    // Sync replies from Odoo
+    await syncAllBroadcastReplies().catch(err => {
+      console.error("[RepliesSync Error]:", err.message);
+    });
     const logs = await BroadcastLog.find().sort({ time: -1 });
     res.json(logs);
   } catch (error) {
@@ -542,5 +554,254 @@ router.put("/broadcast-logs/:logId/response", verifyToken(["admin"]), async (req
     res.status(500).json({ message: error.message });
   }
 });
+
+/**
+ * GET current broadcast settings
+ * GET /api/parent-enquiries/settings/broadcast
+ */
+router.get("/settings/broadcast", verifyToken(["admin"]), async (req, res) => {
+  try {
+    let maxBroadcast = 20;
+    const configPath = path.resolve("config/broadcastConfig.json");
+    if (fs.existsSync(configPath)) {
+      const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
+      maxBroadcast = config.maxBroadcastTutors || 20;
+    }
+    res.json({ maxBroadcastTutors: maxBroadcast });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+/**
+ * POST update broadcast settings
+ * POST /api/parent-enquiries/settings/broadcast
+ */
+router.post("/settings/broadcast", verifyToken(["admin"]), async (req, res) => {
+  try {
+    const { maxBroadcastTutors } = req.body;
+    if (maxBroadcastTutors === undefined || isNaN(Number(maxBroadcastTutors))) {
+      return res.status(400).json({ message: "Invalid maxBroadcastTutors value." });
+    }
+
+    const configPath = path.resolve("config/broadcastConfig.json");
+    const newConfig = { maxBroadcastTutors: Number(maxBroadcastTutors) };
+    
+    fs.mkdirSync(path.dirname(configPath), { recursive: true });
+    fs.writeFileSync(configPath, JSON.stringify(newConfig, null, 2), "utf8");
+    
+    res.json({ success: true, maxBroadcastTutors: Number(maxBroadcastTutors) });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+/**
+ * Automatic broadcast function running after Parent Enquiry creation
+ */
+async function triggerAutoBroadcast(leadId) {
+  try {
+    console.log(`[AutoBroadcast] Starting automatic broadcast workflow for Lead ID: ${leadId}`);
+    const lead = await ParentEnquiry.findById(leadId);
+    if (!lead) {
+      console.error(`[AutoBroadcast] Lead not found: ${leadId}`);
+      return;
+    }
+
+    // 1. Get max broadcast limit
+    let maxBroadcast = 20;
+    try {
+      const configPath = path.resolve("config/broadcastConfig.json");
+      if (fs.existsSync(configPath)) {
+        const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
+        if (config.maxBroadcastTutors && !isNaN(Number(config.maxBroadcastTutors))) {
+          maxBroadcast = Number(config.maxBroadcastTutors);
+        }
+      }
+    } catch (err) {
+      console.error("[AutoBroadcast] Failed to read broadcast limit config:", err.message);
+    }
+
+    // 2. Build match params
+    const firstWard = lead.wards?.[0] || {};
+    const parsedAddr = parseAddress(lead.address);
+    const params = {
+      pincode: lead.pincode || parsedAddr.pincode || "",
+      area: lead.area || parsedAddr.area || "",
+      locality: lead.locality || parsedAddr.locality || "",
+      landmark: lead.landmark || parsedAddr.landmark || "",
+      city: lead.city || parsedAddr.city || lead.geoInfo?.city || "",
+      district: lead.district || parsedAddr.district || "",
+      state: lead.state || parsedAddr.state || lead.geoInfo?.region || "",
+      grade: firstWard.classGrade || "",
+      timing: lead.preferredTime || "",
+      gender: lead.preferredGender || "No Preference"
+    };
+
+    // 3. Query approved tutors matching grade/gender strict rules
+    const query = buildCentralizedQuery(params);
+    const tutors = await Tutor.find(query);
+
+    // 4. Score and filter/rank tutors
+    const scoredTutors = tutors
+      .map(tutor => {
+        const scoreInfo = calculateTutorScore(params, tutor);
+        return {
+          tutor,
+          matchPercentage: scoreInfo.percentage,
+          locationScore: scoreInfo.locationScore
+        };
+      })
+      .filter(item => {
+        const hasLocationCriteria = !!(
+          params.pincode ||
+          params.area ||
+          params.locality ||
+          params.landmark ||
+          params.city
+        );
+        if (hasLocationCriteria && item.locationScore === 0) {
+          return false;
+        }
+        return item.matchPercentage > 0;
+      })
+      .sort((a, b) => b.matchPercentage - a.matchPercentage);
+
+    // Take top recommended tutors up to the max limit
+    const selectedTutors = scoredTutors.slice(0, maxBroadcast).map(item => item.tutor);
+    console.log(`[AutoBroadcast] Found ${scoredTutors.length} total matched tutors. Selected top ${selectedTutors.length} for broadcast.`);
+
+    const reqId = lead.requirementId || "REQ-XXXXX";
+    const parentGrade = firstWard.classGrade ? `Class ${firstWard.classGrade}` : "N/A";
+    const parentBoard = firstWard.curriculum || "N/A";
+    const parentLocation = `${params.area || parsedAddr.area || "N/A"}, ${params.city || "Bengaluru"} - ${params.pincode || "N/A"}`;
+    const parentTiming = lead.preferredTime || "N/A";
+
+    for (const tutor of selectedTutors) {
+      // SAFETY RULE: Prevent duplicate broadcasts
+      const existingLog = await BroadcastLog.findOne({
+        tutorId: tutor._id,
+        requirementId: reqId
+      });
+      
+      if (existingLog) {
+        console.log(`[AutoBroadcast] Broadcast already sent to tutor ${tutor.name} for Requirement ID ${reqId}. Skipping.`);
+        continue;
+      }
+
+      // Generate personalized message
+      const message = `Hello ${tutor.name},\n\nA new tuition opportunity matching your profile has been found.\n\nRequirement ID:\n${reqId}\n\nStudent Grade:\n${parentGrade}\n\nBoard:\n${parentBoard}\n\nLocation:\n${parentLocation}\n\nPreferred Timing:\n${parentTiming}\n\nIf you are interested, please reply YES.\n\nThank you,\nSaraswati Tutorials`;
+
+      // Send via Odoo WhatsApp integration
+      const tutorPhone = tutor.phone || tutor.whatsapp || "";
+      if (!tutorPhone) {
+        console.warn(`[AutoBroadcast] Tutor ${tutor.name} has no phone number. Skipping.`);
+        continue;
+      }
+
+      let odooSuccess = false;
+      let odooMsgId = null;
+      try {
+        const odooRes = await sendOdooWhatsApp(tutorPhone, message, tutor.name);
+        if (odooRes.success) {
+          odooSuccess = true;
+          odooMsgId = odooRes.id;
+        }
+      } catch (err) {
+        console.error(`[AutoBroadcast] Failed sending message to Odoo for ${tutor.name}:`, err.message);
+      }
+
+      // Create Broadcast Log
+      const log = new BroadcastLog({
+        tutorId: tutor._id,
+        tutorName: tutor.name,
+        tutorPhone: tutorPhone,
+        requirementId: reqId,
+        leadId: lead._id,
+        type: "whatsapp",
+        message: message,
+        status: odooSuccess ? "Sent" : "Failed",
+        responseStatus: "No Response"
+      });
+      
+      await log.save();
+      console.log(`[AutoBroadcast] Logged broadcast to ${tutor.name} (Status: ${log.status})`);
+    }
+
+    console.log(`[AutoBroadcast] Completed automatic broadcast workflow for Lead ID: ${leadId}`);
+  } catch (err) {
+    console.error("[AutoBroadcast] General error in auto broadcast:", err);
+  }
+}
+
+/**
+ * Sync replies from Odoo for pending BroadcastLog records
+ */
+async function syncAllBroadcastReplies() {
+  try {
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - 7); // Sync for last 7 days
+
+    const pendingLogs = await BroadcastLog.find({
+      responseStatus: { $in: ["No Response", "Pending"] },
+      time: { $gte: cutoffDate }
+    });
+
+    if (pendingLogs.length === 0) return;
+
+    console.log(`[RepliesSync] Checking Odoo replies for ${pendingLogs.length} pending broadcast logs...`);
+
+    const phoneToLogs = {};
+    for (const log of pendingLogs) {
+      const clean = String(log.tutorPhone).replace(/[^0-9]/g, "");
+      if (clean.length >= 10) {
+        if (!phoneToLogs[log.tutorPhone]) {
+          phoneToLogs[log.tutorPhone] = [];
+        }
+        phoneToLogs[log.tutorPhone].push(log);
+      }
+    }
+
+    for (const [phone, logs] of Object.entries(phoneToLogs)) {
+      // Fetch replies starting with a 5-minute clock skew buffer
+      const earliestTime = new Date(Math.min(...logs.map(l => new Date(l.time))) - 5 * 60 * 1000);
+      
+      const replies = await fetchOdooWhatsAppReplies(phone, earliestTime);
+      if (replies.length > 0) {
+        replies.sort((a, b) => new Date(a.create_date) - new Date(b.create_date));
+
+        for (const log of logs) {
+          const logTime = new Date(log.time);
+          const logTimeWithBuffer = new Date(logTime.getTime() - 5 * 60 * 1000);
+          const matchReply = replies.find(r => new Date(r.create_date) > logTimeWithBuffer);
+          
+          if (matchReply) {
+            const cleanText = String(matchReply.body || "")
+              .replace(/<[^>]*>/g, "")
+              .trim()
+              .toUpperCase();
+
+            let newStatus = null;
+            if (cleanText.includes("YES")) {
+              newStatus = "Interested";
+            } else if (cleanText.includes("NO")) {
+              newStatus = "Not Interested";
+            } else if (cleanText.includes("BUSY")) {
+              newStatus = "Busy";
+            }
+
+            if (newStatus && log.responseStatus !== newStatus) {
+              log.responseStatus = newStatus;
+              await log.save();
+              console.log(`[RepliesSync] Updated reply status for tutor ${log.tutorName} to ${newStatus} on Requirement ${log.requirementId}`);
+            }
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error("[RepliesSync] Error syncing replies from Odoo:", err.message);
+  }
+}
 
 export default router;

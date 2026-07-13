@@ -276,6 +276,7 @@ export default function AdminDashboard() {
   );
   const [broadcastLogs, setBroadcastLogs] = useState([]);
   const [showLogsModal, setShowLogsModal] = useState(false);
+  const [maxBroadcastTutors, setMaxBroadcastTutors] = useState(20);
   const [broadcastType, setBroadcastType] = useState("whatsapp");
   const [sendingBroadcast, setSendingBroadcast] = useState(false);
 
@@ -380,6 +381,43 @@ export default function AdminDashboard() {
       }
     } catch (err) {
       console.error("Error fetching broadcast logs:", err);
+    }
+  };
+
+  const fetchBroadcastSettings = async () => {
+    try {
+      const token = localStorage.getItem("adminToken");
+      const res = await fetch(`${API_BASE}/parent-enquiries/settings/broadcast`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMaxBroadcastTutors(data.maxBroadcastTutors || 20);
+      }
+    } catch (err) {
+      console.error("Error fetching broadcast settings:", err);
+    }
+  };
+
+  const handleUpdateMaxBroadcast = async (val) => {
+    try {
+      const token = localStorage.getItem("adminToken");
+      const res = await fetch(`${API_BASE}/parent-enquiries/settings/broadcast`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ maxBroadcastTutors: val })
+      });
+      if (res.ok) {
+        setMaxBroadcastTutors(val);
+      } else {
+        alert("Failed to update broadcast settings");
+      }
+    } catch (err) {
+      console.error("Error updating broadcast settings:", err);
+      alert("Error updating broadcast settings");
     }
   };
 
@@ -521,6 +559,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     fetchData();
     fetchBroadcastLogs();
+    fetchBroadcastSettings();
   }, []);
 
   const suggestionValues = useMemo(() => {
@@ -1083,6 +1122,7 @@ export default function AdminDashboard() {
             <button
               onClick={() => {
                 fetchBroadcastLogs();
+                fetchBroadcastSettings();
                 setShowLogsModal(true);
               }}
               className="flex items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm font-bold bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 transition duration-300 cursor-pointer"
@@ -2154,6 +2194,26 @@ export default function AdminDashboard() {
                 </button>
               </div>
 
+              {/* Auto-Broadcast Config Card */}
+              <div className="bg-slate-50 border border-slate-250 rounded-2xl p-4 mb-4 flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-bold text-slate-800">Auto-Broadcast Limit</h4>
+                  <p className="text-[10px] text-slate-500 font-semibold mt-0.5">Maximum tutors notified automatically on new parent request</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={maxBroadcastTutors}
+                    onChange={(e) => handleUpdateMaxBroadcast(Number(e.target.value))}
+                    className="bg-white border border-slate-350 text-xs font-black text-slate-700 rounded-xl px-3 py-2 outline-none focus:border-indigo-500 cursor-pointer"
+                  >
+                    <option value={10}>10 Tutors</option>
+                    <option value={20}>20 Tutors</option>
+                    <option value={30}>30 Tutors</option>
+                    <option value={50}>50 Tutors</option>
+                  </select>
+                </div>
+              </div>
+
               <div className="flex-1 overflow-y-auto space-y-3 pr-1 min-h-[300px]">
                 {broadcastLogs.length === 0 ? (
                   <div className="text-center py-20 text-xs text-slate-450 font-semibold italic">No broadcast events logged yet.</div>
@@ -2197,8 +2257,10 @@ export default function AdminDashboard() {
                                   className="bg-slate-50 border border-slate-200 text-[11px] font-black text-slate-700 rounded-lg p-1.5 outline-none focus:border-indigo-500 cursor-pointer"
                                 >
                                   <option value="No Response">No Response</option>
+                                  <option value="Pending">Pending</option>
                                   <option value="Interested">Interested</option>
                                   <option value="Not Interested">Not Interested</option>
+                                  <option value="Busy">Busy</option>
                                   <option value="Follow-up Required">Follow-up Required</option>
                                 </select>
                               </td>
