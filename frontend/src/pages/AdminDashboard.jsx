@@ -276,7 +276,6 @@ export default function AdminDashboard() {
   );
   const [broadcastLogs, setBroadcastLogs] = useState([]);
   const [showLogsModal, setShowLogsModal] = useState(false);
-  const [maxBroadcastTutors, setMaxBroadcastTutors] = useState(20);
   const [broadcastType, setBroadcastType] = useState("whatsapp");
   const [sendingBroadcast, setSendingBroadcast] = useState(false);
 
@@ -384,43 +383,6 @@ export default function AdminDashboard() {
     }
   };
 
-  const fetchBroadcastSettings = async () => {
-    try {
-      const token = localStorage.getItem("adminToken");
-      const res = await fetch(`${API_BASE}/parent-enquiries/settings/broadcast`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setMaxBroadcastTutors(data.maxBroadcastTutors || 20);
-      }
-    } catch (err) {
-      console.error("Error fetching broadcast settings:", err);
-    }
-  };
-
-  const handleUpdateMaxBroadcast = async (val) => {
-    try {
-      const token = localStorage.getItem("adminToken");
-      const res = await fetch(`${API_BASE}/parent-enquiries/settings/broadcast`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify({ maxBroadcastTutors: val })
-      });
-      if (res.ok) {
-        setMaxBroadcastTutors(val);
-      } else {
-        alert("Failed to update broadcast settings");
-      }
-    } catch (err) {
-      console.error("Error updating broadcast settings:", err);
-      alert("Error updating broadcast settings");
-    }
-  };
-
   const handleUpdateResponseStatus = async (logId, responseStatus) => {
     try {
       const token = localStorage.getItem("adminToken");
@@ -448,8 +410,21 @@ export default function AdminDashboard() {
   const handleSendBroadcast = async () => {
     if (selectedTutorIds.length === 0 || !matchingLeadId) return;
     setSendingBroadcast(true);
+    setBroadcastResults([]);
     try {
       const token = localStorage.getItem("adminToken");
+      const adminEmail = localStorage.getItem("adminEmail") || "";
+
+      // Build distance/match maps for privacy-safe message
+      const distanceTiers = {};
+      const distancesKm = {};
+      const matchPercentages = {};
+      matchedTutors.forEach(t => {
+        if (t.distanceTier) distanceTiers[t._id] = t.distanceTier;
+        if (t.distanceKm != null) distancesKm[t._id] = t.distanceKm;
+        if (t.matchPercentage != null) matchPercentages[t._id] = t.matchPercentage;
+      });
+
       const res = await fetch(`${API_BASE}/parent-enquiries/${matchingLeadId}/broadcast`, {
         method: "POST",
         headers: {
@@ -458,19 +433,21 @@ export default function AdminDashboard() {
         },
         body: JSON.stringify({
           tutorIds: selectedTutorIds,
-          messageTemplate: broadcastTemplate,
-          type: broadcastType
+          adminName: "Admin",
+          adminEmail,
+          distanceTiers,
+          distancesKm,
+          matchPercentages,
         })
       });
 
+      const data = await res.json();
       if (res.ok) {
-        alert(`Successfully dispatched broadcast to ${selectedTutorIds.length} tutors!`);
-        setShowBroadcastModal(false);
-        setSelectedTutorIds([]);
+        setBroadcastResults(data.results || []);
         fetchBroadcastLogs();
+        fetchMatchingTutors(matchingLeadId);
       } else {
-        const errData = await res.json();
-        alert(`Failed to send broadcast: ${errData.message}`);
+        alert(`Failed to send broadcast: ${data.message}`);
       }
     } catch (err) {
       console.error("Error sending broadcast:", err);
@@ -480,7 +457,7 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleAssignTutor = async (tutorId) => {
+  const handleAssignTutor = async (tutorId, demoDate, demoTime) => {
     if (!matchingLeadId) return;
     try {
       const token = localStorage.getItem("adminToken");
@@ -490,12 +467,17 @@ export default function AdminDashboard() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ tutorId })
+        body: JSON.stringify({ tutorId, demoDate, demoTime })
       });
 
       if (res.ok) {
-        alert("Tutor assigned successfully!");
+        const data = await res.json();
+        const msg = data.parentDetailsSent
+          ? "✅ Tutor assigned! Parent details sent via WhatsApp."
+          : `✅ Tutor assigned! (WhatsApp not sent: ${data.parentDetailsError || "unknown reason"})`;
+        alert(msg);
         fetchData();
+        fetchBroadcastLogs();
       } else {
         const errData = await res.json();
         alert(`Failed to assign tutor: ${errData.message}`);
@@ -516,6 +498,10 @@ export default function AdminDashboard() {
 
   const [matchedTutors, setMatchedTutors] = useState([]);
   const [loadingMatches, setLoadingMatches] = useState(false);
+  const [broadcastResults, setBroadcastResults] = useState([]);
+  const [assignModalTutorId, setAssignModalTutorId] = useState(null);
+  const [assignDemoDate, setAssignDemoDate] = useState("");
+  const [assignDemoTime, setAssignDemoTime] = useState("");
 
   const fetchMatchingTutors = async (leadId) => {
     if (!leadId) {
@@ -559,7 +545,6 @@ export default function AdminDashboard() {
   useEffect(() => {
     fetchData();
     fetchBroadcastLogs();
-    fetchBroadcastSettings();
   }, []);
 
   const suggestionValues = useMemo(() => {
@@ -1122,7 +1107,6 @@ export default function AdminDashboard() {
             <button
               onClick={() => {
                 fetchBroadcastLogs();
-                fetchBroadcastSettings();
                 setShowLogsModal(true);
               }}
               className="flex items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm font-bold bg-indigo-600 text-white shadow-lg shadow-indigo-600/20 hover:bg-indigo-700 transition duration-300 cursor-pointer"
@@ -1515,7 +1499,7 @@ export default function AdminDashboard() {
                                 </div>
                               ) : (
                                 <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1">
-                                  {matchedTutors.map((t, index) => {
+                                  {matchedTutors.map(t => {
                                     const isSelected = selectedTutorIds.includes(t._id);
                                     return (
                                       <div
@@ -1537,7 +1521,6 @@ export default function AdminDashboard() {
                                             }}
                                             className="h-4.5 w-4.5 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500"
                                           />
-
                                           {t.photo ? (
                                             <img
                                               src={t.photo}
@@ -1545,32 +1528,106 @@ export default function AdminDashboard() {
                                               className="h-12 w-12 rounded-xl object-cover border border-slate-200"
                                             />
                                           ) : (
-                                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-[10px] font-bold text-slate-400">
-                                              No Photo
+                                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-100 to-blue-100 text-xs font-black text-indigo-600">
+                                              {t.name?.charAt(0) || "?"}
                                             </div>
                                           )}
 
-                                          <div>
+                                          <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap">
-                                              <p className="font-extrabold text-slate-900 text-sm">#{index + 1} - {t.name}</p>
+                                              <p className="font-extrabold text-slate-900 text-sm">{t.name}</p>
+
+                                              {/* Match % badge */}
                                               {t.matchPercentage !== undefined && (
-                                                <span className="inline-flex items-center rounded-full bg-indigo-50 border border-indigo-200 px-2 py-0.5 text-[10px] font-black text-indigo-700">
-                                                  {t.matchCategory || "Closest Match"} ({t.matchPercentage}%)
+                                                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-black border ${
+                                                  t.matchPercentage >= 80
+                                                    ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                                                    : t.matchPercentage >= 60
+                                                    ? "bg-blue-50 border-blue-200 text-blue-700"
+                                                    : "bg-amber-50 border-amber-200 text-amber-700"
+                                                }`}>
+                                                  {t.matchPercentage}% Match
+                                                </span>
+                                              )}
+
+                                              {/* Distance badge */}
+                                              {t.distanceTier && t.distanceTier !== "Unknown" && (
+                                                <span className="inline-flex items-center rounded-full bg-violet-50 border border-violet-200 px-2 py-0.5 text-[10px] font-black text-violet-700">
+                                                  📍 {t.distanceTier}
+                                                </span>
+                                              )}
+
+                                              {/* Onboarding badge */}
+                                              {t.onboardingCompleted ? (
+                                                <span className="inline-flex items-center rounded-full bg-emerald-50 border border-emerald-250 px-2 py-0.5 text-[10px] font-black text-emerald-700">
+                                                  🟢 Ready to Broadcast
+                                                </span>
+                                              ) : t.onboardingMessageSentAt ? (
+                                                <span className="inline-flex items-center rounded-full bg-amber-50 border border-amber-250 px-2 py-0.5 text-[10px] font-black text-amber-700">
+                                                  🟡 Onboarding Sent
+                                                </span>
+                                              ) : (
+                                                <span className="inline-flex items-center rounded-full bg-orange-50 border border-orange-250 px-2 py-0.5 text-[10px] font-black text-orange-700">
+                                                  🟠 Onboarding Pending
+                                                </span>
+                                              )}
+
+                                              {/* Broadcast status overlay */}
+                                              {t.broadcastStatus && (
+                                                <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-black border ${
+                                                  t.broadcastResponseStatus === "Assigned"
+                                                    ? "bg-indigo-50 border-indigo-200 text-indigo-700"
+                                                    : t.broadcastResponseStatus === "Interested"
+                                                    ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                                                    : t.broadcastResponseStatus === "Not Interested"
+                                                    ? "bg-rose-50 border-rose-200 text-rose-700"
+                                                    : "bg-slate-100 border-slate-200 text-slate-600"
+                                                }`}>
+                                                  {t.broadcastResponseStatus === "Assigned" ? "✓ Assigned" :
+                                                   t.broadcastResponseStatus === "Interested" ? "✓ Interested" :
+                                                   t.broadcastResponseStatus === "Not Interested" ? "✗ Not Interested" :
+                                                   t.broadcastStatus === "Sent" || t.broadcastStatus === "Delivered" ? "📤 Sent" :
+                                                   t.broadcastStatus === "Failed" ? "⚠ Failed" :
+                                                   "Already Broadcast"}
                                                 </span>
                                               )}
                                             </div>
-                                            <div className="mt-1 flex flex-wrap gap-2 text-[10px] text-slate-500 font-bold">
-                                              <span className="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">
-                                                Exp: {t.experience || "N/A"}
-                                              </span>
-                                              <span className="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">
-                                                Loc: {t.area || t.location || "N/A"}
-                                              </span>
+
+                                            <div className="mt-1 flex flex-wrap gap-1.5 text-[10px] text-slate-500 font-bold">
                                               <span className="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">
                                                 {t.gender || "N/A"}
                                               </span>
                                               <span className="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">
-                                                Grades: {t.grades?.join(", ") || "N/A"}
+                                                Exp: {t.experience || "N/A"}
+                                              </span>
+                                              <span className="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">
+                                                {t.area || t.location || "N/A"}
+                                              </span>
+                                              {t.grades?.length > 0 && (
+                                                <span className="bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-full text-indigo-600">
+                                                  {t.grades.join(", ")}
+                                                </span>
+                                              )}
+                                              {t.boards?.length > 0 && (
+                                                <span className="bg-teal-50 border border-teal-100 px-2 py-0.5 rounded-full text-teal-700">
+                                                  {t.boards.slice(0,3).join(" • ")}
+                                                </span>
+                                              )}
+                                              {t.subjects?.length > 0 && (
+                                                <span className="bg-purple-50 border border-purple-100 px-2 py-0.5 rounded-full text-purple-700">
+                                                  {t.subjects.slice(0,3).join(", ")}
+                                                </span>
+                                              )}
+                                              <span className={`px-2 py-0.5 rounded-full border ${
+                                                t.availabilityStatus === "Available"
+                                                  ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                                                  : t.availabilityStatus === "Busy"
+                                                  ? "bg-amber-50 border-amber-200 text-amber-700"
+                                                  : t.availabilityStatus === "Blocked"
+                                                  ? "bg-red-50 border-red-200 text-red-700"
+                                                  : "bg-slate-100 border-slate-200 text-slate-600"
+                                              }`}>
+                                                {t.availabilityStatus || "Available"}
                                               </span>
                                               <span className={`px-2 py-0.5 rounded-full border ${
                                                 t.status === "approved"
@@ -1579,60 +1636,23 @@ export default function AdminDashboard() {
                                                   ? "bg-rose-50 border-rose-200 text-rose-700"
                                                   : "bg-amber-50 border-amber-200 text-amber-700"
                                               }`}>
-                                                Approval: {t.status?.toUpperCase() || "PENDING"}
+                                                {t.status?.toUpperCase() || "PENDING"}
                                               </span>
-                                              <span className={`px-2 py-0.5 rounded-full border ${
-                                                t.availabilityStatus === "Available"
-                                                  ? "bg-emerald-50 border-emerald-200 text-emerald-700"
-                                                  : t.availabilityStatus === "Busy"
-                                                  ? "bg-amber-50 border-amber-250 text-amber-700"
-                                                  : "bg-slate-100 border-slate-200 text-slate-600"
-                                              }`}>
-                                                Status: {t.availabilityStatus || "Available"}
-                                              </span>
+                                              {t.qualification && (
+                                                <span className="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">
+                                                  {t.qualification}
+                                                </span>
+                                              )}
                                             </div>
-
-                                            {(() => {
-                                              const tLog = broadcastLogs.find(
-                                                (log) => log.tutorId === t._id && log.leadId === matchingLeadId
-                                              );
-                                              if (tLog) {
-                                                return (
-                                                  <div className="mt-2.5 flex flex-wrap items-center gap-2 border-t border-slate-100 pt-2 text-[10px]">
-                                                    <span className={`px-2 py-0.5 rounded-full border font-black ${
-                                                      tLog.status === "Delivered"
-                                                        ? "bg-emerald-50 border-emerald-250 text-emerald-700"
-                                                        : tLog.status === "Failed"
-                                                        ? "bg-rose-50 border-rose-250 text-rose-700"
-                                                        : "bg-blue-50 border-blue-250 text-blue-700"
-                                                    }`}>
-                                                      Broadcast: {tLog.status}
-                                                    </span>
-                                                    <span className="text-slate-450 font-black">Response:</span>
-                                                    <select
-                                                      value={tLog.responseStatus || "No Response"}
-                                                      onChange={(e) => handleUpdateResponseStatus(tLog._id, e.target.value)}
-                                                      className="bg-slate-50 border border-slate-200 text-[10px] font-black text-slate-700 rounded px-1.5 py-0.5 outline-none focus:border-indigo-500 cursor-pointer"
-                                                    >
-                                                      <option value="No Response">No Response</option>
-                                                      <option value="Interested">Interested</option>
-                                                      <option value="Not Interested">Not Interested</option>
-                                                      <option value="Follow-up Required">Follow-up Required</option>
-                                                    </select>
-                                                  </div>
-                                                );
-                                              }
-                                              return null;
-                                            })()}
                                           </div>
                                         </div>
 
                                         <div className="flex items-center gap-2 shrink-0">
                                           <button
                                             onClick={() => {
-                                              if (window.confirm(`Assign ${t.name} to this lead?`)) {
-                                                handleAssignTutor(t._id);
-                                              }
+                                              setAssignModalTutorId(t._id);
+                                              setAssignDemoDate("");
+                                              setAssignDemoTime("");
                                             }}
                                             className="px-3 py-1.5 text-xs font-black text-indigo-600 hover:bg-indigo-50 border border-indigo-150 rounded-xl transition cursor-pointer"
                                           >
@@ -1935,6 +1955,14 @@ export default function AdminDashboard() {
                               {(!t.status || t.status === "pending") && (
                                 <Badge text="Pending" color="yellow" />
                               )}
+
+                              {t.onboardingCompleted ? (
+                                <Badge text="Onboarding Completed" color="emerald" />
+                              ) : t.onboardingMessageSentAt ? (
+                                <Badge text="Onboarding Sent" color="orange" />
+                              ) : (
+                                <Badge text="Onboarding Pending" color="slate" />
+                              )}
                             </div>
 
                             <div className="grid gap-x-8 gap-y-2 text-sm text-slate-700 md:grid-cols-2">
@@ -2061,6 +2089,48 @@ export default function AdminDashboard() {
                             Edit
                           </button>
 
+                          {!t.onboardingCompleted ? (
+                            <button
+                              onClick={async () => {
+                                if (!window.confirm(`Mark ${t.name} as Onboarding Completed? This will also set status to Approved.`)) return;
+                                try {
+                                  const token = localStorage.getItem("adminToken");
+                                  const res = await fetch(`${API_BASE}/tutors/${t._id}/mark-onboarded`, {
+                                    method: "PUT",
+                                    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                                    body: JSON.stringify({ onboardingCompleted: true }),
+                                  });
+                                  if (res.ok) { alert("✅ Tutor marked as Onboarding Completed!"); fetchData(); }
+                                  else { const d = await res.json(); alert(`Failed: ${d.message}`); }
+                                } catch (err) { console.error(err); alert("Error updating tutor onboarding."); }
+                              }}
+                              className="flex-1 flex items-center justify-center gap-1 rounded-2xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white transition duration-200 hover:bg-indigo-700 hover:scale-[1.02] cursor-pointer"
+                            >
+                              <UserCheck className="h-3.5 w-3.5 stroke-[2.5]" />
+                              Mark Onboarded
+                            </button>
+                          ) : (
+                            <button
+                              onClick={async () => {
+                                if (!window.confirm(`Reset onboarding for ${t.name}?`)) return;
+                                try {
+                                  const token = localStorage.getItem("adminToken");
+                                  const res = await fetch(`${API_BASE}/tutors/${t._id}/mark-onboarded`, {
+                                    method: "PUT",
+                                    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                                    body: JSON.stringify({ onboardingCompleted: false }),
+                                  });
+                                  if (res.ok) { alert("✅ Onboarding reset to Pending."); fetchData(); }
+                                  else { const d = await res.json(); alert(`Failed: ${d.message}`); }
+                                } catch (err) { console.error(err); alert("Error resetting onboarding."); }
+                              }}
+                              className="flex-1 flex items-center justify-center gap-1 rounded-2xl bg-slate-500 px-4 py-2.5 text-xs font-bold text-white transition duration-200 hover:bg-slate-600 hover:scale-[1.02] cursor-pointer"
+                            >
+                              <XCircle className="h-3.5 w-3.5 stroke-[2.5]" />
+                              Reset Onboarding
+                            </button>
+                          )}
+
                           <button
                             onClick={() => deleteTutor(t._id)}
                             className="flex-1 flex items-center justify-center gap-1 rounded-2xl bg-slate-900 px-4 py-2.5 text-xs font-bold text-white transition duration-200 hover:bg-black hover:scale-[1.02] cursor-pointer"
@@ -2111,61 +2181,157 @@ export default function AdminDashboard() {
           />
         )}
 
-        {/* Broadcast Template Preview Modal */}
+        {/* Broadcast Confirm + Results Modal */}
         {showBroadcastModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm animate-slideFade">
-            <div className="w-full max-w-xl overflow-hidden rounded-3xl bg-white border border-slate-200 p-6 shadow-2xl flex flex-col relative z-50">
+            <div className="w-full max-w-lg overflow-hidden rounded-3xl bg-white border border-slate-200 p-6 shadow-2xl flex flex-col relative z-50 max-h-[85vh]">
               <div className="flex items-center justify-between border-b border-slate-200 pb-4 mb-4">
                 <div>
                   <h3 className="text-lg font-black text-slate-800">
-                    WhatsApp Broadcast Template
+                    WhatsApp Broadcast
                   </h3>
                   <p className="text-xs text-slate-500 font-semibold mt-0.5">
-                    Review and customize template variables before dispatching to {selectedTutorIds.length} tutors.
+                    Sending target messages to {selectedTutorIds.length} tutor(s) via Odoo WhatsApp.
                   </p>
                 </div>
                 <button
-                  onClick={() => setShowBroadcastModal(false)}
+                  onClick={() => { setShowBroadcastModal(false); setBroadcastResults([]); }}
                   className="rounded-full bg-slate-100 hover:bg-slate-200 p-2 text-slate-500 transition cursor-pointer"
                 >
                   <X className="h-4.5 w-4.5" />
                 </button>
               </div>
 
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-black text-slate-700 mb-2">
-                    Message Content (Template Variables Supported)
-                  </label>
-                  <textarea
-                    value={broadcastTemplate}
-                    onChange={(e) => setBroadcastTemplate(e.target.value)}
-                    rows={10}
-                    className="w-full rounded-2xl border border-slate-200 bg-slate-50/50 p-4 text-xs font-semibold font-mono text-slate-800 outline-none focus:border-blue-500"
-                  />
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {["{{TutorName}}", "{{ParentGrade}}", "{{Location}}", "{{Timing}}", "{{RequirementID}}"].map(v => (
-                      <span key={v} className="bg-slate-100 border border-slate-200 text-[10px] text-slate-650 rounded-full px-2 py-0.5 font-bold font-mono">
-                        {v}
-                      </span>
-                    ))}
-                  </div>
-                </div>
+              {/* Privacy Notice */}
+              <div className="mb-4 rounded-2xl bg-amber-50 border border-amber-200 p-3.5">
+                <p className="text-xs font-bold text-amber-800">
+                  🔒 <strong>Privacy Protected:</strong> Parent details (name, phone, address, map link) are NEVER shared with tutors during broadcasts.
+                </p>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-slate-200 flex items-center justify-end gap-3">
+              {/* Pre-broadcast Preview list */}
+              {broadcastResults.length === 0 && (
+                <div className="flex-1 overflow-y-auto space-y-2 mb-4 max-h-[260px] border border-slate-100 p-2 rounded-2xl bg-slate-50/50">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Tutor Workflow Breakdown:</p>
+                  {selectedTutorIds.map((tId) => {
+                    const tutor = matchedTutors.find(t => t._id === tId);
+                    if (!tutor) return null;
+                    const isNewTutorWorkflow = !(tutor.status === "approved" && tutor.onboardingCompleted);
+                    return (
+                      <div key={tId} className="flex items-center justify-between rounded-xl p-2.5 border border-slate-150 text-xs font-bold bg-white shadow-sm">
+                        <span className="text-slate-800">{tutor.name}</span>
+                        <span>
+                          {isNewTutorWorkflow ? (
+                            <span className="inline-flex items-center rounded-full bg-orange-50 border border-orange-200 px-2 py-0.5 text-[10px] font-black text-orange-700">
+                              🔐 Onboarding Msg (Odoo ID 72)
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-black text-emerald-700">
+                              📋 Requirement Msg
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Results (shown after send) */}
+              {broadcastResults.length > 0 && (
+                <div className="flex-1 overflow-y-auto space-y-2 mb-4 max-h-[260px]">
+                  {broadcastResults.map((r, i) => {
+                    const tutor = matchedTutors.find(t => t._id === r.tutorId);
+                    const isNewTutorWorkflow = tutor ? !(tutor.status === "approved" && tutor.onboardingCompleted) : (r.workflow === "onboarding");
+                    return (
+                      <div key={i} className={`flex flex-col rounded-xl p-3 border text-xs font-bold ${
+                        r.status === "Sent" ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                        : r.status === "Suppressed" ? "bg-amber-50 border-amber-200 text-amber-800"
+                        : "bg-rose-50 border-rose-200 text-rose-800"
+                      }`}>
+                        <div className="flex items-center justify-between">
+                          <span>{r.tutorName || r.tutorId}</span>
+                          <span className="flex items-center gap-2">
+                            {r.status === "Sent" ? "✅ Sent" : r.status === "Suppressed" ? "⚠ Suppressed" : `❌ ${r.failureReason || "Failed"}`}
+                          </span>
+                        </div>
+                        <div className="text-[10px] text-slate-500 mt-1 font-semibold">
+                          Workflow: {isNewTutorWorkflow ? "🔐 Onboarding Message" : "📋 Requirement Notification"}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              <div className="mt-auto pt-4 border-t border-slate-200 flex items-center justify-between gap-3">
                 <button
-                  onClick={() => setShowBroadcastModal(false)}
+                  onClick={() => { setShowBroadcastModal(false); setSelectedTutorIds([]); setBroadcastResults([]); }}
+                  className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold transition cursor-pointer"
+                >
+                  {broadcastResults.length > 0 ? "Close" : "Cancel"}
+                </button>
+                {broadcastResults.length === 0 && (
+                  <button
+                    onClick={handleSendBroadcast}
+                    disabled={sendingBroadcast}
+                    className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-xs font-black rounded-xl transition cursor-pointer text-white shadow-lg shadow-emerald-600/25 disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {sendingBroadcast ? (
+                      <><RefreshCw className="h-3.5 w-3.5 animate-spin" /> Sending...</>
+                    ) : (
+                      `Confirm & Send (${selectedTutorIds.length})`
+                    )}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Assign Demo Modal */}
+        {assignModalTutorId && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm animate-slideFade">
+            <div className="w-full max-w-sm rounded-3xl bg-white border border-slate-200 p-6 shadow-2xl">
+              <h3 className="text-lg font-black text-slate-800 mb-1">Assign & Schedule Demo</h3>
+              <p className="text-xs text-slate-500 font-semibold mb-5">
+                Parent contact details will be sent to the tutor automatically via WhatsApp after assignment.
+              </p>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-black text-slate-700 mb-1.5">Demo Date <span className="text-slate-400 font-semibold">(optional)</span></label>
+                  <input
+                    type="date"
+                    value={assignDemoDate}
+                    onChange={e => setAssignDemoDate(e.target.value)}
+                    className="h-11 w-full rounded-2xl border border-slate-200 px-4 text-sm font-semibold outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-black text-slate-700 mb-1.5">Demo Time <span className="text-slate-400 font-semibold">(optional)</span></label>
+                  <input
+                    type="time"
+                    value={assignDemoTime}
+                    onChange={e => setAssignDemoTime(e.target.value)}
+                    className="h-11 w-full rounded-2xl border border-slate-200 px-4 text-sm font-semibold outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                  />
+                </div>
+              </div>
+              <div className="mt-6 flex items-center justify-end gap-3">
+                <button
+                  onClick={() => setAssignModalTutorId(null)}
                   className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold transition cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={handleSendBroadcast}
-                  disabled={sendingBroadcast}
-                  className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-xs font-black rounded-xl transition cursor-pointer text-white shadow-lg shadow-emerald-600/25 disabled:opacity-50"
+                  onClick={() => {
+                    handleAssignTutor(assignModalTutorId, assignDemoDate, assignDemoTime);
+                    setAssignModalTutorId(null);
+                  }}
+                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-xs font-black rounded-xl transition cursor-pointer text-white shadow-lg shadow-indigo-600/20"
                 >
-                  {sendingBroadcast ? "Dispatching..." : `Send WhatsApp Template (${selectedTutorIds.length})`}
+                  Confirm Assignment
                 </button>
               </div>
             </div>
@@ -2175,7 +2341,7 @@ export default function AdminDashboard() {
         {/* Broadcast Logs Modal */}
         {showLogsModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm animate-slideFade">
-            <div className="max-h-[80vh] w-full max-w-4xl overflow-hidden rounded-3xl bg-white border border-slate-200 p-6 shadow-2xl flex flex-col relative z-50">
+            <div className="max-h-[85vh] w-full max-w-5xl overflow-hidden rounded-3xl bg-white border border-slate-200 p-6 shadow-2xl flex flex-col relative z-50">
               <div className="flex items-center justify-between border-b border-slate-200 pb-4 mb-4">
                 <div>
                   <h3 className="text-xl font-black text-slate-850 flex items-center gap-2">
@@ -2183,7 +2349,7 @@ export default function AdminDashboard() {
                     Broadcast History Logs
                   </h3>
                   <p className="text-xs text-slate-500 font-semibold mt-0.5">
-                    A detailed view of WhatsApp template dispatches, requirement associations, and delivery status.
+                    Real-time WhatsApp delivery tracking, tutor responses, and failure diagnostics.
                   </p>
                 </div>
                 <button
@@ -2194,26 +2360,6 @@ export default function AdminDashboard() {
                 </button>
               </div>
 
-              {/* Auto-Broadcast Config Card */}
-              <div className="bg-slate-50 border border-slate-250 rounded-2xl p-4 mb-4 flex items-center justify-between">
-                <div>
-                  <h4 className="text-xs font-bold text-slate-800">Auto-Broadcast Limit</h4>
-                  <p className="text-[10px] text-slate-500 font-semibold mt-0.5">Maximum tutors notified automatically on new parent request</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <select
-                    value={maxBroadcastTutors}
-                    onChange={(e) => handleUpdateMaxBroadcast(Number(e.target.value))}
-                    className="bg-white border border-slate-350 text-xs font-black text-slate-700 rounded-xl px-3 py-2 outline-none focus:border-indigo-500 cursor-pointer"
-                  >
-                    <option value={10}>10 Tutors</option>
-                    <option value={20}>20 Tutors</option>
-                    <option value={30}>30 Tutors</option>
-                    <option value={50}>50 Tutors</option>
-                  </select>
-                </div>
-              </div>
-
               <div className="flex-1 overflow-y-auto space-y-3 pr-1 min-h-[300px]">
                 {broadcastLogs.length === 0 ? (
                   <div className="text-center py-20 text-xs text-slate-450 font-semibold italic">No broadcast events logged yet.</div>
@@ -2222,12 +2368,14 @@ export default function AdminDashboard() {
                     <table className="w-full text-xs font-semibold text-slate-700">
                       <thead>
                         <tr className="text-left border-b border-slate-200 bg-slate-50/50 text-[10px] text-slate-500 uppercase tracking-wider">
-                          <th className="p-4">Time</th>
-                          <th className="p-4">Tutor</th>
-                          <th className="p-4">Mobile</th>
-                          <th className="p-4">Requirement ID</th>
-                          <th className="p-4">Delivery Status</th>
-                          <th className="p-4">Response Status</th>
+                          <th className="p-3">Time</th>
+                          <th className="p-3">Tutor</th>
+                          <th className="p-3">Req ID</th>
+                          <th className="p-3">Match</th>
+                          <th className="p-3">Delivery</th>
+                          <th className="p-3">Failure Reason</th>
+                          <th className="p-3">Response</th>
+                          <th className="p-3">Actions</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -2235,39 +2383,72 @@ export default function AdminDashboard() {
                           const timeStr = formatSubmittedDate(log.time || log.createdAt);
                           return (
                             <tr key={log._id} className="border-b border-slate-150/70 last:border-0 hover:bg-slate-50/50">
-                              <td className="p-4 text-slate-500">{timeStr}</td>
-                              <td className="p-4 text-slate-900 font-bold">{log.tutorName}</td>
-                              <td className="p-4 text-slate-500">{log.tutorPhone || "N/A"}</td>
-                              <td className="p-4 text-indigo-600 font-bold">{log.requirementId}</td>
-                              <td className="p-4">
+                              <td className="p-3 text-slate-500 text-[10px]">{timeStr}</td>
+                              <td className="p-3 text-slate-900 font-bold">
+                                <span className="block">{log.tutorName}</span>
+                                {log.tutorCode && <span className="text-[10px] text-indigo-500 font-black">{log.tutorCode}</span>}
+                              </td>
+                              <td className="p-3 text-indigo-600 font-black text-[10px]">{log.requirementId}</td>
+                              <td className="p-3">
+                                {log.matchPercentage != null ? (
+                                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border ${
+                                    log.matchPercentage >= 80 ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                                    : log.matchPercentage >= 60 ? "bg-blue-50 border-blue-200 text-blue-700"
+                                    : "bg-amber-50 border-amber-200 text-amber-700"
+                                  }`}>{log.matchPercentage}%</span>
+                                ) : <span className="text-slate-400">—</span>}
+                              </td>
+                              <td className="p-3">
                                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border ${
-                                  log.status === "Delivered"
-                                    ? "bg-emerald-50 border-emerald-250 text-emerald-700"
+                                  log.status === "Delivered" || log.status === "Read" || log.status === "Replied"
+                                    ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                                    : log.status === "Sent"
+                                    ? "bg-blue-50 border-blue-200 text-blue-700"
                                     : log.status === "Failed"
-                                    ? "bg-rose-50 border-rose-250 text-rose-700"
-                                    : "bg-blue-50 border-blue-250 text-blue-700"
+                                    ? "bg-rose-50 border-rose-200 text-rose-700"
+                                    : log.status === "Suppressed"
+                                    ? "bg-amber-50 border-amber-200 text-amber-700"
+                                    : "bg-slate-100 border-slate-200 text-slate-600"
                                 }`}>
                                   {log.status}
                                 </span>
-                                {log.status === "Failed" && log.error && (
-                                  <span className="block text-[9px] text-rose-500 font-semibold mt-1 max-w-[180px] whitespace-normal break-words leading-tight">
-                                    {log.error}
-                                  </span>
-                                )}
                               </td>
-                              <td className="p-4">
+                              <td className="p-3 text-[10px] text-rose-600 font-semibold max-w-[120px] truncate">
+                                {log.failureReason || "—"}
+                              </td>
+                              <td className="p-3">
                                 <select
                                   value={log.responseStatus || "No Response"}
                                   onChange={(e) => handleUpdateResponseStatus(log._id, e.target.value)}
-                                  className="bg-slate-50 border border-slate-200 text-[11px] font-black text-slate-700 rounded-lg p-1.5 outline-none focus:border-indigo-500 cursor-pointer"
+                                  className="bg-slate-50 border border-slate-200 text-[10px] font-black text-slate-700 rounded-lg p-1.5 outline-none focus:border-indigo-500 cursor-pointer"
                                 >
                                   <option value="No Response">No Response</option>
-                                  <option value="Pending">Pending</option>
                                   <option value="Interested">Interested</option>
                                   <option value="Not Interested">Not Interested</option>
-                                  <option value="Busy">Busy</option>
-                                  <option value="Follow-up Required">Follow-up Required</option>
+                                  <option value="Accepted">Accepted</option>
+                                  <option value="Rejected">Rejected</option>
+                                  <option value="Assigned">Assigned</option>
+                                  <option value="Joined">Joined</option>
                                 </select>
+                              </td>
+                              <td className="p-3">
+                                {log.status === "Failed" && log.retryCount < 3 && (
+                                  <button
+                                    onClick={async () => {
+                                      const token = localStorage.getItem("adminToken");
+                                      const res = await fetch(`${API_BASE}/parent-enquiries/broadcast-logs/${log._id}/retry`, {
+                                        method: "POST",
+                                        headers: { Authorization: `Bearer ${token}` }
+                                      });
+                                      const data = await res.json();
+                                      alert(data.message);
+                                      fetchBroadcastLogs();
+                                    }}
+                                    className="px-2.5 py-1 text-[10px] font-black bg-rose-50 border border-rose-200 text-rose-700 rounded-lg hover:bg-rose-100 transition cursor-pointer"
+                                  >
+                                    Retry
+                                  </button>
+                                )}
                               </td>
                             </tr>
                           );

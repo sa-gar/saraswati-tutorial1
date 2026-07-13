@@ -8,7 +8,7 @@ const DB = process.env.ODOO_DB;
 const USERNAME = process.env.ODOO_USERNAME;
 const PASSWORD = process.env.ODOO_PASSWORD;
 
-export async function callOdoo(service, method, args) {
+async function callOdoo(service, method, args) {
 
   // console.log("ODOO REQUEST:", {
   //   service,
@@ -382,241 +382,88 @@ export async function upsertMasterTutor(data) {
 }
 
 /**
- * Dispatches an outbound WhatsApp message immediately through Odoo's WhatsApp channel.
- * Automatically checks the 24-hour conversation window with the tutor:
- * - Active window: Sends the free-form text message immediately and triggers queue processing.
- * - Expired window: Sends the pre-approved static "Tutor Agreement" (ID: 72) template to open the window.
+ * Sync tutor performance statistics to the Odoo Master Tutors record.
+ * Called after assignment or status changes.
+ *
+ * @param {string|number} odooRecordId - The Odoo x_master_tutors record ID
+ * @param {Object} stats
+ * @param {number} stats.assignmentsCompleted
+ * @param {number} stats.assignmentsActive
+ * @param {number} stats.demoTaken
+ * @param {number} stats.demoCancelled
+ * @param {number} stats.successfulEnrollments
+ * @param {number} stats.successRate - 0-100 percentage
+ * @param {number} [stats.averageRating]
  */
-export async function sendOdooWhatsApp(phone, messageText, tutorName) {
-  // Requirement 3: Validate message body
-  if (!messageText || messageText.trim() === "") {
-    console.error(`[Odoo WhatsApp Validation Error]: Message body is empty for ${tutorName || "unknown"}`);
-    return { 
-      success: false, 
-      error: "Missing Template Variables: The message body is empty/invalid." 
-    };
-  }
-
+export async function syncTutorStats(odooRecordId, stats) {
   try {
-    const uid = await callOdoo("common", "authenticate", [
-      DB,
-      USERNAME,
-      PASSWORD,
-      {},
-    ]);
+    const uid = await callOdoo("common", "authenticate", [DB, USERNAME, PASSWORD, {}]);
+    if (!uid) throw new Error("Odoo login failed");
 
-    // Clean phone number
-    let cleanPhone = String(phone).replace(/[^0-9]/g, "");
-    if (cleanPhone.length < 10) {
-      return { success: false, error: "Invalid Phone Number: Must contain at least 10 digits." };
-    }
-    cleanPhone = cleanPhone.slice(-10);
+    const payload = {};
+    if (stats.assignmentsCompleted != null) payload.x_assignments_completed = stats.assignmentsCompleted;
+    if (stats.assignmentsActive != null) payload.x_assignments_active = stats.assignmentsActive;
+    if (stats.demoTaken != null) payload.x_demo_taken = stats.demoTaken;
+    if (stats.demoCancelled != null) payload.x_demo_cancelled = stats.demoCancelled;
+    if (stats.successfulEnrollments != null) payload.x_successful_enrollments = stats.successfulEnrollments;
+    if (stats.successRate != null) payload.x_success_rate = stats.successRate;
+    if (stats.averageRating != null) payload.x_average_rating = stats.averageRating;
 
-    // Requirement 1 & 2: Check 24-hour window
-    console.log(`[Odoo WhatsApp] Checking conversation window for ${tutorName || ""} (${cleanPhone})...`);
-    
-    // Calculate the UTC timestamp for 24 hours ago
-    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const utcDateStr = oneDayAgo.toISOString().replace("T", " ").substring(0, 19);
-
-    const domain = [
-      ["message_type", "=", "inbound"],
-      ["create_date", ">=", utcDateStr],
-      "|",
-      ["mobile_number", "like", cleanPhone],
-      ["mobile_number_formatted", "like", cleanPhone]
-    ];
-
-    const records = await callOdoo("object", "execute_kw", [
+    await callOdoo("object", "execute_kw", [
       DB,
       uid,
       PASSWORD,
-      "whatsapp.message",
-      "search_count",
-      [domain]
+      "x_master_tutors",
+      "write",
+      [[parseInt(odooRecordId)], payload],
     ]);
 
-    const isWindowActive = records > 0;
-    let odooMsgId = null;
-    let finalState = "outgoing";
-    let failureReason = "";
-
-    if (isWindowActive) {
-      // Send free-form text message immediately
-      console.log(`[Odoo WhatsApp] 24h window active for ${tutorName || ""}. Sending free-form text...`);
-      
-      const mailMsgId = await callOdoo("object", "execute_kw", [
-        DB,
-        uid,
-        PASSWORD,
-        "mail.message",
-        "create",
-        [{
-          body: `<p>${messageText.replace(/\n/g, "<br>")}</p>`,
-          message_type: "comment",
-          model: "whatsapp.message"
-        }]
-      ]);
-
-      odooMsgId = await callOdoo("object", "execute_kw", [
-        DB,
-        uid,
-        PASSWORD,
-        "whatsapp.message",
-        "create",
-        [{
-          mobile_number: phone,
-          message_type: "outbound",
-          state: "outgoing",
-          wa_account_id: 2,
-          mail_message_id: mailMsgId,
-          display_name: tutorName || ""
-        }]
-      ]);
-      
-      // Trigger cron immediately to dispatch
-      await callOdoo("object", "execute_kw", [
-        DB,
-        uid,
-        PASSWORD,
-        "ir.cron",
-        "method_direct_trigger",
-        [[19]] // ID 19 processes queued messages
-      ]);
-    } else {
-      // Send approved template "Tutor Agreement" (ID: 72)
-      console.log(`[Odoo WhatsApp] 24h window EXPIRED for ${tutorName || ""}. Sending approved Tutor Agreement template (ID: 72) to open window...`);
-      
-      const composerId = await callOdoo("object", "execute_kw", [
-        DB,
-        uid,
-        PASSWORD,
-        "whatsapp.composer",
-        "create",
-        [{
-          res_model: "sign.request",
-          res_ids: "[3]", // Valid signature request ID from database
-          wa_template_id: 72, // Tutor Agreement template
-          phone: phone,
-          batch_mode: false
-        }]
-      ]);
-
-      await callOdoo("object", "execute_kw", [
-        DB,
-        uid,
-        PASSWORD,
-        "whatsapp.composer",
-        "action_send_whatsapp_template",
-        [[composerId]]
-      ]);
-
-      // Read back the created message
-      const recentMsgs = await callOdoo("object", "execute_kw", [
-        DB,
-        uid,
-        PASSWORD,
-        "whatsapp.message",
-        "search_read",
-        [[["mobile_number", "like", cleanPhone], ["wa_template_id", "=", 72]]],
-        { fields: ["id", "state", "failure_reason", "msg_uid"], limit: 1, order: "id desc" }
-      ]);
-
-      if (recentMsgs.length > 0) {
-        odooMsgId = recentMsgs[0].id;
-        finalState = recentMsgs[0].state;
-        failureReason = recentMsgs[0].failure_reason || "";
-      }
-    }
-
-    // Read back final status if we queued a free-form message
-    if (odooMsgId && !failureReason) {
-      for (let i = 0; i < 3; i++) {
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        const check = await callOdoo("object", "execute_kw", [
-          DB,
-          uid,
-          PASSWORD,
-          "whatsapp.message",
-          "read",
-          [[odooMsgId]],
-          { fields: ["state", "failure_reason"] }
-        ]);
-        if (check && check.length > 0) {
-          finalState = check[0].state;
-          failureReason = check[0].failure_reason || "";
-          if (finalState !== "outgoing") {
-            break;
-          }
-        }
-      }
-    }
-
-    // Requirement 5: Log the exact Meta API request/response context
-    console.log(`[Meta API Log] Msg ID: ${odooMsgId || "N/A"} | State: ${finalState} | Error details: ${failureReason || "None"}`);
-
-    if (finalState === "error" || finalState === "failed" || failureReason) {
-      // Requirement 6: Return the exact failure reason instead of generic "Failed"
-      let errorLabel = failureReason || "Unknown Meta API Error";
-      if (errorLabel.includes("131047") || errorLabel.includes("Re-engagement")) {
-        errorLabel = "131047: Re-engagement message required (Meta 24h window constraint)";
-      } else if (errorLabel.includes("text.body")) {
-        errorLabel = "Missing Template Variables: text.body parameter is required.";
-      }
-      return { success: false, error: errorLabel, id: odooMsgId };
-    }
-
-    return { success: true, id: odooMsgId, state: finalState };
+    console.log("[Odoo] Tutor stats synced for record ID:", odooRecordId);
+    return true;
   } catch (err) {
-    console.error("[Odoo WhatsApp Send Error]:", err.message);
-    return { success: false, error: err.message };
+    console.error("[Odoo] Error in syncTutorStats:", err.message);
+    return false;
   }
 }
 
 /**
- * Fetches recent inbound whatsapp.message records for a specific phone number since a certain date
+ * Update a CRM lead (parent enquiry) with full tutor assignment details.
+ *
+ * @param {string|number} leadId - The Odoo crm.lead record ID
+ * @param {Object} assignmentDetails
+ * @param {string} assignmentDetails.tutorName
+ * @param {string} [assignmentDetails.tutorCode]
+ * @param {string} [assignmentDetails.tutorPhone]
+ * @param {string} [assignmentDetails.demoDate]
+ * @param {string} [assignmentDetails.demoTime]
+ * @param {string} [assignmentDetails.requirementId]
  */
-export async function fetchOdooWhatsAppReplies(tutorPhone, sinceDate) {
+export async function updateLeadAssignment(leadId, assignmentDetails) {
   try {
-    const uid = await callOdoo("common", "authenticate", [
-      DB,
-      USERNAME,
-      PASSWORD,
-      {},
-    ]);
+    const uid = await callOdoo("common", "authenticate", [DB, USERNAME, PASSWORD, {}]);
+    if (!uid) throw new Error("Odoo login failed");
 
-    // Clean phone number to compare
-    let cleanPhone = String(tutorPhone).replace(/[^0-9]/g, "");
-    if (cleanPhone.length < 10) {
-      return []; // Skip sync for invalid phone numbers
-    }
-    cleanPhone = cleanPhone.slice(-10);
+    const payload = {};
+    if (assignmentDetails.tutorName) payload.x_studio_assigned_tutor = assignmentDetails.tutorName;
+    if (assignmentDetails.tutorCode) payload.x_studio_tutor_code = assignmentDetails.tutorCode;
+    if (assignmentDetails.tutorPhone) payload.x_studio_assigned_tutor_phone = assignmentDetails.tutorPhone;
+    if (assignmentDetails.demoDate) payload.x_studio_demo_date = assignmentDetails.demoDate;
+    if (assignmentDetails.demoTime) payload.x_studio_demo_time = assignmentDetails.demoTime;
+    payload.x_studio_lead_status = "Demo Scheduled";
 
-    // Format sinceDate to Odoo UTC format, subtracting a 5-minute buffer for clock skew
-    const bufferTime = new Date(new Date(sinceDate).getTime() - 5 * 60 * 1000);
-    const utcDateStr = bufferTime.toISOString().replace("T", " ").substring(0, 19);
-
-    const domain = [
-      ["message_type", "=", "inbound"],
-      ["create_date", ">=", utcDateStr],
-      "|",
-      ["mobile_number", "like", cleanPhone],
-      ["mobile_number_formatted", "like", cleanPhone]
-    ];
-
-    const replies = await callOdoo("object", "execute_kw", [
+    await callOdoo("object", "execute_kw", [
       DB,
       uid,
       PASSWORD,
-      "whatsapp.message",
-      "search_read",
-      [domain],
-      { fields: ["id", "body", "create_date"] }
+      "crm.lead",
+      "write",
+      [[parseInt(leadId)], payload],
     ]);
 
-    return replies;
+    console.log("[Odoo] Lead assignment updated for lead ID:", leadId);
+    return true;
   } catch (err) {
-    console.error("[Odoo fetch replies error]:", err.message);
-    return [];
+    console.error("[Odoo] Error in updateLeadAssignment:", err.message);
+    return false;
   }
 }

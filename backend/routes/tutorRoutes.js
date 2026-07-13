@@ -1,11 +1,17 @@
 import express from "express";
 import Tutor from "../models/Tutor.js";
 import ParentEnquiry from "../models/ParentEnquiry.js";
+import BroadcastLog from "../models/BroadcastLog.js";
 import fetch from "node-fetch";
 import { createLead, upsertMasterTutor } from "../utils/odooService.js";
 import { verifyToken } from "../middleware/authMiddleware.js";
 import jwt from "jsonwebtoken";
-import { buildCentralizedQuery, calculateTutorScore, parseAddress } from "../utils/matchingEngine.js";
+import {
+  buildCentralizedQuery,
+  calculateTutorScore,
+  parseAddress,
+  compareTutors,
+} from "../utils/matchingEngine.js";
 import mongoose from "mongoose";
 
 const router = express.Router();
@@ -94,16 +100,17 @@ router.get("/:id", async (req, res) => {
 router.post("/match", async (req, res) => {
   try {
     let params = req.body;
+    let requirementId = null;
 
     // If leadId is provided, resolve and extract lead variables from database
     if (params.leadId) {
       let lead = null;
-      
+
       // Check if it's a valid MongoDB ObjectId
       if (mongoose.Types.ObjectId.isValid(params.leadId)) {
         lead = await ParentEnquiry.findById(params.leadId);
       }
-      
+
       // If not resolved by ObjectId, try to query by Odoo Lead ID
       if (!lead) {
         const numericOdooId = parseInt(params.leadId);
@@ -111,8 +118,8 @@ router.post("/match", async (req, res) => {
           lead = await ParentEnquiry.findOne({
             $or: [
               { odooLeadId: numericOdooId },
-              { odooLeadId: String(numericOdooId) }
-            ]
+              { odooLeadId: String(numericOdooId) },
+            ],
           });
         }
       }
@@ -121,9 +128,10 @@ router.post("/match", async (req, res) => {
         return res.status(404).json({ message: "Parent Enquiry lead not found" });
       }
 
+      requirementId = lead.requirementId || null;
       const firstWard = lead.wards?.[0] || {};
       const parsedAddr = parseAddress(lead.address);
-      
+
       params = {
         pincode: lead.pincode || parsedAddr.pincode || "",
         area: lead.area || parsedAddr.area || "",
@@ -133,30 +141,55 @@ router.post("/match", async (req, res) => {
         district: lead.district || parsedAddr.district || "",
         state: lead.state || parsedAddr.state || lead.geoInfo?.region || "",
         grade: firstWard.classGrade || "",
+        board: firstWard.curriculum || "",
+        subjects: Array.isArray(firstWard.subjectsNeeded) ? firstWard.subjectsNeeded : [],
         timing: lead.preferredTime || "",
-        gender: lead.preferredGender || "No Preference"
+        gender: lead.preferredGender || "No Preference",
+        // GPS coords (if available from form)
+        latitude: lead.latitude || null,
+        longitude: lead.longitude || null,
       };
     }
 
+    // Build DB query — never includes Blocked tutors
     const query = buildCentralizedQuery(params);
     const tutors = await Tutor.find(query);
 
     // Append performance stats dynamically for matched tutors
     const tutorsWithStats = await Promise.all(tutors.map(appendStatsToTutor));
 
-    // Calculate match scores and filter/rank in-memory
+    // Fetch existing broadcast logs for this requirement (for status overlay)
+    let existingBroadcastMap = {};
+    if (requirementId) {
+      const existingLogs = await BroadcastLog.find({ requirementId }).lean();
+      for (const log of existingLogs) {
+        existingBroadcastMap[String(log.tutorId)] = {
+          status: log.status,
+          responseStatus: log.responseStatus,
+          logId: log._id,
+        };
+      }
+    }
+
+    // Calculate match scores and annotate with distance + broadcast status
     const scoredTutors = tutorsWithStats
-      .map(tutor => {
+      .map((tutor) => {
         const scoreInfo = calculateTutorScore(params, tutor);
+        const broadcastInfo = existingBroadcastMap[String(tutor._id)] || null;
         return {
           ...tutor,
           matchScore: scoreInfo.score,
           matchPercentage: scoreInfo.percentage,
           locationScore: scoreInfo.locationScore,
-          matchCategory: scoreInfo.matchCategory
+          distanceKm: scoreInfo.distanceKm,
+          distanceTier: scoreInfo.distanceTier,
+          scoreBreakdown: scoreInfo.breakdown,
+          broadcastStatus: broadcastInfo ? broadcastInfo.status : null,
+          broadcastResponseStatus: broadcastInfo ? broadcastInfo.responseStatus : null,
+          broadcastLogId: broadcastInfo ? broadcastInfo.logId : null,
         };
       })
-      .filter(tutor => {
+      .filter((tutor) => {
         // Filter by location score if location criteria was specified
         const hasLocationCriteria = !!(
           params.pincode ||
@@ -172,18 +205,19 @@ router.post("/match", async (req, res) => {
         }
         return tutor.matchPercentage > 0;
       })
-      .sort((a, b) => b.matchPercentage - a.matchPercentage);
+      // Primary: distance (if available), Secondary: match%, Tertiary: availability
+      .sort(compareTutors);
 
     // Extract Odoo record IDs in sorted order
     const matchedOdooIds = scoredTutors
-      .map(t => t.odooLeadId)
-      .filter(id => id !== null && id !== undefined && !isNaN(parseInt(id)))
-      .map(id => parseInt(id));
+      .map((t) => t.odooLeadId)
+      .filter((id) => id !== null && id !== undefined && !isNaN(parseInt(id)))
+      .map((id) => parseInt(id));
 
     res.json({
       success: true,
       tutors: scoredTutors,
-      matched_ids: matchedOdooIds
+      matched_ids: matchedOdooIds,
     });
   } catch (error) {
     console.error("Match error:", error);
@@ -249,6 +283,53 @@ router.post("/", async (req, res) => {
   } catch (error) {
     console.error("Server Error in tutor registration:", error);
     res.status(500).json({ message: "Server error" });
+  }
+});
+
+// MARK ONBOARDED
+router.put("/:id/mark-onboarded", verifyToken(["admin"]), async (req, res) => {
+  try {
+    const { onboardingCompleted = true } = req.body;
+    const tutor = await Tutor.findById(req.params.id);
+    if (!tutor) {
+      return res.status(404).json({ message: "Tutor not found" });
+    }
+
+    tutor.onboardingCompleted = onboardingCompleted;
+    if (onboardingCompleted) {
+      tutor.status = "approved";
+    }
+    await tutor.save();
+
+    // Also update Odoo status if Odoo record is linked
+    if (tutor.odooLeadId) {
+      try {
+        const { callOdoo } = await import("../utils/odooService.js");
+        const DB = process.env.ODOO_DB;
+        const USERNAME = process.env.ODOO_USERNAME;
+        const PASSWORD = process.env.ODOO_PASSWORD;
+        const uid = await callOdoo("common", "authenticate", [DB, USERNAME, PASSWORD, {}]);
+        if (uid) {
+          await callOdoo("object", "execute_kw", [
+            DB,
+            uid,
+            PASSWORD,
+            "x_master_tutors",
+            "write",
+            [[parseInt(tutor.odooLeadId)], {
+              x_availability: onboardingCompleted ? "Available" : "Inactive"
+            }]
+          ]);
+          console.log("[Odoo] Updated tutor availability for ID:", tutor.odooLeadId);
+        }
+      } catch (odooErr) {
+        console.error("[Odoo Sync Error on mark-onboarded]:", odooErr.message);
+      }
+    }
+
+    res.json(tutor);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 });
 

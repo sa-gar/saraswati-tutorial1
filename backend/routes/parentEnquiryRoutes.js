@@ -2,22 +2,53 @@ import express from "express";
 import ParentEnquiry from "../models/ParentEnquiry.js";
 import ParentEnquiryDraft from "../models/ParentEnquiryDraft.js";
 import AnalyticsLog from "../models/AnalyticsLog.js";
-import { createLead, updateLead, sendOdooWhatsApp, fetchOdooWhatsAppReplies } from "../utils/odooService.js";
+import { createLead, updateLead, updateLeadAssignment, syncTutorStats } from "../utils/odooService.js";
 import { verifyToken } from "../middleware/authMiddleware.js";
 import { resolveGeo } from "../utils/geoLookup.js";
 import Tutor from "../models/Tutor.js";
 import BroadcastLog from "../models/BroadcastLog.js";
-import { buildCentralizedQuery, calculateTutorScore, parseAddress } from "../utils/matchingEngine.js";
-import fs from "fs";
-import path from "path";
+import {
+  sendWhatsAppToTutor,
+  buildBroadcastMessage,
+  buildAssignmentMessage,
+  buildOnboardingMessage,
+  isPermanentFailure,
+} from "../utils/whatsappService.js";
 
 const router = express.Router();
 
-/**
- * GET all parent enquiries
- * Final API:
- * GET /api/parent-enquiries
- */
+// ============================================================
+// HELPER: Compute tutor statistics from ParentEnquiry records
+// ============================================================
+async function computeTutorStats(tutor) {
+  const assignedLeads = await ParentEnquiry.find({
+    $or: [
+      { assignedTutorId: tutor._id },
+      { assignedTutor: tutor.name },
+    ],
+  });
+
+  const totalAssignments = assignedLeads.length;
+  const demoScheduled = assignedLeads.filter(l => l.status === "Demo Scheduled").length;
+  const demoCancelled = assignedLeads.filter(l => l.status === "Demo Cancelled").length;
+  const successfullyEnrolled = assignedLeads.filter(l => l.status === "Enrolled" || l.status === "Won").length;
+  const activeTuitionCount = successfullyEnrolled;
+  const successPercentage = totalAssignments > 0 ? Math.round((successfullyEnrolled / totalAssignments) * 100) : 0;
+
+  return {
+    totalAssignments,
+    demoScheduled,
+    demoCancelled,
+    successfullyEnrolled,
+    activeTuitionCount,
+    successPercentage,
+  };
+}
+
+// =============================================================
+// GET all parent enquiries
+// GET /api/parent-enquiries
+// =============================================================
 router.get("/", verifyToken(["admin"]), async (req, res) => {
   try {
     const data = await ParentEnquiry.find().sort({ createdAt: -1 });
@@ -28,10 +59,10 @@ router.get("/", verifyToken(["admin"]), async (req, res) => {
   }
 });
 
-/**
- * GET all parent enquiry drafts (incomplete leads)
- * GET /api/parent-enquiries/drafts
- */
+// =============================================================
+// GET all parent enquiry drafts (incomplete leads)
+// GET /api/parent-enquiries/drafts
+// =============================================================
 router.get("/drafts", verifyToken(["admin"]), async (req, res) => {
   try {
     const drafts = await ParentEnquiryDraft.find().sort({ updatedAt: -1 });
@@ -42,10 +73,32 @@ router.get("/drafts", verifyToken(["admin"]), async (req, res) => {
   }
 });
 
-/**
- * AUTO-SAVE parent enquiry draft
- * POST /api/parent-enquiries/draft
- */
+// =============================================================
+// GET all broadcast logs (with optional leadId filter)
+// GET /api/parent-enquiries/broadcast-logs?leadId=xxx&requirementId=yyy
+// =============================================================
+router.get("/broadcast-logs", verifyToken(["admin"]), async (req, res) => {
+  try {
+    const { leadId, requirementId, tutorId, status } = req.query;
+    const filter = {};
+
+    if (leadId) filter.leadId = leadId;
+    if (requirementId) filter.requirementId = requirementId;
+    if (tutorId) filter.tutorId = tutorId;
+    if (status) filter.status = status;
+
+    const logs = await BroadcastLog.find(filter).sort({ time: -1 });
+    res.json(logs);
+  } catch (error) {
+    console.error("Fetch broadcast logs error:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// =============================================================
+// AUTO-SAVE parent enquiry draft
+// POST /api/parent-enquiries/draft
+// =============================================================
 router.post("/draft", async (req, res) => {
   try {
     const {
@@ -60,21 +113,17 @@ router.post("/draft", async (req, res) => {
       utm_medium,
       utm_campaign,
       utm_content,
-      utm_term
+      utm_term,
     } = req.body;
+
     if (!emailOrPhone) {
       return res.status(400).json({ message: "emailOrPhone is required" });
     }
 
-    // Resolve client IP
     let clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
     if (clientIp) {
-      if (clientIp.includes(",")) {
-        clientIp = clientIp.split(",")[0].trim();
-      }
-      if (clientIp.startsWith("::ffff:")) {
-        clientIp = clientIp.substring(7);
-      }
+      if (clientIp.includes(",")) clientIp = clientIp.split(",")[0].trim();
+      if (clientIp.startsWith("::ffff:")) clientIp = clientIp.substring(7);
     }
 
     let finalIp = ipAddress || clientIp;
@@ -89,26 +138,14 @@ router.post("/draft", async (req, res) => {
           postal: resolved.postal,
           country: resolved.country,
           ip: resolved.ip,
-          org: resolved.org
+          org: resolved.org,
         };
       }
     }
 
     const draft = await ParentEnquiryDraft.findOneAndUpdate(
       { emailOrPhone: emailOrPhone.trim() },
-      {
-        stepReached,
-        formData,
-        geoInfo: finalGeo,
-        ipAddress: finalIp,
-        visitor_id,
-        session_id,
-        utm_source,
-        utm_medium,
-        utm_campaign,
-        utm_content,
-        utm_term
-      },
+      { stepReached, formData, geoInfo: finalGeo, ipAddress: finalIp, visitor_id, session_id, utm_source, utm_medium, utm_campaign, utm_content, utm_term },
       { new: true, upsert: true }
     );
 
@@ -119,16 +156,14 @@ router.post("/draft", async (req, res) => {
   }
 });
 
-/**
- * DELETE parent enquiry draft
- * DELETE /api/parent-enquiries/drafts/:id
- */
+// =============================================================
+// DELETE parent enquiry draft
+// DELETE /api/parent-enquiries/drafts/:id
+// =============================================================
 router.delete("/drafts/:id", verifyToken(["admin"]), async (req, res) => {
   try {
     const draft = await ParentEnquiryDraft.findByIdAndDelete(req.params.id);
-    if (!draft) {
-      return res.status(404).json({ message: "Draft not found" });
-    }
+    if (!draft) return res.status(404).json({ message: "Draft not found" });
     res.json({ message: "Draft deleted successfully" });
   } catch (error) {
     console.error("Draft enquiry delete error:", error);
@@ -136,22 +171,16 @@ router.delete("/drafts/:id", verifyToken(["admin"]), async (req, res) => {
   }
 });
 
-/**
- * CREATE parent enquiry
- * Final API:
- * POST /api/parent-enquiries
- */
+// =============================================================
+// CREATE parent enquiry
+// POST /api/parent-enquiries
+// =============================================================
 router.post("/", async (req, res) => {
   try {
-    // Resolve client IP
     let clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
     if (clientIp) {
-      if (clientIp.includes(",")) {
-        clientIp = clientIp.split(",")[0].trim();
-      }
-      if (clientIp.startsWith("::ffff:")) {
-        clientIp = clientIp.substring(7);
-      }
+      if (clientIp.includes(",")) clientIp = clientIp.split(",")[0].trim();
+      if (clientIp.startsWith("::ffff:")) clientIp = clientIp.substring(7);
     }
 
     let finalIp = req.body.ipAddress || clientIp;
@@ -166,7 +195,7 @@ router.post("/", async (req, res) => {
           postal: resolved.postal,
           country: resolved.country,
           ip: resolved.ip,
-          org: resolved.org
+          org: resolved.org,
         };
       }
     }
@@ -174,9 +203,9 @@ router.post("/", async (req, res) => {
     req.body.geoInfo = finalGeo;
     req.body.ipAddress = finalIp;
 
-    // Log backend validation success event
+    // Log backend validation success
     try {
-      const logData = {
+      await new AnalyticsLog({
         visitor_id: req.body.visitor_id || "unknown",
         session_id: req.body.session_id || "unknown",
         city: finalGeo.city || "Unknown City",
@@ -188,20 +217,15 @@ router.post("/", async (req, res) => {
         browser: req.body.browser || "Unknown Browser",
         os: req.body.os || "Unknown OS",
         ipAddress: finalIp,
-        action: "backend_validation_success"
-      };
-      await new AnalyticsLog(logData).save();
+        action: "backend_validation_success",
+      }).save();
     } catch (logErr) {
       console.error("Failed to log backend validation success:", logErr.message);
     }
 
     let odooRes = null;
-
     try {
-      odooRes = await createLead({
-        ...req.body,
-        userType: "parent",
-      });
+      odooRes = await createLead({ ...req.body, userType: "parent" });
     } catch (err) {
       console.error("Odoo create parent lead error:", err.message);
     }
@@ -222,19 +246,14 @@ router.post("/", async (req, res) => {
       ...req.body,
       status: req.body.status || "New Lead",
       odooLeadId: odooRes && typeof odooRes === "object" ? odooRes.id : odooRes,
-      requirementId: requirementId,
+      requirementId,
     });
 
     const saved = await enquiry.save();
 
-    // Trigger automatic broadcast workflow asynchronously
-    triggerAutoBroadcast(saved._id).catch(err => {
-      console.error("[AutoBroadcast Trigger Error]:", err.message);
-    });
-
-    // Log database saved successfully event
+    // Log database saved successfully
     try {
-      const logData = {
+      await new AnalyticsLog({
         visitor_id: req.body.visitor_id || "unknown",
         session_id: req.body.session_id || "unknown",
         city: finalGeo.city || "Unknown City",
@@ -246,21 +265,19 @@ router.post("/", async (req, res) => {
         browser: req.body.browser || "Unknown Browser",
         os: req.body.os || "Unknown OS",
         ipAddress: finalIp,
-        action: "database_saved_success"
-      };
-      await new AnalyticsLog(logData).save();
+        action: "database_saved_success",
+      }).save();
     } catch (logErr) {
       console.error("Failed to log database saved success:", logErr.message);
     }
 
-    // Clear drafts if any exist
+    // Clear drafts
     try {
       const email = req.body.email;
       const phone = req.body.phone;
       const queryList = [];
       if (email) queryList.push({ emailOrPhone: email.trim() });
       if (phone) queryList.push({ emailOrPhone: phone.trim() });
-      
       if (queryList.length > 0) {
         await ParentEnquiryDraft.deleteMany({ $or: queryList });
       }
@@ -275,12 +292,10 @@ router.post("/", async (req, res) => {
   }
 });
 
-/**
- * UPDATE parent enquiry
- * Used for lead pipeline status update from AdminDashboard
- * Final API:
- * PUT /api/parent-enquiries/:id
- */
+// =============================================================
+// UPDATE parent enquiry status/notes
+// PUT /api/parent-enquiries/:id
+// =============================================================
 router.put("/:id", verifyToken(["admin"]), async (req, res) => {
   try {
     const allowedUpdates = {
@@ -309,33 +324,22 @@ router.put("/:id", verifyToken(["admin"]), async (req, res) => {
       }
     }
 
-    Object.keys(allowedUpdates).forEach((key) => {
-      if (allowedUpdates[key] === undefined) {
-        delete allowedUpdates[key];
-      }
+    Object.keys(allowedUpdates).forEach(key => {
+      if (allowedUpdates[key] === undefined) delete allowedUpdates[key];
     });
 
     const enquiry = await ParentEnquiry.findByIdAndUpdate(
       req.params.id,
       allowedUpdates,
-      {
-        new: true,
-        runValidators: true,
-      }
+      { new: true, runValidators: true }
     );
 
-    if (!enquiry) {
-      return res.status(404).json({
-        message: "Parent enquiry not found",
-      });
-    }
+    if (!enquiry) return res.status(404).json({ message: "Parent enquiry not found" });
 
-    // Optional: update Odoo lead also, only if Odoo lead exists
+    // Sync status to Odoo
     if (enquiry.odooLeadId && allowedUpdates.status) {
       try {
-        await updateLead(enquiry.odooLeadId, {
-          x_studio_lead_status: allowedUpdates.status,
-        });
+        await updateLead(enquiry.odooLeadId, { x_studio_lead_status: allowedUpdates.status });
       } catch (err) {
         console.error("Odoo update lead status error:", err.message);
       }
@@ -344,30 +348,20 @@ router.put("/:id", verifyToken(["admin"]), async (req, res) => {
     res.json(enquiry);
   } catch (error) {
     console.error("Parent enquiry update error:", error);
-    res.status(500).json({
-      message: "Failed to update parent enquiry",
-      error: error.message,
-    });
+    res.status(500).json({ message: "Failed to update parent enquiry", error: error.message });
   }
 });
 
-/**
- * CONFIRM parent enquiry from confirmation link
- * Final API:
- * GET /api/parent-enquiries/confirm?lead=ODOO_LEAD_ID
- */
+// =============================================================
+// CONFIRM parent enquiry from link
+// GET /api/parent-enquiries/confirm?lead=ODOO_LEAD_ID
+// =============================================================
 router.get("/confirm", async (req, res) => {
   try {
     const leadId = req.query.lead;
+    if (!leadId) return res.status(400).send("Lead ID is required");
 
-    if (!leadId) {
-      return res.status(400).send("Lead ID is required");
-    }
-
-    await updateLead(leadId, {
-      x_studio_response_status: "Yes",
-    });
-
+    await updateLead(leadId, { x_studio_response_status: "Yes" });
     res.send("Thank you! Your interest is confirmed.");
   } catch (err) {
     console.error("Confirm parent lead error:", err.message);
@@ -375,203 +369,381 @@ router.get("/confirm", async (req, res) => {
   }
 });
 
-/**
- * DELETE parent enquiry
- * Final API:
- * DELETE /api/parent-enquiries/:id
- */
+// =============================================================
+// DELETE parent enquiry
+// DELETE /api/parent-enquiries/:id
+// =============================================================
 router.delete("/:id", verifyToken(["admin"]), async (req, res) => {
   try {
     const enquiry = await ParentEnquiry.findByIdAndDelete(req.params.id);
-
-    if (!enquiry) {
-      return res.status(404).json({
-        message: "Enquiry not found",
-      });
-    }
-
-    res.json({
-      message: "Enquiry deleted successfully",
-    });
+    if (!enquiry) return res.status(404).json({ message: "Enquiry not found" });
+    res.json({ message: "Enquiry deleted successfully" });
   } catch (error) {
     console.error("Parent enquiry delete error:", error);
-    res.status(500).json({
-      message: error.message,
-    });
-  }
-});
-
-/**
- * GET all broadcast logs
- * GET /api/parent-enquiries/broadcast-logs
- */
-router.get("/broadcast-logs", verifyToken(["admin"]), async (req, res) => {
-  try {
-    // Sync replies from Odoo
-    await syncAllBroadcastReplies().catch(err => {
-      console.error("[RepliesSync Error]:", err.message);
-    });
-    const logs = await BroadcastLog.find().sort({ time: -1 });
-    res.json(logs);
-  } catch (error) {
-    console.error("Fetch broadcast logs error:", error);
     res.status(500).json({ message: error.message });
   }
 });
 
-/**
- * POST broadcast to selected tutors
- * POST /api/parent-enquiries/:id/broadcast
- */
+// =============================================================
+// POST broadcast to selected tutors via WhatsApp
+// POST /api/parent-enquiries/:id/broadcast
+//
+// Body: { tutorIds: [...], adminName?: string, adminEmail?: string }
+//
+// Privacy: NEVER sends parent name, phone, email, exact address, map link.
+// Deduplication: skips if (requirementId, tutorId) pair already exists.
+// Never broadcasts to Blocked tutors.
+// =============================================================
 router.post("/:id/broadcast", verifyToken(["admin"]), async (req, res) => {
   try {
     const leadId = req.params.id;
-    const { tutorIds, messageTemplate, type } = req.body;
+    const { tutorIds, adminName = "", adminEmail = "" } = req.body;
 
     if (!Array.isArray(tutorIds) || tutorIds.length === 0) {
       return res.status(400).json({ message: "At least one tutor must be selected." });
     }
 
     const lead = await ParentEnquiry.findById(leadId);
-    if (!lead) {
-      return res.status(404).json({ message: "Lead not found." });
-    }
+    if (!lead) return res.status(404).json({ message: "Lead not found." });
 
     const firstWard = lead.wards?.[0] || {};
-    const parentGrade = firstWard.classGrade ? `Class ${firstWard.classGrade}` : "N/A";
-    const parentLocation = lead.address || lead.area || "N/A";
-    const parentTiming = lead.preferredTime || "N/A";
     const reqId = lead.requirementId || "REQ-XXXXX";
 
-    const logs = [];
+    const results = [];
 
     for (const tId of tutorIds) {
       const tutor = await Tutor.findById(tId);
-      if (!tutor) continue;
-
-      let message = messageTemplate || "";
-      if (type === "whatsapp") {
-        message = message
-          .replace(/\{\{TutorName\}\}/g, tutor.name)
-          .replace(/\{\{ParentGrade\}\}/g, parentGrade)
-          .replace(/\{\{Location\}\}/g, parentLocation)
-          .replace(/\{\{Timing\}\}/g, parentTiming)
-          .replace(/\{\{RequirementID\}\}/g, reqId);
+      if (!tutor) {
+        results.push({ tutorId: tId, status: "Failed", failureReason: "Tutor not found" });
+        continue;
       }
 
-      let odooSuccess = false;
-      let odooMsgId = null;
-      let odooError = "";
+      // Never broadcast to blocked tutors
+      if (tutor.availabilityStatus === "Blocked") {
+        results.push({
+          tutorId: tId,
+          tutorName: tutor.name,
+          status: "Suppressed",
+          failureReason: "Tutor is Blocked",
+        });
+        continue;
+      }
 
-      if (type === "whatsapp") {
-        const tutorPhone = tutor.phone || tutor.whatsapp || "";
-        if (tutorPhone) {
-          try {
-            const odooRes = await sendOdooWhatsApp(tutorPhone, message, tutor.name);
-            if (odooRes.success) {
-              odooSuccess = true;
-              odooMsgId = odooRes.id;
-            } else {
-              odooError = odooRes.error || "";
-            }
-          } catch (err) {
-            console.error(`[ManualBroadcast] Failed sending message to Odoo for ${tutor.name}:`, err.message);
-            odooError = err.message;
-          }
-        } else {
-          odooError = "Invalid Phone Number: Tutor has no phone number.";
+      const isApproved = tutor.status === "approved";
+      const isOnboarded = tutor.onboardingCompleted === true;
+      const isNewTutorWorkflow = !(isApproved && isOnboarded);
+
+      if (isNewTutorWorkflow) {
+        // Workflow 1: Send Tutor Agreement/Onboarding (once only)
+        if (tutor.onboardingMessageSentAt) {
+          results.push({
+            tutorId: tId,
+            tutorName: tutor.name,
+            status: "Suppressed",
+            failureReason: "Onboarding message already sent",
+          });
+          continue;
         }
-      } else {
-        odooSuccess = true;
-      }
 
-      const log = new BroadcastLog({
-        tutorId: tutor._id,
-        tutorName: tutor.name,
-        tutorPhone: tutor.phone || tutor.whatsapp || "",
-        requirementId: reqId,
-        leadId: lead._id,
-        type: type || "whatsapp",
-        message: message,
-        status: odooSuccess ? "Sent" : "Failed",
-        error: odooError,
-        responseStatus: "No Response"
-      });
-      await log.save();
-      logs.push(log);
+        const messageBody = buildOnboardingMessage(tutor.name);
+
+        const log = new BroadcastLog({
+          tutorId: tutor._id,
+          tutorName: tutor.name,
+          tutorPhone: tutor.whatsapp || tutor.phone || "",
+          tutorCode: tutor.tutorCode || "",
+          requirementId: reqId,
+          leadId: lead._id,
+          type: "whatsapp",
+          message: messageBody,
+          status: "Sending",
+          adminName,
+          adminEmail,
+          broadcastType: "onboarding",
+        });
+        await log.save();
+
+        const whatsappNumber = tutor.whatsapp || tutor.phone || "";
+        if (!whatsappNumber) {
+          await BroadcastLog.findByIdAndUpdate(log._id, {
+            status: "Failed",
+            failureReason: "No WhatsApp number available",
+          });
+          results.push({
+            tutorId: tId,
+            tutorName: tutor.name,
+            logId: log._id,
+            status: "Failed",
+            failureReason: "No WhatsApp number available",
+            workflow: "onboarding",
+          });
+          continue;
+        }
+
+        const sendResult = await sendWhatsAppToTutor({
+          phoneNumber: whatsappNumber,
+          messageBody,
+          templateName: "Tutor Agreement",
+          templateLang: "en",
+          templateVars: {},
+        });
+
+        await BroadcastLog.findByIdAndUpdate(log._id, {
+          status: sendResult.success ? "Sent" : "Failed",
+          failureReason: sendResult.failureReason || "",
+          retryCount: sendResult.retryCount || 0,
+          whatsappMessageId: sendResult.messageId || "",
+          usedTemplate: sendResult.usedTemplate || false,
+          templateName: sendResult.usedTemplate ? "Tutor Agreement" : "",
+        });
+
+        if (sendResult.success) {
+          tutor.onboardingMessageSentAt = new Date();
+          await tutor.save();
+        }
+
+        results.push({
+          tutorId: tId,
+          tutorName: tutor.name,
+          logId: log._id,
+          status: sendResult.success ? "Sent" : "Failed",
+          failureReason: sendResult.failureReason || "",
+          usedTemplate: sendResult.usedTemplate,
+          messageId: sendResult.messageId,
+          workflow: "onboarding",
+        });
+
+      } else {
+        // Workflow 2: Existing Approved + Onboarded Tutor (Tuition Requirement Notification)
+        // Deduplication: check if already sent to this tutor for this requirement
+        const existingLog = await BroadcastLog.findOne({
+          requirementId: reqId,
+          tutorId: tutor._id,
+          status: { $ne: "Suppressed" },
+        });
+
+        if (existingLog) {
+          results.push({
+            tutorId: tId,
+            tutorName: tutor.name,
+            status: "Suppressed",
+            failureReason: "Already broadcast for this requirement",
+            existingLogId: existingLog._id,
+          });
+          continue;
+        }
+
+        const distanceTier = req.body.distanceTiers?.[tId] || null;
+        const distanceKm = req.body.distancesKm?.[tId] || null;
+        const matchPercentage = req.body.matchPercentages?.[tId] || null;
+
+        const messageBody = buildBroadcastMessage(tutor.name, lead, firstWard, distanceTier);
+
+        const log = new BroadcastLog({
+          tutorId: tutor._id,
+          tutorName: tutor.name,
+          tutorPhone: tutor.whatsapp || tutor.phone || "",
+          tutorCode: tutor.tutorCode || "",
+          requirementId: reqId,
+          leadId: lead._id,
+          type: "whatsapp",
+          message: messageBody,
+          status: "Sending",
+          adminName,
+          adminEmail,
+          distanceKm,
+          matchPercentage,
+          broadcastType: "requirement",
+        });
+        await log.save();
+
+        const whatsappNumber = tutor.whatsapp || tutor.phone || "";
+        if (!whatsappNumber) {
+          await BroadcastLog.findByIdAndUpdate(log._id, {
+            status: "Failed",
+            failureReason: "No WhatsApp number available",
+          });
+          results.push({
+            tutorId: tId,
+            tutorName: tutor.name,
+            logId: log._id,
+            status: "Failed",
+            failureReason: "No WhatsApp number available",
+            workflow: "requirement",
+          });
+          continue;
+        }
+
+        const sendResult = await sendWhatsAppToTutor({
+          phoneNumber: whatsappNumber,
+          messageBody,
+          templateVars: {
+            tutor_name: tutor.name,
+            requirement_id: reqId,
+            area: lead.area || "",
+            city: lead.city || lead.geoInfo?.city || "",
+          },
+        });
+
+        await BroadcastLog.findByIdAndUpdate(log._id, {
+          status: sendResult.success ? "Sent" : "Failed",
+          failureReason: sendResult.failureReason || "",
+          retryCount: sendResult.retryCount || 0,
+          whatsappMessageId: sendResult.messageId || "",
+          usedTemplate: sendResult.usedTemplate || false,
+          templateName: sendResult.usedTemplate ? (process.env.WHATSAPP_TEMPLATE_NAME || "") : "",
+        });
+
+        results.push({
+          tutorId: tId,
+          tutorName: tutor.name,
+          logId: log._id,
+          status: sendResult.success ? "Sent" : "Failed",
+          failureReason: sendResult.failureReason || "",
+          usedTemplate: sendResult.usedTemplate,
+          messageId: sendResult.messageId,
+          workflow: "requirement",
+        });
+      }
     }
 
-    res.json({ message: "Broadcast dispatched successfully", logs });
+    const sentCount = results.filter(r => r.status === "Sent").length;
+    const failedCount = results.filter(r => r.status === "Failed").length;
+    const suppressedCount = results.filter(r => r.status === "Suppressed").length;
+
+    res.json({
+      message: `Broadcast complete. Sent: ${sentCount}, Failed: ${failedCount}, Suppressed: ${suppressedCount}`,
+      results,
+    });
   } catch (error) {
     console.error("Tutor broadcast error:", error);
     res.status(500).json({ message: error.message });
   }
 });
 
-/**
- * POST assign tutor to parent lead
- * POST /api/parent-enquiries/:id/assign-tutor
- */
+// =============================================================
+// POST assign tutor to parent lead + auto-send parent details
+// POST /api/parent-enquiries/:id/assign-tutor
+// =============================================================
 router.post("/:id/assign-tutor", verifyToken(["admin"]), async (req, res) => {
   try {
     const leadId = req.params.id;
-    const { tutorId } = req.body;
+    const { tutorId, demoDate, demoTime } = req.body;
 
     const lead = await ParentEnquiry.findById(leadId);
-    if (!lead) {
-      return res.status(404).json({ message: "Lead not found." });
-    }
+    if (!lead) return res.status(404).json({ message: "Lead not found." });
 
     const tutor = await Tutor.findById(tutorId);
-    if (!tutor) {
-      return res.status(404).json({ message: "Tutor not found." });
-    }
+    if (!tutor) return res.status(404).json({ message: "Tutor not found." });
 
+    // Update MongoDB lead
     lead.assignedTutor = tutor.name;
     lead.assignedTutorId = tutor._id;
+    lead.status = "Demo Scheduled";
+    if (demoDate) lead.demoDate = demoDate;
+    if (demoTime) lead.demoTime = demoTime;
     await lead.save();
 
-    // Update Odoo
+    // Update broadcast log response status to "Assigned"
+    await BroadcastLog.updateMany(
+      { leadId: lead._id, tutorId: tutor._id },
+      { $set: { responseStatus: "Assigned" } }
+    );
+
+    // Update Odoo CRM lead
     if (lead.odooLeadId) {
       try {
-        await updateLead(lead.odooLeadId, {
-          x_studio_assigned_tutor: tutor.name,
+        await updateLeadAssignment(lead.odooLeadId, {
+          tutorName: tutor.name,
+          tutorCode: tutor.tutorCode || "",
+          tutorPhone: tutor.whatsapp || tutor.phone || "",
+          demoDate,
+          demoTime,
         });
       } catch (err) {
-        console.error("Odoo update assigned tutor error:", err.message);
+        console.error("Odoo update lead assignment error:", err.message);
       }
     }
 
-    res.json({ message: "Tutor assigned successfully", lead });
+    // Sync tutor statistics to Odoo Master Tutors
+    if (tutor.odooLeadId) {
+      try {
+        const stats = await computeTutorStats(tutor);
+        await syncTutorStats(tutor.odooLeadId, {
+          assignmentsCompleted: stats.totalAssignments,
+          assignmentsActive: stats.activeTuitionCount,
+          demoTaken: stats.demoScheduled,
+          demoCancelled: stats.demoCancelled,
+          successfulEnrollments: stats.successfullyEnrolled,
+          successRate: stats.successPercentage,
+        });
+      } catch (err) {
+        console.error("Odoo sync tutor stats error:", err.message);
+      }
+    }
+
+    // Auto-send parent details to tutor via WhatsApp
+    const firstWard = lead.wards?.[0] || {};
+    const whatsappNumber = tutor.whatsapp || tutor.phone || "";
+    let parentDetailsSent = false;
+    let parentDetailsError = "";
+
+    if (whatsappNumber) {
+      try {
+        const assignmentMsg = buildAssignmentMessage(tutor.name, lead, firstWard, demoDate, demoTime);
+        const sendResult = await sendWhatsAppToTutor({
+          phoneNumber: whatsappNumber,
+          messageBody: assignmentMsg,
+          templateVars: { tutor_name: tutor.name },
+        });
+        parentDetailsSent = sendResult.success;
+        parentDetailsError = sendResult.failureReason || "";
+      } catch (err) {
+        console.error("Error sending assignment WhatsApp message:", err.message);
+        parentDetailsError = err.message;
+      }
+    } else {
+      parentDetailsError = "No WhatsApp number available for tutor";
+    }
+
+    res.json({
+      message: "Tutor assigned successfully",
+      lead,
+      parentDetailsSent,
+      parentDetailsError,
+    });
   } catch (error) {
     console.error("Assign tutor error:", error);
     res.status(500).json({ message: error.message });
   }
 });
 
-/**
- * PUT update broadcast log response status
- * PUT /api/parent-enquiries/broadcast-logs/:logId/response
- */
+// =============================================================
+// PUT update broadcast log response status (manual admin update)
+// PUT /api/parent-enquiries/broadcast-logs/:logId/response
+// =============================================================
 router.put("/broadcast-logs/:logId/response", verifyToken(["admin"]), async (req, res) => {
   try {
     const { responseStatus } = req.body;
-    const allowedResponses = ["Interested", "Not Interested", "No Response", "Follow-up Required"];
-    
+    const allowedResponses = [
+      "No Response", "Interested", "Not Interested", "Accepted",
+      "Rejected", "Assigned", "Joined",
+    ];
+
     if (!allowedResponses.includes(responseStatus)) {
       return res.status(400).json({ message: "Invalid response status." });
     }
 
     const log = await BroadcastLog.findByIdAndUpdate(
       req.params.logId,
-      { responseStatus },
+      {
+        responseStatus,
+        respondedAt: new Date(),
+      },
       { new: true }
     );
 
-    if (!log) {
-      return res.status(404).json({ message: "Broadcast log not found." });
-    }
-
+    if (!log) return res.status(404).json({ message: "Broadcast log not found." });
     res.json(log);
   } catch (error) {
     console.error("Update broadcast log response error:", error);
@@ -579,258 +751,154 @@ router.put("/broadcast-logs/:logId/response", verifyToken(["admin"]), async (req
   }
 });
 
-/**
- * GET current broadcast settings
- * GET /api/parent-enquiries/settings/broadcast
- */
-router.get("/settings/broadcast", verifyToken(["admin"]), async (req, res) => {
+// =============================================================
+// POST retry a failed broadcast log entry
+// POST /api/parent-enquiries/broadcast-logs/:logId/retry
+// =============================================================
+router.post("/broadcast-logs/:logId/retry", verifyToken(["admin"]), async (req, res) => {
   try {
-    let maxBroadcast = 20;
-    const configPath = path.resolve("config/broadcastConfig.json");
-    if (fs.existsSync(configPath)) {
-      const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
-      maxBroadcast = config.maxBroadcastTutors || 20;
-    }
-    res.json({ maxBroadcastTutors: maxBroadcast });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
+    const log = await BroadcastLog.findById(req.params.logId);
+    if (!log) return res.status(404).json({ message: "Broadcast log not found." });
 
-/**
- * POST update broadcast settings
- * POST /api/parent-enquiries/settings/broadcast
- */
-router.post("/settings/broadcast", verifyToken(["admin"]), async (req, res) => {
-  try {
-    const { maxBroadcastTutors } = req.body;
-    if (maxBroadcastTutors === undefined || isNaN(Number(maxBroadcastTutors))) {
-      return res.status(400).json({ message: "Invalid maxBroadcastTutors value." });
+    if (log.status !== "Failed") {
+      return res.status(400).json({ message: "Only Failed broadcasts can be retried." });
     }
 
-    const configPath = path.resolve("config/broadcastConfig.json");
-    const newConfig = { maxBroadcastTutors: Number(maxBroadcastTutors) };
-    
-    fs.mkdirSync(path.dirname(configPath), { recursive: true });
-    fs.writeFileSync(configPath, JSON.stringify(newConfig, null, 2), "utf8");
-    
-    res.json({ success: true, maxBroadcastTutors: Number(maxBroadcastTutors) });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-/**
- * Automatic broadcast function running after Parent Enquiry creation
- */
-async function triggerAutoBroadcast(leadId) {
-  try {
-    console.log(`[AutoBroadcast] Starting automatic broadcast workflow for Lead ID: ${leadId}`);
-    const lead = await ParentEnquiry.findById(leadId);
-    if (!lead) {
-      console.error(`[AutoBroadcast] Lead not found: ${leadId}`);
-      return;
-    }
-
-    // 1. Get max broadcast limit
-    let maxBroadcast = 20;
-    try {
-      const configPath = path.resolve("config/broadcastConfig.json");
-      if (fs.existsSync(configPath)) {
-        const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
-        if (config.maxBroadcastTutors && !isNaN(Number(config.maxBroadcastTutors))) {
-          maxBroadcast = Number(config.maxBroadcastTutors);
-        }
-      }
-    } catch (err) {
-      console.error("[AutoBroadcast] Failed to read broadcast limit config:", err.message);
-    }
-
-    // 2. Build match params
-    const firstWard = lead.wards?.[0] || {};
-    const parsedAddr = parseAddress(lead.address);
-    const params = {
-      pincode: lead.pincode || parsedAddr.pincode || "",
-      area: lead.area || parsedAddr.area || "",
-      locality: lead.locality || parsedAddr.locality || "",
-      landmark: lead.landmark || parsedAddr.landmark || "",
-      city: lead.city || parsedAddr.city || lead.geoInfo?.city || "",
-      district: lead.district || parsedAddr.district || "",
-      state: lead.state || parsedAddr.state || lead.geoInfo?.region || "",
-      grade: firstWard.classGrade || "",
-      timing: lead.preferredTime || "",
-      gender: lead.preferredGender || "No Preference"
-    };
-
-    // 3. Query approved tutors matching grade/gender strict rules
-    const query = buildCentralizedQuery(params);
-    const tutors = await Tutor.find(query);
-
-    // 4. Score and filter/rank tutors
-    const scoredTutors = tutors
-      .map(tutor => {
-        const scoreInfo = calculateTutorScore(params, tutor);
-        return {
-          tutor,
-          matchPercentage: scoreInfo.percentage,
-          locationScore: scoreInfo.locationScore
-        };
-      })
-      .filter(item => {
-        const hasLocationCriteria = !!(
-          params.pincode ||
-          params.area ||
-          params.locality ||
-          params.landmark ||
-          params.city
-        );
-        if (hasLocationCriteria && item.locationScore === 0) {
-          return false;
-        }
-        return item.matchPercentage > 0;
-      })
-      .sort((a, b) => b.matchPercentage - a.matchPercentage);
-
-    // Take top recommended tutors up to the max limit
-    const selectedTutors = scoredTutors.slice(0, maxBroadcast).map(item => item.tutor);
-    console.log(`[AutoBroadcast] Found ${scoredTutors.length} total matched tutors. Selected top ${selectedTutors.length} for broadcast.`);
-
-    const reqId = lead.requirementId || "REQ-XXXXX";
-    const parentGrade = firstWard.classGrade ? `Class ${firstWard.classGrade}` : "N/A";
-    const parentBoard = firstWard.curriculum || "N/A";
-    const parentLocation = `${params.area || parsedAddr.area || "N/A"}, ${params.city || "Bengaluru"} - ${params.pincode || "N/A"}`;
-    const parentTiming = lead.preferredTime || "N/A";
-
-    for (const tutor of selectedTutors) {
-      // SAFETY RULE: Prevent duplicate broadcasts
-      const existingLog = await BroadcastLog.findOne({
-        tutorId: tutor._id,
-        requirementId: reqId
+    // Check if this is a permanent failure — should not retry
+    if (log.failureReason && isPermanentFailure(log.failureReason)) {
+      return res.status(400).json({
+        message: `This failure reason ("${log.failureReason}") is permanent and cannot be retried.`,
       });
-      
-      if (existingLog) {
-        console.log(`[AutoBroadcast] Broadcast already sent to tutor ${tutor.name} for Requirement ID ${reqId}. Skipping.`);
-        continue;
-      }
-
-      // Generate personalized message
-      const message = `Hello ${tutor.name},\n\nA new tuition opportunity matching your profile has been found.\n\nRequirement ID:\n${reqId}\n\nStudent Grade:\n${parentGrade}\n\nBoard:\n${parentBoard}\n\nLocation:\n${parentLocation}\n\nPreferred Timing:\n${parentTiming}\n\nIf you are interested, please reply YES.\n\nThank you,\nSaraswati Tutorials`;
-
-      // Send via Odoo WhatsApp integration
-      const tutorPhone = tutor.phone || tutor.whatsapp || "";
-      if (!tutorPhone) {
-        console.warn(`[AutoBroadcast] Tutor ${tutor.name} has no phone number. Skipping.`);
-        continue;
-      }
-
-      let odooSuccess = false;
-      let odooMsgId = null;
-      let odooError = "";
-      try {
-        const odooRes = await sendOdooWhatsApp(tutorPhone, message, tutor.name);
-        if (odooRes.success) {
-          odooSuccess = true;
-          odooMsgId = odooRes.id;
-        } else {
-          odooError = odooRes.error || "";
-        }
-      } catch (err) {
-        console.error(`[AutoBroadcast] Failed sending message to Odoo for ${tutor.name}:`, err.message);
-        odooError = err.message;
-      }
-
-      // Create Broadcast Log
-      const log = new BroadcastLog({
-        tutorId: tutor._id,
-        tutorName: tutor.name,
-        tutorPhone: tutorPhone,
-        requirementId: reqId,
-        leadId: lead._id,
-        type: "whatsapp",
-        message: message,
-        status: odooSuccess ? "Sent" : "Failed",
-        error: odooError,
-        responseStatus: "No Response"
-      });
-      
-      await log.save();
-      console.log(`[AutoBroadcast] Logged broadcast to ${tutor.name} (Status: ${log.status}, Error: ${odooError || "None"})`);
     }
 
-    console.log(`[AutoBroadcast] Completed automatic broadcast workflow for Lead ID: ${leadId}`);
-  } catch (err) {
-    console.error("[AutoBroadcast] General error in auto broadcast:", err);
-  }
-}
+    if (log.retryCount >= 3) {
+      return res.status(400).json({ message: "Maximum retry count (3) reached." });
+    }
 
-/**
- * Sync replies from Odoo for pending BroadcastLog records
- */
-async function syncAllBroadcastReplies() {
-  try {
-    const cutoffDate = new Date();
-    cutoffDate.setDate(cutoffDate.getDate() - 7); // Sync for last 7 days
+    const tutor = await Tutor.findById(log.tutorId);
+    if (!tutor) return res.status(404).json({ message: "Tutor not found." });
 
-    const pendingLogs = await BroadcastLog.find({
-      responseStatus: { $in: ["No Response", "Pending"] },
-      time: { $gte: cutoffDate }
+    const lead = await ParentEnquiry.findById(log.leadId);
+    if (!lead) return res.status(404).json({ message: "Lead not found." });
+
+    // Update status to Sending
+    await BroadcastLog.findByIdAndUpdate(log._id, {
+      status: "Sending",
+      lastRetryAt: new Date(),
     });
 
-    if (pendingLogs.length === 0) return;
-
-    console.log(`[RepliesSync] Checking Odoo replies for ${pendingLogs.length} pending broadcast logs...`);
-
-    const phoneToLogs = {};
-    for (const log of pendingLogs) {
-      const clean = String(log.tutorPhone).replace(/[^0-9]/g, "");
-      if (clean.length >= 10) {
-        if (!phoneToLogs[log.tutorPhone]) {
-          phoneToLogs[log.tutorPhone] = [];
-        }
-        phoneToLogs[log.tutorPhone].push(log);
-      }
+    const whatsappNumber = tutor.whatsapp || tutor.phone || "";
+    if (!whatsappNumber) {
+      await BroadcastLog.findByIdAndUpdate(log._id, {
+        status: "Failed",
+        failureReason: "No WhatsApp number available",
+        retryCount: log.retryCount + 1,
+      });
+      return res.status(400).json({ message: "No WhatsApp number available for this tutor." });
     }
 
-    for (const [phone, logs] of Object.entries(phoneToLogs)) {
-      // Fetch replies starting with a 5-minute clock skew buffer
-      const earliestTime = new Date(Math.min(...logs.map(l => new Date(l.time))) - 5 * 60 * 1000);
-      
-      const replies = await fetchOdooWhatsAppReplies(phone, earliestTime);
-      if (replies.length > 0) {
-        replies.sort((a, b) => new Date(a.create_date) - new Date(b.create_date));
+    const sendResult = await sendWhatsAppToTutor({
+      phoneNumber: whatsappNumber,
+      messageBody: log.message,
+    });
 
-        for (const log of logs) {
-          const logTime = new Date(log.time);
-          const logTimeWithBuffer = new Date(logTime.getTime() - 5 * 60 * 1000);
-          const matchReply = replies.find(r => new Date(r.create_date) > logTimeWithBuffer);
-          
-          if (matchReply) {
-            const cleanText = String(matchReply.body || "")
-              .replace(/<[^>]*>/g, "")
-              .trim()
-              .toUpperCase();
+    const updatedLog = await BroadcastLog.findByIdAndUpdate(
+      log._id,
+      {
+        status: sendResult.success ? "Sent" : "Failed",
+        failureReason: sendResult.failureReason || "",
+        retryCount: log.retryCount + 1 + (sendResult.retryCount || 0),
+        whatsappMessageId: sendResult.messageId || log.whatsappMessageId,
+        lastRetryAt: new Date(),
+      },
+      { new: true }
+    );
 
-            let newStatus = null;
-            if (cleanText.includes("YES")) {
-              newStatus = "Interested";
-            } else if (cleanText.includes("NO")) {
-              newStatus = "Not Interested";
-            } else if (cleanText.includes("BUSY")) {
-              newStatus = "Busy";
-            }
-
-            if (newStatus && log.responseStatus !== newStatus) {
-              log.responseStatus = newStatus;
-              await log.save();
-              console.log(`[RepliesSync] Updated reply status for tutor ${log.tutorName} to ${newStatus} on Requirement ${log.requirementId}`);
-            }
-          }
-        }
-      }
-    }
-  } catch (err) {
-    console.error("[RepliesSync] Error syncing replies from Odoo:", err.message);
+    res.json({
+      message: sendResult.success ? "Retry successful" : "Retry failed",
+      log: updatedLog,
+      failureReason: sendResult.failureReason || "",
+    });
+  } catch (error) {
+    console.error("Retry broadcast error:", error);
+    res.status(500).json({ message: error.message });
   }
-}
+});
+
+// =============================================================
+// POST WhatsApp reply webhook
+// POST /api/parent-enquiries/webhook/whatsapp-reply
+//
+// Called by Odoo or Meta when a tutor replies to a WhatsApp message.
+// Secured by X-Webhook-Secret header.
+// =============================================================
+router.post("/webhook/whatsapp-reply", async (req, res) => {
+  try {
+    const webhookSecret = req.headers["x-webhook-secret"];
+    const expectedSecret = process.env.WEBHOOK_SECRET;
+
+    if (expectedSecret && webhookSecret !== expectedSecret) {
+      return res.status(403).json({ message: "Unauthorized webhook call." });
+    }
+
+    const { phone, message, messageId } = req.body;
+    if (!phone || !message) {
+      return res.status(400).json({ message: "phone and message are required." });
+    }
+
+    const replyText = String(message).trim().toLowerCase();
+    let responseStatus = null;
+
+    if (["not interested", "no", "nahi", "nope", "reject", "not available"].some(k => replyText.includes(k))) {
+      responseStatus = "Not Interested";
+    } else if (["yes", "interested", "accept", "ok", "okay", "confirm", "ji", "haan", "ha"].some(k => replyText.includes(k))) {
+      responseStatus = "Interested";
+    }
+
+    if (!responseStatus) {
+      // Not a clear YES/NO — log but don't update
+      console.log(`[Webhook] Ambiguous reply from ${phone}: "${message}"`);
+      return res.json({ message: "Reply received but not a clear YES/NO.", processed: false });
+    }
+
+    // Find the tutor by phone number
+    const tutor = await Tutor.findOne({
+      $or: [
+        { whatsapp: { $regex: phone.slice(-10) } },
+        { phone: { $regex: phone.slice(-10) } },
+      ],
+    });
+
+    if (!tutor) {
+      console.warn(`[Webhook] No tutor found for phone: ${phone}`);
+      return res.json({ message: "Tutor not found for this phone number.", processed: false });
+    }
+
+    // Find the most recent broadcast log for this tutor that has No Response
+    const latestLog = await BroadcastLog.findOne({
+      tutorId: tutor._id,
+      responseStatus: "No Response",
+      status: { $in: ["Sent", "Delivered", "Read"] },
+    }).sort({ time: -1 });
+
+    if (!latestLog) {
+      console.warn(`[Webhook] No pending broadcast log found for tutor: ${tutor.name}`);
+      return res.json({ message: "No pending broadcast log found.", processed: false });
+    }
+
+    await BroadcastLog.findByIdAndUpdate(latestLog._id, {
+      responseStatus,
+      respondedAt: new Date(),
+      status: "Replied",
+      whatsappMessageId: messageId || latestLog.whatsappMessageId,
+    });
+
+    console.log(`[Webhook] Updated broadcast log ${latestLog._id} — Tutor ${tutor.name} replied: ${responseStatus}`);
+    res.json({ message: "Reply processed successfully.", responseStatus, tutorName: tutor.name, logId: latestLog._id, processed: true });
+  } catch (error) {
+    console.error("WhatsApp webhook error:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
 
 export default router;

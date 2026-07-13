@@ -231,211 +231,357 @@ export function matchTiming(parentTiming, tutorTimings) {
 }
 
 /**
- * Calculates the location proximity score based on parent parameters and tutor location fields.
- * Ranking Priority:
- * 1. Exact Pincode + Exact Area = 100
- * 2. Exact Pincode + Similar Area = 80
- * 3. Same Area = 60
- * 4. Same Pincode (Diff Area) = 40
- * 5. Nearby Pincode (pincode difference <= 2) = 25
- * 6. Same City = 10
+ * Normalize board name for comparison (CBSE, ICSE, ISC, IB, IGCSE, State Board, etc.)
  */
-export function calculateLocationProximityScore(params, tutor) {
-  let hasPincode = !!(params.pincode && tutor.pincode);
-  const pPin = hasPincode ? String(params.pincode).trim() : "";
-  const tPin = hasPincode ? String(tutor.pincode).trim() : "";
-  
-  const isExactPincode = hasPincode && pPin === tPin;
-
-  // Extract all tutor area fields
-  const tutorAreas = [tutor.area, tutor.location, ...(tutor.locations || [])].filter(Boolean);
-  const parentAreas = [params.area, params.locality, params.landmark].filter(Boolean);
-
-  let isExactArea = false;
-  let isSimilarArea = false;
-
-  if (parentAreas.length > 0 && tutorAreas.length > 0) {
-    // Check exact area match
-    for (const pArea of parentAreas) {
-      const cp = cleanLocationString(pArea);
-      for (const tArea of tutorAreas) {
-        const ct = cleanLocationString(tArea);
-        if (cp && ct && cp === ct) {
-          isExactArea = true;
-          break;
-        }
-      }
-      if (isExactArea) break;
-    }
-
-    // Check fuzzy area match if not exact
-    if (!isExactArea) {
-      for (const pArea of parentAreas) {
-        for (const tArea of tutorAreas) {
-          if (areStringsFuzzySimilar(pArea, tArea)) {
-            isSimilarArea = true;
-            break;
-          }
-        }
-        if (isSimilarArea) break;
-      }
-    }
-  }
-
-  // Tier 1: Exact Pincode + Exact Area
-  if (isExactPincode && isExactArea) {
-    return 100;
-  }
-
-  // Tier 2: Exact Pincode + Similar Area
-  if (isExactPincode && isSimilarArea) {
-    return 80;
-  }
-
-  // Tier 3: Same Area (Regardless of pincode)
-  if (isExactArea || isSimilarArea) {
-    return 60;
-  }
-
-  // Tier 4: Same Pincode (Different Area)
-  if (isExactPincode) {
-    return 40;
-  }
-
-  // Tier 5: Nearby Pincode (difference <= 2)
-  if (hasPincode) {
-    const pPinNum = parseInt(pPin, 10);
-    const tPinNum = parseInt(tPin, 10);
-    if (!isNaN(pPinNum) && !isNaN(tPinNum) && Math.abs(pPinNum - tPinNum) <= 2) {
-      return 25;
-    }
-  }
-
-  // Tier 6: Same City
-  if (params.city && tutor.city) {
-    const cp = cleanLocationString(params.city);
-    const ct = cleanLocationString(tutor.city);
-    if (cp && ct && cp === ct) {
-      return 10;
-    }
-  }
-
-  return 0;
+export function normalizeBoard(board) {
+  if (!board) return "";
+  const b = String(board).toUpperCase().trim();
+  if (b.includes("STATE") || b.includes("SSC") || b.includes("HSC")) return "STATE";
+  if (b === "CBSE") return "CBSE";
+  if (b === "ICSE") return "ICSE";
+  if (b === "ISC") return "ISC";
+  if (b === "IB") return "IB";
+  if (b === "IGCSE") return "IGCSE";
+  if (b === "NIOS") return "NIOS";
+  return b;
 }
 
 /**
+ * Check if the tutor teaches the requested board
+ */
+export function matchBoard(parentBoard, tutorBoards) {
+  if (!parentBoard) return true;
+  if (!Array.isArray(tutorBoards) || tutorBoards.length === 0) return true; // legacy tutors without boards — don't penalize
+  
+  const normalized = normalizeBoard(parentBoard);
+  return tutorBoards.some(b => normalizeBoard(b) === normalized);
+}
+
+/**
+ * Check how many requested subjects the tutor can teach (0.0 to 1.0)
+ */
+export function subjectOverlapRatio(parentSubjects, tutorSubjects) {
+  if (!Array.isArray(parentSubjects) || parentSubjects.length === 0) return 1;
+  if (!Array.isArray(tutorSubjects) || tutorSubjects.length === 0) return 0;
+  
+  const normalizeSubject = s => String(s).toLowerCase().trim();
+  const tSet = new Set(tutorSubjects.map(normalizeSubject));
+  
+  let matched = 0;
+  for (const ps of parentSubjects) {
+    const pNorm = normalizeSubject(ps);
+    if (tSet.has(pNorm)) {
+      matched++;
+    } else {
+      // Fuzzy: check if any tutor subject contains or is very similar
+      for (const ts of tSet) {
+        if (ts.includes(pNorm) || pNorm.includes(ts)) {
+          matched++;
+          break;
+        }
+        if (pNorm.length >= 4 && ts.length >= 4) {
+          const dist = getLevenshteinDistance(pNorm, ts);
+          const maxLen = Math.max(pNorm.length, ts.length);
+          if ((1 - dist / maxLen) >= 0.8) {
+            matched++;
+            break;
+          }
+        }
+      }
+    }
+  }
+  
+  return matched / parentSubjects.length;
+}
+
+/**
+ * Calculate Haversine distance in km between two GPS coordinates
+ */
+export function haversineDistance(lat1, lon1, lat2, lon2) {
+  if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) return null;
+  const R = 6371; // Earth's radius in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+/**
+ * Returns a distance tier label for display
+ */
+export function getDistanceTier(km) {
+  if (km == null) return "Unknown";
+  if (km <= 3) return "0–3 km";
+  if (km <= 5) return "3–5 km";
+  if (km <= 8) return "5–8 km";
+  if (km <= 12) return "8–12 km";
+  return "12+ km";
+}
+
+/**
+ * Availability status priority (lower = better)
+ */
+export function getAvailabilityPriority(status) {
+  const map = {
+    "Available": 0,
+    "Busy": 1,
+    "Inactive": 2,
+    "Not Active": 3,
+    "Archived": 4,
+    "Blocked": 99,
+  };
+  return map[status] ?? 5;
+}
+
+/**
+ * Definition of recommendation factors for scoring
+ *
+ * Total max weight: 145
+ * - Exact Pincode:    40
+ * - Exact Area:       25
+ * - Similar Area:     20 (exclusive with Exact Area)
+ * - Same City:        10
+ * - Correct Grade:    20
+ * - Board Match:      15
+ * - Subject Match:    10
+ * - Correct Timing:   15
+ * - Preferred Gender: 10
+ */
+export const RECOMMENDATION_FACTORS = [
+  {
+    name: "Exact Pincode",
+    maxWeight: 40,
+    calculate: (params, tutor) => {
+      if (!params.pincode || !tutor.pincode) return 0;
+      const pPin = String(params.pincode).trim();
+      const tPin = String(tutor.pincode).trim();
+      return (pPin && tPin && pPin === tPin) ? 40 : 0;
+    }
+  },
+  {
+    name: "Exact Area",
+    maxWeight: 25,
+    calculate: (params, tutor) => {
+      const parentAreas = [params.area, params.locality, params.landmark].filter(Boolean);
+      const tutorAreas = [tutor.area, tutor.location, ...(tutor.locations || [])].filter(Boolean);
+      
+      for (const pArea of parentAreas) {
+        const cp = cleanLocationString(pArea);
+        for (const tArea of tutorAreas) {
+          const ct = cleanLocationString(tArea);
+          if (cp && ct && cp === ct) {
+            return 25;
+          }
+        }
+      }
+      return 0;
+    }
+  },
+  {
+    name: "Similar Area Name",
+    maxWeight: 20,
+    calculate: (params, tutor) => {
+      const parentAreas = [params.area, params.locality, params.landmark].filter(Boolean);
+      const tutorAreas = [tutor.area, tutor.location, ...(tutor.locations || [])].filter(Boolean);
+      
+      for (const pArea of parentAreas) {
+        for (const tArea of tutorAreas) {
+          if (areStringsFuzzySimilar(pArea, tArea)) {
+            return 20;
+          }
+        }
+      }
+      return 0;
+    }
+  },
+  {
+    name: "Same City",
+    maxWeight: 10,
+    calculate: (params, tutor) => {
+      if (!params.city || !tutor.city) return 0;
+      const cp = cleanLocationString(params.city);
+      const ct = cleanLocationString(tutor.city);
+      return (cp && ct && cp === ct) ? 10 : 0;
+    }
+  },
+  {
+    name: "Correct Grade",
+    maxWeight: 20,
+    calculate: (params, tutor) => {
+      if (!params.grade) return 20;
+      const targetGrades = getTutorGradeOptions(params.grade);
+      if (targetGrades.length === 0) return 20;
+      
+      const hasMatchingGrade = Array.isArray(tutor.grades) && tutor.grades.some(g => targetGrades.includes(g));
+      const isNewOrLegacy = !tutor.grades || tutor.grades.length === 0;
+      
+      return (hasMatchingGrade || isNewOrLegacy) ? 20 : 0;
+    }
+  },
+  {
+    name: "Board Match",
+    maxWeight: 15,
+    calculate: (params, tutor) => {
+      if (!params.board) return 15; // no preference → full marks
+      const matched = matchBoard(params.board, tutor.boards);
+      return matched ? 15 : 0;
+    }
+  },
+  {
+    name: "Subject Match",
+    maxWeight: 10,
+    calculate: (params, tutor) => {
+      if (!params.subjects || params.subjects.length === 0) return 10; // no subjects specified → full marks
+      const ratio = subjectOverlapRatio(params.subjects, tutor.subjects);
+      return Math.round(ratio * 10);
+    }
+  },
+  {
+    name: "Correct Timing",
+    maxWeight: 15,
+    calculate: (params, tutor) => {
+      if (!params.timing) return 15;
+      return matchTiming(params.timing, tutor.timings || []) ? 15 : 0;
+    }
+  },
+  {
+    name: "Preferred Gender",
+    maxWeight: 10,
+    calculate: (params, tutor) => {
+      if (!params.gender) return 10;
+      const genderPref = String(params.gender).trim().toLowerCase();
+      const tGender = String(tutor.gender || "").trim().toLowerCase();
+      
+      if (["flexible", "no preference", "both", ""].includes(genderPref)) {
+        return 10;
+      }
+      return (tGender === genderPref || tGender === "" || !tutor.gender) ? 10 : 0;
+    }
+  }
+];
+
+/**
  * Calculates a matching score and percentage for a tutor against parent requirements.
- * Recommends closest and most relevant tutors first.
+ * 
+ * Scoring factors and weights:
+ *   Exact Pincode  : 40
+ *   Exact Area     : 25 (exclusive with Similar Area)
+ *   Similar Area   : 20 (exclusive with Exact Area)
+ *   Same City      : 10
+ *   Correct Grade  : 20
+ *   Board Match    : 15
+ *   Subject Match  : 10
+ *   Correct Timing : 15
+ *   Preferred Gender: 10
  */
 export function calculateTutorScore(params, tutor) {
   let score = 0;
   let maxPossibleScore = 0;
   
-  // 1. Proximity Location Score (max 100)
-  const proximityScore = calculateLocationProximityScore(params, tutor);
-  score += proximityScore;
+  // Calculate Pincode
+  const pinScore = RECOMMENDATION_FACTORS.find(f => f.name === "Exact Pincode").calculate(params, tutor);
+  score += pinScore;
+  if (params.pincode) maxPossibleScore += 40;
   
-  const hasLocationCriteria = !!(
-    params.pincode ||
-    params.area ||
-    params.locality ||
-    params.landmark ||
-    params.city
-  );
-  if (hasLocationCriteria) {
-    maxPossibleScore += 100;
-  }
-  
-  // 2. Correct Grade (Strict filter in database, +30 weight)
-  let isGradeMatch = false;
-  if (params.grade) {
-    const targetGrades = getTutorGradeOptions(params.grade);
-    if (targetGrades.length === 0) {
-      isGradeMatch = true;
-    } else {
-      const hasMatchingGrade = Array.isArray(tutor.grades) && tutor.grades.some(g => targetGrades.includes(g));
-      const isNewOrLegacy = !tutor.grades || tutor.grades.length === 0;
-      if (hasMatchingGrade || isNewOrLegacy) {
-        isGradeMatch = true;
-      }
-    }
+  // Calculate Area (Exact and Similar are mutually exclusive)
+  const exactAreaScore = RECOMMENDATION_FACTORS.find(f => f.name === "Exact Area").calculate(params, tutor);
+  let areaScore = 0;
+  if (exactAreaScore > 0) {
+    areaScore = exactAreaScore;
+    score += exactAreaScore;
   } else {
-    isGradeMatch = true;
+    const similarAreaScore = RECOMMENDATION_FACTORS.find(f => f.name === "Similar Area Name").calculate(params, tutor);
+    areaScore = similarAreaScore;
+    score += similarAreaScore;
   }
-  if (isGradeMatch) score += 30;
-  if (params.grade) maxPossibleScore += 30;
-  
-  // 3. Correct Timing (+20 weight)
-  let isTimingMatch = false;
-  if (params.timing) {
-    if (matchTiming(params.timing, tutor.timings || [])) {
-      isTimingMatch = true;
-    }
-  } else {
-    isTimingMatch = true;
+  if (params.area || params.locality || params.landmark) {
+    maxPossibleScore += 25;
   }
-  if (isTimingMatch) score += 20;
-  if (params.timing) maxPossibleScore += 20;
   
-  // 4. Preferred Gender Match (Strict in DB, +15 weight)
-  let isGenderMatch = false;
-  if (params.gender) {
-    const genderPref = String(params.gender).trim().toLowerCase();
-    const tGender = String(tutor.gender || "").trim().toLowerCase();
-    if (["flexible", "no preference", "both", ""].includes(genderPref)) {
-      isGenderMatch = true;
-    } else if (tGender === genderPref || tGender === "" || !tutor.gender) {
-      isGenderMatch = true;
-    }
-  } else {
-    isGenderMatch = true;
-  }
-  if (isGenderMatch) score += 15;
-  if (params.gender) maxPossibleScore += 15;
+  // Calculate City
+  const cityScore = RECOMMENDATION_FACTORS.find(f => f.name === "Same City").calculate(params, tutor);
+  score += cityScore;
+  if (params.city) maxPossibleScore += 10;
   
-  // 5. Tutor Availability (+10 weight)
-  const isAvailable = tutor.availabilityStatus === "Available";
-  if (isAvailable) score += 10;
-  maxPossibleScore += 10;
+  // Calculate Grade
+  const gradeScore = RECOMMENDATION_FACTORS.find(f => f.name === "Correct Grade").calculate(params, tutor);
+  score += gradeScore;
+  if (params.grade) maxPossibleScore += 20;
+
+  // Calculate Board Match
+  const boardScore = RECOMMENDATION_FACTORS.find(f => f.name === "Board Match").calculate(params, tutor);
+  score += boardScore;
+  if (params.board) maxPossibleScore += 15;
+
+  // Calculate Subject Match
+  const subjectScore = RECOMMENDATION_FACTORS.find(f => f.name === "Subject Match").calculate(params, tutor);
+  score += subjectScore;
+  if (params.subjects && params.subjects.length > 0) maxPossibleScore += 10;
+  
+  // Calculate Timing
+  const timingScore = RECOMMENDATION_FACTORS.find(f => f.name === "Correct Timing").calculate(params, tutor);
+  score += timingScore;
+  if (params.timing) maxPossibleScore += 15;
+  
+  // Calculate Gender
+  const genderScore = RECOMMENDATION_FACTORS.find(f => f.name === "Preferred Gender").calculate(params, tutor);
+  score += genderScore;
+  if (params.gender) maxPossibleScore += 10;
 
   // Base fallback if no requirements were selected
   if (maxPossibleScore === 0) maxPossibleScore = 100;
   
   const percentage = Math.min(100, Math.round((score / maxPossibleScore) * 100));
   
-  // Match Category label based on location score hierarchy
-  let matchCategory = "Same City Match";
-  if (proximityScore >= 80) {
-    matchCategory = "Closest & Best Match";
-  } else if (proximityScore >= 40) {
-    matchCategory = "Closest Match";
-  } else if (proximityScore >= 25) {
-    matchCategory = "Nearby Match";
-  } else if (proximityScore >= 10) {
-    matchCategory = "Same City Match";
-  } else {
-    matchCategory = "Academic Match";
+  // Location score sums pincode + area + city matches (for secondary filtering)
+  const locationScore = pinScore + areaScore + cityScore;
+
+  // Distance in km (if coordinates available)
+  let distanceKm = null;
+  if (
+    params.latitude != null && params.longitude != null &&
+    tutor.latitude != null && tutor.longitude != null
+  ) {
+    distanceKm = haversineDistance(params.latitude, params.longitude, tutor.latitude, tutor.longitude);
+    if (distanceKm != null) distanceKm = Math.round(distanceKm * 10) / 10; // 1 decimal place
   }
 
   return {
     score,
     maxPossibleScore,
     percentage,
-    locationScore: proximityScore,
-    matchCategory
+    locationScore,
+    distanceKm,
+    distanceTier: getDistanceTier(distanceKm),
+    breakdown: {
+      pincode: pinScore,
+      area: areaScore,
+      city: cityScore,
+      grade: gradeScore,
+      board: boardScore,
+      subject: subjectScore,
+      timing: timingScore,
+      gender: genderScore,
+    }
   };
 }
 
 /**
  * Builds standard MongoDB database filters.
  * Recommends tutors strictly capable of handling the selected Grade/Class,
- * and matching preferred Gender if requested specifically.
+ * matching preferred Gender if requested, and never returns Blocked tutors.
  */
 export function buildCentralizedQuery(params) {
   const { grade, gender } = params;
   
   const andConditions = [
-    { status: "approved" }
+    { status: "approved" },
+    // Never recommend blocked tutors
+    { availabilityStatus: { $ne: "Blocked" } }
   ];
 
   // Grade filter (Strict)
@@ -463,4 +609,33 @@ export function buildCentralizedQuery(params) {
   }
 
   return { $and: andConditions };
+}
+
+/**
+ * Comparator for sorting tutors by:
+ *  1. Distance (km) ascending — if available
+ *  2. Match percentage descending
+ *  3. Availability priority ascending (Available > Busy > Inactive)
+ */
+export function compareTutors(a, b) {
+  // If both have distance, sort by distance first
+  if (a.distanceKm != null && b.distanceKm != null) {
+    if (Math.abs(a.distanceKm - b.distanceKm) > 1) {
+      return a.distanceKm - b.distanceKm;
+    }
+  } else if (a.distanceKm != null) {
+    return -1; // a has distance, b does not → a ranks higher
+  } else if (b.distanceKm != null) {
+    return 1;
+  }
+
+  // Then sort by match percentage
+  if (b.matchPercentage !== a.matchPercentage) {
+    return b.matchPercentage - a.matchPercentage;
+  }
+
+  // Then sort by availability priority
+  const aPriority = getAvailabilityPriority(a.availabilityStatus);
+  const bPriority = getAvailabilityPriority(b.availabilityStatus);
+  return aPriority - bPriority;
 }

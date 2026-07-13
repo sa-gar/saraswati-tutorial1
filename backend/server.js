@@ -76,6 +76,8 @@ app.use("/api/blogs", blogRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/blog-auth", blogAuthRoutes);
 app.use("/api/analytics", analyticsRoutes);
+// Webhook endpoint (reuses parentEnquiry routes — mounted separately for clean URL)
+app.use("/api", parentEnquiryRoutes);
 
 // MongoDB Connection + Server Start
 if (

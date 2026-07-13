@@ -6,6 +6,8 @@ const broadcastLogSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+
+    // Tutor reference
     tutorId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Tutor",
@@ -19,6 +21,12 @@ const broadcastLogSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    tutorCode: {
+      type: String,
+      default: "",
+    },
+
+    // Requirement reference
     requirementId: {
       type: String,
       required: true,
@@ -28,6 +36,8 @@ const broadcastLogSchema = new mongoose.Schema(
       ref: "ParentEnquiry",
       required: true,
     },
+
+    // Message details
     type: {
       type: String,
       enum: ["whatsapp", "email"],
@@ -37,19 +47,92 @@ const broadcastLogSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
-    status: {
-      type: String,
-      enum: ["Sent", "Delivered", "Failed"],
-      default: "Sent",
-    },
-    error: {
+    templateName: {
       type: String,
       default: "",
     },
+    usedTemplate: {
+      type: Boolean,
+      default: false,
+    },
+    broadcastType: {
+      type: String,
+      enum: ["onboarding", "requirement"],
+      default: "requirement",
+    },
+
+    // Delivery tracking
+    status: {
+      type: String,
+      enum: [
+        "Pending",
+        "Sending",
+        "Sent",
+        "Delivered",
+        "Read",
+        "Replied",
+        "Failed",
+        "Suppressed",
+      ],
+      default: "Pending",
+    },
+    failureReason: {
+      type: String,
+      default: "",
+      // Examples: "Invalid Number", "Template Missing", "Meta Policy Rejection",
+      // "Message Body Missing", "Authentication Failed", "Rate Limited",
+      // "Timeout", "Network Error", "Server Error"
+    },
+    retryCount: {
+      type: Number,
+      default: 0,
+    },
+    lastRetryAt: {
+      type: Date,
+      default: null,
+    },
+    whatsappMessageId: {
+      type: String,
+      default: "",
+    },
+
+    // Response tracking
     responseStatus: {
       type: String,
-      enum: ["Interested", "Not Interested", "No Response", "Follow-up Required", "Busy", "Pending"],
+      enum: [
+        "No Response",
+        "Interested",
+        "Not Interested",
+        "Accepted",
+        "Rejected",
+        "Assigned",
+        "Joined",
+      ],
       default: "No Response",
+    },
+    respondedAt: {
+      type: Date,
+      default: null,
+    },
+
+    // Admin who triggered the broadcast
+    adminName: {
+      type: String,
+      default: "",
+    },
+    adminEmail: {
+      type: String,
+      default: "",
+    },
+
+    // Approximate distance at time of broadcast
+    distanceKm: {
+      type: Number,
+      default: null,
+    },
+    matchPercentage: {
+      type: Number,
+      default: null,
     },
   },
   { timestamps: true }
@@ -60,5 +143,16 @@ broadcastLogSchema.index({ tutorId: 1 });
 broadcastLogSchema.index({ leadId: 1 });
 broadcastLogSchema.index({ requirementId: 1 });
 broadcastLogSchema.index({ responseStatus: 1 });
+broadcastLogSchema.index({ status: 1 });
+broadcastLogSchema.index({ time: -1 });
+
+// Deduplication: prevent same tutor from receiving same requirement broadcast twice
+broadcastLogSchema.index(
+  { requirementId: 1, tutorId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { status: { $ne: "Suppressed" } },
+  }
+);
 
 export default mongoose.model("BroadcastLog", broadcastLogSchema);
