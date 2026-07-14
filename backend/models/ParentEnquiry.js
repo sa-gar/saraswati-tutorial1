@@ -10,32 +10,26 @@ const wardSchema = new mongoose.Schema(
 
     schoolName: {
       type: String,
-      required: true,
+      required: false,
       trim: true,
     },
 
     classGrade: {
       type: String,
-      required: true,
+      required: false,
       trim: true,
     },
 
     curriculum: {
       type: String,
-      required: true,
+      required: false,
       trim: true,
     },
 
     subjectsNeeded: {
       type: [String],
-      required: true,
+      required: false,
       default: [],
-      validate: {
-        validator: function (value) {
-          return Array.isArray(value) && value.length > 0;
-        },
-        message: "At least one subject is required",
-      },
     },
 
     currentPerformance: {
@@ -69,7 +63,7 @@ const parentEnquirySchema = new mongoose.Schema(
 
     email: {
       type: String,
-      required: true,
+      required: false,
       trim: true,
       lowercase: true,
     },
@@ -77,7 +71,7 @@ const parentEnquirySchema = new mongoose.Schema(
 
     address: {
       type: String,
-      required: true,
+      required: false,
       trim: true,
     },
 
@@ -107,31 +101,25 @@ const parentEnquirySchema = new mongoose.Schema(
 
     preferredMode: {
       type: String,
-      required: true,
+      required: false,
       trim: true,
     },
 
     preferredGender: {
       type: String,
-      required: true,
+      required: false,
       trim: true,
     },
 
     preferredDays: {
       type: [String],
-      required: true,
+      required: false,
       default: [],
-      validate: {
-        validator: function (value) {
-          return Array.isArray(value) && value.length > 0;
-        },
-        message: "At least one preferred day is required",
-      },
     },
 
     preferredTime: {
       type: String,
-      required: true,
+      required: false,
       trim: true,
     },
 
@@ -143,13 +131,8 @@ const parentEnquirySchema = new mongoose.Schema(
 
     wards: {
       type: [wardSchema],
-      validate: {
-        validator: function (value) {
-          return Array.isArray(value) && value.length > 0;
-        },
-        message: "At least one ward is required",
-      },
-      required: true,
+      required: false,
+      default: [],
     },
 
     planType: {
@@ -286,6 +269,26 @@ const parentEnquirySchema = new mongoose.Schema(
     },
 
     lostReason: {
+      type: String,
+      default: "",
+    },
+
+    totalClasses: {
+      type: Number,
+      default: 12,
+    },
+
+    completedClasses: {
+      type: Number,
+      default: 0,
+    },
+
+    classSchedule: {
+      type: String,
+      default: "",
+    },
+
+    lastReminderSentDate: {
       type: String,
       default: "",
     },

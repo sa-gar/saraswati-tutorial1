@@ -55,6 +55,7 @@ const initialFormData = {
   subjects: [],
   maxTravelDistance: "",
   qualification: "",
+  attendanceAgreement: false,
 };
 
 const steps = [
@@ -276,6 +277,7 @@ export default function TutorRegistration() {
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [previewPhoto, setPreviewPhoto] = useState(null);
+  const [showInstructionsModal, setShowInstructionsModal] = useState(false);
   const [openGroup, setOpenGroup] = useState(isMumbai ? "Western Suburbs" : "East Bangalore");
   const [sameAsMobile, setSameAsMobile] = useState(true);
 
@@ -509,7 +511,8 @@ export default function TutorRegistration() {
     if (!formData.idProof) return "ID Proof is required";
     if (!formData.expCert) return "Education Certificate is required";
     if (!formData.timings.length) return "Select at least one available timing";
-    if (!formData.agreement) return "You must agree to the terms";
+    if (!formData.agreement) return "You must agree to the placement fee terms";
+    if (!formData.attendanceAgreement) return "You must agree to the attendance marking guidelines";
 
     const cleaned = Object.fromEntries(
       Object.entries(nextErrors).filter(([, value]) => value)
@@ -1528,6 +1531,49 @@ export default function TutorRegistration() {
                       </p>
                     )}
                   </div>
+
+                  {/* Attendance Agreement */}
+                  <div
+                    className={`rounded-[2rem] border p-5 transition mt-4 ${
+                      formData.attendanceAgreement
+                        ? "border-emerald-200 bg-emerald-50"
+                        : "border-red-200 bg-red-50"
+                    }`}
+                  >
+                    <label className="flex cursor-pointer items-start gap-3">
+                      <input
+                        type="checkbox"
+                        checked={formData.attendanceAgreement}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            attendanceAgreement: e.target.checked,
+                          }))
+                        }
+                        className="mt-1 h-5 w-5 accent-emerald-600"
+                      />
+
+                      <div className="text-sm leading-7 text-slate-700">
+                        I agree to update my attendance after every class using the credentials provided by Saraswati Tutorials. Classes not marked in the portal will not be considered completed and may not be included for payment processing.{" "}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setShowInstructionsModal(true);
+                          }}
+                          className="text-blue-600 font-extrabold underline hover:text-blue-800 ml-1 cursor-pointer"
+                        >
+                          Preview
+                        </button>
+                      </div>
+                    </label>
+
+                    {!formData.attendanceAgreement && (
+                      <p className="mt-2 text-xs font-bold text-red-650">
+                        You must agree before submitting.
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 <NavigationFooter>
@@ -1646,6 +1692,47 @@ export default function TutorRegistration() {
                   </PrimaryButton>
                 </NavigationFooter>
               </section>
+            )}
+
+            {showInstructionsModal && (
+              <div className="fixed inset-0 z-55 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+                <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200 flex flex-col max-h-[90vh] z-55">
+                  {/* Modal Header */}
+                  <div className="px-6 py-4 flex items-center justify-between border-b border-slate-100 bg-slate-50 text-slate-800">
+                    <h3 className="text-xs font-black uppercase tracking-wider">Attendance Update Guidelines</h3>
+                    <button 
+                      type="button"
+                      onClick={() => setShowInstructionsModal(false)}
+                      className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-black/5 text-slate-500 cursor-pointer"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  {/* Modal Body */}
+                  <div className="p-6 overflow-y-auto flex flex-col items-center justify-center">
+                    <img 
+                      src="/attendance_instructions.png" 
+                      alt="Attendance Guidelines Infographic" 
+                      className="w-full h-auto rounded-2xl shadow-sm border border-slate-200 object-contain max-h-[60vh]"
+                    />
+                    <p className="text-xs font-semibold text-slate-500 mt-4 text-center">
+                      Follow these steps to submit your daily class logs and topics on the portal.
+                    </p>
+                  </div>
+
+                  {/* Modal Footer */}
+                  <div className="bg-slate-50 px-6 py-4 flex justify-end border-t border-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => setShowInstructionsModal(false)}
+                      className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-black transition cursor-pointer"
+                    >
+                      Close Preview
+                    </button>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         </div>

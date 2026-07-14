@@ -146,13 +146,7 @@ broadcastLogSchema.index({ responseStatus: 1 });
 broadcastLogSchema.index({ status: 1 });
 broadcastLogSchema.index({ time: -1 });
 
-// Deduplication: prevent same tutor from receiving same requirement broadcast twice
-broadcastLogSchema.index(
-  { requirementId: 1, tutorId: 1 },
-  {
-    unique: true,
-    partialFilterExpression: { status: { $ne: "Suppressed" } },
-  }
-);
+// Index for quick compound queries
+broadcastLogSchema.index({ requirementId: 1, tutorId: 1 });
 
 export default mongoose.model("BroadcastLog", broadcastLogSchema);

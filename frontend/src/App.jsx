@@ -22,6 +22,9 @@ import TermsConditions from "./pages/TermsAndConditions";
 import Testimonials from "./pages/Testimonials";
 import MumbaiPage from "./pages/MumbaiPage";
 import AnalyticsTracker from "./components/AnalyticsTracker";
+import TeacherLogin from "./pages/TeacherLogin";
+import TeacherDashboard from "./pages/TeacherDashboard";
+import ParentPortal from "./pages/ParentPortal";
 
 // Admin Protected Route
 function ProtectedRoute({ children }) {
@@ -33,6 +36,12 @@ function ProtectedRoute({ children }) {
 function BlogProtectedRoute({ children }) {
   const token = localStorage.getItem("blogEditorToken");
   return token ? children : <Navigate to="/blog-login" replace />;
+}
+
+// Tutor Protected Route
+function TutorProtectedRoute({ children }) {
+  const token = localStorage.getItem("tutorToken");
+  return token ? children : <Navigate to="/teacher/login" replace />;
 }
 
 export default function App() {
@@ -61,6 +70,19 @@ export default function App() {
           <Route path="/thank-you" element={<ThankYou />} />
           <Route path="/tutor-register" element={<TutorRegistration />} />
           <Route path="/payment" element={<PaymentPage />} />
+
+          {/* Teacher & Parent Portal Routes */}
+          <Route path="/teacher/login" element={<TeacherLogin />} />
+          <Route path="/teacher-login" element={<Navigate to="/teacher/login" replace />} />
+          <Route
+            path="/teacher/dashboard"
+            element={
+              <TutorProtectedRoute>
+                <TeacherDashboard />
+              </TutorProtectedRoute>
+            }
+          />
+          <Route path="/parent/attendance" element={<ParentPortal />} />
 
           {/* Admin Login */}
           <Route path="/admin-login" element={<AdminLogin />} />

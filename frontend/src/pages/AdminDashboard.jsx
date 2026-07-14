@@ -1,35 +1,36 @@
-import { useEffect, useMemo, useState, useRef } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { 
-  Users, 
-  UserCheck, 
-  FileText, 
-  Mail, 
-  Calendar, 
-  AlertCircle, 
-  Clock, 
-  CheckCircle2, 
-  XCircle, 
-  Search, 
-  Filter, 
-  Plus, 
-  RefreshCw, 
-  LogOut, 
-  Trash2, 
-  Edit, 
-  ShieldCheck, 
-  ChevronDown, 
-  User, 
-  Phone, 
-  MapPin, 
-  Briefcase, 
-  GraduationCap, 
-  School, 
-  BookOpen, 
-  Lock, 
-  Unlock, 
-  Building2, 
-  Check, 
+import {
+  Users,
+  UserCheck,
+  FileText,
+  Mail,
+  Calendar,
+  AlertCircle,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  Search,
+  Filter,
+  Plus,
+  Bell,
+  RefreshCw,
+  LogOut,
+  Trash2,
+  Edit,
+  ShieldCheck,
+  ChevronDown,
+  User,
+  Phone,
+  MapPin,
+  Briefcase,
+  GraduationCap,
+  School,
+  BookOpen,
+  Lock,
+  Unlock,
+  Building2,
+  Check,
   X,
   FileDown,
   Award,
@@ -286,6 +287,74 @@ export default function AdminDashboard() {
   const [newTutor, setNewTutor] = useState(emptyTutor);
 
   const [currentMainTab, setCurrentMainTab] = useState("leads"); // "leads" or "analytics"
+  const [alerts, setAlerts] = useState([]);
+  const [dismissedAlerts, setDismissedAlerts] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("dismissedAlerts") || "[]");
+    } catch {
+      return [];
+    }
+  });
+  const [showAlertsDropdown, setShowAlertsDropdown] = useState(false);
+
+  // States for tutor search panel tabs
+  const [tutorPanelTab, setTutorPanelTab] = useState("matches"); // "matches" or "all"
+  const [tutorSearchQuery, setTutorSearchQuery] = useState("");
+
+  // States and helper functions for attendance tracking console
+  const [attendanceLogs, setAttendanceLogs] = useState({});
+  const [fetchingLogsLeadId, setFetchingLogsLeadId] = useState(null);
+
+  const fetchLeadAttendanceLogs = async (leadId) => {
+    if (!leadId) return;
+    setFetchingLogsLeadId(leadId);
+    try {
+      const token = localStorage.getItem("adminToken");
+      const res = await fetch(`${API_BASE}/attendance/logs/${leadId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setAttendanceLogs(prev => ({
+          ...prev,
+          [leadId]: data.logs || []
+        }));
+      }
+    } catch (err) {
+      console.error("Error fetching lead attendance logs:", err);
+    } finally {
+      setFetchingLogsLeadId(null);
+    }
+  };
+
+  const fetchAlerts = async () => {
+    try {
+      const token = localStorage.getItem("adminToken");
+      const res = await fetch(`${API_BASE}/attendance/admin-alerts`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setAlerts(data.alerts || []);
+      }
+    } catch (err) {
+      console.error("Error fetching admin alerts:", err);
+    }
+  };
+
+  const dismissAlert = (alertId) => {
+    const updated = [...dismissedAlerts, alertId];
+    setDismissedAlerts(updated);
+    localStorage.setItem("dismissedAlerts", JSON.stringify(updated));
+  };
+
+  const activeAlerts = useMemo(() => {
+    return alerts.filter(alert => !dismissedAlerts.includes(alert.id));
+  }, [alerts, dismissedAlerts]);
   const [period, setPeriod] = useState("7d"); // "24h", "7d", "30d"
   const [analyticsData, setAnalyticsData] = useState(null);
   const [loadingAnalytics, setLoadingAnalytics] = useState(false);
@@ -361,6 +430,7 @@ export default function AdminDashboard() {
       setBookings(Array.isArray(bData) ? bData : []);
       setTutors(Array.isArray(tData) ? tData : []);
       setDrafts(Array.isArray(dData) ? dData : []);
+      fetchAlerts();
     } catch (err) {
       console.error("Dashboard fetch error:", err);
     } finally {
@@ -545,6 +615,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     fetchData();
     fetchBroadcastLogs();
+    fetchAlerts();
   }, []);
 
   const suggestionValues = useMemo(() => {
@@ -643,7 +714,7 @@ export default function AdminDashboard() {
       setParentEnquiries((prev) =>
         prev.map((item) => (item._id === id ? updated : item))
       );
-      
+
       // Instantly trigger dashboard refetch to update tutor performance statistics
       fetchData();
     } catch (error) {
@@ -886,11 +957,11 @@ export default function AdminDashboard() {
           border: 1px solid rgba(226, 232, 240, 0.6);
         }
       `}</style>
-      
+
       <div className="mx-auto max-w-7xl">
         <div className="mb-8 overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 p-6 text-white shadow-xl relative border border-slate-800/80 md:p-8">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(59,130,246,0.15),transparent)] pointer-events-none" />
-          
+
           <div className="relative z-10 flex flex-col justify-between gap-6 md:flex-row md:items-center">
             <div>
               <div className="flex items-center gap-2 mb-2">
@@ -910,7 +981,72 @@ export default function AdminDashboard() {
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-3 items-center relative">
+              {/* Notification Center Bell */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowAlertsDropdown(!showAlertsDropdown)}
+                  className="flex items-center justify-center rounded-2xl bg-white/10 h-11 w-11 text-white ring-1 ring-white/20 transition duration-300 hover:bg-white/20 hover:scale-[1.02] cursor-pointer relative"
+                  title="System Alerts"
+                >
+                  <Bell className="h-5 w-5" />
+                  {activeAlerts.length > 0 && (
+                    <span className="absolute -top-1 -right-1 h-5 w-5 bg-rose-500 rounded-full text-[10px] font-black flex items-center justify-center animate-pulse border-2 border-slate-900">
+                      {activeAlerts.length}
+                    </span>
+                  )}
+                </button>
+
+                {showAlertsDropdown && (
+                  <div className="absolute right-0 mt-3 w-80 sm:w-96 rounded-3xl bg-white text-slate-800 shadow-2xl border border-slate-150 p-4 z-50 animate-slideFade">
+                    <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+                      <span className="text-xs font-black text-slate-800 uppercase tracking-wider">System Alerts ({activeAlerts.length})</span>
+                      {activeAlerts.length > 0 && (
+                        <button
+                          onClick={() => {
+                            const allIds = activeAlerts.map(a => a.id);
+                            const updated = [...dismissedAlerts, ...allIds];
+                            setDismissedAlerts(updated);
+                            localStorage.setItem("dismissedAlerts", JSON.stringify(updated));
+                          }}
+                          className="text-[10px] font-bold text-slate-400 hover:text-slate-600 hover:underline cursor-pointer"
+                        >
+                          Clear All
+                        </button>
+                      )}
+                    </div>
+                    <div className="mt-3 max-h-72 overflow-y-auto space-y-2 pr-1">
+                      {activeAlerts.length === 0 ? (
+                        <p className="text-xs font-bold text-slate-500 py-6 text-center">
+                          🎉 No pending attendance alerts!
+                        </p>
+                      ) : (
+                        activeAlerts.map(alert => (
+                          <div
+                            key={alert.id}
+                            className={`p-3 rounded-2xl border text-xs flex flex-col gap-2 ${
+                              alert.severity === "high"
+                                ? "bg-rose-50/50 border-rose-150 text-rose-850"
+                                : "bg-amber-50/50 border-amber-150 text-amber-850"
+                            }`}
+                          >
+                            <p className="font-semibold leading-normal">{alert.message}</p>
+                            <div className="flex justify-end">
+                              <button
+                                onClick={() => dismissAlert(alert.id)}
+                                className="text-[10px] font-black underline cursor-pointer hover:opacity-80"
+                              >
+                                Dismiss
+                              </button>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <button
                 onClick={() => setShowAddForm(true)}
                 className="flex items-center gap-2 rounded-2xl bg-emerald-500 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition duration-300 hover:bg-emerald-600 hover:scale-[1.02] cursor-pointer"
@@ -953,7 +1089,7 @@ export default function AdminDashboard() {
               <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-full" />
             )}
           </button>
-          
+
           <button
             onClick={() => setCurrentMainTab("analytics")}
             className={`pb-4 text-base font-extrabold transition-all relative cursor-pointer ${
@@ -967,9 +1103,24 @@ export default function AdminDashboard() {
               <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-full" />
             )}
           </button>
+
+          <button
+            type="button"
+            onClick={() => setCurrentMainTab("attendance")}
+            className={`pb-4 text-base font-extrabold transition-all relative cursor-pointer ${
+              currentMainTab === "attendance"
+                ? "text-blue-650 font-extrabold"
+                : "text-slate-500 hover:text-slate-800"
+            }`}
+          >
+            Attendance & Class Tracking
+            {currentMainTab === "attendance" && (
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-full" />
+            )}
+          </button>
         </div>
 
-        {currentMainTab === "leads" ? (
+        {currentMainTab === "leads" && (
           <>
             {loading && (
               <div className="mb-6 rounded-2xl border border-blue-100 bg-blue-50/70 p-4 text-sm font-medium text-blue-700 flex items-center gap-2">
@@ -1209,7 +1360,7 @@ export default function AdminDashboard() {
                                     color="emerald"
                                   />
                                 )}
-                                
+
                                 {p.ipAddress && (
                                   <span className="text-xs text-slate-400 font-semibold">
                                     IP: {p.ipAddress}
@@ -1395,9 +1546,13 @@ export default function AdminDashboard() {
                                 if (matchingLeadId === p._id) {
                                   setMatchingLeadId(null);
                                   setSelectedTutorIds([]);
+                                  setTutorPanelTab("matches");
+                                  setTutorSearchQuery("");
                                 } else {
                                   setMatchingLeadId(p._id);
                                   setSelectedTutorIds([]);
+                                  setTutorPanelTab("matches");
+                                  setTutorSearchQuery("");
                                 }
                               }}
                               className={`h-11 flex items-center justify-center gap-1.5 rounded-2xl px-5 text-xs font-extrabold transition-all duration-200 cursor-pointer ${
@@ -1488,18 +1643,103 @@ export default function AdminDashboard() {
                                 )}
                               </div>
 
-                              {loadingMatches ? (
+                              {/* Tab selector for Best Matches vs Search All Tutors */}
+                              <div className="mb-4 flex border-b border-slate-200/80 text-[11px] font-black uppercase tracking-wider">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setTutorPanelTab("matches");
+                                    setSelectedTutorIds([]);
+                                  }}
+                                  className={`pb-2.5 pr-4 transition-all relative cursor-pointer ${
+                                    tutorPanelTab === "matches" ? "text-indigo-650 font-black" : "text-slate-450 hover:text-slate-700"
+                                  }`}
+                                >
+                                  Best Matches ({matchedTutors.length})
+                                  {tutorPanelTab === "matches" && (
+                                    <span className="absolute bottom-0 left-0 right-4 h-0.5 bg-indigo-600 rounded-full" />
+                                  )}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setTutorPanelTab("all");
+                                    setSelectedTutorIds([]);
+                                  }}
+                                  className={`pb-2.5 px-4 transition-all relative cursor-pointer ${
+                                    tutorPanelTab === "all" ? "text-indigo-650 font-black" : "text-slate-450 hover:text-slate-700"
+                                  }`}
+                                >
+                                  Search Other Tutors
+                                  {tutorPanelTab === "all" && (
+                                    <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-indigo-600 rounded-full" />
+                                  )}
+                                </button>
+                              </div>
+
+                              {loadingMatches && tutorPanelTab === "matches" ? (
                                 <div className="py-12 text-center text-xs font-bold text-slate-500 flex flex-col items-center justify-center gap-2">
                                   <RefreshCw className="h-5 w-5 animate-spin text-blue-600" />
                                   Searching Master Tutors at database level...
                                 </div>
-                              ) : matchedTutors.length === 0 ? (
-                                <div className="py-6 text-center text-xs font-bold text-slate-450">
-                                  No tutors match the criteria for this enquiry.
-                                </div>
-                              ) : (
-                                <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1">
-                                  {matchedTutors.map(t => {
+                              ) : (() => {
+                                // Decide list of tutors to display based on selected tab
+                                let tutorsList = [];
+                                if (tutorPanelTab === "matches") {
+                                  tutorsList = matchedTutors;
+                                } else {
+                                  // "Search Other Tutors" filters over ALL loaded database tutors
+                                  tutorsList = tutors.filter(t => {
+                                    const q = tutorSearchQuery.toLowerCase().trim();
+                                    if (!q) return false; // Show nothing by default until query is typed
+                                    return (
+                                      String(t.name || "").toLowerCase().includes(q) ||
+                                      String(t.phone || "").toLowerCase().includes(q) ||
+                                      String(t.whatsapp || "").toLowerCase().includes(q) ||
+                                      String(t.email || "").toLowerCase().includes(q) ||
+                                      String(t.tutorCode || "").toLowerCase().includes(q)
+                                    );
+                                  });
+                                }
+
+                                return (
+                                  <>
+                                    {tutorPanelTab === "all" && (
+                                      <div className="mb-4 relative">
+                                        <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                                          <Search className="h-3.5 w-3.5" />
+                                        </span>
+                                        <input
+                                          type="text"
+                                          placeholder="Type name, phone, email, or code to search any tutor..."
+                                          value={tutorSearchQuery}
+                                          onChange={(e) => setTutorSearchQuery(e.target.value)}
+                                          className="w-full h-10 pl-9 pr-4 rounded-xl bg-white border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-800"
+                                        />
+                                      </div>
+                                    )}
+
+                                    {tutorPanelTab === "all" && !tutorSearchQuery.trim() && (
+                                      <div className="py-8 text-center text-xs font-bold text-slate-450">
+                                        Enter search query above to find any tutor in the master database.
+                                      </div>
+                                    )}
+
+                                    {tutorPanelTab === "matches" && tutorsList.length === 0 && (
+                                      <div className="py-6 text-center text-xs font-bold text-slate-450">
+                                        No best matches found for this tuition location.
+                                      </div>
+                                    )}
+
+                                    {tutorSearchQuery.trim() && tutorPanelTab === "all" && tutorsList.length === 0 && (
+                                      <div className="py-6 text-center text-xs font-bold text-slate-450">
+                                        No tutors found matching your search.
+                                      </div>
+                                    )}
+
+                                    {tutorsList.length > 0 && (
+                                      <div className="space-y-3 max-h-[350px] overflow-y-auto pr-1">
+                                        {tutorsList.map(t => {
                                     const isSelected = selectedTutorIds.includes(t._id);
                                     return (
                                       <div
@@ -1538,7 +1778,7 @@ export default function AdminDashboard() {
                                               <p className="font-extrabold text-slate-900 text-sm">{t.name}</p>
 
                                               {/* Match % badge */}
-                                              {t.matchPercentage !== undefined && (
+                                              {t.matchPercentage !== undefined && t.matchPercentage > 0 ? (
                                                 <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-black border ${
                                                   t.matchPercentage >= 80
                                                     ? "bg-emerald-50 border-emerald-200 text-emerald-700"
@@ -1547,6 +1787,10 @@ export default function AdminDashboard() {
                                                     : "bg-amber-50 border-amber-200 text-amber-700"
                                                 }`}>
                                                   {t.matchPercentage}% Match
+                                                </span>
+                                              ) : (
+                                                <span className="inline-flex items-center rounded-full bg-slate-50 border border-slate-200 px-2 py-0.5 text-[10px] font-black text-slate-500">
+                                                  No Match
                                                 </span>
                                               )}
 
@@ -1664,6 +1908,9 @@ export default function AdminDashboard() {
                                   })}
                                 </div>
                               )}
+                            </>
+                          );
+                        })()}
                             </div>
                           )}
                         </div>
@@ -1701,7 +1948,7 @@ export default function AdminDashboard() {
                                   color="emerald"
                                 />
                               )}
-                              
+
                               {p.ipAddress && (
                                 <span className="text-xs text-slate-400 font-semibold">
                                   IP: {p.ipAddress}
@@ -1916,7 +2163,7 @@ export default function AdminDashboard() {
                   };
                   const tStatus = t.status || "pending";
                   const tBorderClass = statusBorderColors[tStatus] || "border-l-4 border-l-slate-400";
-                  
+
                   return (
                     <div
                       key={t._id}
@@ -2149,13 +2396,25 @@ export default function AdminDashboard() {
         )}
 
           </>
-        ) : (
+        )}
+
+        {currentMainTab === "analytics" && (
           <AnalyticsConsole
             data={analyticsData}
             loading={loadingAnalytics}
             period={period}
             setPeriod={setPeriod}
             refresh={fetchAnalyticsData}
+          />
+        )}
+
+        {currentMainTab === "attendance" && (
+          <AdminAttendanceConsole
+            parentEnquiries={parentEnquiries}
+            fetchLeadAttendanceLogs={fetchLeadAttendanceLogs}
+            attendanceLogs={attendanceLogs}
+            fetchingLogsLeadId={fetchingLogsLeadId}
+            setAttendanceLogs={setAttendanceLogs}
           />
         )}
 
@@ -2501,6 +2760,205 @@ function StatCard({ title, value, subtitle, icon: Icon, gradientClass }) {
           <Icon className="h-5 w-5 stroke-[2.5]" />
         </div>
       )}
+    </div>
+  );
+}
+
+function AdminAttendanceConsole({
+  parentEnquiries,
+  fetchLeadAttendanceLogs,
+  attendanceLogs,
+  fetchingLogsLeadId,
+}) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [expandedId, setExpandedId] = useState(null);
+
+  const filtered = parentEnquiries.filter((p) => {
+    const studentName = p.wards?.map((w) => w.studentName).join(", ") || "";
+    const teacherName = p.assignedTutor || "";
+    const parentName = p.parentName || "";
+    const reqId = p.requirementId || "";
+    const query = searchTerm.toLowerCase();
+
+    return (
+      studentName.toLowerCase().includes(query) ||
+      teacherName.toLowerCase().includes(query) ||
+      parentName.toLowerCase().includes(query) ||
+      reqId.toLowerCase().includes(query)
+    );
+  });
+
+  return (
+    <div className="rounded-3xl bg-white p-6 shadow-sm border border-slate-200/80 animate-slideFade">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <h2 className="text-xl font-extrabold text-slate-800">Attendance & Class Tracking Dashboard</h2>
+          <p className="text-xs text-slate-500 mt-1">
+            Centralized monitoring of teacher logs, completed classes, remaining classes, and topics covered.
+          </p>
+        </div>
+
+        <div className="relative w-full sm:w-80">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+            <Search className="h-4 w-4" />
+          </div>
+          <input
+            type="text"
+            placeholder="Search student, parent, teacher, ID..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full h-11 pl-9 pr-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all text-slate-800"
+          />
+        </div>
+      </div>
+
+      <div className="overflow-x-auto rounded-2xl border border-slate-200">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-black text-slate-500 uppercase tracking-wider">
+              <th className="py-4 px-4">Requirement ID</th>
+              <th className="py-4 px-4">Student</th>
+              <th className="py-4 px-4">Parent</th>
+              <th className="py-4 px-4">Teacher Name</th>
+              <th className="py-4 px-4 text-center">Total</th>
+              <th className="py-4 px-4 text-center">Completed</th>
+              <th className="py-4 px-4 text-center">Missed</th>
+              <th className="py-4 px-4 text-center">Remaining</th>
+              <th className="py-4 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100 text-xs font-bold text-slate-700">
+            {filtered.length === 0 ? (
+              <tr>
+                <td colSpan="9" className="py-12 text-center text-slate-400 font-bold">
+                  No tracking records found matching search query.
+                </td>
+              </tr>
+            ) : (
+              filtered.map((p) => {
+                const isExpanded = expandedId === p._id;
+                const studentName = p.wards?.map((w) => w.studentName).join(", ") || "Unknown Student";
+                const total = p.totalClasses || 12;
+                const completed = p.completedClasses || 0;
+                const remaining = Math.max(0, total - completed);
+
+                // Count missed classes from logs if loaded
+                const tutorMissedLogs = attendanceLogs[p._id]?.filter((l) => l.status === "Missed") || [];
+                const missedCount = attendanceLogs[p._id] ? tutorMissedLogs.length : "-";
+
+                return (
+                  <React.Fragment key={p._id}>
+                    <tr
+                      onClick={() => {
+                        if (isExpanded) {
+                          setExpandedId(null);
+                        } else {
+                          setExpandedId(p._id);
+                          fetchLeadAttendanceLogs(p._id);
+                        }
+                      }}
+                      className={`hover:bg-slate-50/50 transition-all cursor-pointer border-b border-slate-100 ${
+                        isExpanded ? "bg-slate-50/30 font-extrabold" : ""
+                      }`}
+                    >
+                      <td className="py-4 px-4">
+                        <span className="bg-indigo-50 border border-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-[10px] font-black">
+                          {p.requirementId || "REQ-N/A"}
+                        </span>
+                      </td>
+                      <td className="py-4 px-4 font-black text-slate-800 truncate max-w-[160px]">{studentName}</td>
+                      <td className="py-4 px-4 truncate max-w-[160px]">{p.parentName || "Unknown"}</td>
+                      <td className="py-4 px-4 text-slate-650 truncate max-w-[165px]">{p.assignedTutor || "Not Assigned"}</td>
+                      <td className="py-4 px-4 text-center text-slate-500">{total}</td>
+                      <td className="py-4 px-4 text-center text-emerald-600 font-extrabold">{completed}</td>
+                      <td className="py-4 px-4 text-center text-rose-500 font-extrabold">{missedCount}</td>
+                      <td className="py-4 px-4 text-center text-indigo-600 font-extrabold">{remaining}</td>
+                      <td className="py-4 px-4 text-right">
+                        <button
+                          type="button"
+                          className="text-[10px] font-black text-indigo-600 hover:text-indigo-800 underline cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (isExpanded) {
+                              setExpandedId(null);
+                            } else {
+                              setExpandedId(p._id);
+                              fetchLeadAttendanceLogs(p._id);
+                            }
+                          }}
+                        >
+                          {isExpanded ? "Collapse" : "View Logs"}
+                        </button>
+                      </td>
+                    </tr>
+
+                    {isExpanded && (
+                      <tr className="bg-slate-50/30">
+                        <td colSpan="9" className="p-5 border-t border-slate-100">
+                          <div className="bg-white rounded-2xl border border-slate-150 p-5 shadow-inner">
+                            <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider mb-4">Class Logs & Topics History</h4>
+
+                            {fetchingLogsLeadId === p._id ? (
+                              <p className="text-xs font-bold text-slate-500 animate-pulse text-center py-4">
+                                Loading attendance history...
+                              </p>
+                            ) : !attendanceLogs[p._id] ? (
+                              <p className="text-xs font-bold text-slate-500 text-center py-4">
+                                Failed to fetch logs. Click View Logs to try again.
+                              </p>
+                            ) : attendanceLogs[p._id].length === 0 ? (
+                              <p className="text-xs font-bold text-slate-500 text-center py-4">
+                                No classes logged for this requirement yet.
+                              </p>
+                            ) : (
+                              <div className="space-y-3">
+                                {attendanceLogs[p._id].map((log, idx) => {
+                                  const logIndex = attendanceLogs[p._id].length - idx;
+                                  return (
+                                    <div key={log._id} className="bg-slate-50 rounded-xl border border-slate-200/80 p-3.5 flex justify-between gap-4 text-xs font-semibold">
+                                      <div className="space-y-1">
+                                        <div className="flex items-center gap-2">
+                                          <span className="font-extrabold text-slate-800">Class {logIndex} ({log.date})</span>
+                                          <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${
+                                            log.status === "Done"
+                                              ? "bg-emerald-50 border border-emerald-100 text-emerald-700"
+                                              : "bg-rose-50 border border-rose-100 text-rose-700"
+                                          }`}>
+                                            {log.status === "Done" ? "Done" : "Missed"}
+                                          </span>
+                                        </div>
+
+                                        {log.status === "Done" ? (
+                                          <p className="text-slate-655 mt-1">
+                                            <strong className="text-slate-700 font-extrabold">Topics Covered:</strong> {log.topicsCovered}
+                                          </p>
+                                        ) : (
+                                          <p className="text-slate-655 mt-1">
+                                            <strong className="text-slate-700 font-extrabold">Reason:</strong> {log.missedReason === "Other" ? log.customReason : log.missedReason}
+                                          </p>
+                                        )}
+                                      </div>
+
+                                      <div className="text-right text-[10px] font-bold text-slate-450 shrink-0 self-center">
+                                        <span>By {log.tutorName}</span>
+                                        <span className="block mt-0.5">{new Date(log.timestamp).toLocaleDateString()}</span>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -3213,7 +3671,7 @@ function AnalyticsConsole({ data, loading, period, setPeriod, refresh }) {
           <h2 className="text-3xl font-black tracking-tight">
             Web Traffic & Action Analytics
           </h2>
-          
+
           <p className="mt-1 text-xs text-slate-400 font-semibold">
             Real-time user sessions, conversion funnel, devices, and Microsoft Clarity integration.
           </p>
@@ -3268,7 +3726,7 @@ function AnalyticsConsole({ data, loading, period, setPeriod, refresh }) {
         </div>
       ) : (
         <div className="mt-8 relative z-10 space-y-8">
-          
+
           {/* Summary Metric Cards */}
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-7">
             <div className="bg-slate-900/40 border border-slate-800/80 backdrop-blur-md rounded-2xl p-5 hover:border-blue-900/50 transition animate-slideFade">
@@ -3330,7 +3788,7 @@ function AnalyticsConsole({ data, loading, period, setPeriod, refresh }) {
                       <p className="text-[10px] text-slate-400 font-bold uppercase">{step.count} Visitors</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex-1 max-w-md">
                     <div className="flex justify-between text-[10px] text-slate-400 font-bold mb-1">
                       <span>Funnel Rate</span>
@@ -3368,7 +3826,7 @@ function AnalyticsConsole({ data, loading, period, setPeriod, refresh }) {
                   Visitor Traffic Trend
                 </span>
               </div>
-              
+
               <div className="h-72 w-full text-slate-400">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart
@@ -3382,30 +3840,30 @@ function AnalyticsConsole({ data, loading, period, setPeriod, refresh }) {
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.06)" />
-                    <XAxis 
-                      dataKey="date" 
-                      stroke="#64748b" 
-                      fontSize={10} 
-                      tickLine={false} 
-                      axisLine={false} 
+                    <XAxis
+                      dataKey="date"
+                      stroke="#64748b"
+                      fontSize={10}
+                      tickLine={false}
+                      axisLine={false}
                     />
-                    <YAxis 
-                      stroke="#64748b" 
-                      fontSize={10} 
-                      tickLine={false} 
-                      axisLine={false} 
+                    <YAxis
+                      stroke="#64748b"
+                      fontSize={10}
+                      tickLine={false}
+                      axisLine={false}
                     />
                     <ReChartsTooltip
                       contentStyle={{ background: "#0f172a", border: "1px solid #1e293b", borderRadius: "12px", color: "#fff" }}
                     />
-                    <Area 
-                      type="monotone" 
-                      dataKey="count" 
-                      name="Unique Visitors" 
-                      stroke="#3b82f6" 
-                      strokeWidth={2} 
-                      fillOpacity={1} 
-                      fill="url(#visitorColor)" 
+                    <Area
+                      type="monotone"
+                      dataKey="count"
+                      name="Unique Visitors"
+                      stroke="#3b82f6"
+                      strokeWidth={2}
+                      fillOpacity={1}
+                      fill="url(#visitorColor)"
                     />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -3478,7 +3936,7 @@ function AnalyticsConsole({ data, loading, period, setPeriod, refresh }) {
               {(data?.leadSources || []).map((src) => {
                 const totalLeads = data?.leadSources?.reduce((sum, s) => sum + s.count, 0) || 1;
                 const pct = Math.round((src.count / totalLeads) * 100);
-                
+
                 const sourceColors = {
                   Google: "bg-blue-500",
                   WhatsApp: "bg-green-500",
@@ -3489,7 +3947,7 @@ function AnalyticsConsole({ data, loading, period, setPeriod, refresh }) {
                   Referral: "bg-amber-500"
                 };
                 const colorClass = sourceColors[src.name] || "bg-slate-600";
-                
+
                 return (
                   <div key={src.name} className="relative bg-slate-950/40 border border-slate-850 p-4 rounded-2xl flex flex-col justify-between overflow-hidden">
                     <div>
@@ -3532,18 +3990,18 @@ function AnalyticsConsole({ data, loading, period, setPeriod, refresh }) {
                       margin={{ top: 10, right: 10, left: -25, bottom: 0 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.06)" />
-                      <XAxis 
-                        dataKey="city" 
-                        stroke="#64748b" 
-                        fontSize={10} 
-                        tickLine={false} 
-                        axisLine={false} 
+                      <XAxis
+                        dataKey="city"
+                        stroke="#64748b"
+                        fontSize={10}
+                        tickLine={false}
+                        axisLine={false}
                       />
-                      <YAxis 
-                        stroke="#64748b" 
-                        fontSize={10} 
-                        tickLine={false} 
-                        axisLine={false} 
+                      <YAxis
+                        stroke="#64748b"
+                        fontSize={10}
+                        tickLine={false}
+                        axisLine={false}
                       />
                       <ReChartsTooltip
                         contentStyle={{ background: "#0f172a", border: "1px solid #1e293b", borderRadius: "12px", color: "#fff" }}
@@ -3575,7 +4033,7 @@ function AnalyticsConsole({ data, loading, period, setPeriod, refresh }) {
                       const count = found ? found.count : 0;
                       const totalDevices = data?.devices?.reduce((sum, d) => sum + d.count, 0) || 1;
                       const pct = Math.round((count / totalDevices) * 100);
-                      
+
                       const barColors = { Mobile: "bg-emerald-500", Desktop: "bg-blue-500", Tablet: "bg-amber-500" };
                       const Icon = dev === "Mobile" ? Smartphone : dev === "Desktop" ? Laptop : Tablet;
 
@@ -3717,7 +4175,7 @@ function AnalyticsConsole({ data, loading, period, setPeriod, refresh }) {
                   onChange={(e) => setPageSearch(e.target.value)}
                   className="bg-slate-950/80 border border-slate-800 px-3 py-1.5 text-xs rounded-xl text-white font-semibold outline-none focus:border-blue-500 max-w-[200px]"
                 />
-                
+
                 <button
                   onClick={handleExportPages}
                   className="flex items-center gap-1 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-xs text-white font-bold px-3 py-1.5 rounded-xl cursor-pointer transition"
@@ -3785,7 +4243,7 @@ function AnalyticsConsole({ data, loading, period, setPeriod, refresh }) {
                   <Activity className="h-4 w-4 text-blue-400 animate-pulse" />
                   Live Visitor Event Log (Click to view session timeline)
                 </span>
-                
+
                 <button
                   onClick={handleExportActivity}
                   className="flex items-center gap-1 bg-slate-900 border border-slate-800 hover:bg-slate-800 text-xs text-white font-bold px-3 py-1.5 rounded-xl cursor-pointer transition"
@@ -3810,7 +4268,7 @@ function AnalyticsConsole({ data, loading, period, setPeriod, refresh }) {
                           hour12: true
                         })
                       : "00:00";
-                    
+
                     const actionLabels = {
                       page_view: `Visited ${act.page_visited}`,
                       explore_plan: `Explored ${act.plan_clicked || "plan details"}`,
@@ -3835,8 +4293,8 @@ function AnalyticsConsole({ data, loading, period, setPeriod, refresh }) {
                     const actionClass = actionColors[act.action] || "bg-blue-950/40 border-blue-900/50 text-blue-400";
 
                     return (
-                      <div 
-                        key={act._id} 
+                      <div
+                        key={act._id}
                         onClick={() => handleOpenSession(act.session_id)}
                         className="flex gap-4 items-start border-b border-slate-850/50 pb-3 last:border-0 last:pb-0 cursor-pointer hover:bg-slate-850/30 transition p-2.5 rounded-2xl"
                       >
@@ -3887,7 +4345,7 @@ function AnalyticsConsole({ data, loading, period, setPeriod, refresh }) {
                   <Activity className="h-4 w-4 text-blue-400" />
                   Session Recordings & Heatmaps
                 </span>
-                
+
                 <p className="text-xs leading-relaxed text-slate-400 mt-2 font-medium">
                   We have integrated Microsoft Clarity to enable advanced heatmaps, mouse click records, scroll depth tracking, and user session replay recordings.
                 </p>
@@ -3914,7 +4372,7 @@ function AnalyticsConsole({ data, loading, period, setPeriod, refresh }) {
                   Watch Session Replays
                   <ExternalLink className="h-3.5 w-3.5" />
                 </a>
-                
+
                 <p className="text-[10px] text-center text-slate-500 font-semibold leading-normal">
                   * Note: You must log into your Microsoft Clarity account in this browser to open recordings directly.
                 </p>
@@ -4009,7 +4467,7 @@ function AnalyticsConsole({ data, loading, period, setPeriod, refresh }) {
                       form_submitted: `Submitted Enquiry Form`,
                       form_abandoned: `Abandoned Enquiry Form`
                     };
-                    
+
                     const actionStyles = {
                       page_view: "border-blue-500/50 bg-blue-950/20 text-blue-400",
                       form_started: "border-indigo-500/50 bg-indigo-950/20 text-indigo-400",
@@ -4027,7 +4485,7 @@ function AnalyticsConsole({ data, loading, period, setPeriod, refresh }) {
                         <span className={`absolute -left-[31px] top-1.5 h-3.5 w-3.5 rounded-full border-2 bg-[#090e1a] ${
                           log.action === "form_submitted" ? "border-emerald-500" : "border-slate-800"
                         }`} />
-                        
+
                         <div className="bg-slate-950/40 border border-slate-850/80 p-3.5 rounded-2xl">
                           <div className="flex items-center justify-between gap-4 mb-1">
                             <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded border ${actionStyle}`}>
@@ -4039,7 +4497,7 @@ function AnalyticsConsole({ data, loading, period, setPeriod, refresh }) {
                           {log.action === "page_view" && (
                             <p className="text-xs font-mono font-bold text-blue-400 mt-1 break-all">{log.page_visited}</p>
                           )}
-                          
+
                           {log.plan_clicked && (
                             <p className="text-xs font-semibold text-slate-350 mt-1">
                               Plan: <span className="text-indigo-400 font-bold">{log.plan_clicked}</span>
@@ -4059,7 +4517,7 @@ function AnalyticsConsole({ data, loading, period, setPeriod, refresh }) {
                 </div>
               )}
             </div>
-            
+
             <div className="mt-4 pt-4 border-t border-slate-800 flex justify-end">
               <button
                 onClick={() => setSelectedSessionId(null)}

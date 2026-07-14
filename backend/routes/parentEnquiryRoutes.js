@@ -13,7 +13,16 @@ import {
   buildAssignmentMessage,
   buildOnboardingMessage,
   isPermanentFailure,
+  getOdooUid,
+  callOdooMethod,
+  buildRequirementTemplateVars,
 } from "../utils/whatsappService.js";
+import {
+  buildCentralizedQuery,
+  calculateTutorScore,
+  compareTutors,
+  parseAddress,
+} from "../utils/matchingEngine.js";
 
 const router = express.Router();
 
@@ -285,6 +294,11 @@ router.post("/", async (req, res) => {
       console.error("Error clearing draft on submit:", draftErr.message);
     }
 
+    // Trigger auto-broadcast asynchronously to best-matched tutors
+    autoBroadcastTutorsForLead(saved).catch(err => {
+      console.error("[Auto-Broadcast] Trigger failed:", err.message);
+    });
+
     res.status(201).json(saved);
   } catch (error) {
     console.error("Parent enquiry create error:", error);
@@ -309,6 +323,9 @@ router.put("/:id", verifyToken(["admin"]), async (req, res) => {
       feesFinalized: req.body.feesFinalized,
       finalFees: req.body.finalFees,
       lostReason: req.body.lostReason,
+      totalClasses: req.body.totalClasses,
+      completedClasses: req.body.completedClasses,
+      classSchedule: req.body.classSchedule,
     };
 
     if (req.body.assignedTutor !== undefined) {
@@ -480,12 +497,56 @@ router.post("/:id/broadcast", verifyToken(["admin"]), async (req, res) => {
           continue;
         }
 
+        // Retrieve the document_link from Odoo sign.request.item for this tutor's email or phone number
+        let tutorSignLink = "";
+        let tutorSignRequestId = null;
+        try {
+          const uid = await getOdooUid();
+          const searchDomains = [];
+          if (tutor.email) {
+            searchDomains.push([["signer_email", "=", tutor.email.trim()]]);
+          }
+          if (tutor.whatsapp || tutor.phone) {
+            const cleanPhone = String(tutor.whatsapp || tutor.phone).replace(/\D/g, "").slice(-10);
+            if (cleanPhone) {
+              searchDomains.push([["sms_number", "like", cleanPhone]]);
+            }
+          }
+
+          for (const domain of searchDomains) {
+            const signItems = await callOdooMethod(
+              uid,
+              "sign.request.item",
+              "search_read",
+              [domain],
+              { fields: ["id", "sign_request_id", "document_link", "state"], limit: 1, order: "id desc" }
+            );
+            if (signItems && signItems.length > 0 && signItems[0].document_link) {
+              tutorSignLink = signItems[0].document_link;
+              tutorSignRequestId = signItems[0].sign_request_id?.[0] || null;
+              console.log(`[Odoo Sign] Found sign link for tutor ${tutor.name}: ${tutorSignLink}, sign.request ID: ${tutorSignRequestId}`);
+              break;
+            }
+          }
+        } catch (signErr) {
+          console.error(`[Odoo Sign] Error fetching sign request: ${signErr.message}`);
+        }
+
+        // Fallback if no specific link is found, to prevent WhatsApp parameter validation errors
+        if (!tutorSignLink) {
+          console.warn(`[Odoo Sign] Fallback to general sign dashboard for tutor ${tutor.name}`);
+          tutorSignLink = "https://saraswati-tutorials.odoo.com/sign";
+        }
+
         const sendResult = await sendWhatsAppToTutor({
           phoneNumber: whatsappNumber,
           messageBody,
           templateName: "Tutor Agreement",
           templateLang: "en",
-          templateVars: {},
+          templateVars: {
+            button_dynamic_url_1: tutorSignLink,
+          },
+          resId: tutorSignRequestId, // Pass the sign.request record ID for correct model context
         });
 
         await BroadcastLog.findByIdAndUpdate(log._id, {
@@ -514,24 +575,8 @@ router.post("/:id/broadcast", verifyToken(["admin"]), async (req, res) => {
         });
 
       } else {
-        // Workflow 2: Existing Approved + Onboarded Tutor (Tuition Requirement Notification)
-        // Deduplication: check if already sent to this tutor for this requirement
-        const existingLog = await BroadcastLog.findOne({
-          requirementId: reqId,
-          tutorId: tutor._id,
-          status: { $ne: "Suppressed" },
-        });
-
-        if (existingLog) {
-          results.push({
-            tutorId: tId,
-            tutorName: tutor.name,
-            status: "Suppressed",
-            failureReason: "Already broadcast for this requirement",
-            existingLogId: existingLog._id,
-          });
-          continue;
-        }
+        // Existing Approved + Onboarded Tutor (Tuition Requirement Notification)
+        // Send alert every time admin clicks (removed deduplication check)
 
         const distanceTier = req.body.distanceTiers?.[tId] || null;
         const distanceKm = req.body.distancesKm?.[tId] || null;
@@ -574,15 +619,14 @@ router.post("/:id/broadcast", verifyToken(["admin"]), async (req, res) => {
           continue;
         }
 
+        const templateName = process.env.WHATSAPP_REQUIREMENT_TEMPLATE_NAME || "tutor_requirement_v1";
+
         const sendResult = await sendWhatsAppToTutor({
           phoneNumber: whatsappNumber,
           messageBody,
-          templateVars: {
-            tutor_name: tutor.name,
-            requirement_id: reqId,
-            area: lead.area || "",
-            city: lead.city || lead.geoInfo?.city || "",
-          },
+          templateName,
+          templateLang: "en",
+          templateVars: buildRequirementTemplateVars(tutor.name, lead, firstWard),
         });
 
         await BroadcastLog.findByIdAndUpdate(log._id, {
@@ -591,7 +635,7 @@ router.post("/:id/broadcast", verifyToken(["admin"]), async (req, res) => {
           retryCount: sendResult.retryCount || 0,
           whatsappMessageId: sendResult.messageId || "",
           usedTemplate: sendResult.usedTemplate || false,
-          templateName: sendResult.usedTemplate ? (process.env.WHATSAPP_TEMPLATE_NAME || "") : "",
+          templateName: sendResult.usedTemplate ? templateName : "",
         });
 
         results.push({
@@ -642,7 +686,7 @@ router.post("/:id/assign-tutor", verifyToken(["admin"]), async (req, res) => {
     lead.status = "Demo Scheduled";
     if (demoDate) lead.demoDate = demoDate;
     if (demoTime) lead.demoTime = demoTime;
-    await lead.save();
+    await lead.save({ validateBeforeSave: false });
 
     // Update broadcast log response status to "Assigned"
     await BroadcastLog.updateMany(
@@ -800,6 +844,8 @@ router.post("/broadcast-logs/:logId/retry", verifyToken(["admin"]), async (req, 
     const sendResult = await sendWhatsAppToTutor({
       phoneNumber: whatsappNumber,
       messageBody: log.message,
+      templateName: log.templateName || undefined,
+      forceTemplate: log.usedTemplate || false,
     });
 
     const updatedLog = await BroadcastLog.findByIdAndUpdate(
@@ -900,5 +946,241 @@ router.post("/webhook/whatsapp-reply", async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 });
+
+/**
+ * Automatically match and broadcast parent enquiry details to the top 10 matched tutors.
+ * Tutors who are already approved & onboarded get the requirement message template.
+ * Unboarded tutors get the Tutor Agreement onboarding template first.
+ */
+async function autoBroadcastTutorsForLead(leadData) {
+  try {
+    const lead = await ParentEnquiry.findById(leadData._id);
+    if (!lead) {
+      console.error(`[Auto-Broadcast] Lead not found for ID: ${leadData._id}`);
+      return;
+    }
+
+    console.log(`[Auto-Broadcast] Starting matching for Lead ID: ${lead._id} (${lead.requirementId || "N/A"})`);
+
+    const firstWard = lead.wards?.[0] || {};
+    const parsedAddr = parseAddress(lead.address);
+    const params = {
+      pincode: lead.pincode || parsedAddr.pincode || "",
+      area: lead.area || parsedAddr.area || "",
+      locality: lead.locality || parsedAddr.locality || "",
+      landmark: lead.landmark || parsedAddr.landmark || "",
+      city: lead.city || parsedAddr.city || lead.geoInfo?.city || "",
+      district: lead.district || parsedAddr.district || "",
+      state: lead.state || parsedAddr.state || lead.geoInfo?.region || "",
+      grade: firstWard.classGrade || "",
+      board: firstWard.curriculum || "",
+      subjects: Array.isArray(firstWard.subjectsNeeded) ? firstWard.subjectsNeeded : [],
+      timing: lead.preferredTime || "",
+      gender: lead.preferredGender || "No Preference",
+      latitude: lead.latitude || null,
+      longitude: lead.longitude || null,
+    };
+
+    const query = buildCentralizedQuery(params);
+    const tutors = await Tutor.find(query);
+    console.log(`[Auto-Broadcast] Found ${tutors.length} approved/unblocked tutors from base query.`);
+
+    const scoredTutors = tutors
+      .map((tutor) => {
+        const scoreInfo = calculateTutorScore(params, tutor);
+        return {
+          ...tutor.toObject(),
+          _id: tutor._id,
+          matchScore: scoreInfo.score,
+          matchPercentage: scoreInfo.percentage,
+          locationScore: scoreInfo.locationScore,
+          distanceKm: scoreInfo.distanceKm,
+          distanceTier: scoreInfo.distanceTier,
+        };
+      })
+      .filter((t) => {
+        const hasLocationCriteria = !!(
+          params.pincode ||
+          params.area ||
+          params.locality ||
+          params.landmark ||
+          params.city ||
+          params.district ||
+          params.state
+        );
+        if (hasLocationCriteria && t.locationScore === 0) {
+          return false;
+        }
+        return t.matchPercentage > 0;
+      })
+      .sort(compareTutors);
+
+    // Take top 10 best-matched tutors
+    const topTutors = scoredTutors.slice(0, 10);
+    if (topTutors.length === 0) {
+      console.log(`[Auto-Broadcast] No matched tutors found for Lead ID: ${lead._id}`);
+      return;
+    }
+
+    console.log(`[Auto-Broadcast] Broadcasting to top ${topTutors.length} best-matched tutors:`, topTutors.map((t) => t.name).join(", "));
+    const reqId = lead.requirementId || "REQ-XXXXX";
+
+    for (const scoredTutor of topTutors) {
+      const tutor = await Tutor.findById(scoredTutor._id);
+      if (!tutor) continue;
+
+      const isApproved = tutor.status === "approved";
+      const isOnboarded = tutor.onboardingCompleted === true;
+      const isNewTutorWorkflow = !(isApproved && isOnboarded);
+
+      if (isNewTutorWorkflow) {
+        // Workflow 1: Send Tutor Agreement/Onboarding (once only)
+        if (tutor.onboardingMessageSentAt) {
+          console.log(`[Auto-Broadcast] Onboarding already sent for tutor ${tutor.name}. Skipping.`);
+          continue;
+        }
+
+        const messageBody = buildOnboardingMessage(tutor.name);
+        const log = new BroadcastLog({
+          tutorId: tutor._id,
+          tutorName: tutor.name,
+          tutorPhone: tutor.whatsapp || tutor.phone || "",
+          tutorCode: tutor.tutorCode || "",
+          requirementId: reqId,
+          leadId: lead._id,
+          type: "whatsapp",
+          message: messageBody,
+          status: "Sending",
+          adminName: "System Auto-Broadcast",
+          adminEmail: "system@saraswatitutorial.com",
+          broadcastType: "onboarding",
+        });
+        await log.save();
+
+        const whatsappNumber = tutor.whatsapp || tutor.phone || "";
+        if (!whatsappNumber) {
+          await BroadcastLog.findByIdAndUpdate(log._id, {
+            status: "Failed",
+            failureReason: "No WhatsApp number available",
+          });
+          continue;
+        }
+
+        // Get sign link
+        let tutorSignLink = "";
+        let tutorSignRequestId = null;
+        try {
+          const uid = await getOdooUid();
+          const searchDomains = [];
+          if (tutor.email) {
+            searchDomains.push([["signer_email", "=", tutor.email.trim()]]);
+          }
+          const cleanPhone = String(whatsappNumber).replace(/\D/g, "").slice(-10);
+          if (cleanPhone) {
+            searchDomains.push([["sms_number", "like", cleanPhone]]);
+          }
+
+          for (const domain of searchDomains) {
+            const signItems = await callOdooMethod(
+              uid,
+              "sign.request.item",
+              "search_read",
+              [domain],
+              { fields: ["id", "sign_request_id", "document_link", "state"], limit: 1, order: "id desc" }
+            );
+            if (signItems && signItems.length > 0 && signItems[0].document_link) {
+              tutorSignLink = signItems[0].document_link;
+              tutorSignRequestId = signItems[0].sign_request_id?.[0] || null;
+              break;
+            }
+          }
+        } catch (signErr) {
+          console.error(`[Auto-Broadcast] Error fetching sign request for ${tutor.name}:`, signErr.message);
+        }
+
+        if (!tutorSignLink) {
+          tutorSignLink = "https://saraswati-tutorials.odoo.com/sign";
+        }
+
+        const sendResult = await sendWhatsAppToTutor({
+          phoneNumber: whatsappNumber,
+          messageBody,
+          templateName: "Tutor Agreement",
+          templateLang: "en",
+          templateVars: {
+            button_dynamic_url_1: tutorSignLink,
+          },
+          resId: tutorSignRequestId,
+        });
+
+        await BroadcastLog.findByIdAndUpdate(log._id, {
+          status: sendResult.success ? "Sent" : "Failed",
+          failureReason: sendResult.failureReason || "",
+          retryCount: sendResult.retryCount || 0,
+          whatsappMessageId: sendResult.messageId || "",
+          usedTemplate: sendResult.usedTemplate || false,
+          templateName: sendResult.usedTemplate ? "Tutor Agreement" : "",
+        });
+
+        if (sendResult.success) {
+          tutor.onboardingMessageSentAt = new Date();
+          await tutor.save();
+        }
+
+      } else {
+        // Workflow 2: Existing Approved & Onboarded Tutor (Tuition Requirement Notification)
+        const messageBody = buildBroadcastMessage(tutor.name, lead, firstWard, scoredTutor.distanceTier);
+
+        const log = new BroadcastLog({
+          tutorId: tutor._id,
+          tutorName: tutor.name,
+          tutorPhone: tutor.whatsapp || tutor.phone || "",
+          tutorCode: tutor.tutorCode || "",
+          requirementId: reqId,
+          leadId: lead._id,
+          type: "whatsapp",
+          message: messageBody,
+          status: "Sending",
+          adminName: "System Auto-Broadcast",
+          adminEmail: "system@saraswatitutorial.com",
+          distanceKm: scoredTutor.distanceKm,
+          matchPercentage: scoredTutor.matchPercentage,
+          broadcastType: "requirement",
+        });
+        await log.save();
+
+        const whatsappNumber = tutor.whatsapp || tutor.phone || "";
+        if (!whatsappNumber) {
+          await BroadcastLog.findByIdAndUpdate(log._id, {
+            status: "Failed",
+            failureReason: "No WhatsApp number available",
+          });
+          continue;
+        }
+
+        const templateName = process.env.WHATSAPP_REQUIREMENT_TEMPLATE_NAME || "tutor_requirement_v1";
+
+        const sendResult = await sendWhatsAppToTutor({
+          phoneNumber: whatsappNumber,
+          messageBody,
+          templateName,
+          templateLang: "en",
+          templateVars: buildRequirementTemplateVars(tutor.name, lead, firstWard),
+        });
+
+        await BroadcastLog.findByIdAndUpdate(log._id, {
+          status: sendResult.success ? "Sent" : "Failed",
+          failureReason: sendResult.failureReason || "",
+          retryCount: sendResult.retryCount || 0,
+          whatsappMessageId: sendResult.messageId || "",
+          usedTemplate: sendResult.usedTemplate || false,
+          templateName: sendResult.usedTemplate ? templateName : "",
+        });
+      }
+    }
+  } catch (err) {
+    console.error("[Auto-Broadcast] Critical error in automatic matching and broadcast:", err.message, err);
+  }
+}
 
 export default router;

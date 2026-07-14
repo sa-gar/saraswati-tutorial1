@@ -12,6 +12,8 @@ import blogRoutes from "./routes/blogRoutes.js";
 import uploadRoutes from "./routes/uploadRoutes.js"; 
 import blogAuthRoutes from "./routes/blogAuthRoutes.js";
 import analyticsRoutes from "./routes/analyticsRoutes.js";
+import attendanceRoutes from "./routes/attendanceRoutes.js";
+import { startReminderScheduler } from "./utils/reminderScheduler.js";
 import compression from "compression";
 
 dotenv.config();
@@ -76,6 +78,7 @@ app.use("/api/blogs", blogRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/blog-auth", blogAuthRoutes);
 app.use("/api/analytics", analyticsRoutes);
+app.use("/api/attendance", attendanceRoutes);
 // Webhook endpoint (reuses parentEnquiry routes — mounted separately for clean URL)
 app.use("/api", parentEnquiryRoutes);
 
@@ -92,6 +95,7 @@ if (
       console.log("MongoDB connected");
       app.listen(PORT, () => {
         console.log(`Server running on http://localhost:${PORT}`);
+        startReminderScheduler();
       });
     })
     .catch((error) => {

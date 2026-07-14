@@ -103,7 +103,7 @@ export function classifyFailureReason(errorMessage) {
 /**
  * Authenticate with Odoo and return the UID
  */
-async function getOdooUid() {
+export async function getOdooUid() {
   const res = await fetch(`${ODOO_URL}/jsonrpc`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -127,7 +127,7 @@ async function getOdooUid() {
 /**
  * Execute an Odoo model method via JSON-RPC
  */
-async function callOdooMethod(uid, model, method, args, kwargs = {}) {
+export async function callOdooMethod(uid, model, method, args, kwargs = {}) {
   const res = await fetch(`${ODOO_URL}/jsonrpc`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -204,15 +204,21 @@ async function sendFreeformMessage(uid, channelId, messageBody) {
 /**
  * Send a WhatsApp template message via Odoo.
  * Used when outside the 24-hour service window.
+ * @param {number} uid - Authenticated Odoo UID
+ * @param {string} phoneNumber - Tutor WhatsApp number
+ * @param {string} templateName - Odoo WhatsApp template name
+ * @param {string} templateLang - Template language code
+ * @param {Object} templateVars - Variables for template (button_dynamic_url_1, free_text_N)
+ * @param {number|null} resId - Specific record ID to use for res_model (e.g. sign.request ID)
  */
-async function sendTemplateMessage(uid, phoneNumber, templateName, templateLang, templateVars) {
-  // Look up the approved WhatsApp template in Odoo
+async function sendTemplateMessage(uid, phoneNumber, templateName, templateLang, templateVars, resId = null) {
+  // Look up the approved WhatsApp template in Odoo (with model info)
   const templates = await callOdooMethod(
     uid,
     "whatsapp.template",
     "search_read",
     [[["name", "=", templateName], ["status", "=", "approved"]]],
-    { fields: ["id", "name", "body"], limit: 1 }
+    { fields: ["id", "name", "body", "model"], limit: 1 }
   );
 
   if (!templates || templates.length === 0) {
@@ -220,23 +226,72 @@ async function sendTemplateMessage(uid, phoneNumber, templateName, templateLang,
   }
 
   const templateId = templates[0].id;
+  const templateModel = templates[0].model || "res.partner";
 
-  // Create and send a WhatsApp message using the template
-  const msgId = await callOdooMethod(
+  // Determine the res_model and res_ids to use
+  let composerResModel = templateModel;
+  let composerResId = resId;
+
+  if (!composerResId) {
+    // If no specific record ID given, get any valid record ID for the model
+    try {
+      const recordIds = await callOdooMethod(uid, composerResModel, "search", [[]], { limit: 1 });
+      composerResId = recordIds?.[0] || 1;
+    } catch (err) {
+      // Fallback to res.partner if model lookup fails
+      composerResModel = "res.partner";
+      const partnerIds = await callOdooMethod(uid, "res.partner", "search", [[]], { limit: 1 });
+      composerResId = partnerIds?.[0] || 1;
+    }
+  }
+
+  console.log(`[WhatsApp] Template model: "${composerResModel}", resId: ${composerResId}`);
+
+  // Map template variables to free_text_1, free_text_2, etc.
+  const composerPayload = {
+    res_model: composerResModel,
+    res_ids: JSON.stringify([composerResId]),
+    wa_template_id: templateId,
+    phone: phoneNumber,
+    batch_mode: false,
+  };
+
+  if (templateVars) {
+    if (templateVars.button_dynamic_url_1) {
+      composerPayload.button_dynamic_url_1 = String(templateVars.button_dynamic_url_1);
+    }
+    if (templateVars.button_dynamic_url_2) {
+      composerPayload.button_dynamic_url_2 = String(templateVars.button_dynamic_url_2);
+    }
+
+    const standardValues = Object.entries(templateVars)
+      .filter(([key]) => key !== "button_dynamic_url_1" && key !== "button_dynamic_url_2")
+      .map(([_, val]) => val);
+
+    standardValues.forEach((val, idx) => {
+      if (idx < 10) {
+        composerPayload[`free_text_${idx + 1}`] = String(val);
+      }
+    });
+  }
+
+  console.log(`[WhatsApp] Creating composer for template "${templateName}"`);
+  const composerId = await callOdooMethod(
     uid,
-    "whatsapp.message",
+    "whatsapp.composer",
     "create",
-    [{
-      mobile_number: phoneNumber,
-      wa_template_id: templateId,
-      free_text_json: templateVars || {},
-    }]
+    [composerPayload]
   );
 
-  // Trigger the send action
-  await callOdooMethod(uid, "whatsapp.message", "button_send_message", [[msgId]]);
+  console.log(`[WhatsApp] Sending composer message ID: ${composerId}`);
+  const msgIds = await callOdooMethod(
+    uid,
+    "whatsapp.composer",
+    "action_send_whatsapp_template",
+    [[composerId]]
+  );
 
-  return msgId;
+  return msgIds?.[0] || composerId;
 }
 
 /**
@@ -260,12 +315,8 @@ async function sendDirectOutboundMessage(uid, phoneNumber, messageBody) {
     [payload]
   );
   
-  try {
-    await callOdooMethod(uid, "whatsapp.message", "button_send_message", [[recordId]]);
-  } catch (btnErr) {
-    console.log(`[WhatsApp] Info: button_send_message not triggered (Odoo will process outgoing via cron):`, btnErr.message);
-  }
-
+  // In Odoo 18/19, we rely on Odoo's internal cron to process and send outgoing messages automatically.
+  console.log(`[WhatsApp] Direct message created in Odoo outbox. Odoo cron will process and deliver it.`);
   return recordId;
 }
 
@@ -295,6 +346,7 @@ export async function sendWhatsAppToTutor(options) {
     forceTemplate = false,
     templateName = TEMPLATE_NAME,
     templateLang = TEMPLATE_LANG,
+    resId = null, // Optional: specific record ID for the template model (e.g. sign.request ID)
   } = options;
 
   let lastError = null;
@@ -328,7 +380,7 @@ export async function sendWhatsAppToTutor(options) {
         // Outside 24h window — use approved template (or fallback to direct outbound)
         try {
           console.log(`[WhatsApp] Sending template "${templateName}" to ${phoneNumber}`);
-          messageId = await sendTemplateMessage(uid, phoneNumber, templateName, templateLang, templateVars);
+          messageId = await sendTemplateMessage(uid, phoneNumber, templateName, templateLang, templateVars, resId);
           usedTemplate = true;
         } catch (templateErr) {
           if (templateErr.message.includes("template missing")) {
@@ -342,6 +394,10 @@ export async function sendWhatsAppToTutor(options) {
       }
 
       console.log(`[WhatsApp] Message sent successfully to ${phoneNumber}. Message ID: ${messageId}`);
+      
+      // Trigger the queue processing immediately so it delivers to WhatsApp instantly!
+      await triggerWhatsAppQueue();
+
       return {
         success: true,
         messageId: String(messageId),
@@ -389,35 +445,79 @@ export function buildBroadcastMessage(tutorName, lead, ward, distanceTier) {
   const subjects = Array.isArray(ward?.subjectsNeeded)
     ? ward.subjectsNeeded.join(", ")
     : (ward?.subjectsNeeded || "N/A");
-  const mode = lead.preferredMode || "N/A";
   const timing = lead.preferredTime || "N/A";
+  const sessionsPerWeek = lead.sessionsPerWeek || lead.frequency || "N/A";
   const area = lead.area || "N/A";
   const city = lead.city || lead.geoInfo?.city || "N/A";
-  const distance = distanceTier && distanceTier !== "Unknown" ? distanceTier : "N/A";
+  const pincode = lead.pincode || "";
+  const locationStr = [area, city, pincode].filter(Boolean).join(", ");
+  const distance = distanceTier && distanceTier !== "Unknown" ? ` (${distanceTier})` : "";
   const budget = lead.monthlyFees ? `₹${lead.monthlyFees}/month` : "Negotiable";
   const reqId = lead.requirementId || "N/A";
 
   return `Hello *${tutorName}* 👋
 
-A new tuition requirement is available matching your profile:
+A parent in your nearby area is looking for a home tutor. Based on your profile, you are one of our *best matches* for this requirement!
 
-• Teacher Name: *${tutorName}*
-• Requirement ID: *${reqId}*
-• Board: *${board}*
+📋 *Requirement Details:*
 • Grade: *${grade}*
+• Board: *${board}*
 • Subjects: *${subjects}*
-• Tuition Type: *${mode}*
+• Location: *${locationStr}${distance}*
 • Preferred Timing: *${timing}*
-• Area: *${area}*
-• City: *${city}*
-• Approximate Distance: *${distance}*
-• Expected Monthly Fee: *${budget}*
+• Sessions/Week: *${sessionsPerWeek}*
+• Expected Fees: *${budget}*
+• Req ID: *${reqId}*
 
-If you are interested in this tuition, please reply INTERESTED.
+⚠️ _Parent contact details will be shared only after you are selected and assigned._
 
-If you are not available, please reply NOT INTERESTED.
+Are you *interested* in this tuition assignment?
 
-Parent contact details will be shared only after admin approval and tutor assignment.`;
+👉 Reply *INTERESTED* to accept
+👉 Reply *NOT INTERESTED* if unavailable`;
+}
+
+/**
+ * Build template variable mapping for tutor requirement notification.
+ * Maps to {{1}}–{{9}} in the Odoo WhatsApp template `tutor_requirement_v1`.
+ *
+ * Template expects:
+ *   {{1}} = Tutor Name
+ *   {{2}} = Grade
+ *   {{3}} = Board
+ *   {{4}} = Subjects
+ *   {{5}} = Location (Area, City)
+ *   {{6}} = Preferred Timing
+ *   {{7}} = Sessions/Week
+ *   {{8}} = Expected Fees
+ *   {{9}} = Requirement ID
+ */
+export function buildRequirementTemplateVars(tutorName, lead, ward) {
+  const grade = ward?.classGrade ? `Class ${ward.classGrade}` : "N/A";
+  const board = ward?.curriculum || "N/A";
+  const subjects = Array.isArray(ward?.subjectsNeeded)
+    ? ward.subjectsNeeded.join(", ")
+    : (ward?.subjectsNeeded || "N/A");
+  const timing = lead.preferredTime || "N/A";
+  const sessionsPerWeek = lead.sessionsPerWeek || lead.frequency || "N/A";
+  const area = lead.area || "";
+  const city = lead.city || lead.geoInfo?.city || "";
+  const pincode = lead.pincode || "";
+  const locationStr = [area, city, pincode].filter(Boolean).join(", ") || "N/A";
+  const budget = lead.monthlyFees ? `₹${lead.monthlyFees}/month` : "Negotiable";
+  const reqId = lead.requirementId || "N/A";
+
+  return {
+    free_text_1: tutorName,
+    free_text_2: grade,
+    free_text_3: board,
+    free_text_4: subjects,
+    free_text_5: locationStr,
+    free_text_6: timing,
+    free_text_7: String(sessionsPerWeek),
+    free_text_8: budget,
+    free_text_9: reqId,
+  };
 }
 
 /**
@@ -487,3 +587,23 @@ _Please maintain professionalism at all times._
 
 — Saraswati Tutorials`;
 }
+
+/**
+ * Force Odoo to run the WhatsApp queue cron job immediately.
+ * This ensures messages are sent to tutors' phones instantly instead of waiting up to 1 hour.
+ */
+export async function triggerWhatsAppQueue() {
+  try {
+    const uid = await getOdooUid();
+    // Cron job ID for WhatsApp queue is 19
+    const cronId = 19;
+    console.log(`[WhatsApp] Triggering Odoo cron ID ${cronId} to process queue immediately...`);
+    const success = await callOdooMethod(uid, "ir.cron", "method_direct_trigger", [[cronId]]);
+    console.log(`[WhatsApp] Odoo cron run result: ${success}`);
+    return success;
+  } catch (err) {
+    console.warn(`[WhatsApp] Failed to trigger Odoo queue cron: ${err.message}`);
+    return false;
+  }
+}
+

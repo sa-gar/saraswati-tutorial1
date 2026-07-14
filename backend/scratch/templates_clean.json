@@ -1,0 +1,164 @@
+[
+  {
+    "id": 33,
+    "name": "Re-Confirmation",
+    "status": "approved",
+    "body": "Hello *Parent,*\n\nAs discussed over the call, here are your requirement details:\n\n• Grade(s): *{{2}} {{9}}*\n• Subject(s): *{{1}}*  \n\n• Location: *{{3}}*  \n• Tutor Gender: *{{4}}*  \n• Class Timing: *{{6}}*  \n• Sessions/Week: *{{5}}* \n• Duration: *{{7}}* \n• Plan: *{{10}}*\n\n• Monthly Fees: ₹{{8}} \n\nKindly Re-confirm the details:"
+  },
+  {
+    "id": 81,
+    "name": "DemoGuide",
+    "status": "approved",
+    "body": "Your demo session is scheduled on *{{1}}.*\n\nBefore the session, kindly review the attached Parent Onboarding Guide.\n*_This guide contains important information regarding:_*\n\n*• Demo process*\n*• Admission fee*\n*• Tutor support*\n*• Service policies*\n\nReviewing this guide is a *mandatory part* of our demo process and helps ensure complete transparency before the session."
+  },
+  {
+    "id": 72,
+    "name": "Tutor Agreement",
+    "status": "approved",
+    "body": "Thank you for showing interest in a Saraswati Tutorials assignment.  \n\nTo maintain verified and professional tutor allocation, all demo/class requests are processed through our *One-Time Tutor Authorisation System.*\n\n✅ After authorisation, you will receive:  \n• Parent contact details;\n• Exact Parent’s location\n(Society,Wing&Flat No.);\n• Demo timings updates  \n For present & future interested opportunities from Us.\n\n_____\n\n_Our verification team will review and proceed accordingly._"
+  },
+  {
+    "id": 76,
+    "name": "High",
+    "status": "approved",
+    "body": "Hello *Mr./Ms.{{1}}*,\n\nPlease review and authorise the attached *Tutoring Service Agreement* to proceed further.\n\nThis agreement includes *important details* regarding *the Service Fee & Demo Process, Penalty and Our Promises.*\n\nOnce completed, we will immediately begin working on your inquiry and schedule the demo *{{2}}*\n\nAs this is *mandatory,* we’re not allowed to proceed further with demo scheduling without authorisation.\n\n— *Saraswati Tutorials*"
+  },
+  {
+    "id": 73,
+    "name": "High_100",
+    "status": "approved",
+    "body": "Hello *Mr./Ms.{{1}}*,\n\nPlease review and authorise the attached *Tutoring Service Agreement* to proceed further.\n\nThis agreement includes *important details* regarding *the Service Fee & Demo Process, Penalty and Our Promises.*\n\nOnce completed, we will immediately begin working on your inquiry and schedule the demo *{{2}}*\n\nAs this is *mandatory,* we’re not allowed to proceed further with demo scheduling without authorisation.\n\n— *Saraswati Tutorials*"
+  },
+  {
+    "id": 71,
+    "name": "Moderate 3rd (59%)",
+    "status": "approved",
+    "body": "Hello *Mr./Ms. {{1}}*,\n\nKindly review and authorise the attached *Tutoring Service Agreement* to proceed further.\n\nThis agreement includes *important details* regarding *the Service Fee & Process, Penalty and support services.*\n\nOnce completed, we will immediately begin working on your inquiry and schedule the demo *{{2}}*\n\nAs this is *mandatory,* we’re not allowed to proceed further with demo scheduling without authorisation.\n\n— *Saraswati Tutorials*"
+  },
+  {
+    "id": 65,
+    "name": "Agreement Signed Confirmation",
+    "status": "approved",
+    "body": "Thank you,*Mr./Ms.{{1}}*\n\n✅ We have received the signed agreement.\n\nOur team is now shortlisting suitable tutors based on your requirement.\nYou will receive tutor demo details shortly.\n\nWe appreciate your trust in Saraswati Tutorials."
+  },
+  {
+    "id": 78,
+    "name": "Structured Demo Scheduled",
+    "status": "approved",
+    "body": "Hello *Mr/Ms.{{1}}* 😊  \n\nGreat news! Your tutor has been assigned and your demo session is scheduled.  \n\n•Tutor Name: *{{2}}*\n•Demo Timing: *{{3}}* \n\n📌 Quick Note:  \nThis demo session is for evaluation purposes. If you are satisfied with the tutor, the admission & Onboarding needs to be completed Within 24hrs to block the tutor’s slot.  \n\nPlease note: A tutor can take only two tuitions per day, and _*the assigned tutor already has one tuition.*_ So confirming early will help secure your slot.  "
+  },
+  {
+    "id": 64,
+    "name": "Structured Demo Scheduled",
+    "status": "approved",
+    "body": "Hello *Mr/Ms.{{1}}* 😊  \n\nGreat news! Your tutor has been assigned and your demo session is scheduled.  \n\n•Tutor Name: *{{2}}*\n•Demo Timing: *{{3}}* \n\n📌 Quick Note:  \nThis demo session is for evaluation purposes. If you are satisfied with the tutor, the admission fee needs to be completed immediately to block the tutor’s slot.  \n\nPlease note: A tutor can take only two tuitions per day, and _*the assigned tutor already has one tuition.*_ So confirming early will help secure your slot.  \n\nWe Only proceed with parents who are ready to enroll after a successful demo 👍  \n\nAfter the demo, *you will receive a feedback message.* Kindly confirm your response promptly using the buttons provided"
+  },
+  {
+    "id": 77,
+    "name": "Feedback",
+    "status": "approved",
+    "body": "Hello Mr./Ms.{{1}},\n\n_Thanks for Attending the Demo Session._\n\n*Now,You can share your feedback on today’s demo session!*\n\nIt’ll Guide us to plan the next steps and secure the tutor’s slots accordingly."
+  },
+  {
+    "id": 63,
+    "name": "Normal Demo Scheduled",
+    "status": "approved",
+    "body": "Hello Mr./Ms.{{1}},\n\nYour demo has been scheduled\nfor  *{{6}}*.\n\n👤 Assigned Tutor : *{{2}}*\n Grade: *{{5}}*\n📚 Subject(s): *{{3}}*\n🕒 Demo Date & Time: *{{4}}*\n \n\nPlease ensure the student is available during the demo time.\n\nAfter the demo, you’ll receive a quick confirmation message to proceed further."
+  },
+  {
+    "id": 80,
+    "name": "2Fees Delayed Confirmation",
+    "status": "approved",
+    "body": "Hello  *Mr./Ms.{{1}},*\n\nThis is an update regarding the tutor slot reserved following the recent demo.\n\n*As per the allocation process, admission confirmation is required within {{2}} of the demo to reserve the assigned tutor and preferred time slot.*\n\n_After this period, we may not be able to guarantee the same tutor or time slot, as the reservation may be released to other pending demo requests._"
+  },
+  {
+    "id": 79,
+    "name": "Fees Delayed Confirmation",
+    "status": "approved",
+    "body": "Hi *Mr/Ms. {{1}}!*\nJust a quick reminder that parent is supposed to confirm the onboarding within 24 hours of the demo.\n\nAfter that, we can’t guarantee the same tutor and time slot availability. \nIf you have any queries, please feel free to reach out—happy to help!"
+  },
+  {
+    "id": 37,
+    "name": "24hrs Confirmation",
+    "status": "draft",
+    "body": "Hi *Mr/Ms. {{1}}!*\nJust a quick reminder that parent is supposed to confirm the onboarding within 24 hours of the demo.\n\nAfter that, we can’t guarantee the same tutor and time slot availability. \nIf you have any queries, please feel free to reach out—happy to help!"
+  },
+  {
+    "id": 59,
+    "name": "Anti-Bypass Gentle Reminder",
+    "status": "approved",
+    "body": "Dear *Mr./Ms. {{1}}*,  \n\nThis is to inform you that all payments must be made *only to Saraswati Tutorials.*  \n\n❗ *Direct/In-Middle payment to tutors is strictly not allowed.*\n\nAny such action will be treated as a *violation of agreement,* and services may be *discontinued immediately.* \n\nThank you for your cooperation."
+  },
+  {
+    "id": 74,
+    "name": "POS Receipt",
+    "status": "draft",
+    "body": "Dear {{1}},\n\nHere’s your electronic receipt for your order *{{2}}* from *{{3}}*\n\nThank you for shopping with us.\n        "
+  },
+  {
+    "id": 75,
+    "name": "Point of Sale: Marketing",
+    "status": "draft",
+    "body": "Dear customer,\n\nWe have a special promotion offer only for you don't miss it!\n{{1}}\n\nThank you for choosing us.\n\n{{2}}\n{{3}}\n        "
+  },
+  {
+    "id": 18,
+    "name": "Payment Success Confirmation (Auto)",
+    "status": "draft",
+    "body": "Payment Successful ✅\n\nHello  {{1}},\nWe have received your admission fee payment of  {{2}}.\n\n🧾 Transaction ID:  {{3}}\n\nYour tutor slot is now confirmed.\nThe tutor will start regular classes as scheduled.\n\nFor any assistance, feel free to reach out to us anytime.\n\nWelcome to Saraswati Tutorials."
+  },
+  {
+    "id": 17,
+    "name": "Payment Trigger",
+    "status": "draft",
+    "body": "Great choice,  {{1}}! 🎉\n\nTo confirm and book this tutor slot, please complete the admission fee payment.\n\n*Tuition Fee: ₹{{2}}*\n*Admission Fee: ₹{{3}}*\nAdmission fee covers:\n• Tutor slot confirmation\n• Home assignment service\n• Backup teacher support\n• Ongoing assistance & monitoring\n\n👉 Pay Now:  {{4}}\n\nOnce payment is completed, confirmation will be sent instantly."
+  },
+  {
+    "id": 11,
+    "name": "Req Ack (After Call)",
+    "status": "pending",
+    "body": "Hello {{Parent Name}},\n\nThank you for speaking with us.\n\nAs discussed, here are your tuition requirements:\n• Class / Grade: {{Class}}\n• Subject(s): {{Subjects}}\n• Mode: Private Home Tuition\n• Location: {{Area}}\n• Preferred Days & Time: {{Timing}}\n• Tuition Fees: ₹{{Fees}}\n\nNext step:\nWe will share a short service *agreement* on WhatsApp that *explains* tutor allocation, demo process, admission fee, and support services.\n\nPlease review and sign it so we can proceed with tutor assignment smoothly.\n\nThank you"
+  },
+  {
+    "id": 69,
+    "name": "Parent Feedback Template",
+    "status": "approved",
+    "body": "Hi {{1}},\n \nWe hope you liked the demo \n\nAre you interested to continue with the tutor?"
+  },
+  {
+    "id": 19,
+    "name": "Tutor Start Reminder",
+    "status": "approved",
+    "body": "Hello {{1}},\n\nThis is a reminder that regular tuition classes will begin from:\n\n📅 Date: {{2}}\n🕒 Time: {{3}}\n\nWe wish your child a great learning journey ahead!\n\nRegards,\nSaraswati Tutorials."
+  },
+  {
+    "id": 22,
+    "name": "Payment link",
+    "status": "approved",
+    "body": "Hello {{1}},\n\nUse the following link to pay *{{2}}{{3}}* to *{{4}}*.\n{{5}}\n\nDon't share screenshots of payment here.\n\nThank you\n\nThank you"
+  },
+  {
+    "id": 67,
+    "name": "Payment Reminder",
+    "status": "approved",
+    "body": "Hello {{1}},\n\nJust a quick note - your account shows a balance of *{{2}}{{3}}*.\nPlease settle it asap\n\nIf you've already made the payment, feel free to ignore this message.\nFor any questions, our accounting team is here to help.\n\nThanks for your cooperation!\n\nBest,\nSarwasti Tutorials"
+  },
+  {
+    "id": 30,
+    "name": "Sales order",
+    "status": "approved",
+    "body": "Hello  {{1}} Thanks  for enrolling with us   *{{2}}* from *{{3}}* has been confirmed for a total of *{{4}}{{5}}*\nThanks for your trust."
+  },
+  {
+    "id": 9,
+    "name": "Sign Request Completion",
+    "status": "approved",
+    "body": "Hello {{1}},\n\nThe document {{2}} has been completed and signed by {{3}}.\n\nDocument link:\n{{4}}\n\n*Warning do not forward this message to other people!*"
+  },
+  {
+    "id": 58,
+    "name": "Request Another Demo",
+    "status": "approved",
+    "body": "Thank you for your feedback; {{1}},\n\nNo problem at all 🙂\nWe will arrange another suitable tutor demo shortly based on your feedback.\n\nOur team will update you soon."
+  }
+]
