@@ -264,21 +264,26 @@ export default function TutorRegistration() {
   const navigate = useNavigate();
 
   const host = window.location.hostname;
-  const isMumbai =
+  const defaultIsMumbai =
     host.startsWith("mumbai.") ||
     localStorage.getItem("userLocation") === "Mumbai";
 
-  const areaGroups = isMumbai ? mumbaiAreaGroups : bangaloreAreaGroups;
-
   const [step, setStep] = useState(1);
   const [search, setSearch] = useState("");
-  const [formData, setFormData] = useState(initialFormData);
+  const [formData, setFormData] = useState(() => ({
+    ...initialFormData,
+    city: defaultIsMumbai ? "Mumbai" : "Bangalore",
+  }));
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [previewPhoto, setPreviewPhoto] = useState(null);
   const [showInstructionsModal, setShowInstructionsModal] = useState(false);
-  const [openGroup, setOpenGroup] = useState(isMumbai ? "Western Suburbs" : "East Bangalore");
+
+  const isMumbai = formData.city === "Mumbai";
+  const areaGroups = isMumbai ? mumbaiAreaGroups : bangaloreAreaGroups;
+
+  const [openGroup, setOpenGroup] = useState(defaultIsMumbai ? "Western Suburbs" : "East Bangalore");
   const [sameAsMobile, setSameAsMobile] = useState(true);
 
   useEffect(() => {
@@ -393,10 +398,19 @@ export default function TutorRegistration() {
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    if (name === "city") {
+      setFormData((prev) => ({
+        ...prev,
+        city: value,
+        locations: [], // Reset selected locations when city changes
+      }));
+      setOpenGroup(value === "Mumbai" ? "Western Suburbs" : "East Bangalore");
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
 
     const error = validateField(name, value);
 
