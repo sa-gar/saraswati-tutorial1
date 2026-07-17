@@ -1,6 +1,15 @@
 import ParentEnquiry from "../models/ParentEnquiry.js";
 import Tutor from "../models/Tutor.js";
+import BroadcastLog from "../models/BroadcastLog.js";
 import { sendWhatsAppToTutor } from "./whatsappService.js";
+import { broadcastService, RETRYABLE_FAILURE_REASONS } from "./broadcastService.js";
+import { startSyncScheduler } from "./syncService.js";
+
+const MAX_RETRY_COUNT = Number(process.env.RETRY_COUNT || 3);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Attendance Reminder Scheduler
+// ─────────────────────────────────────────────────────────────────────────────
 
 // Helper to parse time strings (e.g. "19:00", "7:00 PM") to minutes since midnight
 function parseTimeToMinutes(timeStr) {
@@ -138,3 +147,54 @@ export function startReminderScheduler() {
     checkAndSendAttendanceReminders();
   }, 60 * 1000);
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Retry Scheduler — runs every 5 minutes, retries only TRANSIENT failures
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Run one batch of retries for failed broadcasts.
+ * Only retries TRANSIENT failures (Timeout, Network Error, Server Error, Rate Limited).
+ * Never retries PERMANENT failures (Invalid Number, Blocked, Template Missing, etc.).
+ */
+async function runRetryBatch() {
+  try {
+    const failedLogs = await BroadcastLog.find({
+      status: "Failed",
+      retryCount: { $lt: MAX_RETRY_COUNT },
+      failureReason: { $in: RETRYABLE_FAILURE_REASONS },
+    })
+      .sort({ time: 1 }) // oldest first
+      .limit(50);        // max 50 per batch to prevent overload
+
+    if (failedLogs.length === 0) return;
+
+    console.log(`[Retry Scheduler] Processing ${failedLogs.length} retryable failed broadcasts`);
+
+    for (const log of failedLogs) {
+      await broadcastService.retryLog(log);
+    }
+
+    console.log(`[Retry Scheduler] ✅ Batch complete`);
+  } catch (err) {
+    console.error(`[Retry Scheduler] Batch error:`, err.message);
+  }
+}
+
+/**
+ * Start the 5-minute retry scheduler for failed broadcasts.
+ * Picks up transient failures that were not retried inline by whatsappService.
+ */
+export function startRetryScheduler() {
+  const intervalMs = 5 * 60 * 1000; // 5 minutes
+  console.log("[Retry Scheduler] Starting — runs every 5 minutes");
+
+  setInterval(() => {
+    runRetryBatch().catch((err) =>
+      console.error("[Retry Scheduler] Unhandled error:", err.message)
+    );
+  }, intervalMs);
+}
+
+// Re-export sync scheduler so server.js only needs to import from one file
+export { startSyncScheduler };

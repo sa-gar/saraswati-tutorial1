@@ -466,4 +466,42 @@ export async function updateLeadAssignment(leadId, assignmentDetails) {
     console.error("[Odoo] Error in updateLeadAssignment:", err.message);
     return false;
   }
+}
+
+/**
+ * Post a message to the Odoo CRM lead chatter.
+ * Used to log broadcast events, tutor responses, and sync status directly
+ * in the Odoo lead's activity feed so admins can see history without
+ * switching to the Node.js dashboard.
+ *
+ * @param {string|number} leadId - The Odoo crm.lead record ID
+ * @param {string} message - HTML or plain text message body
+ * @param {string} [messageType="comment"] - "comment"|"email"|"notification"
+ * @returns {Promise<boolean>}
+ */
+export async function addOdooChatterMessage(leadId, message, messageType = "comment") {
+  try {
+    const uid = await callOdoo("common", "authenticate", [DB, USERNAME, PASSWORD, {}]);
+    if (!uid) throw new Error("Odoo login failed");
+
+    await callOdoo("object", "execute_kw", [
+      DB,
+      uid,
+      PASSWORD,
+      "crm.lead",
+      "message_post",
+      [[parseInt(leadId)]],
+      {
+        body: message,
+        message_type: messageType,
+        subtype_xmlid: "mail.mt_note",
+      },
+    ]);
+
+    console.log(`[Odoo] Chatter message posted to lead ${leadId}`);
+    return true;
+  } catch (err) {
+    console.error("[Odoo] Error posting chatter message:", err.message);
+    return false;
+  }
 }

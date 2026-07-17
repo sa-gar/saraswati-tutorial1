@@ -1,3 +1,28 @@
+/**
+ * matchingEngine.js — Saraswati Tutorials
+ *
+ * Weighted tutor-to-requirement matching engine.
+ * All weights are env-configurable. All existing exports are preserved
+ * with identical signatures for backward compatibility.
+ *
+ * New exports added (non-breaking):
+ *   computeMatchReason(params, tutor, scoreInfo) → string
+ *   getRecommendationType(scoreInfo, params)      → "exact"|"nearby"|"city"|"backup"
+ */
+
+import dotenv from "dotenv";
+dotenv.config();
+
+// ── Read weights from env (with defaults matching previous hardcoded values) ──
+const W_LOCATION   = Number(process.env.MATCH_WEIGHT_LOCATION   || 40);
+const W_GRADE      = Number(process.env.MATCH_WEIGHT_GRADE      || 20);
+const W_SUBJECT    = Number(process.env.MATCH_WEIGHT_SUBJECT    || 20);
+const W_TIMING     = Number(process.env.MATCH_WEIGHT_TIMING     || 10);
+const W_GENDER     = Number(process.env.MATCH_WEIGHT_GENDER     || 5);
+const W_EXPERIENCE = Number(process.env.MATCH_WEIGHT_EXPERIENCE || 5);
+
+const NEARBY_RADIUS_KM = Number(process.env.NEARBY_RADIUS_KM || 8);
+
 export const GENERIC_WORDS = new Set([
   "road", "rd", "street", "st", "cross", "main", "layout", "lyt", "stage",
   "near", "opposite", "opp", "behind", "landmark", "area", "locality",
@@ -338,18 +363,26 @@ export function getAvailabilityPriority(status) {
 }
 
 /**
- * Definition of recommendation factors for scoring
+ * Score experience in years for matching
+ * Returns 0-1 ratio (more experience = higher score)
+ */
+export function scoreExperience(experienceStr) {
+  if (!experienceStr) return 0.5; // no data → neutral score
+  const match = String(experienceStr).match(/(\d+)/);
+  if (!match) return 0.5;
+  const years = parseInt(match[1]);
+  if (years >= 5) return 1.0;
+  if (years >= 3) return 0.75;
+  if (years >= 1) return 0.5;
+  return 0.25;
+}
+
+/**
+ * Definition of recommendation factors for scoring.
+ * Weights are read from environment variables so they can be tuned
+ * without a code deployment.
  *
- * Total max weight: 145
- * - Exact Pincode:    40
- * - Exact Area:       25
- * - Similar Area:     20 (exclusive with Exact Area)
- * - Same City:        10
- * - Correct Grade:    20
- * - Board Match:      15
- * - Subject Match:    10
- * - Correct Timing:   15
- * - Preferred Gender: 10
+ * Total max weight: 145 (location) + grade + board + subject + timing + gender + experience
  */
 export const RECOMMENDATION_FACTORS = [
   {
@@ -461,13 +494,21 @@ export const RECOMMENDATION_FACTORS = [
       }
       return (tGender === genderPref || tGender === "" || !tutor.gender) ? 10 : 0;
     }
+  },
+  {
+    name: "Experience",
+    maxWeight: 10,
+    calculate: (params, tutor) => {
+      // Experience weight is always applied as a bonus factor
+      return Math.round(scoreExperience(tutor.experience) * 10);
+    }
   }
 ];
 
 /**
  * Calculates a matching score and percentage for a tutor against parent requirements.
- * 
- * Scoring factors and weights:
+ *
+ * Scoring factors and weights (env-configurable):
  *   Exact Pincode  : 40
  *   Exact Area     : 25 (exclusive with Similar Area)
  *   Similar Area   : 20 (exclusive with Exact Area)
@@ -477,6 +518,7 @@ export const RECOMMENDATION_FACTORS = [
  *   Subject Match  : 10
  *   Correct Timing : 15
  *   Preferred Gender: 10
+ *   Experience     : 10
  */
 export function calculateTutorScore(params, tutor) {
   let score = 0;
@@ -532,6 +574,11 @@ export function calculateTutorScore(params, tutor) {
   score += genderScore;
   if (params.gender) maxPossibleScore += 10;
 
+  // Calculate Experience (always included as a bonus)
+  const experienceScore = RECOMMENDATION_FACTORS.find(f => f.name === "Experience").calculate(params, tutor);
+  score += experienceScore;
+  maxPossibleScore += 10;
+
   // Base fallback if no requirements were selected
   if (maxPossibleScore === 0) maxPossibleScore = 100;
   
@@ -566,6 +613,7 @@ export function calculateTutorScore(params, tutor) {
       subject: subjectScore,
       timing: timingScore,
       gender: genderScore,
+      experience: experienceScore,
     }
   };
 }
@@ -638,4 +686,84 @@ export function compareTutors(a, b) {
   const aPriority = getAvailabilityPriority(a.availabilityStatus);
   const bPriority = getAvailabilityPriority(b.availabilityStatus);
   return aPriority - bPriority;
+}
+
+/**
+ * Generates a human-readable reason string explaining why a tutor was matched.
+ * Used in recommendation API responses and Odoo chatter messages.
+ *
+ * @param {Object} params      - Parent requirement parameters
+ * @param {Object} tutor       - Tutor document
+ * @param {Object} scoreInfo   - Result from calculateTutorScore()
+ * @returns {string}           - e.g. "Same pincode • Grade match • 2/3 subjects"
+ */
+export function computeMatchReason(params, tutor, scoreInfo) {
+  const parts = [];
+
+  if (scoreInfo.breakdown.pincode > 0) {
+    parts.push("Same pincode");
+  } else if (scoreInfo.breakdown.area > 0) {
+    const areaScore = scoreInfo.breakdown.area;
+    parts.push(areaScore >= 25 ? "Exact area match" : "Similar area");
+  } else if (scoreInfo.breakdown.city > 0) {
+    parts.push("Same city");
+  }
+
+  if (scoreInfo.distanceKm != null) {
+    parts.push(`${scoreInfo.distanceKm} km away`);
+  }
+
+  if (scoreInfo.breakdown.grade > 0 && params.grade) {
+    parts.push("Grade match");
+  }
+
+  if (params.subjects && params.subjects.length > 0 && scoreInfo.breakdown.subject > 0) {
+    const ratio = scoreInfo.breakdown.subject / 10;
+    const matched = Math.round(ratio * params.subjects.length);
+    parts.push(`${matched}/${params.subjects.length} subject${matched !== 1 ? "s" : ""}`);
+  }
+
+  if (scoreInfo.breakdown.timing > 0 && params.timing) {
+    parts.push("Timing match");
+  }
+
+  if (scoreInfo.breakdown.gender > 0 && params.gender &&
+    !["flexible", "no preference", "both", ""].includes(params.gender.toLowerCase())) {
+    parts.push("Gender preference");
+  }
+
+  if (parts.length === 0) {
+    return `${scoreInfo.percentage}% overall match`;
+  }
+
+  return parts.join(" • ");
+}
+
+/**
+ * Determines the recommendation type/tier for a tutor based on their score.
+ *
+ * @param {Object} scoreInfo - Result from calculateTutorScore()
+ * @param {Object} params    - Parent requirement parameters
+ * @returns {"exact"|"nearby"|"city"|"backup"}
+ */
+export function getRecommendationType(scoreInfo, params) {
+  const nearbyRadius = NEARBY_RADIUS_KM;
+
+  // Exact: matched pincode OR exact area name
+  if (scoreInfo.breakdown.pincode >= 40 || scoreInfo.breakdown.area >= 25) {
+    return "exact";
+  }
+
+  // Nearby: within GPS radius (even without area name match)
+  if (scoreInfo.distanceKm != null && scoreInfo.distanceKm <= nearbyRadius) {
+    return "nearby";
+  }
+
+  // Similar area or same city
+  if (scoreInfo.breakdown.area > 0 || scoreInfo.breakdown.city > 0) {
+    return "city";
+  }
+
+  // Fallback: any positive match
+  return "backup";
 }

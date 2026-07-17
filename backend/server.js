@@ -9,11 +9,15 @@ import enquiryRoutes from "./routes/enquiryRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import parentEnquiryRoutes from "./routes/parentEnquiryRoutes.js";
 import blogRoutes from "./routes/blogRoutes.js";
-import uploadRoutes from "./routes/uploadRoutes.js"; 
+import uploadRoutes from "./routes/uploadRoutes.js";
 import blogAuthRoutes from "./routes/blogAuthRoutes.js";
 import analyticsRoutes from "./routes/analyticsRoutes.js";
 import attendanceRoutes from "./routes/attendanceRoutes.js";
-import { startReminderScheduler } from "./utils/reminderScheduler.js";
+import broadcastDashboardRoutes from "./routes/broadcastDashboardRoutes.js";
+import broadcastOdooRoutes from "./routes/broadcastOdooRoutes.js";
+
+import { startReminderScheduler, startRetryScheduler, startSyncScheduler } from "./utils/reminderScheduler.js";
+import BroadcastLog from "./models/BroadcastLog.js";
 import compression from "compression";
 
 dotenv.config();
@@ -21,7 +25,7 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
+// ── Middleware ────────────────────────────────────────────────────────────────
 app.use(
   cors({
     origin: [
@@ -36,8 +40,8 @@ app.use(
 );
 app.use(express.json());
 app.use(compression());
-// Health check
 
+// ── Health check ──────────────────────────────────────────────────────────────
 app.get("/api/health", (req, res) => {
   res.status(200).json({
     success: true,
@@ -47,42 +51,73 @@ app.get("/api/health", (req, res) => {
   });
 });
 
+// ── Short URL redirect ────────────────────────────────────────────────────────
 app.get("/s/:shortId", (req, res) => {
   const { shortId } = req.params;
 
-  //  Hardcoded mapping (test)
+  // Hardcoded mapping (test)
   const links = {
-  abc123: "https://saraswati-tutorials.odoo.com/sign/document/mail/2/0d0ea973-17e1-4b9d-ba88-d45a7ad21f3",
-};
+    abc123: "https://saraswati-tutorials.odoo.com/sign/document/mail/2/0d0ea973-17e1-4b9d-ba88-d45a7ad21f3",
+  };
 
   const fullUrl = links[shortId];
-
-  if (!fullUrl) {
-    return res.status(404).send("Link not found");
-  }
-
+  if (!fullUrl) return res.status(404).send("Link not found");
   return res.redirect(fullUrl);
 });
+
 app.get("/", (req, res) => {
   res.json({ message: "Saraswati Tutorial backend is running" });
 });
 
-
-// API Routes
-app.use("/api/tutors", tutorRoutes);
-app.use("/api/bookings", bookingRoutes);
-app.use("/api/enquiries", enquiryRoutes);
-app.use("/api/auth", authRoutes);
+// ── API Routes ────────────────────────────────────────────────────────────────
+app.use("/api/tutors",           tutorRoutes);
+app.use("/api/bookings",         bookingRoutes);
+app.use("/api/enquiries",        enquiryRoutes);
+app.use("/api/auth",             authRoutes);
 app.use("/api/parent-enquiries", parentEnquiryRoutes);
-app.use("/api/blogs", blogRoutes);
-app.use("/api/upload", uploadRoutes);
-app.use("/api/blog-auth", blogAuthRoutes);
-app.use("/api/analytics", analyticsRoutes);
-app.use("/api/attendance", attendanceRoutes);
-// Webhook endpoint (reuses parentEnquiry routes — mounted separately for clean URL)
+app.use("/api/blogs",            blogRoutes);
+app.use("/api/upload",           uploadRoutes);
+app.use("/api/blog-auth",        blogAuthRoutes);
+app.use("/api/analytics",        analyticsRoutes);
+app.use("/api/attendance",       attendanceRoutes);
+
+// ── Broadcast Dashboard APIs ──────────────────────────────────────────────────
+app.use("/api", broadcastDashboardRoutes);
+
+// ── Odoo Integration APIs ─────────────────────────────────────────────────────
+app.use("/api", broadcastOdooRoutes);
+
+// ── Webhook endpoint (reuses parentEnquiry routes — mounted at /api) ──────────
 app.use("/api", parentEnquiryRoutes);
 
-// MongoDB Connection + Server Start
+// ── Error recovery: reset stale "Sending" logs from a potential server crash ──
+async function recoverStaleSendingLogs() {
+  try {
+    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+    const result = await BroadcastLog.updateMany(
+      {
+        status: "Sending",
+        updatedAt: { $lt: tenMinutesAgo },
+      },
+      {
+        $set: {
+          status: "Failed",
+          failureReason: "Server restart recovery",
+        },
+      }
+    );
+    if (result.modifiedCount > 0) {
+      console.log(
+        `[Startup Recovery] Reset ${result.modifiedCount} stale "Sending" broadcast logs to "Failed". ` +
+        `Retry scheduler will pick them up within 5 minutes.`
+      );
+    }
+  } catch (err) {
+    console.error("[Startup Recovery] Failed to reset stale logs:", err.message);
+  }
+}
+
+// ── MongoDB Connection + Server Start ─────────────────────────────────────────
 if (
   process.env.MONGO_URI &&
   process.env.MONGO_URI !== "your_mongodb_connection_string"
@@ -91,11 +126,19 @@ if (
     .connect(process.env.MONGO_URI, {
       bufferCommands: false,
     })
-    .then(() => {
+    .then(async () => {
       console.log("MongoDB connected");
+
+      // Error recovery: reset stale Sending logs before starting schedulers
+      await recoverStaleSendingLogs();
+
       app.listen(PORT, () => {
         console.log(`Server running on http://localhost:${PORT}`);
-        startReminderScheduler();
+
+        // ── Start background schedulers ────────────────────────────────────
+        startReminderScheduler();  // Attendance reminders (every 60 sec)
+        startRetryScheduler();     // Retry failed broadcasts (every 5 min)
+        startSyncScheduler();      // Odoo → MongoDB tutor sync (every 15 min)
       });
     })
     .catch((error) => {

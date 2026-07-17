@@ -2,7 +2,7 @@ import express from "express";
 import ParentEnquiry from "../models/ParentEnquiry.js";
 import ParentEnquiryDraft from "../models/ParentEnquiryDraft.js";
 import AnalyticsLog from "../models/AnalyticsLog.js";
-import { createLead, updateLead, updateLeadAssignment, syncTutorStats } from "../utils/odooService.js";
+import { createLead, updateLead, updateLeadAssignment, syncTutorStats, addOdooChatterMessage } from "../utils/odooService.js";
 import { verifyToken } from "../middleware/authMiddleware.js";
 import { resolveGeo } from "../utils/geoLookup.js";
 import Tutor from "../models/Tutor.js";
@@ -23,6 +23,8 @@ import {
   compareTutors,
   parseAddress,
 } from "../utils/matchingEngine.js";
+import { getRecommendations, buildParamsFromLead } from "../utils/recommendationEngine.js";
+
 
 const router = express.Router();
 
@@ -796,6 +798,50 @@ router.put("/broadcast-logs/:logId/response", verifyToken(["admin"]), async (req
 });
 
 // =============================================================
+// GET recommend tutors for a parent lead
+// GET /api/parent-enquiries/:leadId/recommend-tutors
+// Returns 4-bucket recommendations: exact, nearby, city, backup
+// Each tutor includes matchPercentage, distanceKm, reason, recommendationType
+// =============================================================
+router.get("/:leadId/recommend-tutors", verifyToken(["admin"]), async (req, res) => {
+  try {
+    const lead = await ParentEnquiry.findById(req.params.leadId).lean();
+    if (!lead) return res.status(404).json({ message: "Lead not found" });
+
+    const parsedAddr = parseAddress(lead.address);
+    const params = buildParamsFromLead(lead, parsedAddr);
+    const recommendations = await getRecommendations(params);
+
+    res.json({
+      lead: {
+        _id: lead._id,
+        requirementId: lead.requirementId,
+        parentName: lead.parentName,
+        area: lead.area,
+        city: lead.city,
+        pincode: lead.pincode,
+        status: lead.status,
+      },
+      params: {
+        grade: params.grade,
+        subjects: params.subjects,
+        area: params.area,
+        city: params.city,
+        pincode: params.pincode,
+        timing: params.timing,
+        gender: params.gender,
+      },
+      recommendations,
+    });
+  } catch (error) {
+    console.error("Recommend tutors error:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+
+
+// =============================================================
 // POST retry a failed broadcast log entry
 // POST /api/parent-enquiries/broadcast-logs/:logId/retry
 // =============================================================
@@ -895,9 +941,20 @@ router.post("/webhook/whatsapp-reply", async (req, res) => {
     const replyText = String(message).trim().toLowerCase();
     let responseStatus = null;
 
-    if (["not interested", "no", "nahi", "nope", "reject", "not available"].some(k => replyText.includes(k))) {
+    // ── Expanded keyword recognition ──────────────────────────────────────────
+    // Not Interested checked FIRST to prevent "not interested" matching "interested"
+    const NOT_INTERESTED_KEYWORDS = [
+      "not interested", "nahi", "no", "nope", "reject", "not available",
+      "busy", "later", "unavailable", "mat karo", "band karo", "cancel",
+    ];
+    const INTERESTED_KEYWORDS = [
+      "interested", "yes", "accept", "ok", "okay", "confirm",
+      "ji", "haan", "han", "ha", "chalega", "bilkul", "zaroor", "theek",
+    ];
+
+    if (NOT_INTERESTED_KEYWORDS.some((k) => replyText.includes(k))) {
       responseStatus = "Not Interested";
-    } else if (["yes", "interested", "accept", "ok", "okay", "confirm", "ji", "haan", "ha"].some(k => replyText.includes(k))) {
+    } else if (INTERESTED_KEYWORDS.some((k) => replyText.includes(k))) {
       responseStatus = "Interested";
     }
 
@@ -940,12 +997,36 @@ router.post("/webhook/whatsapp-reply", async (req, res) => {
     });
 
     console.log(`[Webhook] Updated broadcast log ${latestLog._id} — Tutor ${tutor.name} replied: ${responseStatus}`);
-    res.json({ message: "Reply processed successfully.", responseStatus, tutorName: tutor.name, logId: latestLog._id, processed: true });
+
+    // ── Sync response to Odoo chatter ─────────────────────────────────────────
+    // Fetch the lead to get odooLeadId
+    if (latestLog.leadId) {
+      const lead = await ParentEnquiry.findById(latestLog.leadId).select("odooLeadId requirementId");
+      if (lead?.odooLeadId) {
+        const emoji = responseStatus === "Interested" ? "✅" : "❌";
+        const chatterMsg =
+          `${emoji} Tutor <b>${tutor.name}</b> (${tutor.tutorCode || tutor.phone}) ` +
+          `replied: <b>${responseStatus}</b> for requirement <b>${lead.requirementId}</b>`;
+
+        addOdooChatterMessage(lead.odooLeadId, chatterMsg).catch((err) =>
+          console.warn("[Webhook] Odoo chatter sync failed:", err.message)
+        );
+      }
+    }
+
+    res.json({
+      message: "Reply processed successfully.",
+      responseStatus,
+      tutorName: tutor.name,
+      logId: latestLog._id,
+      processed: true,
+    });
   } catch (error) {
     console.error("WhatsApp webhook error:", error);
     res.status(500).json({ message: error.message });
   }
 });
+
 
 /**
  * Automatically match and broadcast parent enquiry details to the top 10 matched tutors.
@@ -953,6 +1034,7 @@ router.post("/webhook/whatsapp-reply", async (req, res) => {
  * Unboarded tutors get the Tutor Agreement onboarding template first.
  */
 async function autoBroadcastTutorsForLead(leadData) {
+
   try {
     const lead = await ParentEnquiry.findById(leadData._id);
     if (!lead) {

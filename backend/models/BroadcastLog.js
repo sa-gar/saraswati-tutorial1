@@ -149,4 +149,13 @@ broadcastLogSchema.index({ time: -1 });
 // Index for quick compound queries
 broadcastLogSchema.index({ requirementId: 1, tutorId: 1 });
 
+// Compound index for deduplication check in broadcastService
+broadcastLogSchema.index({ requirementId: 1, tutorId: 1, broadcastType: 1, status: 1 });
+
+// Compound index for retry scheduler queries
+broadcastLogSchema.index({ status: 1, retryCount: 1, failureReason: 1 });
+
+// Index for dashboard date-range queries
+broadcastLogSchema.index({ createdAt: -1 });
+
 export default mongoose.model("BroadcastLog", broadcastLogSchema);
