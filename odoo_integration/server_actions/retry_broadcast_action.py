@@ -6,6 +6,14 @@
 # Name: Retry Broadcast (Saraswati)
 # Trigger: Button on CRM Lead form view
 # Use when: Previous broadcast had failures and you want to retry
+#
+# ⚠️  ODOO ONLINE (SaaS) USERS — DO NOT USE THIS FILE!
+#     "Execute Python Code" with `import requests` fails on Odoo Online:
+#       Validation Error: forbidden opcode(s): IMPORT_NAME
+#     Use the "Send Webhook Notification" approach instead.
+#     See: odoo_integration/webhook_actions/WEBHOOK_SETUP.md
+#
+# ✅  FOR ODOO SELF-HOSTED / ODOO.SH ONLY.
 # ============================================================
 
 import requests
