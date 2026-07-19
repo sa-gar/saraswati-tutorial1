@@ -80,56 +80,134 @@ try:
         subtype_xmlid="mail.mt_note",
     )
 
-    # ── Display filtered tutors from x_tutor (read-only — NO create/write/unlink) ──
-    # Field confirmed by live inspection of master x_tutor records:
-    #   x_studio_tutor_id_4  → the actual Tutor Code field (e.g. "TUT-001")
-    #   x_studio_tutor_id, x_studio_tutor_id_1/2/3 → always false in real records
-    # Phone fields confirmed: x_studio_mobile_number_3, x_studio_whatsapp_number_2
-    tutor_codes = []
-    tutor_phones = []
-    for tier in ["exact", "nearby", "city", "backup"]:
-        for t in recs.get(tier, []):
-            if t.get("tutorCode"):
-                tutor_codes.append(t["tutorCode"])
-            if t.get("phone"):
-                tutor_phones.append(str(t["phone"]).strip())
-            if t.get("whatsapp") and t.get("whatsapp") != t.get("phone"):
-                tutor_phones.append(str(t["whatsapp"]).strip())
+    # ── Collect tutor codes and phone numbers from ALL recommendation tiers ────
+    # The recommendation engine returns tutors from MongoDB.  We need to match
+    # them to Odoo records so we can open the Odoo list page showing exactly
+    # those tutors.
+    #
+    # The backend API now resolves Odoo master-tutor IDs for us (odooIds /
+    # odooModel fields in the response).  If those are present, use them
+    # directly — this is the fastest, most accurate path.
+    #
+    # If the backend is an older version that doesn't include odooIds, fall
+    # back to a local two-model lookup using tutor codes and phone numbers.
 
-    tutor_ids = []
-    res_model = "x_tutor"
+    def norm_phone(raw):
+        """Strip non-digits, return last 10 (Indian mobile format)."""
+        digits = "".join(c for c in str(raw or "") if c.isdigit())
+        return digits[-10:] if len(digits) >= 10 else digits
 
-    try:
-        found = env["x_tutor"]
+    # ── Primary path: use pre-resolved Odoo IDs from the API ──────────────────
+    api_odoo_ids   = data.get("odooIds",   [])
+    api_odoo_model = data.get("odooModel", "x_master_tutors")
 
-        # Primary search: by tutor code in the confirmed correct field
-        if tutor_codes:
-            found = env["x_tutor"].search([("x_studio_tutor_id_4", "in", tutor_codes)])
+    if api_odoo_ids:
+        found_ids   = list(api_odoo_ids)
+        found_model = api_odoo_model
 
-        # Fallback: match by phone/WhatsApp if code lookup returns nothing
-        if not found and tutor_phones:
-            found = env["x_tutor"].search([
-                "|",
-                ("x_studio_mobile_number_3", "in", tutor_phones),
-                ("x_studio_whatsapp_number_2", "in", tutor_phones),
-            ])
+    else:
+        # ── Fallback path: local Odoo ORM lookup ──────────────────────────────
+        tutor_codes = []
+        raw_phones  = []
 
-        tutor_ids = found.ids
-        res_model = "x_tutor"
+        for tier in ["exact", "nearby", "city", "backup"]:
+            for t in recs.get(tier, []):
+                code = (t.get("tutorCode") or "").strip()
+                if code:
+                    tutor_codes.append(code)
+                phone = (t.get("phone") or "").strip()
+                if phone:
+                    raw_phones.append(phone)
+                wa = (t.get("whatsapp") or "").strip()
+                if wa and wa != phone:
+                    raw_phones.append(wa)
 
-    except Exception as lookup_err:
-        lead.message_post(
-            body=f"⚠️ Matching Tutors lookup failed: {str(lookup_err)}",
-            message_type="comment",
-            subtype_xmlid="mail.mt_note",
-        )
+        tutor_codes = list(dict.fromkeys(tutor_codes))
+        norm_phones = list(dict.fromkeys(norm_phone(p) for p in raw_phones if p))
 
+        found_ids   = []
+        found_model = "x_master_tutors"
+
+        try:
+            # ── Strategy 1: x_master_tutors ───────────────────────────────────
+            # Written by upsertMasterTutor() on tutor registration.
+            # Fields: x_tutor_id (code), x_mobile, x_whatsapp
+            found_master = env["x_master_tutors"].browse()
+
+            if tutor_codes:
+                found_master = env["x_master_tutors"].search(
+                    [("x_tutor_id", "in", tutor_codes)]
+                )
+
+            if norm_phones:
+                # Odoo OR domain: N-1 "|"-prefixes before N leaf conditions
+                # Each phone generates 2 leaves (mobile + whatsapp)
+                mt_leaves = []
+                for np in norm_phones:
+                    mt_leaves.append(("x_mobile",   "like", np))
+                    mt_leaves.append(("x_whatsapp", "like", np))
+                phone_domain = ["|"] * (len(mt_leaves) - 1) + mt_leaves
+                phone_matches = env["x_master_tutors"].search(phone_domain)
+                found_master  = found_master | phone_matches
+
+            if found_master:
+                found_ids   = found_master.ids
+                found_model = "x_master_tutors"
+
+            # ── Strategy 2: x_tutor (Studio model, fallback) ──────────────────
+            # Only 1 live record (TUT-001) as of last inspection, but kept as
+            # a safety net in case more records are added in future.
+            if not found_ids:
+                found_xt = env["x_tutor"].browse()
+
+                if tutor_codes:
+                    found_xt = env["x_tutor"].search(
+                        [("x_studio_tutor_id_4", "in", tutor_codes)]
+                    )
+
+                if not found_xt and norm_phones:
+                    # Odoo OR domain: N-1 "|"-prefixes before N leaf conditions
+                    xt_leaves = []
+                    for np in norm_phones:
+                        xt_leaves.append(("x_studio_mobile_number_3",   "like", np))
+                        xt_leaves.append(("x_studio_whatsapp_number_2", "like", np))
+                    phone_domain_xt = ["|"] * (len(xt_leaves) - 1) + xt_leaves
+                    found_xt = env["x_tutor"].search(phone_domain_xt)
+
+                if found_xt:
+                    found_ids   = found_xt.ids
+                    found_model = "x_tutor"
+
+        except Exception as lookup_err:
+            lead.message_post(
+                body=f"⚠️ Matching Tutors lookup failed: {str(lookup_err)}",
+                message_type="comment",
+                subtype_xmlid="mail.mt_note",
+            )
+
+    # ── Debug note so admin can see what was matched ───────────────────────────
+    debug_parts = [
+        f"🔎 <b>Tutor Lookup</b>",
+        f"API returned odooIds: {api_odoo_ids or '(none — fallback used)'}",
+        f"Model used: <b>{found_model}</b>",
+        f"Final Odoo IDs: {found_ids or '(none — page will be empty)'}",
+    ]
+    lead.message_post(
+        body="<br/>".join(debug_parts),
+        message_type="comment",
+        subtype_xmlid="mail.mt_note",
+    )
+
+    # ── Return the Window Action ──────────────────────────────────────────────
+    # Domain filters to exactly the matched records.  If found_ids is empty
+    # (no Odoo records for the recommended tutors) the page shows nothing —
+    # the debug note in the chatter explains why.
     action = {
         "type": "ir.actions.act_window",
         "name": f"Matching Tutors — {req_id}",
-        "res_model": res_model,
+        "res_model": found_model,
         "view_mode": "list,form",
-        "domain": [("id", "in", tutor_ids)] if tutor_ids else [("id", "=", False)],
+        "domain": [("id", "in", found_ids)] if found_ids else [("id", "=", False)],
         "target": "current",
     }
 

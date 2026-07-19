@@ -806,4 +806,100 @@ export async function syncMatchingTutorsToOdoo(lead, recommendations) {
     console.error("[OdooService] syncMatchingTutorsToOdoo critical error:", err.message);
     return { inserted, deleted, errors: errors + 1 };
   }
+}
+
+/**
+ * Look up Odoo x_master_tutors record IDs for a flat list of recommended tutors.
+ *
+ * Two-pass strategy:
+ *   Pass 1 — match by tutorCode (x_tutor_id).  Only tutors whose code was set
+ *             by upsertMasterTutor() will match here.
+ *   Pass 2 — match remaining tutors by phone/WhatsApp (last-10-digit suffix).
+ *
+ * @param {Array<{ tutorCode?: string, phone?: string, whatsapp?: string }>} tutors
+ * @returns {Promise<{ odooIds: number[], odooModel: string }>}
+ *   odooIds  — deduplicated list of matched x_master_tutors record IDs
+ *   odooModel — always "x_master_tutors" (used by the Odoo window action)
+ */
+export async function lookupOdooMasterTutorIds(tutors) {
+  const odooIds   = [];
+  const odooModel = "x_master_tutors";
+
+  if (!Array.isArray(tutors) || tutors.length === 0) {
+    return { odooIds, odooModel };
+  }
+
+  try {
+    const uid = await callOdoo("common", "authenticate", [DB, USERNAME, PASSWORD, {}]);
+    if (!uid) {
+      console.warn("[OdooService] lookupOdooMasterTutorIds: Odoo login failed");
+      return { odooIds, odooModel };
+    }
+
+    // ── Normalize a phone string to last-10 digits ────────────────────────────
+    const normPhone = (raw) => {
+      const digits = String(raw || "").replace(/\D/g, "");
+      return digits.length >= 10 ? digits.slice(-10) : digits;
+    };
+
+    const codes  = [...new Set(tutors.map(t => (t.tutorCode || "").trim()).filter(Boolean))];
+    const phones = [...new Set(
+      tutors.flatMap(t => [t.phone, t.whatsapp])
+            .filter(Boolean)
+            .map(normPhone)
+            .filter(p => p.length >= 6)
+    )];
+
+    // ── Pass 1: match by tutorCode ────────────────────────────────────────────
+    if (codes.length > 0) {
+      const byCode = await callOdoo("object", "execute_kw", [
+        DB, uid, PASSWORD,
+        "x_master_tutors", "search_read",
+        [[[  "x_tutor_id", "in", codes ]]],
+        { fields: ["id"], limit: 200 },
+      ]);
+      byCode.forEach(r => odooIds.push(r.id));
+    }
+
+    // ── Pass 2: match remaining tutors by phone suffix ────────────────────────
+    if (phones.length > 0) {
+      // Odoo domain OR is prefix notation: N leaf terms need N-1 "|" operators,
+      // each placed before the pair it joins.
+      // e.g. OR(A, B, C, D) → ["|", A, "|", B, "|", C, D]  (3 "|"s for 4 leaves)
+      //
+      // We produce 2 leaf conditions per phone (x_mobile LIKE p, x_whatsapp LIKE p),
+      // then build the full OR chain.
+      const leaves = [];
+      phones.forEach(p => {
+        leaves.push(["x_mobile",   "like", p]);
+        leaves.push(["x_whatsapp", "like", p]);
+      });
+
+      // Prepend (leaves.length - 1) OR operators
+      const phoneDomain = [];
+      for (let i = 0; i < leaves.length - 1; i++) {
+        phoneDomain.push("|");
+      }
+      leaves.forEach(leaf => phoneDomain.push(leaf));
+
+      const byPhone = await callOdoo("object", "execute_kw", [
+        DB, uid, PASSWORD,
+        "x_master_tutors", "search_read",
+        [phoneDomain],
+        { fields: ["id"], limit: 200 },
+      ]);
+      byPhone.forEach(r => {
+        if (!odooIds.includes(r.id)) odooIds.push(r.id);
+      });
+    }
+
+    console.log(
+      `[OdooService] lookupOdooMasterTutorIds — ` +
+      `codes: ${codes.length}, phones: ${phones.length}, matched: ${odooIds.length}`
+    );
+  } catch (err) {
+    console.error("[OdooService] lookupOdooMasterTutorIds error:", err.message);
+  }
+
+  return { odooIds, odooModel };
 }

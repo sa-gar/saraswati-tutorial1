@@ -24,7 +24,7 @@ import ParentEnquiry from "../models/ParentEnquiry.js";
 import { getRecommendations, buildParamsFromLead } from "../utils/recommendationEngine.js";
 import { broadcastService } from "../utils/broadcastService.js";
 import { parseAddress } from "../utils/matchingEngine.js";
-import { addOdooChatterMessage, syncMatchingTutorsToOdoo } from "../utils/odooService.js";
+import { addOdooChatterMessage, syncMatchingTutorsToOdoo, lookupOdooMasterTutorIds } from "../utils/odooService.js";
 
 const router = express.Router();
 
@@ -252,6 +252,27 @@ router.get("/recommend-from-odoo", async (req, res) => {
       console.error("[OdooRoutes] Failed to sync matching tutors to Odoo:", err.message);
     });
 
+    // ── Resolve Odoo record IDs for matched tutors ─────────────────────────
+    // Flatten all tiers into one list, then look up x_master_tutors by code
+    // and phone.  The Python action will use these IDs directly in the domain
+    // filter so the window action shows exactly the matched tutors.
+    const allRecommended = [
+      ...( recommendations.exact  || []),
+      ...( recommendations.nearby || []),
+      ...( recommendations.city   || []),
+      ...( recommendations.backup || []),
+    ];
+    const { odooIds, odooModel } = await lookupOdooMasterTutorIds(allRecommended)
+      .catch((err) => {
+        console.error("[OdooRoutes] lookupOdooMasterTutorIds failed:", err.message);
+        return { odooIds: [], odooModel: "x_master_tutors" };
+      });
+
+    console.log(
+      `[OdooRoutes] recommend-from-odoo — ` +
+      `${allRecommended.length} tutors recommended, ${odooIds.length} matched in Odoo`
+    );
+
     // Post summary to Odoo chatter
     const tierLines = [];
     for (const [tier, tutors] of Object.entries(recommendations)) {
@@ -279,6 +300,10 @@ router.get("/recommend-from-odoo", async (req, res) => {
         city: lead.city,
       },
       recommendations,
+      // Odoo record IDs resolved from x_master_tutors — used by the Python
+      // Server Action to open the Matching Tutors window with the exact domain.
+      odooIds,
+      odooModel,
     });
 
   } catch (err) {
