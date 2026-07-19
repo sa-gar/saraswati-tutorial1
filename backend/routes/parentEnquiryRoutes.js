@@ -328,6 +328,7 @@ router.put("/:id", verifyToken(["admin"]), async (req, res) => {
       totalClasses: req.body.totalClasses,
       completedClasses: req.body.completedClasses,
       classSchedule: req.body.classSchedule,
+      classDuration: req.body.classDuration,
     };
 
     if (req.body.assignedTutor !== undefined) {

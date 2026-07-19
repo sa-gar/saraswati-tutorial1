@@ -343,6 +343,7 @@ export default function TeacherDashboard() {
 
                           <h4 className="text-sm font-black text-slate-800">{student.studentName}</h4>
                           <p className="text-xs text-slate-500 mt-1 font-semibold">Schedule: {student.classSchedule || "Not scheduled"}</p>
+                          <p className="text-xs text-slate-500 mt-0.5 font-semibold">Duration: {student.classDuration || "Not provided"}</p>
                           
                           {/* Progress Bar */}
                           <div className="mt-3">

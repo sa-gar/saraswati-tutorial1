@@ -37,6 +37,7 @@ async function formatStudentCard(lead) {
     remainingClasses: remaining,
     missedClasses,
     classSchedule: lead.classSchedule || lead.preferredTime || "Not Scheduled",
+    classDuration: lead.classDuration || "Not provided",
     currentAttendanceStatus: latestLog ? latestLog.status : "Pending",
     latestLogDate: latestLog ? latestLog.date : null,
     leadStatus: lead.status,
@@ -329,6 +330,144 @@ router.get("/admin-alerts", verifyToken(["admin"]), async (req, res) => {
   } catch (error) {
     console.error("Fetch admin alerts error:", error);
     res.status(500).json({ message: error.message });
+  }
+});
+
+// =============================================================
+// PUT: Update tuition details (Admin only)
+// =============================================================
+router.put("/update-tuition/:id", verifyToken(["admin"]), async (req, res) => {
+  try {
+    const { classDuration, totalClasses, classSchedule, completedClasses } = req.body;
+    const lead = await ParentEnquiry.findById(req.params.id);
+    if (!lead) return res.status(404).json({ message: "Student enquiry not found." });
+
+    if (classDuration !== undefined) lead.classDuration = classDuration;
+    if (totalClasses !== undefined) lead.totalClasses = totalClasses;
+    if (classSchedule !== undefined) lead.classSchedule = classSchedule;
+    if (completedClasses !== undefined) lead.completedClasses = completedClasses;
+
+    await lead.save({ validateBeforeSave: false });
+
+    // Sync to Odoo if needed
+    if (lead.odooLeadId) {
+      try {
+        const comp = lead.completedClasses || 0;
+        const tot = lead.totalClasses || 12;
+        const rem = Math.max(0, tot - comp);
+        await updateLead(lead.odooLeadId, {
+          x_studio_total_classes: tot,
+          x_studio_completed_classes: comp,
+          x_studio_remaining_classes: rem,
+        });
+      } catch (odooErr) {
+        console.error("[Odoo sync error during manual update]:", odooErr.message);
+      }
+    }
+
+    const card = await formatStudentCard(lead);
+    res.json({ success: true, studentCard: card });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// =============================================================
+// DELETE: Delete an attendance log (Admin only)
+// =============================================================
+router.delete("/log/:logId", verifyToken(["admin"]), async (req, res) => {
+  try {
+    const log = await Attendance.findById(req.params.logId);
+    if (!log) return res.status(404).json({ message: "Log not found." });
+
+    const parentEnquiryId = log.parentEnquiryId;
+    await Attendance.findByIdAndDelete(req.params.logId);
+
+    // Recalculate Completed Classes count
+    const lead = await ParentEnquiry.findById(parentEnquiryId);
+    if (lead) {
+      const completedCount = await Attendance.countDocuments({
+        parentEnquiryId,
+        status: "Done",
+      });
+      lead.completedClasses = completedCount;
+      await lead.save({ validateBeforeSave: false });
+
+      if (lead.odooLeadId) {
+        try {
+          const remaining = Math.max(0, (lead.totalClasses || 12) - completedCount);
+          await updateLead(lead.odooLeadId, {
+            x_studio_completed_classes: completedCount,
+            x_studio_total_classes: lead.totalClasses || 12,
+            x_studio_remaining_classes: remaining,
+          });
+        } catch (odooErr) {
+          console.error("[Odoo Sync Error after delete log]:", odooErr.message);
+        }
+      }
+    }
+
+    res.json({ success: true, message: "Attendance log deleted." });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// =============================================================
+// PUT: Update an attendance log (Admin only)
+// =============================================================
+router.put("/log/:logId", verifyToken(["admin"]), async (req, res) => {
+  try {
+    const { status, date, topicsCovered, missedReason, customReason } = req.body;
+    const log = await Attendance.findById(req.params.logId);
+    if (!log) return res.status(404).json({ message: "Log not found." });
+
+    if (status) log.status = status;
+    if (date) log.date = date;
+    if (status === "Done") {
+      log.topicsCovered = topicsCovered || "";
+      log.missedReason = "";
+      log.customReason = "";
+    } else if (status === "Missed") {
+      log.topicsCovered = "";
+      log.missedReason = missedReason || "";
+      log.customReason = customReason || "";
+    }
+
+    await log.save();
+
+    // Recalculate Completed Classes count for parent lead
+    const parentEnquiryId = log.parentEnquiryId;
+    const lead = await ParentEnquiry.findById(parentEnquiryId);
+    if (lead) {
+      const completedCount = await Attendance.countDocuments({
+        parentEnquiryId,
+        status: "Done",
+      });
+      lead.completedClasses = completedCount;
+      await lead.save({ validateBeforeSave: false });
+
+      if (lead.odooLeadId) {
+        try {
+          const remaining = Math.max(0, (lead.totalClasses || 12) - completedCount);
+          await updateLead(lead.odooLeadId, {
+            x_studio_completed_classes: completedCount,
+            x_studio_total_classes: lead.totalClasses || 12,
+            x_studio_remaining_classes: remaining,
+            x_studio_last_attendance_status: status,
+          });
+        } catch (odooErr) {
+          console.error("[Odoo Sync Error after update log]:", odooErr.message);
+        }
+      }
+    }
+
+    res.json({ success: true, log });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
   }
 });
 

@@ -2415,6 +2415,7 @@ export default function AdminDashboard() {
             attendanceLogs={attendanceLogs}
             fetchingLogsLeadId={fetchingLogsLeadId}
             setAttendanceLogs={setAttendanceLogs}
+            fetchData={fetchData}
           />
         )}
 
@@ -2769,9 +2770,41 @@ function AdminAttendanceConsole({
   fetchLeadAttendanceLogs,
   attendanceLogs,
   fetchingLogsLeadId,
+  setAttendanceLogs,
+  fetchData,
 }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedId, setExpandedId] = useState(null);
+
+  // Edit Tuition Inline States
+  const [tDuration, setTDuration] = useState("");
+  const [tTotalClasses, setTTotalClasses] = useState("");
+  const [tCompletedClasses, setTCompletedClasses] = useState("");
+  const [tSchedule, setTSchedule] = useState("");
+  const [tuitionUpdating, setTuitionUpdating] = useState(false);
+  const [tuitionError, setTuitionError] = useState("");
+
+  // Edit Log Inline States
+  const [editingLogId, setEditingLogId] = useState(null);
+  const [logStatus, setLogStatus] = useState("Done");
+  const [logDate, setLogDate] = useState("");
+  const [logTopics, setLogTopics] = useState("");
+  const [logMissedReason, setLogMissedReason] = useState("");
+  const [logCustomReason, setLogCustomReason] = useState("");
+  const [logUpdating, setLogUpdating] = useState(false);
+  const [logError, setLogError] = useState("");
+
+  const adminToken = localStorage.getItem("adminToken");
+
+  const missedReasons = [
+    "Cancelled by Parent",
+    "Cancelled by Teacher",
+    "Teacher Sick",
+    "Student Unavailable",
+    "Emergency",
+    "Public Holiday",
+    "Other"
+  ];
 
   const filtered = parentEnquiries.filter((p) => {
     const studentName = p.wards?.map((w) => w.studentName).join(", ") || "";
@@ -2787,6 +2820,147 @@ function AdminAttendanceConsole({
       reqId.toLowerCase().includes(query)
     );
   });
+
+  const handleToggleExpand = (p) => {
+    if (expandedId === p._id) {
+      setExpandedId(null);
+      setEditingLogId(null);
+    } else {
+      setExpandedId(p._id);
+      setEditingLogId(null);
+      fetchLeadAttendanceLogs(p._id);
+      
+      // Pre-fill tuition details inline form
+      setTDuration(p.classDuration || "");
+      setTTotalClasses(p.totalClasses || 12);
+      setTCompletedClasses(p.completedClasses || 0);
+      setTSchedule(p.classSchedule || "");
+      setTuitionError("");
+    }
+  };
+
+  const handleUpdateTuitionInline = async (e, leadId) => {
+    e.preventDefault();
+    setTuitionError("");
+    setTuitionUpdating(true);
+
+    try {
+      const res = await fetch(`${API_BASE}/attendance/update-tuition/${leadId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${adminToken}`,
+        },
+        body: JSON.stringify({
+          classDuration: tDuration,
+          totalClasses: Number(tTotalClasses),
+          completedClasses: Number(tCompletedClasses),
+          classSchedule: tSchedule,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        alert("✅ Tuition configuration updated successfully!");
+        fetchData();
+      } else {
+        setTuitionError(data.message || "Failed to update tuition details.");
+      }
+    } catch (err) {
+      setTuitionError("Failed to connect to the server.");
+    } finally {
+      setTuitionUpdating(false);
+    }
+  };
+
+  const startEditLogInline = (log) => {
+    setEditingLogId(log._id);
+    setLogStatus(log.status || "Done");
+    setLogDate(log.date || "");
+    setLogTopics(log.topicsCovered || "");
+    setLogMissedReason(log.missedReason || "");
+    setLogCustomReason(log.customReason || "");
+    setLogError("");
+  };
+
+  const handleUpdateLogInline = async (e, logId, leadId) => {
+    e.preventDefault();
+    setLogError("");
+    setLogUpdating(true);
+
+    if (logStatus === "Done" && !logTopics.trim()) {
+      setLogError("Topics covered is required.");
+      setLogUpdating(false);
+      return;
+    }
+
+    if (logStatus === "Missed" && !logMissedReason) {
+      setLogError("Please select a reason.");
+      setLogUpdating(false);
+      return;
+    }
+
+    if (logStatus === "Missed" && logMissedReason === "Other" && !logCustomReason.trim()) {
+      setLogError("Please specify custom reason.");
+      setLogUpdating(false);
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/attendance/log/${logId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${adminToken}`,
+        },
+        body: JSON.stringify({
+          status: logStatus,
+          date: logDate,
+          topicsCovered: logStatus === "Done" ? logTopics : "",
+          missedReason: logStatus === "Missed" ? logMissedReason : "",
+          customReason: logStatus === "Missed" && logMissedReason === "Other" ? logCustomReason : "",
+        }),
+      });
+
+      if (res.ok) {
+        setEditingLogId(null);
+        alert("✅ Log updated successfully!");
+        fetchData();
+        fetchLeadAttendanceLogs(leadId);
+      } else {
+        const data = await res.json();
+        setLogError(data.message || "Failed to update log.");
+      }
+    } catch (err) {
+      setLogError("Failed to connect to the server.");
+    } finally {
+      setLogUpdating(false);
+    }
+  };
+
+  const handleDeleteLog = async (leadId, logId) => {
+    if (!window.confirm("⚠️ Delete this attendance log? Completed count will be updated.")) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/attendance/log/${logId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${adminToken}`,
+        },
+      });
+
+      if (res.ok) {
+        alert("✅ Log deleted successfully!");
+        fetchData();
+        fetchLeadAttendanceLogs(leadId);
+      } else {
+        const data = await res.json();
+        alert(data.message || "Failed to delete log.");
+      }
+    } catch (err) {
+      alert("Failed to connect to the server.");
+    }
+  };
 
   return (
     <div className="rounded-3xl bg-white p-6 shadow-sm border border-slate-200/80 animate-slideFade">
@@ -2817,7 +2991,7 @@ function AdminAttendanceConsole({
           <thead>
             <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-black text-slate-500 uppercase tracking-wider">
               <th className="py-4 px-4">Requirement ID</th>
-              <th className="py-4 px-4">Student</th>
+              <th className="py-4 px-4">Student & Duration</th>
               <th className="py-4 px-4">Parent</th>
               <th className="py-4 px-4">Teacher Name</th>
               <th className="py-4 px-4 text-center">Total</th>
@@ -2842,21 +3016,13 @@ function AdminAttendanceConsole({
                 const completed = p.completedClasses || 0;
                 const remaining = Math.max(0, total - completed);
 
-                // Count missed classes from logs if loaded
                 const tutorMissedLogs = attendanceLogs[p._id]?.filter((l) => l.status === "Missed") || [];
                 const missedCount = attendanceLogs[p._id] ? tutorMissedLogs.length : "-";
 
                 return (
                   <React.Fragment key={p._id}>
                     <tr
-                      onClick={() => {
-                        if (isExpanded) {
-                          setExpandedId(null);
-                        } else {
-                          setExpandedId(p._id);
-                          fetchLeadAttendanceLogs(p._id);
-                        }
-                      }}
+                      onClick={() => handleToggleExpand(p)}
                       className={`hover:bg-slate-50/50 transition-all cursor-pointer border-b border-slate-100 ${
                         isExpanded ? "bg-slate-50/30 font-extrabold" : ""
                       }`}
@@ -2866,9 +3032,12 @@ function AdminAttendanceConsole({
                           {p.requirementId || "REQ-N/A"}
                         </span>
                       </td>
-                      <td className="py-4 px-4 font-black text-slate-800 truncate max-w-[160px]">{studentName}</td>
+                      <td className="py-4 px-4">
+                        <div className="font-black text-slate-800 truncate max-w-[160px]">{studentName}</div>
+                        <div className="text-[10px] text-slate-450 font-semibold mt-0.5">Duration: {p.classDuration || "Not provided"}</div>
+                      </td>
                       <td className="py-4 px-4 truncate max-w-[160px]">{p.parentName || "Unknown"}</td>
-                      <td className="py-4 px-4 text-slate-650 truncate max-w-[165px]">{p.assignedTutor || "Not Assigned"}</td>
+                      <td className="py-4 px-4 text-slate-655 truncate max-w-[165px]">{p.assignedTutor || "Not Assigned"}</td>
                       <td className="py-4 px-4 text-center text-slate-500">{total}</td>
                       <td className="py-4 px-4 text-center text-emerald-600 font-extrabold">{completed}</td>
                       <td className="py-4 px-4 text-center text-rose-500 font-extrabold">{missedCount}</td>
@@ -2876,18 +3045,13 @@ function AdminAttendanceConsole({
                       <td className="py-4 px-4 text-right">
                         <button
                           type="button"
-                          className="text-[10px] font-black text-indigo-600 hover:text-indigo-800 underline cursor-pointer"
+                          className="text-[10px] font-black text-indigo-650 hover:text-indigo-800 underline cursor-pointer"
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (isExpanded) {
-                              setExpandedId(null);
-                            } else {
-                              setExpandedId(p._id);
-                              fetchLeadAttendanceLogs(p._id);
-                            }
+                            handleToggleExpand(p);
                           }}
                         >
-                          {isExpanded ? "Collapse" : "View Logs"}
+                          {isExpanded ? "Collapse" : "Edit / Logs"}
                         </button>
                       </td>
                     </tr>
@@ -2896,58 +3060,250 @@ function AdminAttendanceConsole({
                       <tr className="bg-slate-50/30">
                         <td colSpan="9" className="p-5 border-t border-slate-100">
                           <div className="bg-white rounded-2xl border border-slate-150 p-5 shadow-inner">
-                            <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider mb-4">Class Logs & Topics History</h4>
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                              
+                              {/* Left Columns: Timeline and Logs */}
+                              <div className="lg:col-span-2 space-y-4">
+                                <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider mb-2">Class Logs & Topics History</h4>
 
-                            {fetchingLogsLeadId === p._id ? (
-                              <p className="text-xs font-bold text-slate-500 animate-pulse text-center py-4">
-                                Loading attendance history...
-                              </p>
-                            ) : !attendanceLogs[p._id] ? (
-                              <p className="text-xs font-bold text-slate-500 text-center py-4">
-                                Failed to fetch logs. Click View Logs to try again.
-                              </p>
-                            ) : attendanceLogs[p._id].length === 0 ? (
-                              <p className="text-xs font-bold text-slate-500 text-center py-4">
-                                No classes logged for this requirement yet.
-                              </p>
-                            ) : (
-                              <div className="space-y-3">
-                                {attendanceLogs[p._id].map((log, idx) => {
-                                  const logIndex = attendanceLogs[p._id].length - idx;
-                                  return (
-                                    <div key={log._id} className="bg-slate-50 rounded-xl border border-slate-200/80 p-3.5 flex justify-between gap-4 text-xs font-semibold">
-                                      <div className="space-y-1">
-                                        <div className="flex items-center gap-2">
-                                          <span className="font-extrabold text-slate-800">Class {logIndex} ({log.date})</span>
-                                          <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${
-                                            log.status === "Done"
-                                              ? "bg-emerald-50 border border-emerald-100 text-emerald-700"
-                                              : "bg-rose-50 border border-rose-100 text-rose-700"
-                                          }`}>
-                                            {log.status === "Done" ? "Done" : "Missed"}
-                                          </span>
+                                {fetchingLogsLeadId === p._id ? (
+                                  <p className="text-xs font-bold text-slate-500 animate-pulse text-center py-4">
+                                    Loading attendance history...
+                                  </p>
+                                ) : !attendanceLogs[p._id] ? (
+                                  <p className="text-xs font-bold text-slate-500 text-center py-4">
+                                    Failed to fetch logs. Click view again.
+                                  </p>
+                                ) : attendanceLogs[p._id].length === 0 ? (
+                                  <p className="text-xs font-bold text-slate-500 text-center py-4">
+                                    No classes logged for this requirement yet.
+                                  </p>
+                                ) : (
+                                  <div className="space-y-3">
+                                    {attendanceLogs[p._id].map((log, idx) => {
+                                      const logIndex = attendanceLogs[p._id].length - idx;
+                                      const isEditingThisLog = editingLogId === log._id;
+
+                                      if (isEditingThisLog) {
+                                        return (
+                                          <form
+                                            key={log._id}
+                                            onSubmit={(e) => handleUpdateLogInline(e, log._id, p._id)}
+                                            className="bg-slate-55 rounded-xl border border-indigo-200 p-4 space-y-3 shadow-sm"
+                                          >
+                                            <p className="text-[10px] font-black text-indigo-700 uppercase tracking-wider">Editing Class {logIndex} log</p>
+                                            {logError && <p className="text-xs text-rose-600 font-bold">{logError}</p>}
+                                            
+                                            <div className="grid grid-cols-2 gap-3">
+                                              <div>
+                                                <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">Status</label>
+                                                <select
+                                                  value={logStatus}
+                                                  onChange={(e) => setLogStatus(e.target.value)}
+                                                  className="w-full h-9 px-3 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+                                                >
+                                                  <option value="Done">Done</option>
+                                                  <option value="Missed">Missed</option>
+                                                </select>
+                                              </div>
+                                              <div>
+                                                <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">Date</label>
+                                                <input
+                                                  type="date"
+                                                  required
+                                                  value={logDate}
+                                                  onChange={(e) => setLogDate(e.target.value)}
+                                                  className="w-full h-9 px-3 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                />
+                                              </div>
+                                            </div>
+
+                                            {logStatus === "Done" ? (
+                                              <div>
+                                                <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">Topics Covered</label>
+                                                <textarea
+                                                  rows="2"
+                                                  required
+                                                  value={logTopics}
+                                                  onChange={(e) => setLogTopics(e.target.value)}
+                                                  className="w-full p-3 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+                                                />
+                                              </div>
+                                            ) : (
+                                              <div className="space-y-2">
+                                                <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">Missed Reason</label>
+                                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                                                  {missedReasons.map((reason) => (
+                                                    <button
+                                                      key={reason}
+                                                      type="button"
+                                                      onClick={() => setLogMissedReason(reason)}
+                                                      className={`px-2 py-1.5 rounded-lg border text-[10px] font-bold text-center transition-all cursor-pointer ${
+                                                        logMissedReason === reason
+                                                          ? "border-rose-500 bg-rose-50 text-rose-700"
+                                                          : "border-slate-200 bg-white text-slate-650"
+                                                      }`}
+                                                    >
+                                                      {reason}
+                                                    </button>
+                                                  ))}
+                                                </div>
+                                                {logMissedReason === "Other" && (
+                                                  <input
+                                                    type="text"
+                                                    required
+                                                    placeholder="Specify custom reason..."
+                                                    value={logCustomReason}
+                                                    onChange={(e) => setLogCustomReason(e.target.value)}
+                                                    className="w-full h-9 px-3 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                  />
+                                                )}
+                                              </div>
+                                            )}
+
+                                            <div className="flex gap-2 justify-end">
+                                              <button
+                                                type="button"
+                                                onClick={() => setEditingLogId(null)}
+                                                className="px-3 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-700 cursor-pointer"
+                                              >
+                                                Cancel
+                                              </button>
+                                              <button
+                                                type="submit"
+                                                disabled={logUpdating}
+                                                className="px-3.5 py-1.5 rounded-lg text-xs font-black text-white bg-indigo-600 hover:bg-indigo-700 transition cursor-pointer"
+                                              >
+                                                {logUpdating ? "Saving..." : "Save Log"}
+                                              </button>
+                                            </div>
+                                          </form>
+                                        );
+                                      }
+
+                                      return (
+                                        <div key={log._id} className="bg-slate-50 rounded-xl border border-slate-200/80 p-3.5 flex justify-between gap-4 text-xs font-semibold">
+                                          <div className="space-y-1">
+                                            <div className="flex items-center gap-2">
+                                              <span className="font-extrabold text-slate-800">Class {logIndex} ({log.date})</span>
+                                              <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${
+                                                log.status === "Done"
+                                                  ? "bg-emerald-50 border border-emerald-100 text-emerald-700"
+                                                  : "bg-rose-50 border border-rose-100 text-rose-700"
+                                              }`}>
+                                                {log.status === "Done" ? "Done" : "Missed"}
+                                              </span>
+                                            </div>
+
+                                            {log.status === "Done" ? (
+                                              <p className="text-slate-655 mt-1">
+                                                <strong className="text-slate-700 font-extrabold">Topics Covered:</strong> {log.topicsCovered}
+                                              </p>
+                                            ) : (
+                                              <p className="text-slate-655 mt-1">
+                                                <strong className="text-slate-700 font-extrabold">Reason:</strong> {log.missedReason === "Other" ? log.customReason : log.missedReason}
+                                              </p>
+                                            )}
+
+                                            <div className="flex items-center gap-2 mt-2 pt-2 border-t border-slate-100">
+                                              <button
+                                                type="button"
+                                                onClick={() => startEditLogInline(log)}
+                                                className="text-[10px] font-black text-indigo-600 hover:underline cursor-pointer"
+                                              >
+                                                Edit Log
+                                              </button>
+                                              <button
+                                                type="button"
+                                                onClick={() => handleDeleteLog(p._id, log._id)}
+                                                className="text-[10px] font-black text-rose-600 hover:underline cursor-pointer"
+                                              >
+                                                Delete Log
+                                              </button>
+                                            </div>
+                                          </div>
+
+                                          <div className="text-right text-[10px] font-bold text-slate-450 shrink-0 self-center">
+                                            <span>By {log.tutorName}</span>
+                                            <span className="block mt-0.5">{new Date(log.timestamp).toLocaleDateString()}</span>
+                                          </div>
                                         </div>
-
-                                        {log.status === "Done" ? (
-                                          <p className="text-slate-655 mt-1">
-                                            <strong className="text-slate-700 font-extrabold">Topics Covered:</strong> {log.topicsCovered}
-                                          </p>
-                                        ) : (
-                                          <p className="text-slate-655 mt-1">
-                                            <strong className="text-slate-700 font-extrabold">Reason:</strong> {log.missedReason === "Other" ? log.customReason : log.missedReason}
-                                          </p>
-                                        )}
-                                      </div>
-
-                                      <div className="text-right text-[10px] font-bold text-slate-450 shrink-0 self-center">
-                                        <span>By {log.tutorName}</span>
-                                        <span className="block mt-0.5">{new Date(log.timestamp).toLocaleDateString()}</span>
-                                      </div>
-                                    </div>
-                                  );
-                                })}
+                                      );
+                                    })}
+                                  </div>
+                                )}
                               </div>
-                            )}
+
+                              {/* Right Column: Inline Edit Tuition Details */}
+                              <div className="border-t lg:border-t-0 lg:border-l border-slate-200 pt-5 lg:pt-0 lg:pl-6 space-y-4">
+                                <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider mb-2">Edit Tuition Details</h4>
+                                
+                                <form onSubmit={(e) => handleUpdateTuitionInline(e, p._id)} className="space-y-3.5">
+                                  {tuitionError && (
+                                    <div className="p-2.5 bg-rose-50 border border-rose-100 rounded-xl text-rose-700 text-xs font-bold">
+                                      {tuitionError}
+                                    </div>
+                                  )}
+
+                                  <div>
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">Class Duration</label>
+                                    <input
+                                      type="text"
+                                      required
+                                      placeholder="e.g. 1.5 hours"
+                                      value={tDuration}
+                                      onChange={(e) => setTDuration(e.target.value)}
+                                      className="w-full h-10 px-3.5 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                    />
+                                  </div>
+
+                                  <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                      <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">Total Classes</label>
+                                      <input
+                                        type="number"
+                                        required
+                                        min="1"
+                                        value={tTotalClasses}
+                                        onChange={(e) => setTTotalClasses(e.target.value)}
+                                        className="w-full h-10 px-3.5 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">Completed</label>
+                                      <input
+                                        type="number"
+                                        required
+                                        min="0"
+                                        value={tCompletedClasses}
+                                        onChange={(e) => setTCompletedClasses(e.target.value)}
+                                        className="w-full h-10 px-3.5 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <div>
+                                    <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">Class Schedule</label>
+                                    <input
+                                      type="text"
+                                      placeholder="e.g. Mon, Wed, Fri @ 5 PM"
+                                      value={tSchedule}
+                                      onChange={(e) => setTSchedule(e.target.value)}
+                                      className="w-full h-10 px-3.5 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                    />
+                                  </div>
+
+                                  <button
+                                    type="submit"
+                                    disabled={tuitionUpdating}
+                                    className="w-full h-10 rounded-xl text-xs font-black text-white bg-indigo-600 hover:bg-indigo-700 transition cursor-pointer shadow-sm disabled:opacity-50"
+                                  >
+                                    {tuitionUpdating ? "Saving Changes..." : "Save Tuition Config"}
+                                  </button>
+                                </form>
+                              </div>
+
+                            </div>
                           </div>
                         </td>
                       </tr>
