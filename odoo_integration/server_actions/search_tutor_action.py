@@ -64,6 +64,42 @@ try:
         subtype_xmlid="mail.mt_note",
     )
 
+    # ── Option (a): Display filtered tutors in x_tutor (or x_master_tutors) ──
+    tutor_codes = []
+    for tier in ["exact", "nearby", "city", "backup"]:
+        for t in recs.get(tier, []):
+            if t.get("tutorCode"):
+                tutor_codes.append(t["tutorCode"])
+
+    tutor_ids = []
+    res_model = "x_tutor"
+    try:
+        tutor_records = env["x_tutor"].search([
+            "|", "|", "|",
+            ("x_studio_tutor_id", "in", tutor_codes),
+            ("x_studio_tutor_id_1", "in", tutor_codes),
+            ("x_studio_tutor_id_2", "in", tutor_codes),
+            ("x_studio_tutor_id_3", "in", tutor_codes)
+        ])
+        tutor_ids = tutor_records.ids
+        res_model = "x_tutor"
+    except Exception:
+        try:
+            tutor_records = env["x_master_tutors"].search([("x_tutor_id", "in", tutor_codes)])
+            tutor_ids = tutor_records.ids
+            res_model = "x_master_tutors"
+        except Exception:
+            pass
+
+    action = {
+        "type": "ir.actions.act_window",
+        "name": f"Matching Tutors for {req_id}",
+        "res_model": res_model,
+        "view_mode": "tree,form",
+        "domain": [("id", "in", tutor_ids)],
+        "target": "current",
+    }
+
 except requests.exceptions.Timeout:
     lead.message_post(
         body="⚠️ Search Tutor: Request timed out. Please try again.",

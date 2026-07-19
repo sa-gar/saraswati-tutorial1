@@ -72,13 +72,15 @@ async function run() {
       ]
     };
 
-    console.log("First Sync (should insert 2)...");
+    console.log("\n--- TEST: SET MODEL TO READ-ONLY x_tutor ---");
+    process.env.ODOO_MATCHING_TUTORS_MODEL = "x_tutor";
     const result1 = await syncMatchingTutorsToOdoo(lead, mockRecommendations);
-    console.log("First Sync Result:", result1);
+    console.log("Sync Result (should skip):", result1);
 
-    console.log("\nSecond Sync (should delete 2 and insert 2)...");
+    console.log("\n--- TEST: SET MODEL TO READ-ONLY x_master_tutors ---");
+    process.env.ODOO_MATCHING_TUTORS_MODEL = "x_master_tutors";
     const result2 = await syncMatchingTutorsToOdoo(lead, mockRecommendations);
-    console.log("Second Sync Result:", result2);
+    console.log("Sync Result (should skip):", result2);
 
   } catch (err) {
     console.error("Test failed:", err);

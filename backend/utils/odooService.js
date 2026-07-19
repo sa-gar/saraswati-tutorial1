@@ -560,6 +560,15 @@ export async function syncMatchingTutorsToOdoo(lead, recommendations) {
     `lead: ${requirementId} (odooLeadId: ${odooLeadId})`
   );
 
+  // ── Guard: Master tutor models are read-only ───────────────────────────────
+  if (modelName === "x_tutor" || modelName === "x_master_tutors") {
+    console.log(
+      `[OdooService] Skipping matching tutor sync: Model is "${modelName}" ` +
+      `(Master Tutor repositories must remain read-only).`
+    );
+    return { inserted: 0, deleted: 0, errors: 0 };
+  }
+
   let inserted = 0;
   let deleted  = 0;
   let errors   = 0;
