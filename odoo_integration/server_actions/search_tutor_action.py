@@ -22,6 +22,22 @@
 import requests
 import json
 
+# ── Odoo Server Action globals ─────────────────────────────────────────────────
+# These names are injected by Odoo at runtime into every "Execute Python Code"
+# Server Action context.  They are NOT importable — declaring them here only
+# satisfies static-analysis tools (Pylance / Pyright / Ruff F821).
+# At runtime the try/except block below is never reached.
+# See: https://www.odoo.com/documentation/17.0/developer/reference/backend/actions.html#python-code
+try:
+    env    = env     # noqa: F821  # Odoo ORM environment (models, config, …)
+    record = record  # noqa: F821  # current crm.lead record
+except NameError:
+    # Running outside Odoo (e.g. linter, unit-test).
+    # Define harmless stubs so the file can be parsed without errors.
+    env    = None  # type: ignore[assignment]
+    record = None  # type: ignore[assignment]
+# ──────────────────────────────────────────────────────────────────────────────
+
 lead = record  # current CRM lead record
 BACKEND_URL = env['ir.config_parameter'].sudo().get_param(
     'saraswati.backend_url', 'https://your-api.saraswatitutorial.com'
@@ -64,39 +80,56 @@ try:
         subtype_xmlid="mail.mt_note",
     )
 
-    # ── Option (a): Display filtered tutors in x_tutor (or x_master_tutors) ──
+    # ── Display filtered tutors from x_tutor (read-only — NO create/write/unlink) ──
+    # Field confirmed by live inspection of master x_tutor records:
+    #   x_studio_tutor_id_4  → the actual Tutor Code field (e.g. "TUT-001")
+    #   x_studio_tutor_id, x_studio_tutor_id_1/2/3 → always false in real records
+    # Phone fields confirmed: x_studio_mobile_number_3, x_studio_whatsapp_number_2
     tutor_codes = []
+    tutor_phones = []
     for tier in ["exact", "nearby", "city", "backup"]:
         for t in recs.get(tier, []):
             if t.get("tutorCode"):
                 tutor_codes.append(t["tutorCode"])
+            if t.get("phone"):
+                tutor_phones.append(str(t["phone"]).strip())
+            if t.get("whatsapp") and t.get("whatsapp") != t.get("phone"):
+                tutor_phones.append(str(t["whatsapp"]).strip())
 
     tutor_ids = []
     res_model = "x_tutor"
+
     try:
-        tutor_records = env["x_tutor"].search([
-            "|", "|", "|",
-            ("x_studio_tutor_id", "in", tutor_codes),
-            ("x_studio_tutor_id_1", "in", tutor_codes),
-            ("x_studio_tutor_id_2", "in", tutor_codes),
-            ("x_studio_tutor_id_3", "in", tutor_codes)
-        ])
-        tutor_ids = tutor_records.ids
+        found = env["x_tutor"]
+
+        # Primary search: by tutor code in the confirmed correct field
+        if tutor_codes:
+            found = env["x_tutor"].search([("x_studio_tutor_id_4", "in", tutor_codes)])
+
+        # Fallback: match by phone/WhatsApp if code lookup returns nothing
+        if not found and tutor_phones:
+            found = env["x_tutor"].search([
+                "|",
+                ("x_studio_mobile_number_3", "in", tutor_phones),
+                ("x_studio_whatsapp_number_2", "in", tutor_phones),
+            ])
+
+        tutor_ids = found.ids
         res_model = "x_tutor"
-    except Exception:
-        try:
-            tutor_records = env["x_master_tutors"].search([("x_tutor_id", "in", tutor_codes)])
-            tutor_ids = tutor_records.ids
-            res_model = "x_master_tutors"
-        except Exception:
-            pass
+
+    except Exception as lookup_err:
+        lead.message_post(
+            body=f"⚠️ Matching Tutors lookup failed: {str(lookup_err)}",
+            message_type="comment",
+            subtype_xmlid="mail.mt_note",
+        )
 
     action = {
         "type": "ir.actions.act_window",
-        "name": f"Matching Tutors for {req_id}",
+        "name": f"Matching Tutors — {req_id}",
         "res_model": res_model,
-        "view_mode": "tree,form",
-        "domain": [("id", "in", tutor_ids)],
+        "view_mode": "list,form",
+        "domain": [("id", "in", tutor_ids)] if tutor_ids else [("id", "=", False)],
         "target": "current",
     }
 

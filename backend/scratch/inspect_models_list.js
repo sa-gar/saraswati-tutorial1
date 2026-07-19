@@ -27,8 +27,8 @@ async function run() {
     const uid = authData.result;
     console.log("Logged in, UID:", uid);
 
-    // List models from ir.model containing "Matching" or "Match" or "Tutor" in name or model
-    const modelsRes = await fetch(`${ODOO_URL}/jsonrpc`, {
+    // List window actions containing tutor or match or matching
+    const actionsRes = await fetch(`${ODOO_URL}/jsonrpc`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -41,24 +41,24 @@ async function run() {
             DB,
             uid,
             PASSWORD,
-            "ir.model",
+            "ir.actions.act_window",
             "search_read",
             [[
               "|",
               "|",
-              ["model", "like", "match"],
-              ["name", "like", "Match"],
               ["name", "like", "Tutor"],
+              ["name", "like", "Match"],
+              ["res_model", "like", "tutor"],
             ]],
-            { fields: ["model", "name"] }
+            { fields: ["name", "res_model", "domain", "context", "binding_model_id"] }
           ],
         },
         id: 2,
       }),
     });
-    const modelsData = await modelsRes.json();
-    console.log("Found models:");
-    console.log(JSON.stringify(modelsData.result, null, 2));
+    const actionsData = await actionsRes.json();
+    console.log("Found Window Actions:");
+    console.log(JSON.stringify(actionsData.result, null, 2));
 
   } catch (err) {
     console.error("Error:", err.message);
