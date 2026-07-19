@@ -504,4 +504,297 @@ export async function addOdooChatterMessage(leadId, message, messageType = "comm
     console.error("[Odoo] Error posting chatter message:", err.message);
     return false;
   }
+}
+
+/**
+ * Sync tutor recommendations into the Odoo "Matching Tutors" model.
+ *
+ * The model name is read from the environment variable ODOO_MATCHING_TUTORS_MODEL
+ * (defaults to "x_tutor").  A saraswati.matching_tutor_model Odoo config param
+ * is also checked first so it can be set once inside Odoo without a redeploy.
+ *
+ * Duplicate prevention strategy:
+ *   Before inserting fresh records the function searches the model for records
+ *   whose x_studio_notes field contains the current lead's requirementId and
+ *   deletes them.  This guarantees that every "Search Tutor" click produces a
+ *   clean, up-to-date list with no duplicates.
+ *
+ * Resilience:
+ *   All Odoo calls are individually wrapped.  If any step fails (delete, create,
+ *   field-introspection) the error is logged and the function returns gracefully.
+ *   The chatter message posted by the caller is NEVER affected by this function.
+ *
+ * @param {Object} lead            — ParentEnquiry document (lean or plain object)
+ * @param {Object} recommendations — 4-bucket object: { exact, nearby, city, backup }
+ * @returns {Promise<{ inserted: number, deleted: number, errors: number }>}
+ */
+export async function syncMatchingTutorsToOdoo(lead, recommendations) {
+  // ── 1. Resolve model name ───────────────────────────────────────────────────
+  let modelName = process.env.ODOO_MATCHING_TUTORS_MODEL || "x_tutor";
+
+  // Also allow override via Odoo system parameter (takes priority)
+  try {
+    const uid = await callOdoo("common", "authenticate", [DB, USERNAME, PASSWORD, {}]);
+    if (uid) {
+      const cfgParam = await callOdoo("object", "execute_kw", [
+        DB, uid, PASSWORD,
+        "ir.config_parameter", "search_read",
+        [[["key", "=", "saraswati.matching_tutor_model"]]],
+        { fields: ["value"], limit: 1 },
+      ]);
+      if (cfgParam?.[0]?.value) {
+        modelName = cfgParam[0].value;
+        console.log(`[OdooService] Using Odoo-configured matching tutor model: "${modelName}"`);
+      }
+    }
+  } catch (cfgErr) {
+    // Non-fatal — continue with env/default value
+    console.warn("[OdooService] Could not read saraswati.matching_tutor_model param:", cfgErr.message);
+  }
+
+  const requirementId = lead.requirementId || "";
+  const odooLeadId   = lead.odooLeadId    || null;
+
+  console.log(
+    `[OdooService] syncMatchingTutorsToOdoo — model: "${modelName}", ` +
+    `lead: ${requirementId} (odooLeadId: ${odooLeadId})`
+  );
+
+  let inserted = 0;
+  let deleted  = 0;
+  let errors   = 0;
+
+  try {
+    // ── 2. Authenticate ───────────────────────────────────────────────────────
+    const uid = await callOdoo("common", "authenticate", [DB, USERNAME, PASSWORD, {}]);
+    if (!uid) throw new Error("Odoo login failed");
+
+    // ── 3. Introspect model fields once ───────────────────────────────────────
+    let availableFields = new Set();
+    try {
+      const fieldsResult = await callOdoo("object", "execute_kw", [
+        DB, uid, PASSWORD,
+        modelName, "fields_get", [], {},
+      ]);
+      availableFields = new Set(Object.keys(fieldsResult || {}));
+      console.log(`[OdooService] "${modelName}" has ${availableFields.size} fields`);
+    } catch (fieldsErr) {
+      console.warn(`[OdooService] Could not introspect "${modelName}" fields:`, fieldsErr.message);
+      // Continue with best-effort mapping — payloads will skip unknown fields anyway
+    }
+
+    // Helper: only add a key/value pair if the field actually exists in the model
+    const hasField = (f) => availableFields.size === 0 || availableFields.has(f);
+
+    // ── 4. Detect CRM-lead relation field (if any) ───────────────────────────
+    //       Looks for many2one fields pointing to crm.lead
+    let leadRelField = null;
+    for (const [fname, fdef] of Object.entries(
+      availableFields.size > 0
+        ? await callOdoo("object", "execute_kw", [DB, uid, PASSWORD, modelName, "fields_get", [], {}]).catch(() => ({}))
+        : {}
+    )) {
+      if (fdef?.type === "many2one" && fdef?.relation === "crm.lead") {
+        leadRelField = fname;
+        console.log(`[OdooService] Found CRM-lead relation field: "${leadRelField}"`);
+        break;
+      }
+    }
+
+    // ── 5. Delete stale records for this lead ─────────────────────────────────
+    //       Strategy A: if a crm.lead many2one field exists, filter by that
+    //       Strategy B: filter by requirementId stored in x_studio_notes
+    if (requirementId) {
+      try {
+        let domain;
+        if (leadRelField && odooLeadId) {
+          domain = [[leadRelField, "=", parseInt(odooLeadId)]];
+        } else if (hasField("x_studio_notes")) {
+          // We store "REQ-XXXXX" in notes — search for records we created
+          domain = [["x_studio_notes", "like", requirementId]];
+        }
+
+        if (domain) {
+          const oldIds = await callOdoo("object", "execute_kw", [
+            DB, uid, PASSWORD,
+            modelName, "search", [domain],
+          ]);
+          if (Array.isArray(oldIds) && oldIds.length > 0) {
+            await callOdoo("object", "execute_kw", [
+              DB, uid, PASSWORD,
+              modelName, "unlink", [oldIds],
+            ]);
+            deleted = oldIds.length;
+            console.log(
+              `[OdooService] Deleted ${deleted} stale matching tutor records ` +
+              `for ${requirementId}`
+            );
+          }
+        }
+      } catch (delErr) {
+        // Non-fatal: log and continue to insertion
+        console.warn("[OdooService] Could not delete stale matching records:", delErr.message);
+      }
+    }
+
+    // ── 6. Flatten recommendations into a single ordered list ─────────────────
+    const timestamp = new Date().toISOString();
+    const tiers = [
+      { key: "exact",  label: "Exact"  },
+      { key: "nearby", label: "Nearby" },
+      { key: "city",   label: "City"   },
+      { key: "backup", label: "Backup" },
+    ];
+
+    const allTutors = [];
+    for (const { key, label } of tiers) {
+      const bucket = recommendations[key];
+      if (!Array.isArray(bucket)) continue;
+      for (const t of bucket) {
+        allTutors.push({ ...t, matchCategory: label });
+      }
+    }
+
+    if (allTutors.length === 0) {
+      console.log("[OdooService] No tutors to insert into matching model.");
+      return { inserted, deleted, errors };
+    }
+
+    // ── 7. Insert one record per recommended tutor ────────────────────────────
+    for (const tutor of allTutors) {
+      try {
+        const payload = {};
+
+        // Utility: conditionally add a field value
+        const field = (f, val) => {
+          if (hasField(f) && val != null && val !== "") payload[f] = val;
+        };
+
+        // ── CRM Lead relation ────────────────────────────────────────────────
+        if (leadRelField && odooLeadId) {
+          field(leadRelField, parseInt(odooLeadId));
+        }
+
+        // ── Core tutor identity ──────────────────────────────────────────────
+        field("x_name",                       tutor.name              || "");
+        field("x_studio_full_name",           tutor.name              || "");
+        field("x_studio_full_name_1",         tutor.name              || "");
+        field("x_studio_tutor_id",            tutor.tutorCode         || "");
+        field("x_studio_tutor_id_1",          tutor.tutorCode         || "");
+        field("x_studio_tutor_id_2",          tutor.tutorCode         || "");
+        field("x_studio_tutor_name",          tutor.tutorCode         || "");
+
+        // ── Contact ──────────────────────────────────────────────────────────
+        field("x_studio_mobile_number",       tutor.phone             || tutor.whatsapp || "");
+        field("x_studio_mobile_number_1",     tutor.phone             || tutor.whatsapp || "");
+        field("x_studio_mobile_number_2",     tutor.phone             || tutor.whatsapp || "");
+        field("x_studio_mobile_number_3",     tutor.phone             || tutor.whatsapp || "");
+        field("x_studio_whatsapp_number",     tutor.whatsapp          || tutor.phone    || "");
+        field("x_studio_whatsapp_number_1",   tutor.whatsapp          || tutor.phone    || "");
+        field("x_studio_whatsapp_number_2",   tutor.whatsapp          || tutor.phone    || "");
+        field("x_studio_partner_phone",       tutor.phone             || tutor.whatsapp || "");
+        field("x_studio_email_address",       tutor.email             || "");
+        field("x_studio_email_address_1",     tutor.email             || "");
+        field("x_studio_email_address_2",     tutor.email             || "");
+        field("x_studio_partner_email",       tutor.email             || "");
+
+        // ── Location ─────────────────────────────────────────────────────────
+        field("x_studio_city",                tutor.city              || "");
+        field("x_studio_city_1",              tutor.city              || "");
+        field("x_studio_city_2",              tutor.city              || "");
+        field("x_studio_city_3",              tutor.city              || "");
+        field("x_studio_area",                tutor.area              || "");
+        field("x_studio_area_1",              tutor.area              || "");
+        field("x_studio_area_2",              tutor.area              || "");
+        field("x_studio_area_3",              tutor.area              || "");
+        field("x_studio_pincode",             tutor.pincode           || "");
+        field("x_studio_pincode_1",           tutor.pincode           || "");
+        field("x_studio_pincode_2",           tutor.pincode           || "");
+        field("x_studio_pincode_3",           tutor.pincode           || "");
+
+        // ── Profile ──────────────────────────────────────────────────────────
+        field("x_studio_qualification",       tutor.qualification     || "");
+        field("x_studio_qualification_1",     tutor.qualification     || "");
+        field("x_studio_qualification_2",     tutor.qualification     || "");
+        field("x_studio_experience",          tutor.experience        || "");
+        field("x_studio_experience_1",        tutor.experience        || "");
+        field("x_studio_experience_2",        tutor.experience        || "");
+
+        const gradesStr   = Array.isArray(tutor.grades)   ? tutor.grades.join(", ")   : (tutor.grades   || "");
+        const subjectsStr = Array.isArray(tutor.subjects) ? tutor.subjects.join(", ") : (tutor.subjects || "");
+        const timingsStr  = Array.isArray(tutor.timings)  ? tutor.timings.join(", ")  : (tutor.timings  || "");
+        const boardsStr   = Array.isArray(tutor.boards)   ? tutor.boards.join(", ")   : (tutor.boards   || "");
+
+        field("x_studio_grades_can_teach",    gradesStr);
+        field("x_studio_grades_can_teach_1",  gradesStr);
+        field("x_studio_grade",               gradesStr);
+        field("x_studio_grade_can_teach",     gradesStr);
+        field("x_studio_subjects",            subjectsStr);
+        field("x_studio_subject",             subjectsStr);
+        field("x_studio_subject_1",           subjectsStr);
+        field("x_studio_subject_2",           subjectsStr);
+        field("x_studio_boards_can_teach",    boardsStr);
+        field("x_studio_boards_can_teach_1",  boardsStr);
+        field("x_studio_board_can_teach",     boardsStr);
+        field("x_studio_preferred_timings",   timingsStr);
+        field("x_studio_preferred_timings_1", timingsStr);
+        field("x_studio_perferred_timings",   timingsStr);
+
+        // ── Availability ──────────────────────────────────────────────────────
+        // x_studio_availability_status is a selection field — only pass if it's a valid selection value
+        // Known values from Odoo model: Available, Busy, Inactive, Not Active, Archived, Blocked
+        const avStatus = tutor.availabilityStatus || "Available";
+        field("x_studio_availability_status", avStatus);
+        field("x_studio_availability",        avStatus);
+        field("x_studio_availability_1",      avStatus);
+
+        // ── Matching score & metadata (stored in notes) ───────────────────────
+        //    x_studio_success_rate_ and x_studio_rating are float fields — we
+        //    map match percentage to success_rate for display convenience.
+        field("x_studio_success_rate_", typeof tutor.matchPercentage === "number" ? tutor.matchPercentage : null);
+
+        const notesLines = [
+          `Requirement: ${requirementId}`,
+          `Match Category: ${tutor.matchCategory}`,
+          `Match %: ${tutor.matchPercentage ?? "N/A"}%`,
+          tutor.distanceKm != null ? `Distance: ${tutor.distanceKm} km` : null,
+          tutor.reason      ? `Reason: ${tutor.reason}` : null,
+          `Synced at: ${timestamp}`,
+        ].filter(Boolean).join("\n");
+
+        field("x_studio_notes",               notesLines);
+        field("x_studio_full_address",        tutor.fullAddress || "");
+
+        // ── Insert record ─────────────────────────────────────────────────────
+        const newId = await callOdoo("object", "execute_kw", [
+          DB, uid, PASSWORD,
+          modelName, "create", [payload],
+        ]);
+
+        inserted++;
+        console.log(
+          `[OdooService] ✅ Inserted matching tutor #${newId}: ` +
+          `${tutor.name} | ${tutor.matchCategory} | ${tutor.matchPercentage}% ` +
+          `${tutor.distanceKm != null ? `| ${tutor.distanceKm} km` : ""}`
+        );
+
+      } catch (tutorErr) {
+        errors++;
+        console.error(
+          `[OdooService] ❌ Failed to insert matching tutor ${tutor.name}:`,
+          tutorErr.message
+        );
+      }
+    }
+
+    console.log(
+      `[OdooService] syncMatchingTutorsToOdoo complete — ` +
+      `inserted: ${inserted}, deleted: ${deleted}, errors: ${errors}`
+    );
+    return { inserted, deleted, errors };
+
+  } catch (err) {
+    console.error("[OdooService] syncMatchingTutorsToOdoo critical error:", err.message);
+    return { inserted, deleted, errors: errors + 1 };
+  }
 }

@@ -24,7 +24,7 @@ import ParentEnquiry from "../models/ParentEnquiry.js";
 import { getRecommendations, buildParamsFromLead } from "../utils/recommendationEngine.js";
 import { broadcastService } from "../utils/broadcastService.js";
 import { parseAddress } from "../utils/matchingEngine.js";
-import { addOdooChatterMessage } from "../utils/odooService.js";
+import { addOdooChatterMessage, syncMatchingTutorsToOdoo } from "../utils/odooService.js";
 
 const router = express.Router();
 
@@ -247,6 +247,11 @@ router.get("/recommend-from-odoo", async (req, res) => {
     const params          = buildParamsFromLead(lead, parsedAddr);
     const recommendations = await getRecommendations(params);
 
+    // Sync matching tutors to Odoo (non-blocking, catch all errors)
+    syncMatchingTutorsToOdoo(lead, recommendations).catch((err) => {
+      console.error("[OdooRoutes] Failed to sync matching tutors to Odoo:", err.message);
+    });
+
     // Post summary to Odoo chatter
     const tierLines = [];
     for (const [tier, tutors] of Object.entries(recommendations)) {
@@ -347,6 +352,11 @@ router.post("/odoo/search-tutor", async (req, res) => {
           `Ensure the lead was created via the website or synced to MongoDB first.`,
       });
     }
+
+    // Sync matching tutors to Odoo (non-blocking, catch all errors)
+    syncMatchingTutorsToOdoo(lead, recommendations).catch((err) => {
+      console.error("[OdooRoutes] Failed to sync matching tutors to Odoo Online:", err.message);
+    });
 
     // ── Format and post chatter message ──────────────────────────────────────
     const tierLines  = buildChatterSummary(recommendations);
