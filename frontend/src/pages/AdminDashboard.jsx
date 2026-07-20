@@ -279,6 +279,9 @@ export default function AdminDashboard() {
   const [showLogsModal, setShowLogsModal] = useState(false);
   const [broadcastType, setBroadcastType] = useState("whatsapp");
   const [sendingBroadcast, setSendingBroadcast] = useState(false);
+  const [whatsappTemplates, setWhatsappTemplates] = useState([]);
+  const [selectedTemplateId, setSelectedTemplateId] = useState("");
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
 
   const [editingTutor, setEditingTutor] = useState(null);
   const [editForm, setEditForm] = useState(emptyTutor);
@@ -438,6 +441,23 @@ export default function AdminDashboard() {
     }
   };
 
+  const fetchWhatsAppTemplates = async () => {
+    setLoadingTemplates(true);
+    try {
+      const token = localStorage.getItem("adminToken");
+      const res = await fetch(`${API_BASE}/broadcast-dashboard/whatsapp-templates`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      setWhatsappTemplates(data.templates || []);
+    } catch (err) {
+      console.error("Error fetching WhatsApp templates:", err);
+      setWhatsappTemplates([]);
+    } finally {
+      setLoadingTemplates(false);
+    }
+  };
+
   const fetchBroadcastLogs = async () => {
     try {
       const token = localStorage.getItem("adminToken");
@@ -508,6 +528,7 @@ export default function AdminDashboard() {
           distanceTiers,
           distancesKm,
           matchPercentages,
+          templateId: selectedTemplateId || undefined,
         })
       });
 
@@ -1602,6 +1623,9 @@ export default function AdminDashboard() {
                                         <button
                                           onClick={() => {
                                             setBroadcastType("whatsapp");
+                                            setBroadcastResults([]);
+                                            setSelectedTemplateId("");
+                                            fetchWhatsAppTemplates();
                                             setShowBroadcastModal(true);
                                           }}
                                           className="rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-black text-white hover:bg-emerald-700 transition cursor-pointer shadow-sm shadow-emerald-600/10"
@@ -2469,6 +2493,33 @@ export default function AdminDashboard() {
                 </p>
               </div>
 
+              {/* Template Picker */}
+              {broadcastResults.length === 0 && (
+                <div className="mb-4">
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                    WhatsApp Template {loadingTemplates && <span className="font-normal text-slate-400">(loading...)</span>}
+                  </label>
+                  {whatsappTemplates.length > 0 ? (
+                    <select
+                      value={selectedTemplateId}
+                      onChange={e => setSelectedTemplateId(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-bold text-slate-800 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition cursor-pointer"
+                    >
+                      <option value="">— Auto-select (use env default) —</option>
+                      {whatsappTemplates.map(t => (
+                        <option key={t.id} value={t.id}>
+                          {t.name}{t.lang && t.lang !== "en" ? ` (${t.lang})` : ""}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-2.5 text-[11px] font-semibold text-slate-400">
+                      {loadingTemplates ? "Fetching approved templates from Odoo…" : "No approved templates found — using environment default."}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Pre-broadcast Preview list */}
               {broadcastResults.length === 0 && (
                 <div className="flex-1 overflow-y-auto space-y-2 mb-4 max-h-[260px] border border-slate-100 p-2 rounded-2xl bg-slate-50/50">
@@ -2765,6 +2816,17 @@ function StatCard({ title, value, subtitle, icon: Icon, gradientClass }) {
   );
 }
 
+const DEFAULT_ATTENDANCE_COLUMNS = [
+  { key: "requirementId", label: "Requirement ID", enabled: true },
+  { key: "studentName", label: "Student & Duration", enabled: true },
+  { key: "parentName", label: "Parent", enabled: true },
+  { key: "teacherName", label: "Teacher Name", enabled: true },
+  { key: "totalClasses", label: "Total", enabled: true },
+  { key: "completedClasses", label: "Completed", enabled: true },
+  { key: "missedClasses", label: "Missed", enabled: true },
+  { key: "remainingClasses", label: "Remaining", enabled: true },
+];
+
 function AdminAttendanceConsole({
   parentEnquiries,
   fetchLeadAttendanceLogs,
@@ -2775,6 +2837,15 @@ function AdminAttendanceConsole({
 }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedId, setExpandedId] = useState(null);
+  const [showCustomizeModal, setShowCustomizeModal] = useState(false);
+  const [attendanceColumns, setAttendanceColumns] = useState(() => {
+    try {
+      const saved = localStorage.getItem("attendanceColumnsConfig");
+      return saved ? JSON.parse(saved) : DEFAULT_ATTENDANCE_COLUMNS;
+    } catch {
+      return DEFAULT_ATTENDANCE_COLUMNS;
+    }
+  });
 
   // Edit Tuition Inline States
   const [tDuration, setTDuration] = useState("");
@@ -2972,17 +3043,28 @@ function AdminAttendanceConsole({
           </p>
         </div>
 
-        <div className="relative w-full sm:w-80">
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
-            <Search className="h-4 w-4" />
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="relative w-full sm:w-80">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+              <Search className="h-4 w-4" />
+            </div>
+            <input
+              type="text"
+              placeholder="Search student, parent, teacher, ID..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full h-11 pl-9 pr-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all text-slate-800"
+            />
           </div>
-          <input
-            type="text"
-            placeholder="Search student, parent, teacher, ID..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full h-11 pl-9 pr-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all text-slate-800"
-          />
+
+          <button
+            type="button"
+            onClick={() => setShowCustomizeModal(true)}
+            className="flex items-center gap-1.5 px-3.5 h-11 rounded-2xl border border-slate-250 bg-white text-xs font-black text-slate-700 hover:bg-slate-50 transition cursor-pointer shrink-0 shadow-sm"
+          >
+            <Settings className="h-4 w-4 text-slate-500" />
+            Columns
+          </button>
         </div>
       </div>
 
@@ -2990,21 +3072,18 @@ function AdminAttendanceConsole({
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-black text-slate-500 uppercase tracking-wider">
-              <th className="py-4 px-4">Requirement ID</th>
-              <th className="py-4 px-4">Student & Duration</th>
-              <th className="py-4 px-4">Parent</th>
-              <th className="py-4 px-4">Teacher Name</th>
-              <th className="py-4 px-4 text-center">Total</th>
-              <th className="py-4 px-4 text-center">Completed</th>
-              <th className="py-4 px-4 text-center">Missed</th>
-              <th className="py-4 px-4 text-center">Remaining</th>
+              {attendanceColumns.filter(c => c.enabled).map(c => (
+                <th key={c.key} className={`py-4 px-4 ${["totalClasses", "completedClasses", "missedClasses", "remainingClasses"].includes(c.key) ? "text-center" : ""}`}>
+                  {c.label}
+                </th>
+              ))}
               <th className="py-4 px-4 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-xs font-bold text-slate-700">
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan="9" className="py-12 text-center text-slate-400 font-bold">
+                <td colSpan={attendanceColumns.filter(c => c.enabled).length + 1} className="py-12 text-center text-slate-400 font-bold">
                   No tracking records found matching search query.
                 </td>
               </tr>
@@ -3027,21 +3106,56 @@ function AdminAttendanceConsole({
                         isExpanded ? "bg-slate-50/30 font-extrabold" : ""
                       }`}
                     >
-                      <td className="py-4 px-4">
-                        <span className="bg-indigo-50 border border-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-[10px] font-black">
-                          {p.requirementId || "REQ-N/A"}
-                        </span>
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="font-black text-slate-800 truncate max-w-[160px]">{studentName}</div>
-                        <div className="text-[10px] text-slate-450 font-semibold mt-0.5">Duration: {p.classDuration || "Not provided"}</div>
-                      </td>
-                      <td className="py-4 px-4 truncate max-w-[160px]">{p.parentName || "Unknown"}</td>
-                      <td className="py-4 px-4 text-slate-655 truncate max-w-[165px]">{p.assignedTutor || "Not Assigned"}</td>
-                      <td className="py-4 px-4 text-center text-slate-500">{total}</td>
-                      <td className="py-4 px-4 text-center text-emerald-600 font-extrabold">{completed}</td>
-                      <td className="py-4 px-4 text-center text-rose-500 font-extrabold">{missedCount}</td>
-                      <td className="py-4 px-4 text-center text-indigo-600 font-extrabold">{remaining}</td>
+                      {attendanceColumns.filter(c => c.enabled).map(c => {
+                        if (c.key === "requirementId") {
+                          return (
+                            <td key={c.key} className="py-4 px-4">
+                              <span className="bg-indigo-50 border border-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-[10px] font-black">
+                                {p.requirementId || "REQ-N/A"}
+                              </span>
+                            </td>
+                          );
+                        }
+                        if (c.key === "studentName") {
+                          return (
+                            <td key={c.key} className="py-4 px-4">
+                              <div className="font-black text-slate-800 truncate max-w-[160px]">{studentName}</div>
+                              <div className="text-[10px] text-slate-450 font-semibold mt-0.5">Duration: {p.classDuration || "Not provided"}</div>
+                            </td>
+                          );
+                        }
+                        if (c.key === "parentName") {
+                          return (
+                            <td key={c.key} className="py-4 px-4 truncate max-w-[160px]">{p.parentName || "Unknown"}</td>
+                          );
+                        }
+                        if (c.key === "teacherName") {
+                          return (
+                            <td key={c.key} className="py-4 px-4 text-slate-655 truncate max-w-[165px]">{p.assignedTutor || "Not Assigned"}</td>
+                          );
+                        }
+                        if (c.key === "totalClasses") {
+                          return (
+                            <td key={c.key} className="py-4 px-4 text-center text-slate-500">{total}</td>
+                          );
+                        }
+                        if (c.key === "completedClasses") {
+                          return (
+                            <td key={c.key} className="py-4 px-4 text-center text-emerald-600 font-extrabold">{completed}</td>
+                          );
+                        }
+                        if (c.key === "missedClasses") {
+                          return (
+                            <td key={c.key} className="py-4 px-4 text-center text-rose-500 font-extrabold">{missedCount}</td>
+                          );
+                        }
+                        if (c.key === "remainingClasses") {
+                          return (
+                            <td key={c.key} className="py-4 px-4 text-center text-indigo-600 font-extrabold">{remaining}</td>
+                          );
+                        }
+                        return null;
+                      })}
                       <td className="py-4 px-4 text-right">
                         <button
                           type="button"
@@ -3058,7 +3172,7 @@ function AdminAttendanceConsole({
 
                     {isExpanded && (
                       <tr className="bg-slate-50/30">
-                        <td colSpan="9" className="p-5 border-t border-slate-100">
+                        <td colSpan={attendanceColumns.filter(c => c.enabled).length + 1} className="p-5 border-t border-slate-100">
                           <div className="bg-white rounded-2xl border border-slate-150 p-5 shadow-inner">
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                               
@@ -3315,6 +3429,102 @@ function AdminAttendanceConsole({
           </tbody>
         </table>
       </div>
+
+      {showCustomizeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+          <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200 flex flex-col max-h-[85vh] z-50">
+            <div className="px-6 py-4 flex items-center justify-between border-b border-slate-100 bg-slate-50 text-slate-800">
+              <h3 className="text-sm font-black uppercase tracking-wider">Customize Attendance Columns</h3>
+              <button 
+                type="button"
+                onClick={() => setShowCustomizeModal(false)}
+                className="h-8 w-8 rounded-full flex items-center justify-center hover:bg-black/5 text-slate-500 cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto space-y-4">
+              <p className="text-xs font-semibold text-slate-500 mb-2">
+                Enable/disable columns and change their order. These settings are saved in your browser.
+              </p>
+              <div className="space-y-2">
+                {attendanceColumns.map((col, idx) => (
+                  <div key={col.key} className="flex items-center justify-between bg-slate-50 rounded-xl p-3 border border-slate-150">
+                    <label className="flex items-center gap-3 cursor-pointer text-xs font-bold text-slate-700">
+                      <input
+                        type="checkbox"
+                        checked={col.enabled}
+                        onChange={(e) => {
+                          const updated = [...attendanceColumns];
+                          updated[idx] = { ...col, enabled: e.target.checked };
+                          setAttendanceColumns(updated);
+                          localStorage.setItem("attendanceColumnsConfig", JSON.stringify(updated));
+                        }}
+                        className="rounded border-slate-350 accent-indigo-600"
+                      />
+                      {col.label}
+                    </label>
+
+                    <div className="flex gap-1.5">
+                      <button
+                        type="button"
+                        disabled={idx === 0}
+                        onClick={() => {
+                          const updated = [...attendanceColumns];
+                          const temp = updated[idx - 1];
+                          updated[idx - 1] = updated[idx];
+                          updated[idx] = temp;
+                          setAttendanceColumns(updated);
+                          localStorage.setItem("attendanceColumnsConfig", JSON.stringify(updated));
+                        }}
+                        className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition cursor-pointer disabled:opacity-30 disabled:hover:bg-transparent"
+                      >
+                        ▲
+                      </button>
+                      <button
+                        type="button"
+                        disabled={idx === attendanceColumns.length - 1}
+                        onClick={() => {
+                          const updated = [...attendanceColumns];
+                          const temp = updated[idx + 1];
+                          updated[idx + 1] = updated[idx];
+                          updated[idx] = temp;
+                          setAttendanceColumns(updated);
+                          localStorage.setItem("attendanceColumnsConfig", JSON.stringify(updated));
+                        }}
+                        className="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition cursor-pointer disabled:opacity-30 disabled:hover:bg-transparent"
+                      >
+                        ▼
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-slate-50 px-6 py-4 flex justify-between border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => {
+                  setAttendanceColumns(DEFAULT_ATTENDANCE_COLUMNS);
+                  localStorage.removeItem("attendanceColumnsConfig");
+                }}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 hover:bg-slate-150 transition cursor-pointer"
+              >
+                Reset Default
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCustomizeModal(false)}
+                className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black transition cursor-pointer shadow-md"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -417,7 +417,7 @@ router.delete("/:id", verifyToken(["admin"]), async (req, res) => {
 router.post("/:id/broadcast", verifyToken(["admin"]), async (req, res) => {
   try {
     const leadId = req.params.id;
-    const { tutorIds, adminName = "", adminEmail = "" } = req.body;
+    const { tutorIds, adminName = "", adminEmail = "", templateId = null } = req.body;
 
     if (!Array.isArray(tutorIds) || tutorIds.length === 0) {
       return res.status(400).json({ message: "At least one tutor must be selected." });
@@ -622,7 +622,10 @@ router.post("/:id/broadcast", verifyToken(["admin"]), async (req, res) => {
           continue;
         }
 
-        const templateName = process.env.WHATSAPP_REQUIREMENT_TEMPLATE_NAME || "tutor_requirement_v1";
+        // Use admin-selected template ID if provided, otherwise fall back to env default name
+        const templateName = templateId
+          ? String(templateId)
+          : (process.env.WHATSAPP_REQUIREMENT_TEMPLATE_NAME || "tutor_requirement_v1");
 
         const sendResult = await sendWhatsAppToTutor({
           phoneNumber: whatsappNumber,
@@ -630,6 +633,7 @@ router.post("/:id/broadcast", verifyToken(["admin"]), async (req, res) => {
           templateName,
           templateLang: "en",
           templateVars: buildRequirementTemplateVars(tutor.name, lead, firstWard),
+          ...(templateId ? { templateId: Number(templateId) } : {}),
         });
 
         await BroadcastLog.findByIdAndUpdate(log._id, {

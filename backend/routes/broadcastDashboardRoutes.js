@@ -20,6 +20,7 @@ import ParentEnquiry from "../models/ParentEnquiry.js";
 import { verifyToken } from "../middleware/authMiddleware.js";
 import { broadcastService, RETRYABLE_FAILURE_REASONS } from "../utils/broadcastService.js";
 import { getSyncState } from "../utils/syncService.js";
+import { getOdooUid, callOdooMethod } from "../utils/whatsappService.js";
 
 const router = express.Router();
 
@@ -283,6 +284,28 @@ router.get("/broadcast-dashboard/interested", verifyToken(["admin"]), async (req
   } catch (err) {
     console.error("[Dashboard] Interested error:", err);
     res.status(500).json({ message: err.message });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /broadcast-dashboard/whatsapp-templates
+// Fetch approved WhatsApp templates from Odoo for the template picker.
+// ─────────────────────────────────────────────────────────────────────────────
+router.get("/broadcast-dashboard/whatsapp-templates", verifyToken(["admin"]), async (req, res) => {
+  try {
+    const uid = await getOdooUid();
+    const templates = await callOdooMethod(
+      uid,
+      "whatsapp.template",
+      "search_read",
+      [[["status", "=", "approved"]]],
+      { fields: ["id", "name", "body", "lang", "status"], limit: 100, order: "name asc" }
+    );
+    res.json({ templates: templates || [] });
+  } catch (err) {
+    console.error("[Dashboard] WhatsApp templates error:", err.message);
+    // Return empty list so UI degrades gracefully
+    res.json({ templates: [], error: err.message });
   }
 });
 

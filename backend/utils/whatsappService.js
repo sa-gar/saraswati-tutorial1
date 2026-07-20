@@ -211,22 +211,39 @@ async function sendFreeformMessage(uid, channelId, messageBody) {
  * @param {Object} templateVars - Variables for template (button_dynamic_url_1, free_text_N)
  * @param {number|null} resId - Specific record ID to use for res_model (e.g. sign.request ID)
  */
-async function sendTemplateMessage(uid, phoneNumber, templateName, templateLang, templateVars, resId = null) {
+async function sendTemplateMessage(uid, phoneNumber, templateName, templateLang, templateVars, resId = null, overrideTemplateId = null) {
   // Look up the approved WhatsApp template in Odoo (with model info)
-  const templates = await callOdooMethod(
-    uid,
-    "whatsapp.template",
-    "search_read",
-    [[["name", "=", templateName], ["status", "=", "approved"]]],
-    { fields: ["id", "name", "body", "model"], limit: 1 }
-  );
+  let templateId, templateModel;
 
-  if (!templates || templates.length === 0) {
-    throw new Error(`template missing: WhatsApp template "${templateName}" not found or not approved in Odoo`);
+  if (overrideTemplateId) {
+    // Direct lookup by ID — the admin explicitly chose this template
+    const templates = await callOdooMethod(
+      uid,
+      "whatsapp.template",
+      "read",
+      [[overrideTemplateId]],
+      { fields: ["id", "name", "body", "model"] }
+    );
+    if (!templates || templates.length === 0) {
+      throw new Error(`template missing: WhatsApp template ID "${overrideTemplateId}" not found in Odoo`);
+    }
+    templateId = templates[0].id;
+    templateModel = templates[0].model || "res.partner";
+  } else {
+    const templates = await callOdooMethod(
+      uid,
+      "whatsapp.template",
+      "search_read",
+      [[["name", "=", templateName], ["status", "=", "approved"]]],
+      { fields: ["id", "name", "body", "model"], limit: 1 }
+    );
+
+    if (!templates || templates.length === 0) {
+      throw new Error(`template missing: WhatsApp template "${templateName}" not found or not approved in Odoo`);
+    }
+    templateId = templates[0].id;
+    templateModel = templates[0].model || "res.partner";
   }
-
-  const templateId = templates[0].id;
-  const templateModel = templates[0].model || "res.partner";
 
   // Determine the res_model and res_ids to use
   let composerResModel = templateModel;
@@ -347,6 +364,7 @@ export async function sendWhatsAppToTutor(options) {
     templateName = TEMPLATE_NAME,
     templateLang = TEMPLATE_LANG,
     resId = null, // Optional: specific record ID for the template model (e.g. sign.request ID)
+    templateId = null, // Optional: direct Odoo template ID override (admin picker)
   } = options;
 
   let lastError = null;
@@ -380,7 +398,8 @@ export async function sendWhatsAppToTutor(options) {
         // Outside 24h window — use approved template (or fallback to direct outbound)
         try {
           console.log(`[WhatsApp] Sending template "${templateName}" to ${phoneNumber}`);
-          messageId = await sendTemplateMessage(uid, phoneNumber, templateName, templateLang, templateVars, resId);
+          messageId = await sendTemplateMessage(uid, phoneNumber, templateName, templateLang, templateVars, resId, templateId || null);
+
           usedTemplate = true;
         } catch (templateErr) {
           if (templateErr.message.includes("template missing")) {

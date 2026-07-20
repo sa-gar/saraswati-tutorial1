@@ -26,13 +26,14 @@ import {
 
 import { API_BASE } from "../config";
 
+const DRAFT_KEY = "tutorRegistrationDraft";
+
 const initialFormData = {
   name: "",
   experience: "",
   hasOccupation: "",
   occupation: "",
   organization: "",
-  email: "",
   phone: "",
   locations: [],
   hasVehicle: "",
@@ -44,12 +45,9 @@ const initialFormData = {
   timings: [],
   agreement: false,
   gender: "",
-  dob: "",
   whatsapp: "",
   city: "",
-  area: "",
   fullAddress: "",
-  pincode: "",
   grades: [],
   boards: [],
   subjects: [],
@@ -74,14 +72,8 @@ const steps = [
   {
     number: 3,
     title: "Documents",
-    subtitle: "Verification",
+    subtitle: "Verification & Submit",
     icon: ShieldCheck,
-  },
-  {
-    number: 4,
-    title: "Review",
-    subtitle: "Final check",
-    icon: CheckCircle2,
   },
 ];
 
@@ -127,19 +119,13 @@ const subjectOptions = [
   "Biology",
   "English",
   "Hindi",
+  "Kannada",
   "Commerce",
   "Social Studies",
 ];
 
 const timingGroups = {
-  "Morning 6 AM – 12 PM": [
-    "6-7 AM",
-    "7-8 AM",
-    "8-9 AM",
-    "9-10 AM",
-    "10-11 AM",
-    "11-12 PM",
-  ],
+  "Morning 5:00 AM – 9:00 AM": ["5:00 AM – 9:00 AM"],
   "Evening 4 PM – 8 PM": ["4-5 PM", "5-6 PM", "6-7 PM", "7-8 PM"],
 };
 
@@ -268,12 +254,38 @@ export default function TutorRegistration() {
     host.startsWith("mumbai.") ||
     localStorage.getItem("userLocation") === "Mumbai";
 
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(DRAFT_KEY) || "null");
+      return saved?.step || 1;
+    } catch { return 1; }
+  });
   const [search, setSearch] = useState("");
-  const [formData, setFormData] = useState(() => ({
-    ...initialFormData,
-    city: defaultIsMumbai ? "Mumbai" : "Bangalore",
-  }));
+  const [formData, setFormData] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(DRAFT_KEY) || "null");
+      if (saved?.formData) {
+        // File fields (File objects) cannot be stored in localStorage
+        const { photo, idProof, expCert, otherDoc, ...rest } = saved.formData;
+        return {
+          ...initialFormData,
+          ...rest,
+          city: rest.city || (defaultIsMumbai ? "Mumbai" : "Bangalore"),
+          photo: null,
+          idProof: null,
+          expCert: null,
+          otherDoc: null,
+        };
+      }
+    } catch {}
+    return { ...initialFormData, city: defaultIsMumbai ? "Mumbai" : "Bangalore" };
+  });
+  const [showDraftBanner, setShowDraftBanner] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(DRAFT_KEY) || "null");
+      return !!(saved?.formData && saved.step > 1);
+    } catch { return false; }
+  });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
@@ -284,8 +296,54 @@ export default function TutorRegistration() {
   const areaGroups = isMumbai ? mumbaiAreaGroups : bangaloreAreaGroups;
 
   const [openGroup, setOpenGroup] = useState(defaultIsMumbai ? "Western Suburbs" : "East Bangalore");
-  const [sameAsMobile, setSameAsMobile] = useState(true);
+  const [sameAsMobile, setSameAsMobile] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(DRAFT_KEY) || "null");
+      return saved?.sameAsMobile !== false;
+    } catch { return true; }
+  });
 
+  // Save form progress to localStorage whenever state changes
+  useEffect(() => {
+    try {
+      const draft = {
+        step,
+        sameAsMobile,
+        formData: {
+          ...formData,
+          photo: null,
+          idProof: null,
+          expCert: null,
+          otherDoc: null,
+        },
+      };
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    } catch {}
+  }, [step, formData, sameAsMobile]);
+
+  // Also save when the tab is hidden / minimised
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        try {
+          const draft = {
+            step,
+            sameAsMobile,
+            formData: {
+              ...formData,
+              photo: null, idProof: null, expCert: null, otherDoc: null,
+            },
+          };
+          localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+        } catch {}
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [step, formData, sameAsMobile]);
+
+
+  // Sync WhatsApp with phone when sameAsMobile is checked
   useEffect(() => {
     if (sameAsMobile) {
       setFormData((prev) => ({
@@ -311,7 +369,7 @@ export default function TutorRegistration() {
     return () => URL.revokeObjectURL(url);
   }, [formData.photo]);
 
-  const progress = (step / 4) * 100;
+  const progress = (step / 3) * 100;
 
   const handleMulti = (field, value) => {
     setFormData((prev) => {
@@ -342,22 +400,12 @@ export default function TutorRegistration() {
       if (!phoneRegex.test(value)) return "Enter a valid 10-digit phone number";
     }
 
-    if (name === "email") {
-      if (!value) return "Email is required";
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(value)) return "Enter a valid email address";
-    }
-
     if (name === "experience") {
       if (!value) return "Select experience";
     }
 
     if (name === "gender") {
       if (!value) return "Select gender";
-    }
-
-    if (name === "dob") {
-      if (!value) return "Enter date of birth";
     }
 
     if (name === "whatsapp") {
@@ -378,18 +426,8 @@ export default function TutorRegistration() {
       if (!value) return "Select city";
     }
 
-    if (name === "area") {
-      if (!value || value.trim().length < 2) return "Enter area";
-    }
-
     if (name === "fullAddress") {
       if (!value || value.trim().length < 10) return "Enter full address (min 10 characters)";
-    }
-
-    if (name === "pincode") {
-      if (!value) return "Enter pincode";
-      const pincodeRegex = /^\d{6}$/;
-      if (!pincodeRegex.test(value)) return "Enter a valid 6-digit pincode";
     }
 
     return "";
@@ -440,9 +478,7 @@ export default function TutorRegistration() {
     const nextErrors = {
       name: validateField("name", formData.name),
       phone: validateField("phone", formData.phone),
-      email: validateField("email", formData.email),
       gender: validateField("gender", formData.gender),
-      dob: validateField("dob", formData.dob),
       whatsapp: sameAsMobile ? "" : validateField("whatsapp", formData.whatsapp),
     };
 
@@ -459,9 +495,7 @@ export default function TutorRegistration() {
       ...prev,
       name: true,
       phone: true,
-      email: true,
       gender: true,
-      dob: true,
       whatsapp: true,
     }));
 
@@ -476,7 +510,6 @@ export default function TutorRegistration() {
     const nextErrors = {
       experience: validateField("experience", formData.experience),
       qualification: validateField("qualification", formData.qualification),
-      maxTravelDistance: validateField("maxTravelDistance", formData.maxTravelDistance),
     };
 
     if (!formData.grades.length) nextErrors.grades = "Select at least one grade";
@@ -508,9 +541,8 @@ export default function TutorRegistration() {
   const validateStep3 = () => {
     const nextErrors = {
       city: validateField("city", formData.city),
-      area: validateField("area", formData.area),
       fullAddress: validateField("fullAddress", formData.fullAddress),
-      pincode: validateField("pincode", formData.pincode),
+      maxTravelDistance: validateField("maxTravelDistance", formData.maxTravelDistance),
     };
 
     if (formData.hasVehicle === "yes" && !formData.vehicleNumber.trim()) {
@@ -665,6 +697,7 @@ export default function TutorRegistration() {
         status: "pending",
       });
 
+      localStorage.removeItem(DRAFT_KEY);
       navigate("/thank-you?type=tutor");
     } catch (err) {
       console.error("FULL ERROR:", err);
@@ -704,7 +737,7 @@ export default function TutorRegistration() {
       }
     }
 
-    setStep((prev) => Math.min(prev + 1, 4));
+    setStep((prev) => Math.min(prev + 1, 3));
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -716,15 +749,11 @@ export default function TutorRegistration() {
   const isStep1Ready =
     formData.name &&
     formData.phone &&
-    formData.email &&
     formData.gender &&
-    formData.dob &&
     (sameAsMobile || formData.whatsapp) &&
     !errors.name &&
     !errors.phone &&
-    !errors.email &&
     !errors.gender &&
-    !errors.dob &&
     (sameAsMobile || !errors.whatsapp);
 
   const isStep2Ready =
@@ -733,18 +762,15 @@ export default function TutorRegistration() {
     formData.grades.length > 0 &&
     formData.boards.length > 0 &&
     formData.subjects.length > 0 &&
-    formData.maxTravelDistance &&
     formData.hasOccupation &&
     (formData.hasOccupation === "no" || formData.occupation) &&
     !errors.experience &&
-    !errors.qualification &&
-    !errors.maxTravelDistance;
+    !errors.qualification;
 
   const isStep3Ready =
     formData.city &&
-    formData.area &&
     formData.fullAddress &&
-    formData.pincode &&
+    formData.maxTravelDistance &&
     formData.locations.length > 0 &&
     formData.hasVehicle &&
     (formData.hasVehicle === "no" || formData.vehicleNumber.trim()) &&
@@ -753,10 +779,10 @@ export default function TutorRegistration() {
     formData.expCert &&
     formData.timings.length > 0 &&
     formData.agreement &&
+    formData.attendanceAgreement &&
     !errors.city &&
-    !errors.area &&
     !errors.fullAddress &&
-    !errors.pincode &&
+    !errors.maxTravelDistance &&
     (formData.hasVehicle === "no" || !errors.vehicleNumber);
 
   return (
@@ -818,14 +844,30 @@ export default function TutorRegistration() {
                     {Math.round(progress)}%
                   </p>
                   <p className="mt-1 text-sm text-slate-300">
-                    Step {step} of 4
+                    Step {step} of 3
                   </p>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="mb-8 grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-4">
+          {showDraftBanner && (
+            <div className="mb-6 flex items-center justify-between rounded-2xl bg-emerald-50 border border-emerald-200 px-5 py-3.5 text-sm font-bold text-emerald-800 animate-fadeIn">
+              <span className="flex items-center gap-2">
+                <Sparkles className="h-4.5 w-4.5 text-emerald-600 animate-pulse" />
+                Draft restored — continue from where you left off.
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowDraftBanner(false)}
+                className="text-emerald-500 hover:text-emerald-700 cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+
+          <div className="mb-8 grid grid-cols-3 gap-2 sm:gap-3 md:grid-cols-3">
             {steps.map((item) => {
               const Icon = item.icon;
               const active = step === item.number;
@@ -880,19 +922,6 @@ export default function TutorRegistration() {
                   />
 
                   <InputField
-                    icon={Mail}
-                    label="Email ID"
-                    required
-                    name="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    placeholder="example@email.com"
-                    error={touched.email ? errors.email : ""}
-                  />
-
-                  <InputField
                     icon={Phone}
                     label="Phone Number"
                     required
@@ -943,18 +972,6 @@ export default function TutorRegistration() {
                     options={genderOptions}
                     placeholder="Select Gender"
                   />
-
-                  <InputField
-                    icon={Clock3}
-                    label="Date of Birth"
-                    required
-                    name="dob"
-                    type="date"
-                    value={formData.dob}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    error={touched.dob ? errors.dob : ""}
-                  />
                 </div>
 
                 <NavigationFooter>
@@ -999,19 +1016,6 @@ export default function TutorRegistration() {
                       onBlur={handleBlur}
                       placeholder="e.g. B.Ed, M.Sc in Physics, B.Tech"
                       error={touched.qualification ? errors.qualification : ""}
-                    />
-
-                    <SelectField
-                      icon={MapPin}
-                      label="Maximum Travel Distance"
-                      required
-                      name="maxTravelDistance"
-                      value={formData.maxTravelDistance}
-                      onChange={handleChange}
-                      onBlur={handleBlur}
-                      error={touched.maxTravelDistance ? errors.maxTravelDistance : ""}
-                      options={travelDistanceOptions}
-                      placeholder="Select Max Travel Distance"
                     />
                   </div>
 
@@ -1196,41 +1200,30 @@ export default function TutorRegistration() {
                         placeholder="Select City"
                       />
 
-                      <InputField
+                      <SelectField
                         icon={MapPin}
-                        label="Area"
+                        label="Maximum Travel Distance"
                         required
-                        name="area"
-                        value={formData.area}
+                        name="maxTravelDistance"
+                        value={formData.maxTravelDistance}
                         onChange={handleChange}
                         onBlur={handleBlur}
-                        placeholder="e.g. Indiranagar, Bandra West"
-                        error={touched.area ? errors.area : ""}
-                      />
-
-                      <InputField
-                        icon={MapPin}
-                        label="Pincode"
-                        required
-                        name="pincode"
-                        value={formData.pincode}
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        placeholder="6-digit pincode"
-                        error={touched.pincode ? errors.pincode : ""}
+                        error={touched.maxTravelDistance ? errors.maxTravelDistance : ""}
+                        options={travelDistanceOptions}
+                        placeholder="Select Max Travel Distance"
                       />
                     </div>
 
                     <InputField
                       icon={MapPin}
-                      label="Full Address"
+                      label="Full Address (with Area & PIN Code)"
                       required
                       name="fullAddress"
                       type="textarea"
                       value={formData.fullAddress}
                       onChange={handleChange}
                       onBlur={handleBlur}
-                      placeholder="Enter your complete house/flat number, building name, street and landmark"
+                      placeholder="Enter complete house/flat number, building name, street, area/locality, and 6-digit PIN code"
                       error={touched.fullAddress ? errors.fullAddress : ""}
                     />
                   </div>
@@ -1575,7 +1568,7 @@ export default function TutorRegistration() {
                             e.preventDefault();
                             setShowInstructionsModal(true);
                           }}
-                          className="text-blue-600 font-extrabold underline hover:text-blue-800 ml-1 cursor-pointer"
+                          className="text-xs text-blue-600 font-extrabold underline hover:text-blue-800 ml-1 cursor-pointer bg-slate-100/80 px-2 py-0.5 rounded-md hover:bg-slate-200 transition-all"
                         >
                           Preview
                         </button>
@@ -1595,112 +1588,7 @@ export default function TutorRegistration() {
                     <ChevronLeft className="h-4 w-4" />
                     Previous
                   </SecondaryButton>
-                  <PrimaryButton disabled={!isStep3Ready} onClick={goNext}>
-                    Review Details
-                    <ChevronRight className="h-4 w-4" />
-                  </PrimaryButton>
-                </NavigationFooter>
-              </section>
-            )}
-
-            {step === 4 && (
-              <section className="animate-fadeIn">
-                <StepHeader
-                  eyebrow="Step 04"
-                  title="Review Your Details"
-                  description="Please verify everything before final submission."
-                />
-
-                <div className="grid gap-5 md:grid-cols-2">
-                  <ReviewCard title="Basic & Contact Details" icon={User}>
-                    <ReviewRow label="Name" value={formData.name} />
-                    <ReviewRow label="Gender" value={formData.gender} />
-                    <ReviewRow label="Date of Birth" value={formData.dob} />
-                    <ReviewRow label="Email" value={formData.email} />
-                    <ReviewRow label="Phone" value={formData.phone} />
-                    <ReviewRow label="WhatsApp" value={sameAsMobile ? formData.phone : formData.whatsapp} />
-                  </ReviewCard>
-
-                  <ReviewCard title="Professional & Teaching Details" icon={Briefcase}>
-                    <ReviewRow label="Experience" value={formData.experience} />
-                    <ReviewRow label="Qualification" value={formData.qualification} />
-                    <ReviewRow label="Grades Can Teach" value={formData.grades.join(", ")} />
-                    <ReviewRow label="Boards Can Teach" value={formData.boards.join(", ")} />
-                    <ReviewRow label="Subjects" value={formData.subjects.join(", ")} />
-                    <ReviewRow label="Max Travel Distance" value={formData.maxTravelDistance} />
-                    <ReviewRow
-                      label="Has Institutional Experience"
-                      value={formData.hasOccupation || "Not selected"}
-                    />
-                    {formData.hasOccupation === "yes" && (
-                      <>
-                        <ReviewRow label="Occupation" value={formData.occupation} />
-                        <ReviewRow label="Organization" value={formData.organization} />
-                      </>
-                    )}
-                  </ReviewCard>
-
-                  <ReviewCard title="Address & Locations" icon={MapPin}>
-                    <ReviewRow label="City" value={formData.city} />
-                    <ReviewRow label="Area" value={formData.area} />
-                    <ReviewRow label="Pincode" value={formData.pincode} />
-                    <ReviewRow label="Full Address" value={formData.fullAddress} />
-                    <ReviewRow label="Preferred Locations" value={formData.locations.join(", ")} />
-                    <ReviewRow
-                      label="Vehicle Available"
-                      value={
-                        formData.hasVehicle === "yes"
-                          ? `Yes (${formData.vehicleNumber})`
-                          : "No"
-                      }
-                    />
-                    <ReviewRow label="Available Timings" value={formData.timings.join(", ")} />
-                  </ReviewCard>
-
-                  <ReviewCard title="Documents" icon={FileCheck2}>
-                    <div className="mb-4 flex items-center gap-4">
-                      {previewPhoto ? (
-                        <img
-                          src={previewPhoto}
-                          alt="Profile preview"
-                          className="h-20 w-20 rounded-2xl object-cover ring-1 ring-slate-200"
-                        />
-                      ) : (
-                        <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
-                          <Camera className="h-6 w-6" />
-                        </div>
-                      )}
-                      <div>
-                        <p className="font-black text-slate-900">
-                          Profile Photo
-                        </p>
-                        <p className="text-sm text-slate-500">
-                          {formData.photo?.name || "Not uploaded"}
-                        </p>
-                      </div>
-                    </div>
-
-                    <ReviewRow
-                      label="ID Proof"
-                      value={formData.idProof?.name || "Not uploaded"}
-                    />
-                    <ReviewRow
-                      label="Certificate"
-                      value={formData.expCert?.name || "Not uploaded"}
-                    />
-                    <ReviewRow
-                      label="Other Document"
-                      value={formData.otherDoc?.name || "Not uploaded"}
-                    />
-                  </ReviewCard>
-                </div>
-
-                <NavigationFooter>
-                  <SecondaryButton onClick={goBack}>
-                    <ChevronLeft className="h-4 w-4" />
-                    Edit
-                  </SecondaryButton>
-                  <PrimaryButton onClick={handleSubmit} disabled={loading}>
+                  <PrimaryButton disabled={!isStep3Ready || loading} onClick={handleSubmit}>
                     {loading ? "Submitting..." : "Confirm & Submit"}
                     <CheckCircle2 className="h-4 w-4" />
                   </PrimaryButton>
