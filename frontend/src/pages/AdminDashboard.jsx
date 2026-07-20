@@ -3034,7 +3034,7 @@ function AdminAttendanceConsole({
   };
 
   return (
-    <div className="rounded-3xl bg-white p-6 shadow-sm border border-slate-200/80 animate-slideFade">
+    <div className="rounded-3xl bg-white p-6 shadow-sm border border-slate-200/80">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h2 className="text-xl font-extrabold text-slate-800">Attendance & Class Tracking Dashboard</h2>
@@ -3431,7 +3431,7 @@ function AdminAttendanceConsole({
       </div>
 
       {showCustomizeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 animate-fadeIn">
           <div className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200 flex flex-col max-h-[85vh] z-50">
             <div className="px-6 py-4 flex items-center justify-between border-b border-slate-100 bg-slate-50 text-slate-800">
               <h3 className="text-sm font-black uppercase tracking-wider">Customize Attendance Columns</h3>
