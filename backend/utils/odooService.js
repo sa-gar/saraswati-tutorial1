@@ -3,59 +3,84 @@ import fetch from "node-fetch";
 
 dotenv.config();
 
-const ODOO_URL = process.env.ODOO_URL;
-const DB = process.env.ODOO_DB;
-const USERNAME = process.env.ODOO_USERNAME;
-const PASSWORD = process.env.ODOO_PASSWORD;
+// ─── Sanitize env vars ──────────────────────────────────────────────────────
+// On some deployment platforms (Render, Heroku) env values set with surrounding
+// single-quotes in the dashboard are passed literally with the quote characters.
+// Strip them here so the _PASSWORD/URL are always clean strings.
+function sanitizeEnv(val) {
+  return (val || "").trim().replace(/^['"]|['"]$/g, "");
+}
+
+const _ODOO_URL      = sanitizeEnv(process.env.ODOO_URL).replace(/\/+$/, "");
+const _DB            = sanitizeEnv(process.env.ODOO_DB);
+const _USERNAME      = sanitizeEnv(process.env.ODOO_USERNAME);
+const _PASSWORD      = sanitizeEnv(process.env.ODOO_PASSWORD);
+const _JSONRPC_URL   = `${_ODOO_URL}/jsonrpc`;
 
 async function callOdoo(service, method, args) {
+  const payload = {
+    jsonrpc: "2.0",
+    method: "call",
+    params: { service, method, args },
+    id: Math.floor(Math.random() * 1000),
+  };
 
-  // console.log("ODOO REQUEST:", {
-  //   service,
-  //   method,
-  // });
-
-  const res = await fetch(`${ODOO_URL}/jsonrpc`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      jsonrpc: "2.0",
-      method: "call",
-      params: {
-        service,
-        method,
-        args,
+  let res;
+  try {
+    res = await fetch(_JSONRPC_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
       },
-      id: Math.floor(Math.random() * 1000),
-    }),
-  });
+      body: JSON.stringify(payload),
+    });
+  } catch (netErr) {
+    console.error(`[OdooService] Network error connecting to "${_JSONRPC_URL}":`, netErr.message);
+    throw new Error(`Odoo connection failed: ${netErr.message}`);
+  }
 
-  const data = await res.json();
+  // Read body as text first — avoid crashing on HTML login/redirect pages
+  const responseText = await res.text();
+  let data;
 
-  // console.log("FULL ODOO RESPONSE:");
-  // console.log(JSON.stringify(data, null, 2));
+  try {
+    data = JSON.parse(responseText);
+  } catch (parseErr) {
+    const statusCode  = res.status;
+    const finalUrl    = res.url;
+    const contentType = res.headers.get("content-type") || "unknown";
+    const bodySnippet = responseText.substring(0, 300);
+
+    console.error(`[OdooService] ❌ Non-JSON response — Odoo JSON-RPC request failed:`);
+    console.error(`  Target JSON-RPC URL : ${_JSONRPC_URL}`);
+    console.error(`  HTTP Status Code    : ${statusCode}`);
+    console.error(`  Final URL           : ${finalUrl}`);
+    console.error(`  Content-Type        : ${contentType}`);
+    console.error(`  Response snippet    :\n${bodySnippet}`);
+
+    throw new Error(
+      `Odoo returned non-JSON (HTTP ${statusCode}): ${bodySnippet.replace(/\s+/g, " ").trim().substring(0, 120)}`
+    );
+  }
 
   if (data.error) {
-    throw new Error(
-      data.error?.data?.message ||
-      data.error?.message ||
-      "Odoo Error"
-    );
+    const errMsg = data.error?.data?.message || data.error?.message || "Odoo Error";
+    throw new Error(errMsg);
   }
 
   return data.result;
 }
+
 
 export async function createLead(data) {
 
   try {
     // LOGIN
     const uid = await callOdoo("common", "authenticate", [
-      DB,
-      USERNAME,
-      PASSWORD,
+      _DB,
+      _USERNAME,
+      _PASSWORD,
       {},
     ]);
 
@@ -174,9 +199,9 @@ export async function createLead(data) {
       console.log("[Odoo] Generating sequential Requirement ID...");
       try {
         const count = await callOdoo("object", "execute_kw", [
-          DB,
+          _DB,
           uid,
-          PASSWORD,
+          _PASSWORD,
           "crm.lead",
           "search_count",
           [[["x_studio_type", "=", "Parent"]]],
@@ -193,9 +218,9 @@ export async function createLead(data) {
 
     // CREATE LEAD
     const leadId = await callOdoo("object", "execute_kw", [
-      DB,
+      _DB,
       uid,
-      PASSWORD,
+      _PASSWORD,
 
       "crm.lead",
       "create",
@@ -219,9 +244,9 @@ export async function updateLead(leadId, values) {
   try {
 
     const uid = await callOdoo("common", "authenticate", [
-      DB,
-      USERNAME,
-      PASSWORD,
+      _DB,
+      _USERNAME,
+      _PASSWORD,
       {},
     ]);
 
@@ -230,9 +255,9 @@ export async function updateLead(leadId, values) {
     }
 
     await callOdoo("object", "execute_kw", [
-      DB,
+      _DB,
       uid,
-      PASSWORD,
+      _PASSWORD,
 
       "crm.lead",
       "write",
@@ -253,9 +278,9 @@ export async function updateLead(leadId, values) {
 export async function upsertMasterTutor(data) {
   try {
     const uid = await callOdoo("common", "authenticate", [
-      DB,
-      USERNAME,
-      PASSWORD,
+      _DB,
+      _USERNAME,
+      _PASSWORD,
       {},
     ]);
 
@@ -324,9 +349,9 @@ export async function upsertMasterTutor(data) {
 
     console.log("[Odoo] Searching for existing tutor with mobile:", data.phone);
     const existing = await callOdoo("object", "execute_kw", [
-      DB,
+      _DB,
       uid,
-      PASSWORD,
+      _PASSWORD,
       "x_master_tutors",
       "search_read",
       [[["x_mobile", "=", data.phone]]],
@@ -339,9 +364,9 @@ export async function upsertMasterTutor(data) {
       console.log("[Odoo] Duplicate tutor found. Updating record ID:", recordId, "Tutor ID:", tutorCode);
       
       await callOdoo("object", "execute_kw", [
-        DB,
+        _DB,
         uid,
-        PASSWORD,
+        _PASSWORD,
         "x_master_tutors",
         "write",
         [[recordId], payload]
@@ -351,9 +376,9 @@ export async function upsertMasterTutor(data) {
     } else {
       console.log("[Odoo] No existing tutor found. Generating sequential Tutor ID...");
       const count = await callOdoo("object", "execute_kw", [
-        DB,
+        _DB,
         uid,
-        PASSWORD,
+        _PASSWORD,
         "x_master_tutors",
         "search_count",
         [[]]
@@ -364,9 +389,9 @@ export async function upsertMasterTutor(data) {
 
       console.log("[Odoo] Creating new Master Tutor record with Tutor ID:", tutorCode);
       const recordId = await callOdoo("object", "execute_kw", [
-        DB,
+        _DB,
         uid,
-        PASSWORD,
+        _PASSWORD,
         "x_master_tutors",
         "create",
         [payload]
@@ -397,7 +422,7 @@ export async function upsertMasterTutor(data) {
  */
 export async function syncTutorStats(odooRecordId, stats) {
   try {
-    const uid = await callOdoo("common", "authenticate", [DB, USERNAME, PASSWORD, {}]);
+    const uid = await callOdoo("common", "authenticate", [_DB, _USERNAME, _PASSWORD, {}]);
     if (!uid) throw new Error("Odoo login failed");
 
     const payload = {};
@@ -410,9 +435,9 @@ export async function syncTutorStats(odooRecordId, stats) {
     if (stats.averageRating != null) payload.x_average_rating = stats.averageRating;
 
     await callOdoo("object", "execute_kw", [
-      DB,
+      _DB,
       uid,
-      PASSWORD,
+      _PASSWORD,
       "x_master_tutors",
       "write",
       [[parseInt(odooRecordId)], payload],
@@ -440,7 +465,7 @@ export async function syncTutorStats(odooRecordId, stats) {
  */
 export async function updateLeadAssignment(leadId, assignmentDetails) {
   try {
-    const uid = await callOdoo("common", "authenticate", [DB, USERNAME, PASSWORD, {}]);
+    const uid = await callOdoo("common", "authenticate", [_DB, _USERNAME, _PASSWORD, {}]);
     if (!uid) throw new Error("Odoo login failed");
 
     const payload = {};
@@ -452,9 +477,9 @@ export async function updateLeadAssignment(leadId, assignmentDetails) {
     payload.x_studio_lead_status = "Demo Scheduled";
 
     await callOdoo("object", "execute_kw", [
-      DB,
+      _DB,
       uid,
-      PASSWORD,
+      _PASSWORD,
       "crm.lead",
       "write",
       [[parseInt(leadId)], payload],
@@ -481,13 +506,13 @@ export async function updateLeadAssignment(leadId, assignmentDetails) {
  */
 export async function addOdooChatterMessage(leadId, message, messageType = "comment") {
   try {
-    const uid = await callOdoo("common", "authenticate", [DB, USERNAME, PASSWORD, {}]);
+    const uid = await callOdoo("common", "authenticate", [_DB, _USERNAME, _PASSWORD, {}]);
     if (!uid) throw new Error("Odoo login failed");
 
     await callOdoo("object", "execute_kw", [
-      DB,
+      _DB,
       uid,
-      PASSWORD,
+      _PASSWORD,
       "crm.lead",
       "message_post",
       [[parseInt(leadId)]],
@@ -530,7 +555,7 @@ export async function lookupOdooMasterTutorIds(tutors) {
   }
 
   try {
-    const uid = await callOdoo("common", "authenticate", [DB, USERNAME, PASSWORD, {}]);
+    const uid = await callOdoo("common", "authenticate", [_DB, _USERNAME, _PASSWORD, {}]);
     if (!uid) {
       console.warn("[OdooService] lookupOdooMasterTutorIds: Odoo login failed");
       return { odooIds, odooModel };
@@ -553,7 +578,7 @@ export async function lookupOdooMasterTutorIds(tutors) {
     // ── Pass 1: match by tutorCode ────────────────────────────────────────────
     if (codes.length > 0) {
       const byCode = await callOdoo("object", "execute_kw", [
-        DB, uid, PASSWORD,
+        _DB, uid, _PASSWORD,
         "x_master_tutors", "search_read",
         [[[  "x_tutor_id", "in", codes ]]],
         { fields: ["id"], limit: 200 },
@@ -583,7 +608,7 @@ export async function lookupOdooMasterTutorIds(tutors) {
       leaves.forEach(leaf => phoneDomain.push(leaf));
 
       const byPhone = await callOdoo("object", "execute_kw", [
-        DB, uid, PASSWORD,
+        _DB, uid, _PASSWORD,
         "x_master_tutors", "search_read",
         [phoneDomain],
         { fields: ["id"], limit: 200 },
@@ -602,4 +627,4 @@ export async function lookupOdooMasterTutorIds(tutors) {
   }
 
   return { odooIds, odooModel };
-}
+}

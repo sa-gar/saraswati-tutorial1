@@ -100,51 +100,111 @@ export function classifyFailureReason(errorMessage) {
   return "Unknown Error";
 }
 
+function getSanitizedOdooEnv() {
+  const sanitize = (val) => (val || "").trim().replace(/^['"]|['"]$/g, "");
+  const baseUrl = sanitize(process.env.ODOO_URL).replace(/\/+$/, "");
+  const db = sanitize(process.env.ODOO_DB);
+  const username = sanitize(process.env.ODOO_USERNAME);
+  const password = sanitize(process.env.ODOO_PASSWORD);
+  return { baseUrl, db, username, password, jsonrpcUrl: `${baseUrl}/jsonrpc` };
+}
+
+/**
+ * Execute a JSON-RPC request to Odoo with full diagnostic logging on non-JSON / HTML / redirect responses.
+ */
+async function executeOdooJsonRpc(service, method, args) {
+  const { jsonrpcUrl } = getSanitizedOdooEnv();
+
+  const payload = {
+    jsonrpc: "2.0",
+    method: "call",
+    params: { service, method, args },
+    id: Math.floor(Math.random() * 10000),
+  };
+
+  let res;
+  try {
+    res = await fetch(jsonrpcUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+  } catch (netErr) {
+    console.error(`[OdooRPC Network Error] Failed to connect to "${jsonrpcUrl}":`, netErr.message);
+    throw new Error(`Odoo connection failed (${jsonrpcUrl}): ${netErr.message}`);
+  }
+
+  const responseText = await res.text();
+  let data;
+
+  try {
+    data = JSON.parse(responseText);
+  } catch (parseErr) {
+    const statusCode = res.status;
+    const finalUrl = res.url;
+    const contentType = res.headers.get("content-type") || "unknown";
+    const bodySnippet = responseText.substring(0, 300);
+
+    console.error(`[OdooRPC Error] Non-JSON response received from Odoo:`);
+    console.error(`  - Target JSON-RPC URL: ${jsonrpcUrl}`);
+    console.error(`  - HTTP Status Code: ${statusCode}`);
+    console.error(`  - Final Response URL (after redirects): ${finalUrl}`);
+    console.error(`  - Content-Type: ${contentType}`);
+    console.error(`  - First 300 chars of response body:\n${bodySnippet}`);
+
+    throw new Error(
+      `Odoo JSON-RPC endpoint returned invalid JSON (HTTP ${statusCode} at ${finalUrl}): ${bodySnippet.replace(/\s+/g, " ").trim()}`
+    );
+  }
+
+  if (data.error) {
+    const errMsg = data.error?.data?.message || data.error?.message || "Odoo Error";
+    console.error(`[OdooRPC Error] Odoo error response (HTTP ${res.status}, URL ${res.url}): ${errMsg}`);
+    throw new Error(errMsg);
+  }
+
+  return data.result;
+}
+
 /**
  * Authenticate with Odoo and return the UID
  */
 export async function getOdooUid() {
-  const res = await fetch(`${ODOO_URL}/jsonrpc`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      jsonrpc: "2.0",
-      method: "call",
-      params: {
-        service: "common",
-        method: "authenticate",
-        args: [DB, USERNAME, PASSWORD, {}],
-      },
-      id: Math.floor(Math.random() * 10000),
-    }),
-  });
-  const data = await res.json();
-  if (data.error) throw new Error(data.error?.data?.message || data.error?.message || "Odoo auth failed");
-  if (!data.result) throw new Error("Odoo authentication failed — check credentials");
-  return data.result;
+  const { db, username, password } = getSanitizedOdooEnv();
+
+  const uid = await executeOdooJsonRpc("common", "authenticate", [
+    db,
+    username,
+    password,
+    {},
+  ]);
+
+  if (typeof uid !== "number" || uid <= 0) {
+    console.error(`[OdooRPC Auth Failed] Authentication returned non-positive UID (${uid}) for user "${username}" on DB "${db}". Check credentials.`);
+    throw new Error("Odoo authentication failed — check ODOO_USERNAME / ODOO_PASSWORD credentials");
+  }
+
+  return uid;
 }
 
 /**
  * Execute an Odoo model method via JSON-RPC
  */
 export async function callOdooMethod(uid, model, method, args, kwargs = {}) {
-  const res = await fetch(`${ODOO_URL}/jsonrpc`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      jsonrpc: "2.0",
-      method: "call",
-      params: {
-        service: "object",
-        method: "execute_kw",
-        args: [DB, uid, PASSWORD, model, method, args, kwargs],
-      },
-      id: Math.floor(Math.random() * 10000),
-    }),
-  });
-  const data = await res.json();
-  if (data.error) throw new Error(data.error?.data?.message || data.error?.message || "Odoo error");
-  return data.result;
+  const { db, password } = getSanitizedOdooEnv();
+
+  return await executeOdooJsonRpc("object", "execute_kw", [
+    db,
+    uid,
+    password,
+    model,
+    method,
+    args,
+    kwargs,
+  ]);
 }
 
 /**
