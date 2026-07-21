@@ -628,3 +628,47 @@ export async function lookupOdooMasterTutorIds(tutors) {
 
   return { odooIds, odooModel };
 }
+
+/**
+ * Update crm.lead record in Odoo with recommended x_master_tutors IDs.
+ * Uses Odoo ORM command [(6, 0, ids)] to replace the Many2many relation.
+ * Field name: x_recommended_tutor_ids (related model: x_master_tutors)
+ */
+export async function updateLeadRecommendedTutors(odooLeadId, odooIds = []) {
+  if (!odooLeadId) return;
+
+  try {
+    const uid = await callOdoo("common", "authenticate", [_DB, _USERNAME, _PASSWORD, {}]);
+    if (!uid) {
+      console.warn("[OdooService] updateLeadRecommendedTutors: Odoo auth failed");
+      return;
+    }
+
+    const cleanLeadId = Number(odooLeadId);
+    const cleanIds    = (odooIds || []).map(Number).filter((id) => !isNaN(id));
+
+    await callOdoo("object", "execute_kw", [
+      _DB,
+      uid,
+      _PASSWORD,
+      "crm.lead",
+      "write",
+      [
+        [cleanLeadId],
+        {
+          x_recommended_tutor_ids: [[6, 0, cleanIds]],
+        },
+      ],
+    ]);
+
+    console.log(
+      `[OdooService] ✅ Updated crm.lead #${cleanLeadId} x_recommended_tutor_ids with ${cleanIds.length} tutor ID(s)`
+    );
+  } catch (err) {
+    console.error(
+      `[OdooService] Failed to update crm.lead #${odooLeadId} x_recommended_tutor_ids:`,
+      err.message
+    );
+  }
+}
+

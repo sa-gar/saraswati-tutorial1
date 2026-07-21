@@ -24,7 +24,7 @@ import ParentEnquiry from "../models/ParentEnquiry.js";
 import { getRecommendations, buildParamsFromLead } from "../utils/recommendationEngine.js";
 import { broadcastService } from "../utils/broadcastService.js";
 import { parseAddress } from "../utils/matchingEngine.js";
-import { addOdooChatterMessage, lookupOdooMasterTutorIds } from "../utils/odooService.js";
+import { addOdooChatterMessage, lookupOdooMasterTutorIds, updateLeadRecommendedTutors } from "../utils/odooService.js";
 
 const router = express.Router();
 
@@ -268,6 +268,12 @@ router.get("/recommend-from-odoo", async (req, res) => {
       `${allRecommended.length} tutors recommended, ${odooIds.length} matched in Odoo`
     );
 
+    // ── Update Many2many field x_recommended_tutor_ids on crm.lead ──────────
+    await updateLeadRecommendedTutors(leadId, odooIds).catch((err) =>
+      console.warn("[OdooRoutes] updateLeadRecommendedTutors failed:", err.message)
+    );
+
+
     // Post summary to Odoo chatter
     const tierLines = [];
     for (const [tier, tutors] of Object.entries(recommendations)) {
@@ -386,6 +392,11 @@ router.post("/odoo/search-tutor", async (req, res) => {
         console.error("[OdooOnline] lookupOdooMasterTutorIds failed:", err.message);
         return { odooIds: [], odooModel: "x_master_tutors" };
       });
+
+    // ── Update Many2many field x_recommended_tutor_ids on crm.lead ──────────
+    await updateLeadRecommendedTutors(odooLeadId, odooIds).catch((err) =>
+      console.warn("[OdooOnline] updateLeadRecommendedTutors failed:", err.message)
+    );
 
     // ── Format and post chatter message ──────────────────────────────────────
     const tierLines  = buildChatterSummary(recommendations);

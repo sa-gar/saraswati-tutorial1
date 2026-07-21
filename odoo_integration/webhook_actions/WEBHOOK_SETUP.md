@@ -169,6 +169,30 @@ The action now appears in the ⚙️ menu on every CRM Lead.
 
 ---
 
+## Step 5.5 — Optional: Add "Matching Tutors" Smart Button (Architecture B)
+
+When `/api/odoo/search-tutor` runs, the backend automatically uses JSON-RPC to populate a Many2many field on `crm.lead` named `x_recommended_tutor_ids` with the matched `x_master_tutors` IDs using Odoo's `(6, 0, ids)` ORM command.
+
+To view these matching tutors via a native **Smart Button** on the CRM Lead form:
+
+### 1. Create the Field (if not using Odoo Studio)
+Go to **Settings → Technical → Database Structure → Fields → New**:
+- **Field Name**: `x_recommended_tutor_ids`
+- **Field Label**: `Recommended Tutors`
+- **Model**: `CRM Lead/Opportunity` (`crm.lead`)
+- **Field Type**: `many2many`
+- **Object Relation**: `x_master_tutors`
+
+### 2. Add the Smart Button (via Odoo Studio or View Customization)
+1. Open any CRM Lead in **Odoo Studio**.
+2. Add a **Smart Button** at the top of the Lead Form view.
+3. Set the button relation to `x_recommended_tutor_ids`.
+4. Label: **Matching Tutors**.
+
+Now, whenever you click **Search Tutor (Saraswati)**, the webhook calculates matches, updates `x_recommended_tutor_ids`, and the Smart Button updates to display the matched tutors list in Odoo!
+
+---
+
 ## Example Webhook Payloads
 
 ### Search Tutor — payload sent by Odoo:
