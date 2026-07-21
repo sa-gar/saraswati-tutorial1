@@ -107,15 +107,6 @@ async function run() {
     console.log("  UNLINK error:", err.message);
   }
 
-  // ── 8. Check if x_matching_tutor model exists ───────────────────────────────
-  console.log("\n═══════════════════════════════════════");
-  console.log("8. Checking if x_matching_tutor model exists...");
-  try {
-    const mtFields = await rpc(uid, "x_matching_tutor", "fields_get", [], { attributes: ["string", "type", "relation"] });
-    console.log("  x_matching_tutor EXISTS with fields:", Object.keys(mtFields).join(", "));
-  } catch (err) {
-    console.log("  x_matching_tutor does NOT exist:", err.message.slice(0, 120));
-  }
 
   // ── 9. Check test records created by earlier sync ───────────────────────────
   console.log("\n═══════════════════════════════════════");

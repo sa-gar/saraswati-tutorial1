@@ -24,7 +24,7 @@ import ParentEnquiry from "../models/ParentEnquiry.js";
 import { getRecommendations, buildParamsFromLead } from "../utils/recommendationEngine.js";
 import { broadcastService } from "../utils/broadcastService.js";
 import { parseAddress } from "../utils/matchingEngine.js";
-import { addOdooChatterMessage, syncMatchingTutorsToOdoo, lookupOdooMasterTutorIds } from "../utils/odooService.js";
+import { addOdooChatterMessage, lookupOdooMasterTutorIds } from "../utils/odooService.js";
 
 const router = express.Router();
 
@@ -247,14 +247,9 @@ router.get("/recommend-from-odoo", async (req, res) => {
     const params          = buildParamsFromLead(lead, parsedAddr);
     const recommendations = await getRecommendations(params);
 
-    // Sync matching tutors to Odoo (non-blocking, catch all errors)
-    syncMatchingTutorsToOdoo(lead, recommendations).catch((err) => {
-      console.error("[OdooRoutes] Failed to sync matching tutors to Odoo:", err.message);
-    });
-
     // ── Resolve Odoo record IDs for matched tutors ─────────────────────────
     // Flatten all tiers into one list, then look up x_master_tutors by code
-    // and phone.  The Python action will use these IDs directly in the domain
+    // and phone. The Python action will use these IDs directly in the domain
     // filter so the window action shows exactly the matched tutors.
     const allRecommended = [
       ...( recommendations.exact  || []),
@@ -294,6 +289,7 @@ router.get("/recommend-from-odoo", async (req, res) => {
     await addOdooChatterMessage(leadId, chatterMsg).catch(() => {});
 
     res.json({
+      success: true,
       lead: {
         requirementId: lead.requirementId,
         area: lead.area,
@@ -378,10 +374,18 @@ router.post("/odoo/search-tutor", async (req, res) => {
       });
     }
 
-    // Sync matching tutors to Odoo (non-blocking, catch all errors)
-    syncMatchingTutorsToOdoo(lead, recommendations).catch((err) => {
-      console.error("[OdooRoutes] Failed to sync matching tutors to Odoo Online:", err.message);
-    });
+    // ── Resolve Odoo record IDs for matched tutors ─────────────────────────
+    const allRecommended = [
+      ...( recommendations.exact  || []),
+      ...( recommendations.nearby || []),
+      ...( recommendations.city   || []),
+      ...( recommendations.backup || []),
+    ];
+    const { odooIds, odooModel } = await lookupOdooMasterTutorIds(allRecommended)
+      .catch((err) => {
+        console.error("[OdooOnline] lookupOdooMasterTutorIds failed:", err.message);
+        return { odooIds: [], odooModel: "x_master_tutors" };
+      });
 
     // ── Format and post chatter message ──────────────────────────────────────
     const tierLines  = buildChatterSummary(recommendations);
@@ -398,6 +402,9 @@ router.post("/odoo/search-tutor", async (req, res) => {
       message: "Recommendations calculated and posted to Odoo chatter.",
       odooLeadId,
       requirementId: lead.requirementId,
+      recommendations,
+      odooIds,
+      odooModel,
       buckets: {
         exact:  recommendations.exact.length,
         nearby: recommendations.nearby.length,
