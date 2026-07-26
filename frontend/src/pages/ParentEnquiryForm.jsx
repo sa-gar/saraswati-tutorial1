@@ -38,6 +38,7 @@ import {
 import { PLANS, calculatePrice, calculateEliteHourlyPrice, calculateEliteMonthlyPrice, getMultipleWardsCalculation } from "../data/plansConfig";
 import { API_BASE } from "../config";
 import { trackEvent } from "../utils/analytics";
+import DemoParentDashboard from "./DemoParentDashboard";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -576,6 +577,7 @@ export default function ParentEnquiryForm() {
   const [selectedOption, setSelectedOption] = useState(null);
   const [openFaqIndex, setOpenFaqIndex] = useState(null);
   const [showAllFeatures, setShowAllFeatures] = useState(false);
+  const [showDemoPreview, setShowDemoPreview] = useState(false);
 
   useEffect(() => {
     setOpenFaqIndex(null);
@@ -2058,6 +2060,16 @@ export default function ParentEnquiryForm() {
                                                 </p>
                                               </>
                                             )}
+                                            {benefit.title && (benefit.title.toLowerCase().includes('attendance') || benefit.title.toLowerCase().includes('compensation')) && (
+                                              <button
+                                                type="button"
+                                                onClick={(e) => { e.stopPropagation(); setShowDemoPreview(true); }}
+                                                className="mt-2 inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-[10px] font-black px-3 py-1.5 rounded-lg transition-all duration-200 cursor-pointer shadow-sm shadow-blue-500/30"
+                                              >
+                                                <Eye className="h-3 w-3" />
+                                                See Preview
+                                              </button>
+                                            )}
                                           </div>
                                         </div>
                                       );
@@ -2558,6 +2570,12 @@ export default function ParentEnquiryForm() {
           </div>
         </form>
       </div>
+      {showDemoPreview && (
+        <DemoParentDashboard
+          onClose={() => setShowDemoPreview(false)}
+          selectedPlan={form.planType || "advance"}
+        />
+      )}
     </div>
   );
 }

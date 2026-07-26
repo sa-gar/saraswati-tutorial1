@@ -1,6 +1,7 @@
 import ParentEnquiry from "../models/ParentEnquiry.js";
 import Tutor from "../models/Tutor.js";
 import BroadcastLog from "../models/BroadcastLog.js";
+import Attendance from "../models/Attendance.js";
 import { sendWhatsAppToTutor } from "./whatsappService.js";
 import { broadcastService, RETRYABLE_FAILURE_REASONS } from "./broadcastService.js";
 import { startSyncScheduler } from "./syncService.js";
@@ -96,6 +97,20 @@ export async function checkAndSendAttendanceReminders() {
 
       // Check if current time is exactly 15 to 25 minutes after the class ended
       if (currentMinutes >= endTimeMinutes + 15 && currentMinutes <= endTimeMinutes + 25) {
+        // Query Attendance model to see if attendance was already marked today
+        const existingAttendance = await Attendance.findOne({
+          parentEnquiryId: lead._id,
+          tutorId: lead.assignedTutorId,
+          date: todayDateStr,
+        });
+
+        if (existingAttendance) {
+          console.log(`[Reminder System] Attendance already marked for Lead ID: ${lead._id} on ${todayDateStr}. Skipping reminder.`);
+          lead.lastReminderSentDate = todayDateStr;
+          await lead.save({ validateBeforeSave: false });
+          continue;
+        }
+
         const tutor = await Tutor.findById(lead.assignedTutorId);
         if (!tutor) continue;
 
@@ -140,11 +155,91 @@ export async function checkAndSendAttendanceReminders() {
   }
 }
 
+/**
+ * Check for student packages with exactly 1 class remaining and alert Admin.
+ */
+export async function checkPackageCompletionAlerts() {
+  try {
+    const leads = await ParentEnquiry.find({
+      status: { $in: ["Enrolled", "Won"] },
+      totalClasses: { $ne: null, $gt: 0 },
+    });
+
+    for (const lead of leads) {
+      const remaining = lead.totalClasses - lead.completedClasses;
+      if (remaining === 1) {
+        if (lead.packageAlertSentForTotal !== lead.totalClasses) {
+          const studentName = lead.wards?.map(w => w.studentName).join(", ") || "Unknown Student";
+          const adminAlertMsg = `[ADMIN ALERT] package completion threshold reached: Student "${studentName}" (Lead ID: ${lead._id}, Req: ${lead.requirementId || "N/A"}) has exactly 1 class remaining out of ${lead.totalClasses} total classes. Please initiate renewal processes.`;
+          console.warn(adminAlertMsg);
+
+          lead.packageAlertSentForTotal = lead.totalClasses;
+          await lead.save({ validateBeforeSave: false });
+        }
+      }
+    }
+  } catch (err) {
+    console.error(`[Package Completion Alert Error]:`, err.message);
+  }
+}
+
+/**
+ * Check for student packages with exactly 0 classes remaining and alert Parent via WhatsApp.
+ */
+export async function checkParentRenewalReminders() {
+  try {
+    const leads = await ParentEnquiry.find({
+      status: { $in: ["Enrolled", "Won"] },
+      totalClasses: { $ne: null, $gt: 0 },
+    });
+
+    for (const lead of leads) {
+      const remaining = lead.totalClasses - lead.completedClasses;
+      if (remaining <= 0) {
+        if (lead.renewalReminderSentForTotal !== lead.totalClasses) {
+          const studentName = lead.wards?.map(w => w.studentName).join(", ") || "Unknown Student";
+          const parentName = lead.parentName || "Parent";
+          const phoneNumber = lead.phone;
+
+          const messageBody = `Dear ${parentName},\n\nThis is a friendly reminder that the current tutoring package for ${studentName} has been completed (${lead.completedClasses}/${lead.totalClasses} classes completed).\n\nTo ensure uninterrupted sessions, please process the package renewal payment. Let us know if you need any assistance.\n\nThank you,\nSaraswati Tutorials`;
+
+          console.log(`[Renewal Reminder] Sending renewal message to Parent: ${parentName} (${phoneNumber})`);
+
+          let sentSuccessfully = false;
+          if (phoneNumber) {
+            try {
+              const result = await sendWhatsAppToTutor({
+                phoneNumber,
+                messageBody,
+                templateVars: { parent_name: parentName, student_name: studentName },
+                forceTemplate: false,
+              });
+              sentSuccessfully = result.success;
+              if (!sentSuccessfully) {
+                console.warn(`[Renewal Reminder] WhatsApp dispatch failed: ${result.failureReason}`);
+              }
+            } catch (wsErr) {
+              console.error(`[Renewal Reminder] WhatsApp error:`, wsErr.message);
+            }
+          }
+
+          lead.renewalReminderSentForTotal = lead.totalClasses;
+          await lead.save({ validateBeforeSave: false });
+        }
+      }
+    }
+  } catch (err) {
+    console.error(`[Parent Renewal Reminder Error]:`, err.message);
+  }
+}
+
 // Start Background Interval (runs every 60 seconds)
 export function startReminderScheduler() {
   console.log(`[Reminder System] Starting automated attendance check daemon...`);
   setInterval(() => {
     checkAndSendAttendanceReminders();
+    checkPackageCompletionAlerts();
+    checkParentRenewalReminders();
   }, 60 * 1000);
 }
 

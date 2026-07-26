@@ -70,7 +70,7 @@ export function classifyFailureReason(errorMessage) {
   if (msg.includes("invalid number") || msg.includes("invalid phone") || msg.includes("number does not exist")) {
     return "Invalid Number";
   }
-  if (msg.includes("template missing") || msg.includes("template not found") || msg.includes("template not approved")) {
+  if (msg.includes("template missing") || msg.includes("template not found") || msg.includes("template not approved") || msg.includes("template deleted or inactive")) {
     return "Template Missing";
   }
   if (msg.includes("policy") || msg.includes("enforcement")) {
@@ -240,6 +240,41 @@ async function findActiveConversation(uid, phoneNumber) {
   } catch (err) {
     console.warn("[WhatsApp] Could not check active conversation:", err.message);
     return null;
+  }
+}
+
+/**
+ * Verify template existence and approval status in Odoo.
+ * Returns true if template exists and is approved, false otherwise.
+ */
+export async function validateTemplate(uid, templateIdentifier) {
+  try {
+    let domain;
+    if (typeof templateIdentifier === "number") {
+      domain = [["id", "=", templateIdentifier]];
+    } else {
+      domain = [["name", "=", templateIdentifier]];
+    }
+    const templates = await callOdooMethod(
+      uid,
+      "whatsapp.template",
+      "search_read",
+      [[domain]],
+      { fields: ["id", "status"], limit: 1 }
+    );
+    if (!templates || templates.length === 0) {
+      console.warn(`[WhatsApp Validation] Template "${templateIdentifier}" does not exist in Odoo.`);
+      return false;
+    }
+    const status = templates[0].status;
+    if (status !== "approved") {
+      console.warn(`[WhatsApp Validation] Template "${templateIdentifier}" status is "${status}", not approved.`);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error(`[WhatsApp Validation] Error validating template "${templateIdentifier}":`, err.message);
+    return false;
   }
 }
 
@@ -455,21 +490,25 @@ export async function sendWhatsAppToTutor(options) {
         messageId = await sendFreeformMessage(uid, channelId, messageBody);
         usedTemplate = false;
       } else {
-        // Outside 24h window — use approved template (or fallback to direct outbound)
-        try {
-          console.log(`[WhatsApp] Sending template "${templateName}" to ${phoneNumber}`);
-          messageId = await sendTemplateMessage(uid, phoneNumber, templateName, templateLang, templateVars, resId, templateId || null);
-
-          usedTemplate = true;
-        } catch (templateErr) {
-          if (templateErr.message.includes("template missing")) {
-            console.warn(`[WhatsApp] Template "${templateName}" is missing in Odoo. Falling back to direct outbound message...`);
-            messageId = await sendDirectOutboundMessage(uid, phoneNumber, messageBody);
-            usedTemplate = false;
-          } else {
-            throw templateErr;
-          }
+        // Outside 24h window — use approved template
+        const targetTemplate = templateId || templateName;
+        const isApproved = await validateTemplate(uid, targetTemplate);
+        if (!isApproved) {
+          const reason = "Template Deleted or Inactive";
+          console.error(`[WhatsApp] Validation failed for template "${targetTemplate}". Reason: ${reason}`);
+          return {
+            success: false,
+            messageId: null,
+            usedTemplate: false,
+            channelId: null,
+            failureReason: reason,
+            retryCount,
+          };
         }
+
+        console.log(`[WhatsApp] Sending template "${templateName}" to ${phoneNumber}`);
+        messageId = await sendTemplateMessage(uid, phoneNumber, templateName, templateLang, templateVars, resId, templateId || null);
+        usedTemplate = true;
       }
 
       console.log(`[WhatsApp] Message sent successfully to ${phoneNumber}. Message ID: ${messageId}`);

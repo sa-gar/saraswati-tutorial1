@@ -317,10 +317,20 @@ const parentEnquirySchema = new mongoose.Schema(
 
     totalClasses: {
       type: Number,
-      default: 12,
+      default: null,
     },
 
     completedClasses: {
+      type: Number,
+      default: 0,
+    },
+
+    packageAlertSentForTotal: {
+      type: Number,
+      default: 0,
+    },
+
+    renewalReminderSentForTotal: {
       type: Number,
       default: 0,
     },

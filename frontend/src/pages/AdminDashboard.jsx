@@ -2924,7 +2924,7 @@ function AdminAttendanceConsole({
       
       // Pre-fill tuition details inline form
       setTDuration(p.classDuration || "");
-      setTTotalClasses(p.totalClasses || 12);
+      setTTotalClasses(p.totalClasses !== null && p.totalClasses !== undefined ? p.totalClasses : "");
       setTCompletedClasses(p.completedClasses || 0);
       setTSchedule(p.classSchedule || "");
       setTuitionError("");
@@ -3112,9 +3112,10 @@ function AdminAttendanceConsole({
               filtered.map((p) => {
                 const isExpanded = expandedId === p._id;
                 const studentName = p.wards?.map((w) => w.studentName).join(", ") || "Unknown Student";
-                const total = p.totalClasses || 12;
+                const hasTotal = p.totalClasses !== null && p.totalClasses !== undefined;
+                const totalDisplay = hasTotal ? p.totalClasses : "—";
                 const completed = p.completedClasses || 0;
-                const remaining = Math.max(0, total - completed);
+                const remainingDisplay = hasTotal ? Math.max(0, p.totalClasses - completed) : "—";
 
                 const tutorMissedLogs = attendanceLogs[p._id]?.filter((l) => l.status === "Missed") || [];
                 const missedCount = attendanceLogs[p._id] ? tutorMissedLogs.length : "-";
@@ -3157,7 +3158,7 @@ function AdminAttendanceConsole({
                         }
                         if (c.key === "totalClasses") {
                           return (
-                            <td key={c.key} className="py-4 px-4 text-center text-slate-500">{total}</td>
+                            <td key={c.key} className="py-4 px-4 text-center text-slate-500">{totalDisplay}</td>
                           );
                         }
                         if (c.key === "completedClasses") {
@@ -3172,7 +3173,7 @@ function AdminAttendanceConsole({
                         }
                         if (c.key === "remainingClasses") {
                           return (
-                            <td key={c.key} className="py-4 px-4 text-center text-indigo-600 font-extrabold">{remaining}</td>
+                            <td key={c.key} className="py-4 px-4 text-center text-indigo-600 font-extrabold">{remainingDisplay}</td>
                           );
                         }
                         return null;

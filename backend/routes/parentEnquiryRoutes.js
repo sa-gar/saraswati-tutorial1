@@ -253,8 +253,14 @@ router.post("/", async (req, res) => {
       }
     }
 
+    let finalTotalClasses = req.body.totalClasses;
+    if ((finalTotalClasses === undefined || finalTotalClasses === null) && req.body.daysPerWeek) {
+      finalTotalClasses = Number(req.body.daysPerWeek) * 4;
+    }
+
     const enquiry = new ParentEnquiry({
       ...req.body,
+      totalClasses: finalTotalClasses,
       status: req.body.status || "New Lead",
       odooLeadId: odooRes && typeof odooRes === "object" ? odooRes.id : odooRes,
       requirementId,
