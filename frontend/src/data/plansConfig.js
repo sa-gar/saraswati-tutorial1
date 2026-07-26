@@ -365,3 +365,49 @@ export const PLANS = [
     }
   }
 ];
+
+export const SIBLING_CONCESSIONS = {
+  1: 0.00,
+  2: 0.25,
+  3: 0.35 // 3 or more students
+};
+
+export const getMultipleWardsCalculation = (planId, option, wards = [], mode = "Home Tuition / In-Person") => {
+  if (!option || !wards || wards.length === 0) return null;
+
+  // 1. Calculate price for each student separately
+  const studentFees = wards.map(ward => {
+    const cg = ward.classGrade || "6";
+    const curr = ward.curriculum || "CBSE";
+    const fee = calculatePrice(planId, cg, curr, option.days, option.hours, mode);
+    return fee;
+  });
+
+  const totalBaseFee = studentFees.reduce((sum, fee) => sum + fee, 0);
+
+  // 2. Sibling Concession calculation
+  const numStudents = wards.length;
+  let concessionPercent = 0;
+  if (numStudents === 2) {
+    concessionPercent = SIBLING_CONCESSIONS[2] || 0.25;
+  } else if (numStudents >= 3) {
+    concessionPercent = SIBLING_CONCESSIONS[3] || 0.35;
+  }
+
+  const siblingDiscount = Math.round(totalBaseFee * concessionPercent);
+  const finalPrice = totalBaseFee - siblingDiscount;
+
+  // For elite, cost per class can be calculated based on final price and classes
+  const totalClasses = option.days * 4;
+  const costPerClass = Math.round(finalPrice / totalClasses);
+
+  return {
+    studentFees,
+    totalBaseFee,
+    concessionPercent: Math.round(concessionPercent * 100),
+    siblingDiscount,
+    finalPrice,
+    totalClasses,
+    costPerClass
+  };
+};

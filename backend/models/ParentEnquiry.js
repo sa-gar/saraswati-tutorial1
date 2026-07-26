@@ -173,6 +173,31 @@ const parentEnquirySchema = new mongoose.Schema(
       default: null,
     },
 
+    siblingDiscount: {
+      type: Number,
+      default: 0,
+    },
+
+    siblingConcessionPercent: {
+      type: Number,
+      default: 0,
+    },
+
+    totalBaseFee: {
+      type: Number,
+      default: null,
+    },
+
+    studentFees: {
+      type: [Number],
+      default: [],
+    },
+
+    finalPrice: {
+      type: Number,
+      default: null,
+    },
+
     odooLeadId: {
       type: mongoose.Schema.Types.Mixed,
       default: null,

@@ -1494,6 +1494,12 @@ export default function AdminDashboard() {
                                 <InfoRow icon={Calendar} label="Days / Week" value={p.daysPerWeek ? `${p.daysPerWeek} Days` : "Not specified"} />
                                 <InfoRow icon={Clock} label="Hours / Day" value={p.hoursPerDay ? `${p.hoursPerDay} Hr` : "Not specified"} />
                                 <InfoRow icon={CreditCard} label="Monthly Fee" value={p.monthlyFees ? `₹${p.monthlyFees.toLocaleString('en-IN')}` : "Not specified"} />
+                                {p.totalBaseFee && p.totalBaseFee !== p.monthlyFees && (
+                                  <InfoRow icon={CreditCard} label="Total Base Fee" value={`₹${p.totalBaseFee.toLocaleString('en-IN')}`} />
+                                )}
+                                {p.siblingDiscount > 0 && (
+                                  <InfoRow icon={CreditCard} label="Sibling Concession" value={`-₹${p.siblingDiscount.toLocaleString('en-IN')} (${p.siblingConcessionPercent}%)`} />
+                                )}
                               </div>
                             </div>
                           )}
@@ -2053,6 +2059,12 @@ export default function AdminDashboard() {
                               <InfoRow icon={Calendar} label="Days / Week" value={p.formData.daysPerWeek ? `${p.formData.daysPerWeek} Days` : "Not specified"} />
                               <InfoRow icon={Clock} label="Hours / Day" value={p.formData.hoursPerDay ? `${p.formData.hoursPerDay} Hr` : "Not specified"} />
                               <InfoRow icon={CreditCard} label="Monthly Fee" value={p.formData.monthlyFees ? `₹${p.formData.monthlyFees.toLocaleString('en-IN')}` : "Not specified"} />
+                              {p.formData.totalBaseFee && p.formData.totalBaseFee !== p.formData.monthlyFees && (
+                                <InfoRow icon={CreditCard} label="Total Base Fee" value={`₹${p.formData.totalBaseFee.toLocaleString('en-IN')}`} />
+                              )}
+                              {p.formData.siblingDiscount > 0 && (
+                                <InfoRow icon={CreditCard} label="Sibling Concession" value={`-₹${p.formData.siblingDiscount.toLocaleString('en-IN')} (${p.formData.siblingConcessionPercent}%)`} />
+                              )}
                             </div>
                           </div>
                         ) : null}

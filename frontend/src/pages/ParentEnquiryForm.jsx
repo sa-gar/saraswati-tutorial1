@@ -35,7 +35,7 @@ import {
   RefreshCw,
   MessageSquare
 } from "lucide-react";
-import { PLANS, calculatePrice, calculateEliteHourlyPrice, calculateEliteMonthlyPrice } from "../data/plansConfig";
+import { PLANS, calculatePrice, calculateEliteHourlyPrice, calculateEliteMonthlyPrice, getMultipleWardsCalculation } from "../data/plansConfig";
 import { API_BASE } from "../config";
 import { trackEvent } from "../utils/analytics";
 
@@ -104,6 +104,10 @@ const initialForm = {
   daysPerWeek: null,
   hoursPerDay: null,
   monthlyFees: null,
+  siblingDiscount: 0,
+  siblingConcessionPercent: 0,
+  totalBaseFee: null,
+  studentFees: [],
   discount: null,
   finalPrice: null,
   costPerClass: null,
@@ -598,9 +602,12 @@ export default function ParentEnquiryForm() {
       setMessage("For classes 1 to 8, 1 Hour session is not allowed on this plan. Please select 1.5 or 2 Hours.");
       return;
     }
-    const firstWardClass = form.wards[0]?.classGrade || "6";
-    const firstWardBoard = form.wards[0]?.curriculum || "CBSE";
-    const calc = getDynamicCalculation(plan.id, selectedOption, firstWardClass, firstWardBoard, form.preferredMode);
+    const calc = getMultipleWardsCalculation(plan.id, selectedOption, form.wards, form.preferredMode);
+    let discount = null;
+    if (plan.id === 'foundation' && calc) {
+      const calcBase = getMultipleWardsCalculation('board', selectedOption, form.wards, form.preferredMode);
+      discount = calcBase ? (calcBase.finalPrice - calc.finalPrice) : null;
+    }
     
     // Automatically calculate End Time and Slot matching the chosen plan's session hours
     const curStart = form.startTime || "17:00";
@@ -614,7 +621,11 @@ export default function ParentEnquiryForm() {
       daysPerWeek: selectedOption.days,
       hoursPerDay: selectedOption.hours,
       monthlyFees: calc ? calc.finalPrice : selectedOption.price,
-      discount: calc ? (calc.discount || null) : null,
+      siblingDiscount: calc ? calc.siblingDiscount : 0,
+      siblingConcessionPercent: calc ? calc.concessionPercent : 0,
+      totalBaseFee: calc ? calc.totalBaseFee : 0,
+      studentFees: calc ? calc.studentFees : [],
+      discount: discount,
       finalPrice: calc ? calc.finalPrice : selectedOption.price,
       costPerClass: calc ? (calc.costPerClass || null) : null,
       preferredDays: [],
@@ -651,6 +662,31 @@ export default function ParentEnquiryForm() {
       pricingConsent: "",
     }));
   };
+
+  useEffect(() => {
+    if (form.planType && form.daysPerWeek && form.hoursPerDay) {
+      const selectedOption = { days: form.daysPerWeek, hours: form.hoursPerDay };
+      const calc = getMultipleWardsCalculation(form.planType, selectedOption, form.wards, form.preferredMode);
+      if (calc) {
+        let discount = null;
+        if (form.planType === 'foundation') {
+          const calcBase = getMultipleWardsCalculation('board', selectedOption, form.wards, form.preferredMode);
+          discount = calcBase ? (calcBase.finalPrice - calc.finalPrice) : null;
+        }
+        setForm(prev => ({
+          ...prev,
+          monthlyFees: calc.finalPrice,
+          siblingDiscount: calc.siblingDiscount,
+          siblingConcessionPercent: calc.concessionPercent,
+          totalBaseFee: calc.totalBaseFee,
+          studentFees: calc.studentFees,
+          discount: discount,
+          finalPrice: calc.finalPrice,
+          costPerClass: calc.costPerClass
+        }));
+      }
+    }
+  }, [form.wards, form.planType, form.daysPerWeek, form.hoursPerDay, form.preferredMode]);
 
   useEffect(() => {
     const prefilledPlan = localStorage.getItem("prefilledPlan");
@@ -1438,11 +1474,28 @@ export default function ParentEnquiryForm() {
                             options={subjectOptions}
                             selectedValues={ward.subjectsNeeded}
                             onChange={(newValues) => {
+                              const previousValues = ward.subjectsNeeded || [];
+                              const hadHindi = previousValues.includes("Hindi");
+                              const hadKannada = previousValues.includes("Kannada");
+                              const hasHindi = newValues.includes("Hindi");
+                              const hasKannada = newValues.includes("Kannada");
+                              
+                              let filteredValues = newValues;
+                              if (hasHindi && hasKannada) {
+                                if (!hadHindi && hasHindi) {
+                                  filteredValues = newValues.filter(x => x !== "Kannada");
+                                } else if (!hadKannada && hasKannada) {
+                                  filteredValues = newValues.filter(x => x !== "Hindi");
+                                } else {
+                                  filteredValues = newValues.filter(x => x !== "Kannada");
+                                }
+                              }
+
                               setForm((prev) => {
                                 const updated = [...prev.wards];
                                 updated[index] = {
                                   ...updated[index],
-                                  subjectsNeeded: newValues,
+                                  subjectsNeeded: filteredValues,
                                 };
                                 return {
                                   ...prev,
@@ -1667,51 +1720,88 @@ export default function ParentEnquiryForm() {
                           </div>
                           <div className="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 border-slate-100 pt-4 md:pt-0">
                             <div className="text-left md:text-right">
-                              {form.planType === 'elite' ? (
-                                (() => {
-                                  const firstWardClass = form.wards[0]?.classGrade || "6";
-                                  const firstWardBoard = form.wards[0]?.curriculum || "CBSE";
-                                  const hrRate = calculateEliteHourlyPrice(firstWardClass, firstWardBoard);
-                                  return (
-                                    <div className="flex flex-col">
-                                      <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Hourly Rate</p>
-                                      <p className="text-2xl font-black text-slate-900">₹{hrRate.toLocaleString('en-IN')}/hour</p>
-                                      <span className="text-[11px] font-bold text-slate-500 mt-0.5 block">
-                                        Est: ₹{form.monthlyFees?.toLocaleString('en-IN')}/month
-                                      </span>
-                                    </div>
-                                  );
-                                })()
+                              {form.wards.length > 1 ? (
+                                <div className="text-right text-xs space-y-1 bg-slate-50 p-3.5 rounded-2xl border border-slate-200 min-w-[220px]">
+                                  <div className="text-[9px] font-black uppercase text-slate-400 tracking-wider mb-1.5 pb-1 border-b border-slate-200">
+                                    Multiple Student Breakdown
+                                  </div>
+                                  {form.wards.map((ward, sIdx) => {
+                                    const fee = form.studentFees?.[sIdx] || 0;
+                                    const name = ward.studentName || `Student ${sIdx + 1}`;
+                                    return (
+                                      <div key={sIdx} className="flex justify-between gap-4 font-semibold text-slate-655">
+                                        <span>{name}:</span>
+                                        <span className="font-extrabold text-slate-900">₹{fee.toLocaleString('en-IN')}</span>
+                                      </div>
+                                    );
+                                  })}
+                                  {form.siblingDiscount > 0 && (
+                                    <>
+                                      <div className="flex justify-between gap-4 font-semibold text-slate-500 pt-1 border-t border-slate-200/50">
+                                        <span>Total Base Fee:</span>
+                                        <span>₹{form.totalBaseFee?.toLocaleString('en-IN')}</span>
+                                      </div>
+                                      <div className="flex justify-between gap-4 font-bold text-emerald-700">
+                                        <span>Sibling Concession ({form.siblingConcessionPercent}%):</span>
+                                        <span>-₹{form.siblingDiscount?.toLocaleString('en-IN')}</span>
+                                      </div>
+                                    </>
+                                  )}
+                                  <div className="flex justify-between gap-4 pt-1.5 border-t border-slate-200 font-black text-slate-955 text-sm">
+                                    <span>Final Monthly Price:</span>
+                                    <span className="text-base">₹{form.monthlyFees?.toLocaleString('en-IN')}</span>
+                                  </div>
+                                </div>
                               ) : (
                                 <>
-                                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Monthly Tuition Fee</p>
-                                  <p className="text-2xl font-black text-slate-900">
-                                    {['foundation', 'advance'].includes(form.planType) ? (
-                                      (() => {
-                                        const firstWardClass = form.wards[0]?.classGrade || "6";
-                                        const firstWardBoard = form.wards[0]?.curriculum || "CBSE";
-                                        const basePrice = calculatePrice('board', firstWardClass, firstWardBoard, form.daysPerWeek, form.hoursPerDay);
-                                        return (
-                                          <>
-                                            <span className="line-through text-slate-400 text-lg mr-2 font-black">
-                                              ₹{basePrice.toLocaleString('en-IN')}
-                                            </span>
-                                            <span className="text-slate-900">
-                                              ₹{form.monthlyFees?.toLocaleString('en-IN')}
-                                            </span>
-                                          </>
-                                        );
-                                      })()
-                                    ) : (
-                                      `₹${form.monthlyFees?.toLocaleString('en-IN')}`
-                                    )}
-                                  </p>
-                                  {form.planType === 'foundation' && form.discount && (
-                                    <span className="text-[10px] font-black text-emerald-600 block mt-0.5">
-                                      Save ₹{form.discount.toLocaleString('en-IN')} (18% applied)
-                                    </span>
+                                  {form.planType === 'elite' ? (
+                                    (() => {
+                                      const firstWardClass = form.wards[0]?.classGrade || "6";
+                                      const firstWardBoard = form.wards[0]?.curriculum || "CBSE";
+                                      const hrRate = calculateEliteHourlyPrice(firstWardClass, firstWardBoard);
+                                      return (
+                                        <div className="flex flex-col">
+                                          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Hourly Rate</p>
+                                          <p className="text-2xl font-black text-slate-900">₹{hrRate.toLocaleString('en-IN')}/hour</p>
+                                          <span className="text-[11px] font-bold text-slate-500 mt-0.5 block">
+                                            Est: ₹{form.monthlyFees?.toLocaleString('en-IN')}/month
+                                          </span>
+                                        </div>
+                                      );
+                                    })()
+                                  ) : (
+                                    <>
+                                      <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Monthly Tuition Fee</p>
+                                      <p className="text-2xl font-black text-slate-900">
+                                        {['foundation', 'advance'].includes(form.planType) ? (
+                                          (() => {
+                                            const firstWardClass = form.wards[0]?.classGrade || "6";
+                                            const firstWardBoard = form.wards[0]?.curriculum || "CBSE";
+                                            const basePrice = calculatePrice('board', firstWardClass, firstWardBoard, form.daysPerWeek, form.hoursPerDay, form.preferredMode);
+                                            return (
+                                              <>
+                                                {basePrice !== form.monthlyFees && (
+                                                  <span className="line-through text-slate-400 text-lg mr-2 font-black">
+                                                    ₹{basePrice.toLocaleString('en-IN')}
+                                                  </span>
+                                                )}
+                                                <span className="text-slate-900">
+                                                  ₹{form.monthlyFees?.toLocaleString('en-IN')}
+                                                </span>
+                                              </>
+                                            );
+                                          })()
+                                        ) : (
+                                          `₹${form.monthlyFees?.toLocaleString('en-IN')}`
+                                        )}
+                                      </p>
+                                      {form.planType === 'foundation' && form.discount && (
+                                        <span className="text-[10px] font-black text-emerald-600 block mt-0.5">
+                                          Save ₹{form.discount.toLocaleString('en-IN')} (18% applied)
+                                        </span>
+                                      )}
+                                    </>
                                   )}
-
                                 </>
                               )}
                             </div>
@@ -2070,76 +2160,122 @@ export default function ParentEnquiryForm() {
 
                                   {/* Dynamic Calculation Summary Card */}
                                   {(() => {
-                                    const firstWardClass = form.wards[0]?.classGrade || "6";
-                                    const firstWardBoard = form.wards[0]?.curriculum || "CBSE";
-                                    const calc = getDynamicCalculation(activePlanData.id, selectedOption, firstWardClass, firstWardBoard);
-                                    if (!calc) return null;
+                                    if (form.wards.length > 1) {
+                                      const calc = getMultipleWardsCalculation(activePlanData.id, selectedOption, form.wards, form.preferredMode);
+                                      if (!calc) return null;
 
-                                    if (activePlanData.id === 'foundation') {
                                       return (
-                                        <div className="mt-4 p-3 rounded-xl bg-emerald-50/50 border border-emerald-150/60 text-xs space-y-1.5 animate-slideFade">
-                                          <div className="flex justify-between items-center">
-                                            <span className="text-slate-500 font-semibold">Original Price:</span>
-                                            <span className="text-slate-400 line-through font-extrabold">₹{calc.originalPrice.toLocaleString('en-IN')}</span>
+                                        <div className="mt-4 p-4 rounded-xl border space-y-2.5 bg-white border-slate-200 text-xs animate-slideFade">
+                                          <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100 pb-1.5">
+                                            Fee Summary
                                           </div>
-                                          <div className="flex justify-between items-center">
-                                            <span className="text-slate-500 font-semibold flex items-center gap-1">
-                                              Discount: 
-                                              <span className="bg-emerald-150 text-emerald-800 text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase">
-                                                -{calc.discountPercent}%
+                                          <div className="space-y-1.5">
+                                            {form.wards.map((ward, sIdx) => {
+                                              const fee = calc.studentFees[sIdx] || 0;
+                                              const name = ward.studentName || `Student ${sIdx + 1}`;
+                                              return (
+                                                <div key={sIdx} className="flex justify-between items-center text-slate-650">
+                                                  <span className="font-semibold">{name} Fee:</span>
+                                                  <span className="font-extrabold text-slate-900">₹{fee.toLocaleString('en-IN')}</span>
+                                                </div>
+                                              );
+                                            })}
+                                            {calc.concessionPercent > 0 && (
+                                              <>
+                                                <div className="pt-1.5 border-t border-slate-100/50 flex justify-between items-center text-slate-500">
+                                                  <span className="font-semibold">Total Base Fee:</span>
+                                                  <span className="font-extrabold text-slate-700">₹{calc.totalBaseFee.toLocaleString('en-IN')}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center text-emerald-700">
+                                                  <span className="font-semibold flex items-center gap-1.5">
+                                                    Sibling Concession:
+                                                    <span className="bg-emerald-100 text-emerald-800 text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase">
+                                                      -{calc.concessionPercent}%
+                                                    </span>
+                                                  </span>
+                                                  <span className="font-black">-₹{calc.siblingDiscount.toLocaleString('en-IN')}</span>
+                                                </div>
+                                              </>
+                                            )}
+                                          </div>
+                                          <div className="pt-2 border-t border-slate-200 flex justify-between items-center">
+                                            <span className="text-slate-900 font-black text-xs">Final Payable Amount:</span>
+                                            <span className="text-slate-900 font-black text-base">₹{calc.finalPrice.toLocaleString('en-IN')}</span>
+                                          </div>
+                                        </div>
+                                      );
+                                    } else {
+                                      const firstWardClass = form.wards[0]?.classGrade || "6";
+                                      const firstWardBoard = form.wards[0]?.curriculum || "CBSE";
+                                      const calc = getDynamicCalculation(activePlanData.id, selectedOption, firstWardClass, firstWardBoard);
+                                      if (!calc) return null;
+
+                                      if (activePlanData.id === 'foundation') {
+                                        return (
+                                          <div className="mt-4 p-3 rounded-xl bg-emerald-50/50 border border-emerald-150/60 text-xs space-y-1.5 animate-slideFade">
+                                            <div className="flex justify-between items-center">
+                                              <span className="text-slate-500 font-semibold">Original Price:</span>
+                                              <span className="text-slate-400 line-through font-extrabold">₹{calc.originalPrice.toLocaleString('en-IN')}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                              <span className="text-slate-500 font-semibold flex items-center gap-1">
+                                                Discount: 
+                                                <span className="bg-emerald-150 text-emerald-800 text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase">
+                                                  -{calc.discountPercent}%
+                                                </span>
                                               </span>
-                                            </span>
-                                            <span className="text-emerald-700 font-extrabold">-₹{calc.discount.toLocaleString('en-IN')}</span>
+                                              <span className="text-emerald-700 font-extrabold">-₹{calc.discount.toLocaleString('en-IN')}</span>
+                                            </div>
+                                            <div className="pt-1.5 border-t border-emerald-200/50 flex justify-between items-center">
+                                              <span className="text-slate-900 font-black text-xs">Final Price:</span>
+                                              <span className="text-slate-900 font-black text-base">₹{calc.finalPrice.toLocaleString('en-IN')}</span>
+                                            </div>
+                                            <div className="text-right">
+                                              <span className="text-emerald-700 text-[10px] font-black">
+                                                Save ₹{calc.discount.toLocaleString('en-IN')} ({calc.discountPercent}%)
+                                              </span>
+                                            </div>
                                           </div>
-                                          <div className="pt-1.5 border-t border-emerald-200/50 flex justify-between items-center">
-                                            <span className="text-slate-900 font-black text-xs">Final Price:</span>
-                                            <span className="text-slate-900 font-black text-base">₹{calc.finalPrice.toLocaleString('en-IN')}</span>
-                                          </div>
-                                          <div className="text-right">
-                                            <span className="text-emerald-700 text-[10px] font-black">
-                                              Save ₹{calc.discount.toLocaleString('en-IN')} ({calc.discountPercent}%)
-                                            </span>
-                                          </div>
-                                        </div>
-                                      );
-                                    }
+                                        );
+                                      }
 
-                                    if (activePlanData.id === 'advance') {
-                                      return (
-                                        <div className="mt-4 p-3.5 rounded-xl bg-amber-50/40 border border-amber-200/50 text-xs space-y-1.5 animate-slideFade">
-                                          <div className="flex justify-between items-center">
-                                            <span className="text-slate-900 font-black text-xs">Total Tuition Investment:</span>
-                                            <span className="text-slate-900 font-black text-base">₹{calc.finalPrice.toLocaleString('en-IN')}</span>
+                                      if (activePlanData.id === 'advance') {
+                                        return (
+                                          <div className="mt-4 p-3.5 rounded-xl bg-amber-50/40 border border-amber-200/50 text-xs space-y-1.5 animate-slideFade">
+                                            <div className="flex justify-between items-center">
+                                              <span className="text-slate-900 font-black text-xs">Total Tuition Investment:</span>
+                                              <span className="text-slate-900 font-black text-base">₹{calc.finalPrice.toLocaleString('en-IN')}</span>
+                                            </div>
                                           </div>
-                                        </div>
-                                      );
-                                    }
+                                        );
+                                      }
 
-                                    if (activePlanData.id === 'elite') {
-                                      const hrRate = calculateEliteHourlyPrice(firstWardClass, firstWardBoard);
-                                      return (
-                                        <div className="mt-4 p-3 rounded-xl bg-slate-900 text-white text-xs space-y-1.5 animate-slideFade">
-                                          <div className="flex justify-between items-center">
-                                            <span className="text-slate-300 font-semibold">Hourly Rate:</span>
-                                            <span className="font-black text-base text-amber-400">₹{hrRate.toLocaleString('en-IN')}/hour</span>
+                                      if (activePlanData.id === 'elite') {
+                                        const hrRate = calculateEliteHourlyPrice(firstWardClass, firstWardBoard);
+                                        return (
+                                          <div className="mt-4 p-3 rounded-xl bg-slate-900 text-white text-xs space-y-1.5 animate-slideFade">
+                                            <div className="flex justify-between items-center">
+                                              <span className="text-slate-300 font-semibold">Hourly Rate:</span>
+                                              <span className="font-black text-base text-amber-400">₹{hrRate.toLocaleString('en-IN')}/hour</span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-slate-350">
+                                              <span className="font-semibold">Estimated Monthly Fee:</span>
+                                              <span className="font-extrabold text-white">₹{calc.finalPrice.toLocaleString('en-IN')}/month</span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-slate-355">
+                                              <span className="font-semibold">Schedules per Month:</span>
+                                              <span className="font-extrabold text-white">{calc.totalClasses} classes</span>
+                                            </div>
+                                            <div className="pt-1.5 border-t border-slate-800 flex justify-between items-center">
+                                              <span className="font-black text-xs">Cost Per Class:</span>
+                                              <span className="font-black text-sm text-slate-300">₹{calc.costPerClass} / Class</span>
+                                            </div>
                                           </div>
-                                          <div className="flex justify-between items-center text-slate-350">
-                                            <span className="font-semibold">Estimated Monthly Fee:</span>
-                                            <span className="font-extrabold text-white">₹{calc.finalPrice.toLocaleString('en-IN')}/month</span>
-                                          </div>
-                                          <div className="flex justify-between items-center text-slate-355">
-                                            <span className="font-semibold">Schedules per Month:</span>
-                                            <span className="font-extrabold text-white">{calc.totalClasses} classes</span>
-                                          </div>
-                                          <div className="pt-1.5 border-t border-slate-800 flex justify-between items-center">
-                                            <span className="font-black text-xs">Cost Per Class:</span>
-                                            <span className="font-black text-sm text-slate-300">₹{calc.costPerClass} / Class</span>
-                                          </div>
-                                        </div>
-                                      );
-                                    }
+                                        );
+                                      }
 
-                                    return null;
+                                      return null;
+                                    }
                                   })()}
                                 </div>
 
