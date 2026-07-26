@@ -1471,6 +1471,15 @@ export default function AdminDashboard() {
                               <InfoRow icon={Clock} label="Preferred Time" value={p.preferredTime} />
                               <InfoRow icon={Clock} label="Class Duration" value={getClassDuration(p)} />
                               <InfoRow icon={Calendar} label="Preferred Days" value={getPreferredDays(p.preferredDays)} />
+                              {p.classTimingType && (
+                                <InfoRow icon={Clock} label="Timing Preference" value={p.classTimingType} />
+                              )}
+                              {p.classTimingSlot && (
+                                <InfoRow icon={Clock} label="Timing Slot" value={p.classTimingSlot} />
+                              )}
+                              {p.pricingConsent !== undefined && (
+                                <InfoRow icon={ShieldCheck} label="Pricing Consent" value={p.pricingConsent ? "Agreed" : "No"} />
+                              )}
                             </div>
                           </div>
 

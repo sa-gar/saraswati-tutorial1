@@ -58,18 +58,18 @@ export const CBSE_MASTER_PRICES = {
 
 export const BOARD_MULTIPLIERS = {
   "CBSE": 1.00,
-  "ICSE": 1.10,
-  "ISC": 1.10,
+  "ICSE": 1.00,
+  "ISC": 1.00,
   "IGCSE": 1.25,
   "IB": 1.40,
-  "State Board": 0.95,
-  "PUC": 0.95,
-  "NIOS": 0.90
+  "State Board": 1.00,
+  "PUC": 1.00,
+  "NIOS": 1.00
 };
 
 export const PLAN_MULTIPLIERS = {
   "foundation": 0.82, // 18% OFF
-  "advance": 1.18     // 18% EXTRA
+  "advance": 1.18     // Base price + 18% markup (default for Class 1-7)
 };
 
 export const mapClassToGroup = (classGrade) => {
@@ -107,26 +107,26 @@ export const mapBoardToMultiplier = (board) => {
 };
 
 export const CBSE_ELITE_HOURLY_RATES = {
-  "Grades 1–5": 450,
-  "Grade 6": 500,
-  "Grade 7": 550,
-  "Grade 8": 600,
-  "Grade 9": 700,
-  "Grade 10": 800,
-  "Grade 11": 900,
-  "Grade 12": 1000,
-  "Degree": 1100
+  "Grades 1–5": 350, // Reduced by 50 more (was 400)
+  "Grade 6": 400,    // Reduced by 50 more (was 450)
+  "Grade 7": 450,    // Reduced by 50 more (was 500)
+  "Grade 8": 500,    // Reduced by 50 more (was 550)
+  "Grade 9": 550,    // Reduced by 50 more (was 600)
+  "Grade 10": 650,   // Reduced by 50 more (was 700)
+  "Grade 11": 750,   // Reduced by 50 more (was 800)
+  "Grade 12": 850,   // Reduced by 50 more (was 900)
+  "Degree": 950      // Reduced by 50 more (was 1000)
 };
 
 export const ELITE_BOARD_MULTIPLIERS = {
   "CBSE": 1.00,
-  "ICSE": 1.10,
-  "ISC": 1.10,
+  "ICSE": 1.00,
+  "ISC": 1.00,
   "IGCSE": 1.20,
   "IB": 1.30,
-  "State Board": 0.95,
-  "PUC": 0.95,
-  "NIOS": 0.90
+  "State Board": 1.00,
+  "PUC": 1.00,
+  "NIOS": 1.00
 };
 
 export const calculateEliteHourlyPrice = (classGrade, curriculum) => {
@@ -155,12 +155,36 @@ export const calculateEliteMonthlyPrice = (classGrade, curriculum, days, hours) 
   return Math.round(hourlyRate * hoursPerDay * daysPerWeek * 4);
 };
 
-export const calculatePrice = (planId, classGrade, curriculum, days, hours) => {
+export const isClass8OrAbove = (classGrade) => {
+  const cg = String(classGrade || "").trim().toLowerCase();
+  if (!cg) return false;
+  // If class matches 1-7 group, it is NOT class 8 or above
+  if (
+    cg.includes("1 to 5") ||
+    cg.includes("1-5") ||
+    cg === "6" ||
+    cg === "7" ||
+    cg.includes("grades 1") ||
+    cg.includes("grade 6") ||
+    cg.includes("grade 7")
+  ) {
+    return false;
+  }
+  return true;
+};
+
+export const calculatePrice = (planId, classGrade, curriculum, days, hours, mode = "Home Tuition / In-Person") => {
+  const isOnline = typeof mode === "string" && mode.toLowerCase().includes("online");
+  const group = mapClassToGroup(classGrade);
+
   if (planId === "elite") {
-    return calculateEliteMonthlyPrice(classGrade, curriculum, days, hours);
+    let price = calculateEliteMonthlyPrice(classGrade, curriculum, days, hours);
+    if (isOnline) {
+      price = Math.round((price * 0.70) / 50) * 50;
+    }
+    return price;
   }
 
-  const group = mapClassToGroup(classGrade);
   const basePrices = CBSE_MASTER_PRICES[group];
   if (!basePrices) return 0;
 
@@ -170,9 +194,34 @@ export const calculatePrice = (planId, classGrade, curriculum, days, hours) => {
   
   const basePrice = basePrices[key] || basePrices["3_1.5"];
   const boardMult = mapBoardToMultiplier(curriculum);
-  const planMult = PLAN_MULTIPLIERS[planId] || 1.00;
 
-  return Math.round(basePrice * boardMult * planMult);
+  let planMult = 1.00;
+  if (planId === "foundation") {
+    planMult = PLAN_MULTIPLIERS["foundation"]; // 0.82
+  } else if (planId === "advance") {
+    if (isClass8OrAbove(classGrade)) {
+      planMult = 1.00; // Base Price = Final Advanced Plan Price (no markup)
+    } else {
+      planMult = PLAN_MULTIPLIERS["advance"]; // Base Price + 18% markup (for Class 1-7)
+    }
+  } else if (planId === "board") {
+    planMult = 1.00;
+  }
+
+  let finalPrice = basePrice * boardMult * planMult;
+
+  if (isOnline) {
+    // Online tuition is ~30% lower than home tuition, rounded cleanly to nearest 50
+    finalPrice = Math.round((finalPrice * 0.70) / 50) * 50;
+  } else {
+    if (planId === "foundation" || planId === "advance") {
+      finalPrice = Math.round(finalPrice / 100) * 100;
+    } else {
+      finalPrice = Math.round(finalPrice);
+    }
+  }
+
+  return finalPrice;
 };
 
 export const PLANS = [
@@ -247,7 +296,7 @@ export const PLANS = [
       pricing: [
         { label: "Starting price", value: "₹9,130 / month" },
         { label: "Rate per class", value: "₹500 - ₹600 / Class" },
-        { label: "Investment diff", value: "Only +18% vs Base Plan" }
+        { label: "Pricing structure", value: "Standard Monthly Investment" }
       ],
       benefits: [
         { title: "Academic Strategy & Deadlines" },

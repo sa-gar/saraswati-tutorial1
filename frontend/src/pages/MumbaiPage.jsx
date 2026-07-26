@@ -288,7 +288,7 @@ export default function MumbaiPage() {
     {
       title: "Mathematics Tuition",
       desc: "Master algebra, calculus, and geometry with step-by-step guidance from expert maths home tutors in Mumbai.",
-      image: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&q=80&w=600"
+      image: "https://images.unsplash.com/photo-1509228468518-180dd4864904?auto=format&fit=crop&q=80&w=600"
     },
     {
       title: "Science Tuition",
@@ -303,12 +303,12 @@ export default function MumbaiPage() {
     {
       title: "Chemistry Tuition",
       desc: "Understand chemical equations, periodic tables, organic chemistry, and reactions with clear personal guidance.",
-      image: "https://images.unsplash.com/photo-1603126857599-f6e157fa2fe6?auto=format&fit=crop&q=80&w=600"
+      image: "https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?auto=format&fit=crop&q=80&w=600"
     },
     {
       title: "Biology Tuition",
       desc: "Excel in life sciences, anatomy, and plant physiology with detailed diagrams, memory aids, and expert tutoring.",
-      image: "https://images.unsplash.com/photo-1530026405186-ed1f139313f8?auto=format&fit=crop&q=80&w=600"
+      image: "https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&q=80&w=600"
     },
     {
       title: "English Tuition",

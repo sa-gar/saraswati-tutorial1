@@ -92,11 +92,14 @@ const initialForm = {
   address: "",
   preferredGender: "",
   preferredMode: "",
+  classTimingType: "Flexible",
+  classTimingMode: "Predefined",
+  classTimingSlot: "5:00 PM – 6:00 PM",
   preferredDays: [],
   preferredTime: "",
-  startTime: "",
-  endTime: "",
-  classDuration: "",
+  startTime: "17:00",
+  endTime: "18:30",
+  classDuration: "1.5 Hours",
   planType: "",
   daysPerWeek: null,
   hoursPerDay: null,
@@ -264,6 +267,26 @@ const formatTime12Hr = (timeString) => {
   return `${hour}:${minute} ${ampm}`;
 };
 
+const addHoursToTimeStr = (startTimeStr, hoursDuration) => {
+  if (!startTimeStr) return "";
+  const [hStr, mStr] = startTimeStr.split(":").map(Number);
+  const totalMinutes = Math.round((hStr || 17) * 60 + (mStr || 0) + (hoursDuration || 1.5) * 60);
+  const newH = Math.floor(totalMinutes / 60) % 24;
+  const newM = totalMinutes % 60;
+  return `${String(newH).padStart(2, "0")}:${String(newM).padStart(2, "0")}`;
+};
+
+const getSlotsForHours = (hours = 1.5) => {
+  const h = parseFloat(hours || 1.5);
+  if (h === 1) {
+    return ["4:00 PM – 5:00 PM", "5:00 PM – 6:00 PM", "6:00 PM – 7:00 PM", "7:00 PM – 8:00 PM"];
+  }
+  if (h === 2) {
+    return ["4:00 PM – 6:00 PM", "5:00 PM – 7:00 PM", "6:00 PM – 8:00 PM"];
+  }
+  return ["4:00 PM – 5:30 PM", "5:00 PM – 6:30 PM", "5:30 PM – 7:00 PM", "6:00 PM – 7:30 PM"];
+};
+
 const isClass1to8 = (classGrade) => {
   return ["1 to 5", "6", "7", "8"].includes(String(classGrade || "").trim());
 };
@@ -277,15 +300,15 @@ const getFilteredPricingOptions = (plan, wards = []) => {
   return plan.pricingOptions;
 };
 
-const getDynamicCalculation = (planId, option, classGrade = "6", curriculum = "CBSE") => {
+const getDynamicCalculation = (planId, option, classGrade = "6", curriculum = "CBSE", mode = "Home Tuition / In-Person") => {
   if (!option) return null;
 
   const cg = classGrade || "6";
   const curr = curriculum || "CBSE";
 
   if (planId === 'foundation') {
-    const finalPrice = calculatePrice('foundation', cg, curr, option.days, option.hours);
-    const originalPrice = calculatePrice('board', cg, curr, option.days, option.hours); // base board price
+    const finalPrice = calculatePrice('foundation', cg, curr, option.days, option.hours, mode);
+    const originalPrice = calculatePrice('board', cg, curr, option.days, option.hours, mode); // base board price
     const discount = originalPrice - finalPrice;
     return {
       originalPrice,
@@ -296,8 +319,8 @@ const getDynamicCalculation = (planId, option, classGrade = "6", curriculum = "C
   }
 
   if (planId === 'advance') {
-    const finalPrice = calculatePrice('advance', cg, curr, option.days, option.hours);
-    const basePrice = calculatePrice('board', cg, curr, option.days, option.hours);
+    const finalPrice = calculatePrice('advance', cg, curr, option.days, option.hours, mode);
+    const basePrice = calculatePrice('board', cg, curr, option.days, option.hours, mode);
     const extraCost = finalPrice - basePrice;
     return {
       basePrice,
@@ -307,7 +330,7 @@ const getDynamicCalculation = (planId, option, classGrade = "6", curriculum = "C
   }
 
   if (planId === 'elite') {
-    const finalPrice = calculatePrice('elite', cg, curr, option.days, option.hours);
+    const finalPrice = calculatePrice('elite', cg, curr, option.days, option.hours, mode);
     const totalClasses = option.days * 4;
     const costPerClass = Math.round(finalPrice / totalClasses);
     return {
@@ -577,7 +600,14 @@ export default function ParentEnquiryForm() {
     }
     const firstWardClass = form.wards[0]?.classGrade || "6";
     const firstWardBoard = form.wards[0]?.curriculum || "CBSE";
-    const calc = getDynamicCalculation(plan.id, selectedOption, firstWardClass, firstWardBoard);
+    const calc = getDynamicCalculation(plan.id, selectedOption, firstWardClass, firstWardBoard, form.preferredMode);
+    
+    // Automatically calculate End Time and Slot matching the chosen plan's session hours
+    const curStart = form.startTime || "17:00";
+    const calculatedEnd = addHoursToTimeStr(curStart, selectedOption.hours);
+    const calculatedSlot = `${formatTime12Hr(curStart)} – ${formatTime12Hr(calculatedEnd)}`;
+    const calculatedDuration = `${selectedOption.hours} Hour${selectedOption.hours !== 1 ? 's' : ''}`;
+
     setForm((prev) => ({
       ...prev,
       planType: plan.id,
@@ -588,6 +618,9 @@ export default function ParentEnquiryForm() {
       finalPrice: calc ? calc.finalPrice : selectedOption.price,
       costPerClass: calc ? (calc.costPerClass || null) : null,
       preferredDays: [],
+      endTime: calculatedEnd,
+      classTimingSlot: calculatedSlot,
+      classDuration: calculatedDuration,
     }));
     setErrors((prev) => ({
       ...prev,
@@ -729,7 +762,7 @@ export default function ParentEnquiryForm() {
     }
   }, [form.startTime, form.endTime]);
 
-  const totalSteps = 4;
+  const totalSteps = 3;
 
   const requiredLabel = (label) => (
     <>
@@ -850,7 +883,7 @@ export default function ParentEnquiryForm() {
     const newErrors = {};
 
     // Step 1: Parent details validation
-    if (currentStep === 1 || currentStep === 4) {
+    if (currentStep === 1) {
       if (!form.parentName.trim()) {
         newErrors.parentName = "Parent / Guardian Name is required";
       }
@@ -861,9 +894,7 @@ export default function ParentEnquiryForm() {
         newErrors.phone = "Please enter a valid phone number";
       }
 
-      if (!form.email.trim()) {
-        newErrors.email = "Parent Email Address is required";
-      } else if (!isValidEmail(form.email)) {
+      if (form.email.trim() && !isValidEmail(form.email)) {
         newErrors.email = "Please enter a valid email address";
       }
 
@@ -873,7 +904,7 @@ export default function ParentEnquiryForm() {
     }
 
     // Step 2: Student details validation
-    if (currentStep === 2 || currentStep === 4) {
+    if (currentStep === 2) {
       form.wards.forEach((ward, index) => {
         if (!ward.studentName.trim()) {
           newErrors[`wards.${index}.studentName`] = "Student Name is required";
@@ -898,8 +929,8 @@ export default function ParentEnquiryForm() {
       });
     }
 
-    // Step 3: Tutor preferences validation
-    if (currentStep === 3 || currentStep === 4) {
+    // Step 3: Tutor preferences & plan validation
+    if (currentStep === 3) {
       if (!form.preferredMode.trim()) {
         newErrors.preferredMode = "Preferred Mode is required";
       }
@@ -919,9 +950,7 @@ export default function ParentEnquiryForm() {
           newErrors.preferredDays = `Please select exactly ${form.daysPerWeek} preferred days.`;
         }
       }
-    }
 
-    if (currentStep === 4) {
       if (!form.pricingConsent) {
         newErrors.pricingConsent = "Acknowledgment of the pricing terms is required to submit.";
       }
@@ -1038,8 +1067,8 @@ export default function ParentEnquiryForm() {
       return;
     }
 
-    if (!validateStep(4)) {
-      setMessage("Please fill all required fields before submitting.");
+    if (!validateStep(3)) {
+      setMessage("Please fill all required fields and accept the pricing declaration before submitting.");
       return;
     }
 
@@ -1179,10 +1208,9 @@ export default function ParentEnquiryForm() {
                   <h4 className="text-base font-black text-slate-855 mt-0.5 leading-snug">
                     {step === 1 && "Parent Details"}
                     {step === 2 && "Student Details"}
-                    {step === 3 && "Tutor Preferences"}
-                    {step === 4 && "Review Details"}
+                    {step === 3 && "Tutor Preferences & Plan"}
                   </h4>
-                  <p className="text-xs text-slate-450 font-semibold mt-0.5">
+                  <p className="text-xs text-slate-455 font-semibold mt-0.5">
                     Step {step} of {totalSteps}
                   </p>
                 </div>
@@ -1191,7 +1219,7 @@ export default function ParentEnquiryForm() {
           </div>
         </div>
 
-        <div className="mb-8 grid grid-cols-4 gap-2 md:gap-4">
+        <div className="mb-8 grid grid-cols-3 gap-2 md:gap-4">
           <StepBox
             number="01"
             active={step === 1}
@@ -1211,18 +1239,10 @@ export default function ParentEnquiryForm() {
           <StepBox
             number="03"
             active={step === 3}
-            done={step > 3}
-            title="Preference"
-            subtitle="Mode & timing"
-            icon={Settings}
-          />
-          <StepBox
-            number="04"
-            active={step === 4}
             done={false}
-            title="Review"
-            subtitle="Verify details"
-            icon={FileText}
+            title="Preference"
+            subtitle="Mode & plan"
+            icon={Settings}
           />
         </div>        <form
           onSubmit={(e) => e.preventDefault()}
@@ -1269,7 +1289,7 @@ export default function ParentEnquiryForm() {
                   />
 
                   <Input
-                    label={requiredLabel("Parent Email Address")}
+                    label="Parent Email Address (Optional)"
                     type="email"
                     name="email"
                     value={form.email}
@@ -1438,6 +1458,8 @@ export default function ParentEnquiryForm() {
                             error={errors[`wards.${index}.subjectsNeeded`]}
                             icon={BookOpen}
                           />
+
+
 
                           <div className="md:col-span-2 overflow-hidden rounded-[1.8rem] border border-slate-200 bg-slate-50/50 backdrop-blur-sm">
                             <button
@@ -1689,11 +1711,7 @@ export default function ParentEnquiryForm() {
                                       Save ₹{form.discount.toLocaleString('en-IN')} (18% applied)
                                     </span>
                                   )}
-                                  {form.planType === 'advance' && (
-                                    <span className="text-[10px] font-black text-amber-700 block mt-0.5">
-                                      Only +18% more investment
-                                    </span>
-                                  )}
+
                                 </>
                               )}
                             </div>
@@ -1706,18 +1724,7 @@ export default function ParentEnquiryForm() {
                             </button>
                           </div>
                         </div>
-
-                        {/* Professional Pricing Disclaimer */}
-                        <div className="mt-5 pt-4 border-t border-slate-150 flex items-start gap-2.5 text-xs text-slate-400">
-                          <Info className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
-                          <p className="leading-relaxed font-semibold text-[10px] text-slate-550">
-                            {form.planType === 'elite' ? (
-                              "Estimated monthly tuition fees are calculated using the selected board, class, session duration and weekly schedule. Final tuition fees may vary after the demo session depending on the student's learning level, syllabus complexity, parents' expectations, tutor availability, travel distance (if applicable) and the overall academic support required."
-                            ) : (
-                              "Final tuition fees may vary after the demo session depending on the student's learning level, syllabus complexity, parents' expectations, teacher availability, travel distance (if applicable), and the overall academic effort required."
-                            )}
-                          </p>
-                        </div>          </div>
+                      </div>
 
                       {/* Preferred Days Selector */}
                       <div className="rounded-3xl border border-slate-200 bg-white/90 backdrop-blur-md p-6 shadow-xl">
@@ -2015,11 +2022,12 @@ export default function ParentEnquiryForm() {
                                       const firstWardClass = form.wards[0]?.classGrade || "6";
                                       const firstWardBoard = form.wards[0]?.curriculum || "CBSE";
                                       const rowPrice = calculatePrice(
-                                        activePlanData.id === 'elite' ? 'elite' : 'board',
+                                        activePlanData.id,
                                         firstWardClass,
                                         firstWardBoard,
                                         opt.days,
-                                        opt.hours
+                                        opt.hours,
+                                        form.preferredMode
                                       );
 
                                       return (
@@ -2098,28 +2106,10 @@ export default function ParentEnquiryForm() {
 
                                     if (activePlanData.id === 'advance') {
                                       return (
-                                        <div className="mt-4 p-3 rounded-xl bg-amber-50/30 border border-amber-200/40 text-xs space-y-1.5 animate-slideFade">
+                                        <div className="mt-4 p-3.5 rounded-xl bg-amber-50/40 border border-amber-200/50 text-xs space-y-1.5 animate-slideFade">
                                           <div className="flex justify-between items-center">
-                                            <span className="text-slate-500 font-semibold">Base Plan Price:</span>
-                                            <span className="text-slate-700 font-extrabold">₹{calc.basePrice.toLocaleString('en-IN')}</span>
-                                          </div>
-                                          <div className="flex justify-between items-center">
-                                            <span className="text-slate-500 font-semibold flex items-center gap-1">
-                                              Plan Addition:
-                                              <span className="bg-amber-100 text-amber-800 text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase">
-                                                +18%
-                                              </span>
-                                            </span>
-                                            <span className="text-amber-700 font-extrabold">+₹{calc.extraCost.toLocaleString('en-IN')}</span>
-                                          </div>
-                                          <div className="pt-1.5 border-t border-amber-200/30 flex justify-between items-center">
-                                            <span className="text-slate-900 font-black text-xs">Final Price:</span>
+                                            <span className="text-slate-900 font-black text-xs">Total Tuition Investment:</span>
                                             <span className="text-slate-900 font-black text-base">₹{calc.finalPrice.toLocaleString('en-IN')}</span>
-                                          </div>
-                                          <div className="text-right">
-                                            <span className="text-amber-800 text-[10px] font-black">
-                                              Base Plan + 18% Extra
-                                            </span>
                                           </div>
                                         </div>
                                       );
@@ -2171,287 +2161,213 @@ export default function ParentEnquiryForm() {
                     })()
                   )}
                 </AnimatePresence>
-              </motion.section>
-            )}
 
-            {/* STEP 4: Review Details */}
-            {step === 4 && (
-              <motion.section
-                key="step4"
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
-                exit="hidden"
-                className="space-y-8"
-              >
-                <motion.div variants={itemVariants}>
-                  <SectionTitle
-                    eyebrow="Step 04"
-                    title="Review Details"
-                    description="Double-check the details below before submitting your enquiry."
-                  />
-                </motion.div>
+                {/* Class Timing Section in Preference Step (Placed after Plan Selection) */}
+                <motion.div variants={itemVariants} className="mt-8 space-y-3">
+                  <label className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                    <Clock className="h-4.5 w-4.5 text-blue-600" />
+                    {requiredLabel("Class Timing Preference")}
+                  </label>
 
-                <motion.div variants={itemVariants} className="space-y-6">
-                  {/* 1. Parent Details */}
-                  <div className="rounded-3xl border border-slate-200/80 bg-white/70 backdrop-blur-md p-6 shadow-sm border-l-4 border-l-slate-800">
-                    <div className="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">
-                      <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
-                        <User className="h-5 w-5 text-slate-600" /> 1. Parent Details
-                      </h3>
-                      <button
-                        type="button"
-                        onClick={() => setStep(1)}
-                        className="rounded-xl bg-slate-150 px-3.5 py-1.5 text-xs font-black text-slate-700 transition hover:bg-slate-250 cursor-pointer active:scale-95 shadow-sm"
-                      >
-                        Edit Section
-                      </button>
-                    </div>
-
-                    <div className="grid gap-4 sm:grid-cols-2 text-sm">
-                      <div className="flex flex-col gap-0.5">
-                        <span className="font-semibold text-slate-400 text-xs uppercase tracking-wider">Parent / Guardian Name</span>
-                        <span className="font-bold text-slate-800 text-base">{form.parentName}</span>
-                      </div>
-                      <div className="flex flex-col gap-0.5">
-                        <span className="font-semibold text-slate-400 text-xs uppercase tracking-wider">Phone Number</span>
-                        <span className="font-bold text-slate-800 text-base">{form.phone}</span>
-                      </div>
-                      <div className="flex flex-col gap-0.5 sm:col-span-2">
-                        <span className="font-semibold text-slate-400 text-xs uppercase tracking-wider">Email Address</span>
-                        <span className="font-bold text-slate-800 text-base">{form.email}</span>
-                      </div>
-                      <div className="sm:col-span-2 flex flex-col gap-0.5">
-                        <span className="font-semibold text-slate-400 text-xs uppercase tracking-wider">Complete Address</span>
-                        <p className="mt-1 text-slate-700 bg-slate-50/50 p-3.5 rounded-2xl border border-slate-150">{form.address}</p>
-                      </div>
-                    </div>
+                  <div className="relative flex rounded-2xl bg-slate-100 p-1.5 border border-slate-200/50">
+                    {["Flexible", "Fixed Timing"].map((timingType) => {
+                      const isSelected = (form.classTimingType || "Flexible") === timingType;
+                      return (
+                        <button
+                          type="button"
+                          key={timingType}
+                          onClick={() => setForm(prev => ({ ...prev, classTimingType: timingType }))}
+                          className={`relative flex flex-1 items-center justify-center gap-2 py-3 px-3 text-xs font-extrabold rounded-xl transition-all duration-300 cursor-pointer z-10 ${
+                            isSelected ? "text-white" : "text-slate-600 hover:text-slate-900"
+                          }`}
+                        >
+                          {isSelected && (
+                            <motion.div
+                              layoutId="activeTimingBg"
+                              className="absolute inset-0 bg-slate-900 rounded-xl -z-10 shadow-sm"
+                              transition={{ type: "spring", stiffness: 350, damping: 28 }}
+                            />
+                          )}
+                          <Clock className="h-4 w-4" />
+                          <span>{timingType}</span>
+                        </button>
+                      );
+                    })}
                   </div>
 
-                  {/* 2. Student Details */}
-                  <div className="rounded-3xl border border-slate-200/80 bg-white/70 backdrop-blur-md p-6 shadow-sm border-l-4 border-l-blue-600">
-                    <div className="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">
-                      <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
-                        <GraduationCap className="h-5.5 w-5.5 text-blue-600" /> 2. Student Details
-                      </h3>
-                      <button
-                        type="button"
-                        onClick={() => setStep(2)}
-                        className="rounded-xl bg-slate-150 px-3.5 py-1.5 text-xs font-black text-slate-700 transition hover:bg-slate-250 cursor-pointer active:scale-95 shadow-sm"
-                      >
-                        Edit Section
-                      </button>
-                    </div>
+                  {form.classTimingType === "Fixed Timing" ? (
+                    <div className="mt-3 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm space-y-4">
+                      {/* Sub-mode selector: Predefined Slots vs Custom Manual Input */}
+                      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-150 pb-3">
+                        <span className="text-xs font-extrabold text-slate-700">Choose Timing Option:</span>
+                        <div className="flex bg-slate-100 p-1 rounded-xl gap-1">
+                          <button
+                            type="button"
+                            onClick={() => setForm(prev => ({ ...prev, classTimingMode: "Predefined" }))}
+                            className={`px-3 py-1 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
+                              (form.classTimingMode || "Predefined") === "Predefined"
+                                ? "bg-blue-600 text-white shadow-sm"
+                                : "text-slate-600 hover:text-slate-900"
+                            }`}
+                          >
+                            Predefined Slots
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setForm(prev => ({ ...prev, classTimingMode: "Custom" }))}
+                            className={`px-3 py-1 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
+                              form.classTimingMode === "Custom"
+                                ? "bg-blue-600 text-white shadow-sm"
+                                : "text-slate-600 hover:text-slate-900"
+                            }`}
+                          >
+                            + Enter Custom Timing
+                          </button>
+                        </div>
+                      </div>
 
-                    <div className="space-y-6">
-                      {form.wards.map((ward, idx) => (
-                        <div key={idx} className={idx > 0 ? "border-t border-slate-150 pt-5 mt-5" : ""}>
-                          <h4 className="text-base font-black text-slate-800 mb-3 flex items-center gap-2">
-                            <span className="h-2 w-2 rounded-full bg-blue-500" /> Student Profile {idx + 1}
-                          </h4>
-                          <div className="grid gap-4 sm:grid-cols-2 text-sm bg-slate-50/30 p-4 rounded-2xl border border-slate-150/60">
-                            <div>
-                              <span className="font-semibold text-slate-400 text-xs uppercase tracking-wider block">Student Name</span>
-                              <span className="font-bold text-slate-800 text-base">{ward.studentName}</span>
-                            </div>
-                            <div>
-                              <span className="font-semibold text-slate-400 text-xs uppercase tracking-wider block">Class</span>
-                              <span className="font-bold text-slate-800 text-base">{ward.classGrade}</span>
-                            </div>
-                            <div>
-                              <span className="font-semibold text-slate-400 text-xs uppercase tracking-wider block">Curriculum</span>
-                              <span className="font-bold text-slate-800 text-base">{ward.curriculum || "Not selected"}</span>
-                            </div>
-                            <div>
-                              <span className="font-semibold text-slate-400 text-xs uppercase tracking-wider block">School Name</span>
-                              <span className="font-bold text-slate-800 text-base">{ward.schoolName}</span>
-                            </div>
-                            <div className="sm:col-span-2">
-                              <span className="font-semibold text-slate-400 text-xs uppercase tracking-wider block mb-1">Subjects Needed</span>
-                              <div className="flex flex-wrap gap-1.5">
-                                {ward.subjectsNeeded.map((sub) => (
-                                  <span key={sub} className="rounded-full bg-blue-50 border border-blue-100 px-3 py-1 text-xs font-bold text-blue-700">
-                                    {sub}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                            {ward.specialNeeds && (
-                              <div className="sm:col-span-2">
-                                <span className="font-semibold text-slate-400 text-xs uppercase tracking-wider block">Special Needs / Notes</span>
-                                <p className="mt-1 text-slate-700 bg-white p-3 rounded-2xl border border-slate-100">{ward.specialNeeds}</p>
-                              </div>
-                            )}
+                      {(form.classTimingMode || "Predefined") === "Predefined" ? (
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-semibold text-slate-500 block">
+                              Predefined Slots ({form.hoursPerDay ? `${form.hoursPerDay} Hr/Class` : 'Default 1.5 Hr'}):
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {getSlotsForHours(form.hoursPerDay || 1.5).map((slot) => {
+                              const isSlotSelected = form.classTimingSlot === slot;
+                              return (
+                                <button
+                                  type="button"
+                                  key={slot}
+                                  onClick={() => setForm(prev => ({ ...prev, classTimingSlot: slot }))}
+                                  className={`px-3.5 py-2 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
+                                    isSlotSelected
+                                      ? "bg-blue-600 text-white border-blue-600 shadow-sm scale-[1.02]"
+                                      : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+                                  }`}
+                                >
+                                  {slot}
+                                </button>
+                              );
+                            })}
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* 3. Tutor Preferences & Plan Selection */}
-                  <div className="rounded-3xl border border-slate-200/80 bg-white/70 backdrop-blur-md p-6 shadow-sm border-l-4 border-l-indigo-600">
-                    <div className="mb-4 flex items-center justify-between border-b border-slate-100 pb-3">
-                      <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
-                        <Settings className="h-5 w-5 text-indigo-600" /> 3. Tutor Preferences & Plan
-                      </h3>
-                      <button
-                        type="button"
-                        onClick={() => setStep(3)}
-                        className="rounded-xl bg-slate-150 px-3.5 py-1.5 text-xs font-black text-slate-700 transition hover:bg-slate-250 cursor-pointer active:scale-95 shadow-sm"
-                      >
-                        Edit Section
-                      </button>
-                    </div>
-
-                    <div className="grid gap-4 sm:grid-cols-2 text-sm">
-                      <div>
-                        <span className="font-semibold text-slate-400 text-xs uppercase tracking-wider block">Preferred Mode</span>
-                        <span className="font-bold text-slate-800 text-base">{form.preferredMode}</span>
-                      </div>
-                      <div>
-                        <span className="font-semibold text-slate-400 text-xs uppercase tracking-wider block">Preferred Gender</span>
-                        <span className="font-bold text-slate-800 text-base">{form.preferredGender}</span>
-                      </div>
-                      {form.planType ? (
-                        <>
-                          <div>
-                            <span className="font-semibold text-slate-400 text-xs uppercase tracking-wider block">Selected Plan</span>
-                            <span className="font-bold text-slate-800 text-base">
-                              {PLANS.find(p => p.id === form.planType)?.title || form.planType}
+                      ) : (
+                        <div className="space-y-3 bg-blue-50/30 p-4 rounded-xl border border-blue-100">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-extrabold text-blue-900 block">
+                              Enter Start Time (End Time & Duration calculated from plan):
                             </span>
-                          </div>
-                          <div>
-                            <span className="font-semibold text-slate-400 text-xs uppercase tracking-wider block">Schedule Format</span>
-                            <span className="font-bold text-slate-800 text-base">
-                              {form.daysPerWeek} Days/Week • {form.hoursPerDay} Hr/Day
-                            </span>
-                          </div>
-                          <div>
-                            {form.planType === 'elite' ? (
-                              (() => {
-                                  const firstWardClass = form.wards[0]?.classGrade || "6";
-                                  const firstWardBoard = form.wards[0]?.curriculum || "CBSE";
-                                  const hrRate = calculateEliteHourlyPrice(firstWardClass, firstWardBoard);
-                                  return (
-                                    <div className="flex flex-col">
-                                      <span className="font-semibold text-slate-400 text-xs uppercase tracking-wider block">Hourly Rate</span>
-                                      <span className="font-extrabold text-indigo-700 text-lg">
-                                        ₹{hrRate.toLocaleString('en-IN')}/hour
-                                      </span>
-                                      <span className="text-[11px] font-semibold text-slate-555 block mt-0.5">
-                                        Est Monthly: ₹{form.monthlyFees?.toLocaleString('en-IN')}/month
-                                      </span>
-                                    </div>
-                                  );
-                              })()
-                            ) : (
-                              <>
-                                <span className="font-semibold text-slate-400 text-xs uppercase tracking-wider block">Monthly Tuition Investment</span>
-                                <span className="font-extrabold text-emerald-700 text-lg">
-                                  {['foundation', 'advance'].includes(form.planType) ? (
-                                    (() => {
-                                      const firstWardClass = form.wards[0]?.classGrade || "6";
-                                      const firstWardBoard = form.wards[0]?.curriculum || "CBSE";
-                                      const basePrice = calculatePrice('board', firstWardClass, firstWardBoard, form.daysPerWeek, form.hoursPerDay);
-                                      return (
-                                        <>
-                                          <span className="line-through text-slate-400 text-sm mr-2 font-black">
-                                            ₹{basePrice.toLocaleString('en-IN')}
-                                          </span>
-                                          <span className="text-emerald-700">
-                                            ₹{form.monthlyFees?.toLocaleString('en-IN')}
-                                          </span>
-                                        </>
-                                      );
-                                    })()
-                                  ) : (
-                                    `₹${form.monthlyFees?.toLocaleString('en-IN')}`
-                                  )}
-                                </span>
-                                {form.planType === 'foundation' && form.discount && (
-                                  <span className="text-[10px] font-black text-emerald-600 block mt-0.5">
-                                    Save ₹{form.discount.toLocaleString('en-IN')} (18% applied)
-                                  </span>
-                                )}
-                                {form.planType === 'advance' && (
-                                  <span className="text-[10px] font-black text-amber-700 block mt-0.5">
-                                    Base Plan + 18% Extra
-                                  </span>
-                                )}
-                              </>
+                            {form.hoursPerDay && (
+                              <span className="bg-blue-100 text-blue-800 text-[10px] font-black px-2 py-0.5 rounded-full">
+                                Selected Plan: {form.hoursPerDay} Hr/Day
+                              </span>
                             )}
                           </div>
-                            
-                            {/* Professional Pricing Consent Checkbox */}
-                            <div className="mt-4 pt-4 border-t border-slate-100 flex items-start gap-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                              <label className="text-xs font-bold text-slate-600 block mb-1">
+                                Start Time
+                              </label>
                               <input
-                                type="checkbox"
-                                id="pricingConsent"
-                                checked={form.pricingConsent || false}
-                                onChange={(e) =>
-                                  setForm((prev) => ({
+                                type="time"
+                                name="startTime"
+                                value={form.startTime || "17:00"}
+                                onChange={(e) => {
+                                  const newStart = e.target.value;
+                                  const hours = form.hoursPerDay || 1.5;
+                                  const calculatedEnd = addHoursToTimeStr(newStart, hours);
+                                  const formattedSlot = `${formatTime12Hr(newStart)} – ${formatTime12Hr(calculatedEnd)}`;
+                                  const duration = `${hours} Hour${hours !== 1 ? 's' : ''}`;
+                                  setForm(prev => ({
                                     ...prev,
-                                    pricingConsent: e.target.checked,
-                                  }))
-                                }
-                                className="mt-1 h-5 w-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer shrink-0"
-                                style={{ accentColor: "#2563eb" }}
+                                    startTime: newStart,
+                                    endTime: calculatedEnd,
+                                    classDuration: duration,
+                                    classTimingSlot: formattedSlot
+                                  }));
+                                }}
+                                className="w-full rounded-xl border border-slate-300 p-2.5 text-xs font-bold text-slate-800 bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
                               />
-                              <div className="flex-1">
-                                <label
-                                  htmlFor="pricingConsent"
-                                  className="text-xs font-semibold text-slate-500 leading-relaxed cursor-pointer select-none"
-                                >
-                                  I understand and agree that the displayed tuition fee is an estimated price. The final tuition fee may increase or decrease after the demo session based on the student's academic level, learning requirements, syllabus complexity, parents' expectations, preferred tutor experience, travel distance (if applicable), and the overall teaching effort required. <span className="text-red-500">*</span>
-                                </label>
-                                {errors.pricingConsent && (
-                                  <p className="mt-1.5 text-xs font-bold text-red-600 flex items-center gap-1">
-                                    <span className="inline-block h-1 w-1 rounded-full bg-red-650 animate-pulse" />
-                                    {errors.pricingConsent}
-                                  </p>
-                                )}
-                              </div>
                             </div>
-                          <div>
-                            <span className="font-semibold text-slate-400 text-xs uppercase tracking-wider block mb-1">Preferred Days</span>
-                            <div className="flex flex-wrap gap-1.5">
-                              {form.preferredDays.map((day) => (
-                                <span key={day} className="rounded-full bg-emerald-50 border border-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800">
-                                  {day}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div>
-                            <span className="font-semibold text-slate-400 text-xs uppercase tracking-wider block">Timing</span>
-                            <span className="font-bold text-slate-800 text-base">
-                              {formatTime12Hr(form.startTime)} to {formatTime12Hr(form.endTime)}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="font-semibold text-slate-400 text-xs uppercase tracking-wider block">Class Duration</span>
-                            <span className="font-bold text-slate-800 text-base">{form.classDuration}</span>
-                          </div>
-                          <div className="sm:col-span-2">
-                            <span className="font-semibold text-slate-400 text-xs uppercase tracking-wider block mb-1">Preferred Days</span>
-                            <div className="flex flex-wrap gap-1.5">
-                              {form.preferredDays.map((day) => (
-                                <span key={day} className="rounded-full bg-emerald-50 border border-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800">
-                                  {day}
-                                </span>
-                              ))}
+                            <div>
+                              <label className="text-xs font-bold text-slate-600 block mb-1">
+                                End Time (Auto-calculated)
+                              </label>
+                              <input
+                                type="time"
+                                name="endTime"
+                                value={form.endTime || addHoursToTimeStr(form.startTime || "17:00", form.hoursPerDay || 1.5)}
+                                onChange={(e) => {
+                                  const newEnd = e.target.value;
+                                  const duration = calculateDuration(form.startTime || "17:00", newEnd);
+                                  const formattedSlot = `${formatTime12Hr(form.startTime || "17:00")} – ${formatTime12Hr(newEnd)}`;
+                                  setForm(prev => ({
+                                    ...prev,
+                                    endTime: newEnd,
+                                    classDuration: duration,
+                                    classTimingSlot: formattedSlot
+                                  }));
+                                }}
+                                className="w-full rounded-xl border border-slate-300 p-2.5 text-xs font-bold text-slate-800 bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                              />
                             </div>
                           </div>
-                        </>
+
+                          {form.startTime && form.endTime && (
+                            <div className="mt-2 text-xs font-bold text-emerald-800 bg-emerald-50 p-2.5 rounded-xl border border-emerald-200 flex items-center justify-between">
+                              <span>
+                                Calculated Class Slot: {formatTime12Hr(form.startTime)} to {formatTime12Hr(form.endTime)}
+                              </span>
+                              <span className="bg-emerald-600 text-white text-[10px] px-2 py-0.5 rounded-full font-black">
+                                {calculateDuration(form.startTime, form.endTime) || `${form.hoursPerDay || 1.5} Hours`}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    null
+                  )}
+                </motion.div>
+
+                {/* Final Pricing Consent Declaration Checkbox at the end of Step 3 (Preference) */}
+                <motion.div variants={itemVariants} className="mt-8 rounded-2xl border border-slate-200 bg-slate-50/80 p-5 shadow-sm">
+                  <div className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      id="pricingConsent"
+                      checked={form.pricingConsent || false}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          pricingConsent: e.target.checked,
+                        }))
+                      }
+                      className="mt-1 h-5 w-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer shrink-0"
+                      style={{ accentColor: "#2563eb" }}
+                    />
+                    <div className="flex-1">
+                      <label
+                        htmlFor="pricingConsent"
+                        className="text-xs font-semibold text-slate-700 leading-relaxed cursor-pointer select-none block"
+                      >
+                        I understand and agree that the displayed tuition fee is an estimated price. The final tuition fee may increase or decrease after the demo session based on the student's academic level, learning requirements, syllabus complexity, parents' expectations, preferred tutor experience, travel distance (if applicable), and the overall teaching effort required. <span className="text-red-500">*</span>
+                      </label>
+                      {errors.pricingConsent && (
+                        <p className="mt-1.5 text-xs font-bold text-red-600 flex items-center gap-1">
+                          <span className="inline-block h-1.5 w-1.5 rounded-full bg-red-600 animate-pulse" />
+                          {errors.pricingConsent}
+                        </p>
                       )}
                     </div>
                   </div>
                 </motion.div>
               </motion.section>
             )}
+
           </AnimatePresence>
 
           {message && (

@@ -123,10 +123,27 @@ const parentEnquirySchema = new mongoose.Schema(
       trim: true,
     },
 
-    classDuration: {
+     classDuration: {
       type: String,
       default: "",
       trim: true,
+    },
+
+    classTimingType: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    classTimingSlot: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    pricingConsent: {
+      type: Boolean,
+      default: false,
     },
 
     wards: {
