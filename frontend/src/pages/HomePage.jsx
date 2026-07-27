@@ -704,6 +704,11 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [activeFaq, setActiveFaq] = useState(null);
   const [activeSection, setActiveSection] = useState("home");
+  const [visibleTutorsCount, setVisibleTutorsCount] = useState(4);
+
+  useEffect(() => {
+    setVisibleTutorsCount(4);
+  }, [query, selectedCategory, verifiedOnly, onlineOnly]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -1594,7 +1599,7 @@ export default function HomePage() {
               ref={sliderRef}
               className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4 scroll-smooth lg:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
-              {filteredTutors.map((tutor) => (
+              {filteredTutors.slice(0, visibleTutorsCount).map((tutor) => (
                 <TutorCard
                   key={tutor._id}
                   tutor={tutor}
@@ -1606,7 +1611,7 @@ export default function HomePage() {
             </div>
 
             <div className="hidden gap-6 lg:grid lg:grid-cols-2">
-              {filteredTutors.map((tutor) => (
+              {filteredTutors.slice(0, visibleTutorsCount).map((tutor) => (
                 <TutorCard
                   key={tutor._id}
                   tutor={tutor}
@@ -1615,6 +1620,18 @@ export default function HomePage() {
                 />
               ))}
             </div>
+
+            {visibleTutorsCount < filteredTutors.length && (
+              <div className="mt-8 flex justify-center">
+                <button
+                  onClick={() => setVisibleTutorsCount((prev) => prev + 4)}
+                  className="inline-flex items-center gap-2 rounded-full border-2 border-blue-600 bg-white px-6 py-2.5 text-xs font-black uppercase tracking-wider text-blue-600 hover:bg-blue-50 active:scale-95 transition-all duration-200 cursor-pointer shadow-md shadow-blue-500/5"
+                >
+                  See More Tutors
+                  <ChevronDown className="h-4 w-4" />
+                </button>
+              </div>
+            )}
           </>
         )}
       </section>
