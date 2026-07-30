@@ -41,6 +41,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
 import { Avatar, AvatarFallback } from "../components/ui/avatar";
+import DemoParentDashboard from "./DemoParentDashboard";
 
 
 
@@ -705,6 +706,7 @@ export default function HomePage() {
   const [activeFaq, setActiveFaq] = useState(null);
   const [activeSection, setActiveSection] = useState("home");
   const [visibleTutorsCount, setVisibleTutorsCount] = useState(4);
+  const [showDemoPreview, setShowDemoPreview] = useState(false);
 
   useEffect(() => {
     setVisibleTutorsCount(4);
@@ -1308,7 +1310,7 @@ export default function HomePage() {
                 </p>
               </div>
 
-              <div className="mt-8 flex flex-wrap gap-4">
+              <div className="mt-8 flex flex-wrap gap-4 items-center">
                 <MotionLink
                   to="/parent-enquiry"
                   onClick={() => trackEvent("book_demo")}
@@ -1326,6 +1328,19 @@ export default function HomePage() {
                 >
                   Find a Home Tutor
                 </a>
+
+                {/* Standalone Preview Dashboard button */}
+                <motion.button
+                  id="preview-dashboard-btn"
+                  type="button"
+                  onClick={() => setShowDemoPreview(true)}
+                  whileHover={{ scale: 1.03, translateY: -2 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="group inline-flex items-center gap-2 rounded-2xl border border-purple-500/40 bg-purple-600/15 px-7 py-4 font-black text-purple-300 backdrop-blur transition-all duration-300 hover:bg-purple-600/30 hover:border-purple-400/60 hover:text-white hover:shadow-lg hover:shadow-purple-900/30"
+                  aria-label="Preview parent dashboard"
+                >
+                  Preview Dashboard
+                </motion.button>
               </div>
 
               {/* Quick Stats Grid */}
@@ -1403,7 +1418,7 @@ export default function HomePage() {
                   </div>
                 </div>
 
-                {/* Card 4 */}
+                {/* Card 4 – Free Trial */}
                 <div className="relative rounded-2xl border border-blue-500/10 bg-[#060c18] pl-3.5 pr-2.5 py-4 flex items-center gap-2.5 transition-all duration-300 hover:border-blue-500/30 hover:shadow-[0_0_30px_rgba(59,130,246,0.08)] group">
                   <div className="relative flex items-center justify-center w-10 h-10 shrink-0 rounded-full bg-blue-950/30 border border-blue-500/15 shadow-[0_0_15px_rgba(59,130,246,0.1)]">
                     <div className="absolute inset-[-2.5px] rounded-full border border-dashed border-blue-500/30 animate-[spin_60s_linear_infinite]" />
@@ -2298,6 +2313,14 @@ export default function HomePage() {
           </motion.div>
         ) : null}
       </AnimatePresence>
+
+      {/* Demo Parent Dashboard Preview Modal */}
+      {showDemoPreview && (
+        <DemoParentDashboard
+          onClose={() => setShowDemoPreview(false)}
+          selectedPlan="advance"
+        />
+      )}
     </div>
   );
 }

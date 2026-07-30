@@ -30,6 +30,7 @@ const DRAFT_KEY = "tutorRegistrationDraft";
 
 const initialFormData = {
   name: "",
+  email: "",
   experience: "",
   hasOccupation: "",
   occupation: "",
@@ -392,6 +393,11 @@ export default function TutorRegistration() {
   const validateField = (name, value) => {
     if (name === "name") {
       if (!value || value.trim().length < 3) return "Name must be at least 3 characters";
+    }
+
+    if (name === "email") {
+      if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim()))
+        return "Enter a valid email address";
     }
 
     if (name === "phone") {
@@ -919,6 +925,18 @@ export default function TutorRegistration() {
                     onBlur={handleBlur}
                     placeholder="Name as per ID"
                     error={touched.name ? errors.name : ""}
+                  />
+
+                  <InputField
+                    icon={Mail}
+                    label="Email Address"
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    placeholder="your@email.com (optional)"
+                    error={touched.email ? errors.email : ""}
                   />
 
                   <InputField
