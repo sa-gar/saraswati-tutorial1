@@ -21,6 +21,15 @@ import {
   XCircle,
   BarChart2,
   Target,
+  Bell,
+  Download,
+  Info,
+  Settings,
+  Users,
+  ChevronRight,
+  Layers,
+  Activity,
+  ArrowUpRight
 } from "lucide-react";
 
 // ─── Sample Demo Data ────────────────────────────────────────────────────────
@@ -38,7 +47,7 @@ const DEMO_STUDENT = {
 const DEMO_TEACHER = {
   name: "Mrs. Priya Nair",
   qualification: "M.Sc. Mathematics, B.Ed",
-  experience: "8 Years",
+  experience: "8 Years Experience",
   specialization: "Math & Science",
   phone: "+91 98XXX XXXXX",
   rating: 4.8,
@@ -57,16 +66,16 @@ const DEMO_PACKAGE = {
   timing: "5:00 PM – 6:00 PM",
   monthlyFee: 8600,
   feePaid: true,
-  nextRenewalDate: "Aug 15, 2025",
+  nextRenewalDate: "Aug 15, 2026",
 };
 
 const DEMO_ATTENDANCE = [
-  { date: "Jul 26, 2025", day: "Sat", status: "Done", topic: "Trigonometry – Introduction" },
-  { date: "Jul 25, 2025", day: "Fri", status: "Done", topic: "Linear Equations – Revision" },
-  { date: "Jul 24, 2025", day: "Thu", status: "Done", topic: "Quadratic Equations" },
-  { date: "Jul 23, 2025", day: "Wed", status: "Missed", topic: "—" },
-  { date: "Jul 22, 2025", day: "Tue", status: "Done", topic: "Polynomials – Part 2" },
-  { date: "Jul 21, 2025", day: "Mon", status: "Done", topic: "Polynomials – Part 1" },
+  { date: "Jul 26, 2026", day: "Sat", status: "Done", topic: "Trigonometry – Introduction" },
+  { date: "Jul 25, 2026", day: "Fri", status: "Done", topic: "Linear Equations – Revision" },
+  { date: "Jul 24, 2026", day: "Thu", status: "Done", topic: "Quadratic Equations" },
+  { date: "Jul 23, 2026", day: "Wed", status: "Missed", topic: "—" },
+  { date: "Jul 22, 2026", day: "Tue", status: "Done", topic: "Polynomials – Part 2" },
+  { date: "Jul 21, 2026", day: "Mon", status: "Done", topic: "Polynomials – Part 1" },
 ];
 
 const DEMO_HOMEWORK = [
@@ -77,101 +86,36 @@ const DEMO_HOMEWORK = [
 
 const DEMO_REMARKS = [
   {
-    date: "Jul 26, 2025",
+    date: "Jul 26, 2026",
     remark: "Aryan has shown excellent improvement in Trigonometry. Grasped concepts quickly. Recommend more practice on angle calculations.",
     sentiment: "positive",
   },
   {
-    date: "Jul 21, 2025",
+    date: "Jul 21, 2026",
     remark: "Completed all polynomial exercises with 90%+ accuracy. Moving to next chapter ahead of schedule.",
     sentiment: "positive",
   },
-  {
-    date: "Jul 14, 2025",
-    remark: "Slightly distracted during the first 15 mins. Suggest reducing screen time before class. Performance recovered well in the second half.",
-    sentiment: "neutral",
-  },
 ];
 
-const DEMO_TOPICS = [
-  { subject: "Mathematics", topic: "Polynomials", status: "Completed" },
-  { subject: "Mathematics", topic: "Linear Equations in 2 Variables", status: "Completed" },
-  { subject: "Mathematics", topic: "Quadratic Equations", status: "In Progress" },
-  { subject: "Mathematics", topic: "Trigonometry", status: "Started" },
-  { subject: "Science", topic: "Matter in Our Surroundings", status: "Completed" },
-  { subject: "Science", topic: "Is Matter Around Us Pure?", status: "Completed" },
-  { subject: "Science", topic: "Atoms and Molecules", status: "In Progress" },
-  { subject: "English", topic: "The Fun They Had", status: "Completed" },
-  { subject: "English", topic: "The Sound of Music", status: "Completed" },
+const WEEKLY_DAYS = [
+  { day: "Mon", subject: "Maths", time: "5:00 PM", color: "bg-blue-500" },
+  { day: "Tue", subject: "Science", time: "5:00 PM", color: "bg-emerald-500" },
+  { day: "Wed", subject: "English", time: "6:00 PM", color: "bg-purple-500" },
+  { day: "Thu", subject: "Maths", time: "5:00 PM", color: "bg-blue-500" },
+  { day: "Fri", subject: "Science", time: "5:00 PM", color: "bg-emerald-500" },
+  { day: "Sat", subject: "Test", time: "10:00 AM", color: "bg-amber-500" },
+  { day: "Sun", subject: "—", time: "No Class", color: "bg-slate-300" },
 ];
-
-const DEMO_UPCOMING = [
-  { date: "Jul 28, Mon", time: "5:00 PM", topic: "Trigonometry – Identities", subject: "Mathematics" },
-  { date: "Jul 29, Tue", time: "5:00 PM", topic: "Atoms and Molecules – Part 2", subject: "Science" },
-  { date: "Jul 30, Wed", time: "5:00 PM", topic: "Trigonometry – Problem Set", subject: "Mathematics" },
-];
-
-const SUBJECT_PROGRESS = [
-  { subject: "Mathematics", percent: 68, color: "#3B82F6" },
-  { subject: "Science", percent: 75, color: "#10B981" },
-  { subject: "English", percent: 85, color: "#F59E0B" },
-];
-
-// ─── Sub-components ──────────────────────────────────────────────────────────
-
-function SectionCard({ children, className = "" }) {
-  return (
-    <div className={`rounded-2xl bg-white border border-slate-200/80 shadow-sm overflow-hidden ${className}`}>
-      {children}
-    </div>
-  );
-}
-
-function SectionHeader({ icon: Icon, title, color = "text-slate-800", bg = "bg-slate-100" }) {
-  return (
-    <div className="flex items-center gap-2.5 px-4 py-3 border-b border-slate-100">
-      <div className={`p-1.5 rounded-xl ${bg}`}>
-        <Icon className={`h-3.5 w-3.5 ${color}`} />
-      </div>
-      <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-500">{title}</h3>
-    </div>
-  );
-}
-
-function LockedModule({ title, desc, icon: Icon }) {
-  return (
-    <div className="relative rounded-2xl bg-gradient-to-br from-slate-100 to-slate-50 border border-slate-200/80 overflow-hidden opacity-80">
-      <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 text-center p-4 bg-white/50 backdrop-blur-[2px]">
-        <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 rounded-full px-3 py-1 shadow-sm">
-          <Lock className="h-3 w-3 text-amber-600" />
-          <span className="text-[10px] font-black text-amber-700 uppercase tracking-wider">Available in Elite Plan</span>
-        </div>
-        <p className="text-[10px] font-semibold text-slate-500 max-w-[180px]">{desc}</p>
-      </div>
-      <div className="flex items-center gap-2.5 px-4 py-3 border-b border-slate-100 blur-sm">
-        <div className="p-1.5 rounded-xl bg-slate-200">
-          <Icon className="h-3.5 w-3.5 text-slate-500" />
-        </div>
-        <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-400">{title}</h3>
-      </div>
-      <div className="p-4 space-y-2 blur-sm">
-        <div className="h-3 bg-slate-200 rounded-full w-3/4" />
-        <div className="h-3 bg-slate-200 rounded-full w-1/2" />
-        <div className="h-3 bg-slate-200 rounded-full w-2/3" />
-        <div className="h-8 bg-slate-200 rounded-xl mt-3" />
-      </div>
-    </div>
-  );
-}
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function DemoParentDashboard({ onClose, selectedPlan = "advance" }) {
   const [activeTab, setActiveTab] = useState("overview");
+  const [showNotice, setShowNotice] = useState(true);
 
   const completedPercent = Math.round((DEMO_PACKAGE.completedClasses / DEMO_PACKAGE.totalClasses) * 100);
 
-  const tabs = [
+  const navItems = [
     { id: "overview", label: "Overview", icon: BarChart2 },
     { id: "attendance", label: "Attendance", icon: Calendar },
     { id: "progress", label: "Progress", icon: TrendingUp },
@@ -180,327 +124,548 @@ export default function DemoParentDashboard({ onClose, selectedPlan = "advance" 
 
   return (
     <div
-      className="fixed inset-0 z-[200] flex items-start justify-center p-3 sm:p-6 overflow-y-auto"
-      style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+      className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto"
+      style={{ backgroundColor: "rgba(9, 21, 43, 0.75)", backdropFilter: "blur(8px)" }}
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-5xl bg-slate-50 rounded-[1.6rem] shadow-2xl border border-slate-200 my-4 flex flex-col overflow-hidden"
+        className="relative w-full max-w-6xl bg-[#F6F8FC] rounded-[1.8rem] shadow-2xl border border-slate-200/80 my-auto flex flex-col overflow-hidden text-slate-800"
         onClick={(e) => e.stopPropagation()}
-        style={{ maxHeight: "calc(100vh - 2rem)", minHeight: "600px" }}
+        style={{ height: "calc(100vh - 2rem)", maxHeight: "900px" }}
       >
-
-        {/* ── TOP BAR ────────────────────────────────────────────────── */}
-        <div className="relative bg-gradient-to-r from-[#1e3a5f] via-[#1a3a8f] to-[#0f2460] px-5 py-5 flex items-center justify-between gap-4 shrink-0">
-          <div className="absolute top-0 right-0 w-40 h-40 rounded-full bg-blue-400/10 blur-2xl pointer-events-none" />
-          <div className="absolute bottom-0 left-1/3 w-32 h-32 rounded-full bg-indigo-400/10 blur-2xl pointer-events-none" />
-
-          <div className="relative z-10 flex items-center gap-3">
-            <div className="flex items-center justify-center h-10 w-10 rounded-2xl bg-white/10 text-white font-black text-sm border border-white/20 shrink-0">
+        {/* ── 1. TOP HEADER BANNER (#0B1736 Dark Navy) ────────────────────────── */}
+        <div className="bg-[#0B1736] px-5 sm:px-7 py-4 flex items-center justify-between gap-4 shrink-0 border-b border-slate-800">
+          {/* Left: Avatar + Student Info */}
+          <div className="flex items-center gap-3.5">
+            <div className="flex items-center justify-center h-11 w-11 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 text-white font-black text-base shadow-md border border-white/20 shrink-0">
               {DEMO_STUDENT.avatar}
             </div>
             <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-white font-black text-base leading-tight">{DEMO_STUDENT.name}</h2>
-                <span className="text-[10px] font-black bg-blue-500/30 text-blue-200 border border-blue-400/30 rounded-full px-2 py-0.5 uppercase tracking-wide">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <h2 className="text-white font-black text-lg tracking-tight leading-none">
+                  {DEMO_STUDENT.name}
+                </h2>
+                <span className="text-[10px] font-black bg-blue-500/30 text-blue-200 border border-blue-400/30 rounded-full px-2.5 py-0.5 uppercase tracking-wider">
                   Demo Preview
                 </span>
               </div>
-              <p className="text-blue-200 text-[11px] font-medium mt-0.5">
+              <p className="text-blue-200/80 text-xs font-semibold mt-1">
                 {DEMO_STUDENT.class} &bull; {DEMO_STUDENT.board} &bull; {DEMO_PACKAGE.plan}
               </p>
             </div>
           </div>
 
-          <button
-            onClick={onClose}
-            className="relative z-10 p-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white transition cursor-pointer shrink-0"
-          >
-            <X className="h-4 w-4" />
-          </button>
+          {/* Right: Actions (Close Button) */}
+          <div className="flex items-center gap-2.5">
+            <button
+              onClick={onClose}
+              className="p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white transition cursor-pointer shrink-0"
+              title="Close Preview"
+            >
+              <X className="h-4.5 w-4.5" />
+            </button>
+          </div>
         </div>
 
-        {/* ── DEMO BANNER ─────────────────────────────────────────────── */}
-        <div className="bg-amber-50 border-b border-amber-200/70 px-4 py-2 flex items-center gap-2 shrink-0">
-          <Sparkles className="h-3.5 w-3.5 text-amber-600 shrink-0" />
-          <p className="text-[11px] font-semibold text-amber-700">
-            This is a <strong>demo preview</strong> using sample data. Your actual dashboard will show real attendance, progress, and teacher remarks.
-          </p>
-        </div>
-
-        {/* ── TABS ────────────────────────────────────────────────────── */}
-        <div className="flex border-b border-slate-200 bg-white px-4 gap-0.5 shrink-0 overflow-x-auto">
-          {tabs.map((tab) => {
-            const TabIcon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1.5 px-4 py-3 text-[11px] font-extrabold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap cursor-pointer ${
-                  isActive
-                    ? "border-blue-600 text-blue-700"
-                    : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
-                }`}
-              >
-                <TabIcon className="h-3.5 w-3.5" />
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* ── SCROLLABLE BODY ─────────────────────────────────────────── */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-5">
-
-          {/* ══ OVERVIEW TAB ══════════════════════════════════════════ */}
-          {activeTab === "overview" && (
-            <div className="space-y-4">
-
-              {/* Stats row */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {[
-                  { label: "Total Classes", value: DEMO_PACKAGE.totalClasses, icon: BookOpen, color: "text-blue-600", bg: "bg-blue-50" },
-                  { label: "Completed", value: DEMO_PACKAGE.completedClasses, icon: CheckCircle2, color: "text-emerald-600", bg: "bg-emerald-50" },
-                  { label: "Remaining", value: DEMO_PACKAGE.remainingClasses, icon: Clock, color: "text-amber-600", bg: "bg-amber-50" },
-                  { label: "Missed", value: DEMO_PACKAGE.missedClasses, icon: XCircle, color: "text-red-500", bg: "bg-red-50" },
-                ].map((stat) => {
-                  const StatIcon = stat.icon;
-                  return (
-                    <div key={stat.label} className="bg-white rounded-2xl border border-slate-200/80 p-4 flex items-center gap-3 shadow-sm">
-                      <div className={`p-2 rounded-xl ${stat.bg} shrink-0`}>
-                        <StatIcon className={`h-4 w-4 ${stat.color}`} />
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{stat.label}</p>
-                        <p className={`text-xl font-black ${stat.color}`}>{stat.value}</p>
-                      </div>
+        {/* ── 2. DASHBOARD BODY (LEFT SIDEBAR + MAIN CONTENT AREA) ─────────── */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* ── LEFT SIDEBAR ────────────────────────────────────────────── */}
+          <aside className="w-60 shrink-0 bg-white border-r border-slate-200/80 p-4 font-semibold text-slate-600 flex-col justify-between hidden md:flex">
+            <div className="space-y-1.5">
+              {navItems.map((item) => {
+                const ItemIcon = item.icon;
+                const isActive = activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveTab(item.id)}
+                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all duration-200 cursor-pointer ${
+                      isActive
+                        ? "bg-blue-600 text-white shadow-md shadow-blue-500/25 scale-[1.01]"
+                        : "text-slate-600 hover:bg-slate-100/80 hover:text-slate-900"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <ItemIcon className={`h-4 w-4 ${isActive ? "text-white" : "text-slate-500"}`} />
+                      <span>{item.label}</span>
                     </div>
-                  );
-                })}
+                    {item.badge && (
+                      <span className="h-4 min-w-4 px-1 flex items-center justify-center rounded-full bg-rose-500 text-white text-[10px] font-black">
+                        {item.badge}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Sidebar Bottom Promo Card */}
+            <div className="bg-gradient-to-b from-blue-50/90 to-indigo-50/60 border border-blue-100 rounded-2xl p-4 text-center relative overflow-hidden shadow-sm">
+              <div className="flex h-10 w-10 mx-auto items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/30">
+                <GraduationCap className="h-5 w-5" />
               </div>
+              <h4 className="font-extrabold text-slate-900 text-xs mt-2.5">Keep Learning, Keep Growing!</h4>
+              <p className="text-[10px] text-slate-500 font-medium mt-1 leading-relaxed">
+                You're doing great. Keep up the momentum!
+              </p>
+            </div>
+          </aside>
 
-              <div className="grid gap-4 md:grid-cols-2">
+          {/* ── MAIN CONTENT AREA ───────────────────────────────────────── */}
+          <main className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
 
-                {/* Student Profile */}
-                <SectionCard>
-                  <SectionHeader icon={GraduationCap} title="Student Profile" color="text-blue-600" bg="bg-blue-50" />
-                  <div className="p-4 flex items-start gap-4">
-                    <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-black text-sm shrink-0">
-                      {DEMO_STUDENT.avatar}
+            {/* Top Demo Notice Alert Banner */}
+            {showNotice && (
+              <div className="bg-blue-50/90 border border-blue-200/80 rounded-2xl p-4 text-xs font-semibold text-blue-900 flex items-center justify-between shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-blue-100 text-blue-700 shrink-0">
+                    <Info className="h-4 w-4" />
+                  </div>
+                  <p>
+                    <strong>This is a demo preview</strong> using sample data. Your actual dashboard will show real attendance, progress, and teacher remarks.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowNotice(false)}
+                  className="p-1 rounded-lg text-blue-400 hover:text-blue-700 transition cursor-pointer shrink-0"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+
+            {/* ══ OVERVIEW TAB CONTENT ══════════════════════════════════ */}
+            {activeTab === "overview" && (
+              <div className="space-y-6">
+
+                {/* ── ROW 1: 4 STAT CARDS ───────────────────────────── */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {/* Card 1: Total Classes */}
+                  <div className="bg-white rounded-2xl border border-slate-200/90 p-4.5 flex items-center gap-4 shadow-sm hover:shadow-md transition">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 border border-blue-200/60 text-blue-600 shrink-0 shadow-inner">
+                      <BookOpen className="h-5 w-5" />
                     </div>
-                    <div className="space-y-1.5 flex-1">
-                      <h4 className="font-black text-slate-900 text-sm">{DEMO_STUDENT.name}</h4>
-                      <p className="text-[11px] text-slate-500 font-semibold">{DEMO_STUDENT.class} &bull; {DEMO_STUDENT.board}</p>
-                      <p className="text-[11px] text-slate-500">{DEMO_STUDENT.school}</p>
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {DEMO_STUDENT.subjects.map((s) => (
-                          <span key={s} className="text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200/60 rounded-full px-2 py-0.5">{s}</span>
-                        ))}
-                      </div>
+                    <div>
+                      <p className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Total Classes</p>
+                      <p className="text-2xl font-black text-slate-900 mt-0.5">{DEMO_PACKAGE.totalClasses}</p>
+                      <p className="text-xs font-semibold text-slate-500 mt-0.5">All Scheduled</p>
                     </div>
                   </div>
-                </SectionCard>
 
-                {/* Teacher Profile */}
-                <SectionCard>
-                  <SectionHeader icon={User} title="Assigned Teacher" color="text-purple-600" bg="bg-purple-50" />
-                  <div className="p-4 flex items-start gap-4">
-                    <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-black text-sm shrink-0">
-                      {DEMO_TEACHER.avatar}
+                  {/* Card 2: Completed */}
+                  <div className="bg-white rounded-2xl border border-slate-200/90 p-4.5 flex items-center gap-4 shadow-sm hover:shadow-md transition">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 border border-emerald-200/60 text-emerald-600 shrink-0 shadow-inner">
+                      <CheckCircle2 className="h-5 w-5" />
                     </div>
-                    <div className="space-y-1.5 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="font-black text-slate-900 text-sm">{DEMO_TEACHER.name}</h4>
-                        <div className="flex items-center gap-0.5">
-                          <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                          <span className="text-[10px] font-black text-amber-600">{DEMO_TEACHER.rating}</span>
+                    <div>
+                      <p className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Completed</p>
+                      <p className="text-2xl font-black text-emerald-600 mt-0.5">{DEMO_PACKAGE.completedClasses}</p>
+                      <p className="text-xs font-bold text-emerald-600 mt-0.5">{completedPercent}% Completed</p>
+                    </div>
+                  </div>
+
+                  {/* Card 3: Remaining */}
+                  <div className="bg-white rounded-2xl border border-slate-200/90 p-4.5 flex items-center gap-4 shadow-sm hover:shadow-md transition">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 border border-amber-200/60 text-amber-600 shrink-0 shadow-inner">
+                      <Clock className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Remaining</p>
+                      <p className="text-2xl font-black text-amber-600 mt-0.5">{DEMO_PACKAGE.remainingClasses}</p>
+                      <p className="text-xs font-bold text-amber-600 mt-0.5">Upcoming Classes</p>
+                    </div>
+                  </div>
+
+                  {/* Card 4: Missed */}
+                  <div className="bg-white rounded-2xl border border-slate-200/90 p-4.5 flex items-center gap-4 shadow-sm hover:shadow-md transition">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 border border-rose-200/60 text-rose-600 shrink-0 shadow-inner">
+                      <XCircle className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Missed</p>
+                      <p className="text-2xl font-black text-rose-600 mt-0.5">{DEMO_PACKAGE.missedClasses}</p>
+                      <p className="text-xs font-bold text-rose-500 mt-0.5">Needs Attention</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── ROW 2: STUDENT PROFILE & ASSIGNED TEACHER ─────── */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Student Profile Card */}
+                  <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm relative overflow-hidden">
+                    <div className="flex items-center gap-2 border-b border-slate-100 pb-3.5 mb-4">
+                      <User className="h-4 w-4 text-blue-600" />
+                      <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">Student Profile</h3>
+                    </div>
+
+                    <div className="flex items-start gap-4">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black text-xl shadow-md shrink-0">
+                        {DEMO_STUDENT.avatar}
+                      </div>
+                      <div className="space-y-1 flex-1">
+                        <h4 className="text-xl font-black text-slate-900">{DEMO_STUDENT.name}</h4>
+                        <p className="text-xs font-bold text-slate-500">{DEMO_STUDENT.class} &bull; {DEMO_STUDENT.board}</p>
+                        <p className="text-xs font-semibold text-slate-400">{DEMO_STUDENT.school}</p>
+                        <div className="flex flex-wrap gap-1.5 pt-2">
+                          {DEMO_STUDENT.subjects.map((subj, idx) => {
+                            const colors = ["bg-blue-50 text-blue-700 border-blue-200", "bg-emerald-50 text-emerald-700 border-emerald-200", "bg-purple-50 text-purple-700 border-purple-200"];
+                            return (
+                              <span key={subj} className={`text-[11px] font-bold border rounded-lg px-2.5 py-0.5 ${colors[idx % colors.length]}`}>
+                                {subj}
+                              </span>
+                            );
+                          })}
                         </div>
                       </div>
-                      <p className="text-[11px] text-slate-500 font-semibold">{DEMO_TEACHER.qualification}</p>
-                      <p className="text-[11px] text-slate-500">{DEMO_TEACHER.experience} Experience &bull; {DEMO_TEACHER.specialization}</p>
-                      <p className="text-[10px] text-slate-400 flex items-center gap-1 mt-1">
-                        <Phone className="h-3 w-3" /> Contact shared after enrollment
-                      </p>
                     </div>
                   </div>
-                </SectionCard>
-              </div>
 
-              {/* Package Progress */}
-              <SectionCard>
-                <SectionHeader icon={Target} title="Package Progress" color="text-emerald-600" bg="bg-emerald-50" />
-                <div className="p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[11px] font-bold text-slate-600">
+                  {/* Assigned Teacher Card */}
+                  <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm">
+                    <div className="flex items-center gap-2 border-b border-slate-100 pb-3.5 mb-4">
+                      <User className="h-4 w-4 text-purple-600" />
+                      <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">Assigned Teacher</h3>
+                    </div>
+
+                    <div className="flex items-start gap-4">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-tr from-purple-500 to-pink-500 text-white font-black text-xl shadow-md shrink-0">
+                        {DEMO_TEACHER.avatar}
+                      </div>
+                      <div className="space-y-1 flex-1">
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                          <h4 className="text-xl font-black text-slate-900">{DEMO_TEACHER.name}</h4>
+                          <div className="flex items-center gap-1 bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-lg">
+                            <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                            <span className="text-xs font-black text-amber-600">{DEMO_TEACHER.rating}</span>
+                          </div>
+                        </div>
+                        <p className="text-xs font-bold text-slate-500">{DEMO_TEACHER.qualification}</p>
+                        <p className="text-xs font-semibold text-slate-400">{DEMO_TEACHER.experience} &bull; {DEMO_TEACHER.specialization}</p>
+                        <p className="text-xs text-slate-400 italic pt-1 flex items-center gap-1.5">
+                          <Phone className="h-3.5 w-3.5" /> Contact shared after enrollment
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── ROW 3: LEARNING PROGRESS & UPCOMING CLASS ─────── */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Learning Progress Card (2 cols) */}
+                  <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-3.5 mb-4">
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="h-4 w-4 text-emerald-600" />
+                        <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">Learning Progress</h3>
+                      </div>
+                      <span className="text-xs font-black text-emerald-600">{completedPercent}%</span>
+                    </div>
+
+                    <p className="text-xs font-bold text-slate-700 mb-2">
                       {DEMO_PACKAGE.completedClasses} / {DEMO_PACKAGE.totalClasses} Classes Completed
-                    </span>
-                    <span className="text-[11px] font-black text-emerald-600">{completedPercent}%</span>
+                    </p>
+                    <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden mb-5">
+                      <div className="h-full bg-emerald-500 rounded-full transition-all duration-700" style={{ width: `${completedPercent}%` }} />
+                    </div>
+
+                    {/* 3 Mini Stat Boxes */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="bg-slate-50 border border-slate-150 rounded-2xl p-3.5 flex items-center gap-3">
+                        <div className="p-2.5 rounded-xl bg-purple-100 text-purple-600 shrink-0">
+                          <Target className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <p className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Average Score</p>
+                          <p className="text-base font-black text-slate-900 mt-0.5">82%</p>
+                          <p className="text-[10px] text-slate-400 font-semibold">Across Subjects</p>
+                        </div>
+                      </div>
+
+                      <div className="bg-slate-50 border border-slate-150 rounded-2xl p-3.5 flex items-center gap-3">
+                        <div className="p-2.5 rounded-xl bg-teal-100 text-teal-600 shrink-0">
+                          <FileText className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <p className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Assignments</p>
+                          <p className="text-base font-black text-slate-900 mt-0.5">8 / 10</p>
+                          <p className="text-[10px] text-slate-400 font-semibold">Submitted</p>
+                        </div>
+                      </div>
+
+                      <div className="bg-slate-50 border border-slate-150 rounded-2xl p-3.5 flex items-center gap-3">
+                        <div className="p-2.5 rounded-xl bg-amber-100 text-amber-600 shrink-0">
+                          <TrendingUp className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <p className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Improvement</p>
+                          <p className="text-base font-black text-amber-600 mt-0.5">+18%</p>
+                          <p className="text-[10px] text-slate-400 font-semibold">Since Last Month</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full transition-all duration-700"
-                      style={{ width: `${completedPercent}%` }}
-                    />
+
+                  {/* Upcoming Class Card (1 col) */}
+                  <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-3.5 mb-4">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-blue-600" />
+                          <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">Upcoming Class</h3>
+                        </div>
+                        <button className="text-xs font-bold text-blue-600 hover:underline cursor-pointer">View All</button>
+                      </div>
+
+                      <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-2xl p-4 space-y-3">
+                        <div className="flex items-start gap-3">
+                          <div className="p-2 rounded-xl bg-emerald-600 text-white shrink-0">
+                            <BookOpen className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-black text-slate-900">Mathematics – Algebra</h4>
+                            <p className="text-[11px] font-semibold text-emerald-700">Chapter 4: Linear Equations</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-1">
+                          <div className="flex items-center gap-1.5 text-xs text-slate-600 font-semibold">
+                            <Clock className="h-3.5 w-3.5 text-slate-400" />
+                            <span>Today, 5:00 PM – 6:00 PM</span>
+                          </div>
+                          <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2.5 py-1 rounded-lg">
+                            In 2h 30m
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <p className="text-xs text-slate-400 font-semibold pt-3 flex items-center gap-1.5">
+                      <User className="h-3.5 w-3.5" /> {DEMO_TEACHER.name}
+                    </p>
                   </div>
-                  <div className="mt-3 grid grid-cols-3 gap-3 text-center">
-                    {[
-                      { label: "Schedule", value: `${DEMO_PACKAGE.daysPerWeek} Days/Week` },
-                      { label: "Class Time", value: DEMO_PACKAGE.timing },
-                      { label: "Next Renewal", value: DEMO_PACKAGE.nextRenewalDate },
-                    ].map((item) => (
-                      <div key={item.label} className="bg-slate-50 rounded-xl p-2.5 border border-slate-200/60">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase">{item.label}</p>
-                        <p className="text-xs font-black text-slate-800 mt-0.5">{item.value}</p>
+                </div>
+
+                {/* ── ROW 4: WEEKLY SCHEDULE & RECENT ACTIVITY ────── */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Weekly Schedule Grid (2 cols) */}
+                  <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-3.5 mb-4">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-blue-600" />
+                        <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">Weekly Schedule</h3>
+                      </div>
+                      <button className="text-xs font-bold text-blue-600 hover:underline cursor-pointer">View Full Schedule</button>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
+                      {WEEKLY_DAYS.map((day) => (
+                        <div key={day.day} className="bg-slate-50 border border-slate-150 rounded-2xl p-3 text-center">
+                          <p className="text-xs font-black text-slate-700">{day.day}</p>
+                          <div className="flex items-center justify-center gap-1 my-1.5">
+                            <span className={`h-1.5 w-1.5 rounded-full ${day.color}`} />
+                            <span className="text-[11px] font-bold text-slate-800">{day.subject}</span>
+                          </div>
+                          <p className="text-[10px] font-semibold text-slate-400">{day.time}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Recent Activity (1 col) */}
+                  <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-3.5 mb-4">
+                      <div className="flex items-center gap-2">
+                        <Activity className="h-4 w-4 text-indigo-600" />
+                        <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">Recent Activity</h3>
+                      </div>
+                      <button className="text-xs font-bold text-blue-600 hover:underline cursor-pointer">View All</button>
+                    </div>
+
+                    <div className="space-y-3.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2.5">
+                          <div className="p-1.5 rounded-full bg-emerald-50 text-emerald-600">
+                            <CheckCircle2 className="h-4 w-4" />
+                          </div>
+                          <span className="font-bold text-slate-800">Science assignment submitted</span>
+                        </div>
+                        <span className="text-[10px] font-semibold text-slate-400">2 hours ago</span>
+                      </div>
+
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2.5">
+                          <div className="p-1.5 rounded-full bg-blue-50 text-blue-600">
+                            <FileText className="h-4 w-4" />
+                          </div>
+                          <span className="font-bold text-slate-800">Maths test conducted</span>
+                        </div>
+                        <span className="text-[10px] font-semibold text-slate-400">1 day ago</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            )}
+
+            {/* ══ ATTENDANCE TAB CONTENT ════════════════════════════════ */}
+            {activeTab === "attendance" && (
+              <div className="space-y-6">
+                {/* Attendance Summary Stat Row */}
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                  <div className="bg-white rounded-2xl border border-slate-200/90 p-4 flex items-center gap-3.5 shadow-sm">
+                    <div className="p-3 rounded-xl bg-blue-50 text-blue-600">
+                      <Calendar className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black uppercase text-slate-400">Total Classes</p>
+                      <p className="text-xl font-black text-slate-900">20</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-2xl border border-slate-200/90 p-4 flex items-center gap-3.5 shadow-sm">
+                    <div className="p-3 rounded-xl bg-emerald-50 text-emerald-600">
+                      <CheckCircle2 className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black uppercase text-slate-400">Classes Attended</p>
+                      <p className="text-xl font-black text-emerald-600">14</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-2xl border border-slate-200/90 p-4 flex items-center gap-3.5 shadow-sm">
+                    <div className="p-3 rounded-xl bg-rose-50 text-rose-600">
+                      <XCircle className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black uppercase text-slate-400">Classes Missed</p>
+                      <p className="text-xl font-black text-rose-600">1</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-2xl border border-slate-200/90 p-4 flex items-center gap-3.5 shadow-sm">
+                    <div className="p-3 rounded-xl bg-amber-50 text-amber-600">
+                      <Clock className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black uppercase text-slate-400">Upcoming</p>
+                      <p className="text-xl font-black text-amber-600">6</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Attendance Timeline Table Card */}
+                <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-5">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-blue-600" />
+                      <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">Class Attendance Log</h3>
+                    </div>
+                    <span className="text-xs font-bold text-slate-500">Jul 2026</span>
+                  </div>
+
+                  <div className="divide-y divide-slate-100">
+                    {DEMO_ATTENDANCE.map((entry, idx) => (
+                      <div key={idx} className="py-3.5 flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3.5">
+                          <div className={`p-2.5 rounded-xl shrink-0 ${
+                            entry.status === "Done" ? "bg-emerald-50 text-emerald-600 border border-emerald-200/60" : "bg-rose-50 text-rose-600 border border-rose-200/60"
+                          }`}>
+                            {entry.status === "Done" ? <CheckCircle2 className="h-4.5 w-4.5" /> : <XCircle className="h-4.5 w-4.5" />}
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-black text-slate-900">{entry.topic}</h4>
+                            <p className="text-[11px] font-semibold text-slate-400 mt-0.5">{entry.date} &bull; {entry.day} &bull; Teacher: Mrs. Priya Nair</p>
+                          </div>
+                        </div>
+
+                        <span className={`text-[10px] font-black px-3 py-1 rounded-full shrink-0 ${
+                          entry.status === "Done" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-rose-50 text-rose-700 border border-rose-200"
+                        }`}>
+                          {entry.status}
+                        </span>
                       </div>
                     ))}
                   </div>
                 </div>
-              </SectionCard>
-
-              {/* Fee Status */}
-              <SectionCard>
-                <SectionHeader icon={CreditCard} title="Fee Status" color="text-indigo-600" bg="bg-indigo-50" />
-                <div className="p-4 flex items-center justify-between gap-4 flex-wrap">
-                  <div>
-                    <p className="text-xs font-bold text-slate-500">Monthly Fee</p>
-                    <p className="text-2xl font-black text-slate-900">&#8377;{DEMO_PACKAGE.monthlyFee.toLocaleString("en-IN")}</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">Next renewal: {DEMO_PACKAGE.nextRenewalDate}</p>
-                  </div>
-                  <div className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl font-extrabold text-sm ${
-                    DEMO_PACKAGE.feePaid
-                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                      : "bg-red-50 text-red-700 border border-red-200"
-                  }`}>
-                    {DEMO_PACKAGE.feePaid ? <CheckCheck className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
-                    {DEMO_PACKAGE.feePaid ? "Paid" : "Pending"}
-                  </div>
-                </div>
-              </SectionCard>
-
-              {/* Latest Remark */}
-              <SectionCard>
-                <SectionHeader icon={MessageSquare} title="Latest Teacher Remark" color="text-violet-600" bg="bg-violet-50" />
-                <div className="p-4 flex gap-3">
-                  <div className="h-2 w-2 rounded-full mt-2 shrink-0 bg-emerald-500" />
-                  <div>
-                    <p className="text-xs font-semibold text-slate-700 leading-relaxed">{DEMO_REMARKS[0].remark}</p>
-                    <p className="text-[10px] text-slate-400 mt-1 font-bold">— {DEMO_TEACHER.name} &middot; {DEMO_REMARKS[0].date}</p>
-                  </div>
-                </div>
-              </SectionCard>
-
-              {/* Elite locked modules */}
-              <div className="grid gap-4 sm:grid-cols-2">
-                <LockedModule
-                  title="Weekly Learning Report"
-                  desc="Detailed weekly analysis of learning pace, concept mastery and weak areas."
-                  icon={TrendingUp}
-                />
-                <LockedModule
-                  title="Academic Gap Analysis"
-                  desc="AI-powered gap identification with chapter-level recommendations."
-                  icon={Target}
-                />
               </div>
-            </div>
-          )}
+            )}
 
-          {/* ══ ATTENDANCE TAB ════════════════════════════════════════ */}
-          {activeTab === "attendance" && (
-            <div className="space-y-4">
-              <SectionCard>
-                <SectionHeader icon={Calendar} title="Attendance Timeline" color="text-blue-600" bg="bg-blue-50" />
-                <div className="divide-y divide-slate-100">
-                  {DEMO_ATTENDANCE.map((entry, idx) => (
-                    <div key={idx} className="flex items-center gap-3 px-4 py-3">
-                      <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${
-                        entry.status === "Done" ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-500"
-                      }`}>
-                        {entry.status === "Done" ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
+            {/* ══ PROGRESS TAB CONTENT ══════════════════════════════════ */}
+            {activeTab === "progress" && (
+              <div className="space-y-6">
+                {/* Subject Progress Card */}
+                <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm">
+                  <div className="flex items-center gap-2 border-b border-slate-100 pb-3.5 mb-5">
+                    <TrendingUp className="h-4 w-4 text-emerald-600" />
+                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">Subject-wise Progress</h3>
+                  </div>
+
+                  <div className="space-y-5">
+                    {[
+                      { subject: "Mathematics", percent: 68, color: "bg-blue-600", textColor: "text-blue-600", teacher: "Mrs. Priya Nair" },
+                      { subject: "Science", percent: 75, color: "bg-emerald-500", textColor: "text-emerald-600", teacher: "Mrs. Priya Nair" },
+                      { subject: "English", percent: 85, color: "bg-purple-600", textColor: "text-purple-600", teacher: "Mr. Anish Sen" },
+                    ].map((item) => (
+                      <div key={item.subject} className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-extrabold text-slate-800">{item.subject}</span>
+                          <span className={`font-black ${item.textColor}`}>{item.percent}%</span>
+                        </div>
+                        <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                          <div className={`h-full ${item.color} rounded-full transition-all duration-700`} style={{ width: `${item.percent}%` }} />
+                        </div>
+                        <p className="text-[10px] text-slate-400 font-semibold">Teacher: {item.teacher}</p>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-extrabold text-slate-800 truncate">{entry.topic}</p>
-                        <p className="text-[10px] text-slate-400 font-semibold">{entry.date} &middot; {entry.day}</p>
-                      </div>
-                      <span className={`text-[10px] font-black px-2.5 py-1 rounded-full shrink-0 ${
-                        entry.status === "Done"
-                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                          : "bg-red-50 text-red-600 border border-red-200"
-                      }`}>
-                        {entry.status}
-                      </span>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </SectionCard>
 
-              <SectionCard>
-                <SectionHeader icon={Clock} title="Upcoming Classes" color="text-sky-600" bg="bg-sky-50" />
-                <div className="divide-y divide-slate-100">
-                  {DEMO_UPCOMING.map((cls, idx) => (
-                    <div key={idx} className="flex items-center gap-3 px-4 py-3">
-                      <div className="h-8 w-8 rounded-full bg-sky-50 text-sky-600 flex items-center justify-center shrink-0">
-                        <Clock className="h-4 w-4" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-extrabold text-slate-800 truncate">{cls.topic}</p>
-                        <p className="text-[10px] text-slate-400 font-semibold">{cls.date} &middot; {cls.time}</p>
-                      </div>
-                      <span className="text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200 rounded-full px-2.5 py-1 shrink-0">
-                        {cls.subject}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </SectionCard>
-            </div>
-          )}
+                {/* Topics Covered Grid */}
+                <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm">
+                  <div className="flex items-center gap-2 border-b border-slate-100 pb-3.5 mb-5">
+                    <BookOpen className="h-4 w-4 text-blue-600" />
+                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">Syllabus & Topics Tracker</h3>
+                  </div>
 
-          {/* ══ PROGRESS TAB ══════════════════════════════════════════ */}
-          {activeTab === "progress" && (
-            <div className="space-y-4">
-
-              <SectionCard>
-                <SectionHeader icon={TrendingUp} title="Subject Progress" color="text-emerald-600" bg="bg-emerald-50" />
-                <div className="p-4 space-y-4">
-                  {SUBJECT_PROGRESS.map((s) => (
-                    <div key={s.subject}>
-                      <div className="flex justify-between mb-1.5">
-                        <span className="text-[11px] font-extrabold text-slate-700">{s.subject}</span>
-                        <span className="text-[11px] font-black" style={{ color: s.color }}>{s.percent}%</span>
-                      </div>
-                      <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all duration-700"
-                          style={{ width: `${s.percent}%`, backgroundColor: s.color }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </SectionCard>
-
-              <SectionCard>
-                <SectionHeader icon={BookOpen} title="Topics Covered" color="text-violet-600" bg="bg-violet-50" />
-                <div className="p-4">
-                  {["Mathematics", "Science", "English"].map((subj) => {
-                    const topics = DEMO_TOPICS.filter((t) => t.subject === subj);
-                    return (
-                      <div key={subj} className="mb-4 last:mb-0">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">{subj}</p>
-                        <div className="space-y-1.5">
-                          {topics.map((t, idx) => (
-                            <div key={idx} className="flex items-center gap-2.5">
-                              <div className={`h-2 w-2 rounded-full shrink-0 ${
-                                t.status === "Completed" ? "bg-emerald-500" :
-                                t.status === "In Progress" ? "bg-blue-500" : "bg-slate-300"
-                              }`} />
-                              <span className="text-[11px] text-slate-700 font-semibold flex-1">{t.topic}</span>
-                              <span className={`text-[9px] font-black px-2 py-0.5 rounded-full ${
-                                t.status === "Completed" ? "bg-emerald-50 text-emerald-700" :
-                                t.status === "In Progress" ? "bg-blue-50 text-blue-700" :
-                                "bg-slate-100 text-slate-500"
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {[
+                      {
+                        subj: "Mathematics",
+                        topics: [
+                          { name: "Polynomials", status: "Completed" },
+                          { name: "Linear Equations", status: "Completed" },
+                          { name: "Quadratic Equations", status: "In Progress" },
+                          { name: "Trigonometry", status: "Started" },
+                        ]
+                      },
+                      {
+                        subj: "Science",
+                        topics: [
+                          { name: "Matter in Our Surroundings", status: "Completed" },
+                          { name: "Is Matter Pure?", status: "Completed" },
+                          { name: "Atoms & Molecules", status: "In Progress" },
+                        ]
+                      },
+                      {
+                        subj: "English",
+                        topics: [
+                          { name: "The Fun They Had", status: "Completed" },
+                          { name: "The Sound of Music", status: "Completed" },
+                          { name: "Grammar & Tenses", status: "In Progress" },
+                        ]
+                      }
+                    ].map((col) => (
+                      <div key={col.subj} className="bg-slate-50 border border-slate-150 rounded-2xl p-4 space-y-3">
+                        <h4 className="text-xs font-black uppercase text-slate-700 border-b border-slate-200 pb-2">{col.subj}</h4>
+                        <div className="space-y-2">
+                          {col.topics.map((t, i) => (
+                            <div key={i} className="flex items-center justify-between text-xs">
+                              <span className="font-semibold text-slate-700">{t.name}</span>
+                              <span className={`text-[9px] font-black px-2 py-0.5 rounded-md ${
+                                t.status === "Completed" ? "bg-emerald-100 text-emerald-800" :
+                                t.status === "In Progress" ? "bg-blue-100 text-blue-800" :
+                                "bg-amber-100 text-amber-800"
                               }`}>
                                 {t.status}
                               </span>
@@ -508,111 +673,71 @@ export default function DemoParentDashboard({ onClose, selectedPlan = "advance" 
                           ))}
                         </div>
                       </div>
-                    );
-                  })}
+                    ))}
+                  </div>
                 </div>
-              </SectionCard>
 
-              <SectionCard>
-                <SectionHeader icon={Award} title="Progress Summary" color="text-amber-600" bg="bg-amber-50" />
-                <div className="p-4 space-y-0.5">
-                  {[
-                    { label: "Topics Completed", value: "9 / 12", highlight: false },
-                    { label: "Average Test Score", value: "82%", highlight: true },
-                    { label: "Homework Completion", value: "78%", highlight: false },
-                    { label: "Punctuality", value: "93%", highlight: true },
-                    { label: "Overall Performance", value: "Good", highlight: false },
-                  ].map((item) => (
-                    <div key={item.label} className="flex justify-between items-center py-2.5 border-b border-slate-100 last:border-0">
-                      <span className="text-[11px] font-semibold text-slate-600">{item.label}</span>
-                      <span className={`text-[11px] font-black ${item.highlight ? "text-emerald-600" : "text-slate-800"}`}>{item.value}</span>
-                    </div>
-                  ))}
-                </div>
-              </SectionCard>
+                {/* Teacher Remarks */}
+                <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm">
+                  <div className="flex items-center gap-2 border-b border-slate-100 pb-3.5 mb-4">
+                    <MessageSquare className="h-4 w-4 text-purple-600" />
+                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">Teacher Remarks</h3>
+                  </div>
 
-              <SectionCard>
-                <SectionHeader icon={MessageSquare} title="Teacher Remarks" color="text-purple-600" bg="bg-purple-50" />
-                <div className="divide-y divide-slate-100">
-                  {DEMO_REMARKS.map((r, idx) => (
-                    <div key={idx} className="p-4 flex gap-3">
-                      <div className={`h-2 w-2 rounded-full mt-2 shrink-0 ${
-                        r.sentiment === "positive" ? "bg-emerald-500" : "bg-amber-400"
-                      }`} />
-                      <div>
-                        <p className="text-xs text-slate-700 font-semibold leading-relaxed">{r.remark}</p>
-                        <p className="text-[10px] text-slate-400 font-bold mt-1">— {DEMO_TEACHER.name} &middot; {r.date}</p>
+                  <div className="space-y-3">
+                    {DEMO_REMARKS.map((r, i) => (
+                      <div key={i} className="bg-slate-50 border border-slate-150 rounded-2xl p-4 flex gap-3.5">
+                        <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
+                        <div>
+                          <p className="text-xs font-semibold text-slate-800 leading-relaxed">{r.remark}</p>
+                          <p className="text-[10px] text-slate-400 font-bold mt-1.5">— {DEMO_TEACHER.name} &bull; {r.date}</p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </SectionCard>
+              </div>
+            )}
 
-              <LockedModule
-                title="AI Academic Gap Analysis"
-                desc="Personalized chapter-level gap identification with weekly remediation plan."
-                icon={Target}
-              />
-            </div>
-          )}
-
-          {/* ══ HOMEWORK TAB ══════════════════════════════════════════ */}
-          {activeTab === "homework" && (
-            <div className="space-y-4">
-              <SectionCard>
-                <SectionHeader icon={FileText} title="Homework Assignments" color="text-rose-600" bg="bg-rose-50" />
-                <div className="divide-y divide-slate-100">
-                  {DEMO_HOMEWORK.map((hw, idx) => (
-                    <div key={idx} className="flex items-center gap-3 px-4 py-3.5">
-                      <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${
-                        hw.status === "Submitted" ? "bg-emerald-50 text-emerald-600" : "bg-amber-50 text-amber-600"
-                      }`}>
-                        {hw.status === "Submitted" ? <CheckCheck className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-extrabold text-slate-800">{hw.task}</p>
-                        <p className="text-[10px] text-slate-400 font-semibold mt-0.5">{hw.subject} &middot; Due: {hw.due}</p>
-                      </div>
-                      <span className={`text-[10px] font-black px-2.5 py-1 rounded-full shrink-0 ${
-                        hw.status === "Submitted"
-                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                          : "bg-amber-50 text-amber-700 border border-amber-200"
-                      }`}>
-                        {hw.status}
-                      </span>
+            {/* ══ HOMEWORK TAB CONTENT ══════════════════════════════════ */}
+            {activeTab === "homework" && (
+              <div className="space-y-6">
+                <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3.5 mb-5">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-rose-600" />
+                      <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">Homework & Assignments</h3>
                     </div>
-                  ))}
+                    <span className="text-xs font-bold text-slate-500">3 Total Assignments</span>
+                  </div>
+
+                  <div className="space-y-3">
+                    {DEMO_HOMEWORK.map((hw, idx) => (
+                      <div key={idx} className="bg-slate-50 border border-slate-150 rounded-2xl p-4 flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3.5">
+                          <div className={`p-2.5 rounded-xl ${hw.status === "Submitted" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
+                            {hw.status === "Submitted" ? <CheckCheck className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-black text-slate-900">{hw.task}</h4>
+                            <p className="text-[11px] font-semibold text-slate-500 mt-0.5">{hw.subject} &bull; Due: {hw.due}</p>
+                          </div>
+                        </div>
+
+                        <span className={`text-[10px] font-black px-3 py-1 rounded-full shrink-0 ${
+                          hw.status === "Submitted" ? "bg-emerald-100 text-emerald-800 border border-emerald-200" : "bg-amber-100 text-amber-800 border border-amber-200"
+                        }`}>
+                          {hw.status}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </SectionCard>
+              </div>
+            )}
 
-              <LockedModule
-                title="Live Doubt Sessions"
-                desc="Schedule WhatsApp or video doubt sessions directly with your assigned mentor."
-                icon={MessageSquare}
-              />
-              <LockedModule
-                title="Assignment Performance Tracking"
-                desc="Score tracking per assignment with subject-wise trend analysis."
-                icon={BarChart2}
-              />
-            </div>
-          )}
-
+          </main>
         </div>
-
-        {/* ── FOOTER ──────────────────────────────────────────────── */}
-        <div className="shrink-0 bg-white border-t border-slate-100 px-5 py-3 flex items-center justify-between gap-4 flex-wrap">
-          <p className="text-[10px] font-semibold text-slate-400">
-            This is a demo preview. Your actual dashboard will be available after enrollment.
-          </p>
-          <button
-            onClick={onClose}
-            className="shrink-0 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black px-5 py-2.5 rounded-xl transition cursor-pointer"
-          >
-            Close Preview
-          </button>
-        </div>
-
       </div>
     </div>
   );
