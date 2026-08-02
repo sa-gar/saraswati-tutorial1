@@ -34,7 +34,13 @@ import {
   User,
   Globe,
   GraduationCap,
-  Rocket
+  Rocket,
+  Home,
+  ClipboardCheck,
+  TrendingUp,
+  IndianRupee,
+  Tv,
+  CalendarCheck
 } from "lucide-react";
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -349,26 +355,6 @@ function TutorCard({ tutor, onViewProfile, onBook, swipeMode = false }) {
             <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-blue-500/20 blur-3xl pointer-events-none" />
             <div className="absolute bottom-0 left-8 h-20 w-20 rounded-full bg-emerald-500/10 blur-2xl pointer-events-none" />
 
-            {/* Wreath watermark */}
-            <div className="absolute right-2 top-1 bottom-1 w-[160px] opacity-[0.04] pointer-events-none flex items-center justify-center text-white z-0">
-              <svg viewBox="0 0 100 100" className="h-full w-full stroke-current" fill="none" strokeWidth="1.5">
-                <path d="M 30,80 A 25,25 0 0,1 30,20" />
-                <path d="M 28,30 Q 25,27 22,30 Q 25,33 28,30" fill="currentColor" />
-                <path d="M 26,42 Q 22,40 19,43 Q 22,46 26,42" fill="currentColor" />
-                <path d="M 26,55 Q 22,54 19,57 Q 22,60 26,55" fill="currentColor" />
-                <path d="M 29,68 Q 26,67 23,70 Q 26,73 29,68" fill="currentColor" />
-                <path d="M 70,80 A 25,25 0 0,0 70,20" />
-                <path d="M 72,30 Q 75,27 78,30 Q 75,33 72,30" fill="currentColor" />
-                <path d="M 74,42 Q 78,40 81,43 Q 78,46 74,42" fill="currentColor" />
-                <path d="M 74,55 Q 78,54 81,57 Q 78,60 74,55" fill="currentColor" />
-                <path d="M 71,68 Q 74,67 77,70 Q 74,73 71,68" fill="currentColor" />
-                <path d="M 50,30 L 50,75 M 40,75 L 60,75" />
-                <path d="M 38,40 L 62,40" />
-                <path d="M 38,40 L 32,55 M 32,55 A 6,3 0 0,0 44,55 Z" />
-                <path d="M 62,40 L 56,55 M 56,55 A 6,3 0 0,0 68,55 Z" />
-              </svg>
-            </div>
-
             <div className="relative flex flex-wrap items-center justify-between gap-3 sm:gap-4 z-10">
               <div className="flex min-w-0 items-center gap-3 sm:gap-4">
                 {/* Hexagon image container */}
@@ -396,16 +382,6 @@ function TutorCard({ tutor, onViewProfile, onBook, swipeMode = false }) {
                       )}
                     </div>
                   </div>
-
-                  {/* Overlapping subject badge (Shield Shape) */}
-                  <div className="absolute -bottom-2 -right-2 h-9 w-9 drop-shadow-md flex items-center justify-center select-none">
-                    <svg viewBox="0 0 24 24" className="absolute inset-0 h-full w-full fill-[#061530] stroke-[#E2B755]" strokeWidth="2">
-                      <path d="M 12 2 C 12 2 20 4 20 8 C 20 14 15 20 12 22 C 9 20 4 14 4 8 C 4 4 12 2 12 2 Z" />
-                    </svg>
-                    <div className="relative z-10 flex items-center justify-center">
-                      {subjectIcon}
-                    </div>
-                  </div>
                 </div>
 
                 <div className="min-w-0 leading-tight">
@@ -413,30 +389,18 @@ function TutorCard({ tutor, onViewProfile, onBook, swipeMode = false }) {
                     <h3 className="text-lg sm:text-xl font-black text-white tracking-tight truncate max-w-[130px] sm:max-w-[200px]">
                       {tutor.name || "Expert Tutor"}
                     </h3>
-
-                    {tutor.verified ? (
-                      <span className="inline-flex items-center gap-1 rounded-full border border-[#CAA036]/60 bg-[#CAA036]/10 px-2 py-0.5 text-[10px] font-bold text-[#E2B755]">
-                        <ShieldCheck className="h-3 w-3" />
-                        Verified
-                      </span>
-                    ) : null}
                   </div>
 
                   <p className="mt-1 text-sm font-semibold text-blue-300 truncate">
                     {tutor.subject || tutor.category || "Subject expert"}
                   </p>
 
-                  <div className="h-[2px] w-8 bg-gradient-to-r from-[#E2B755] to-transparent mt-2.5" />
+                  <div className="h-[2px] w-8 bg-gradient-to-r from-[#E2B755] to-transparent mt-2" />
 
-                  {/* Tagline emblem line (Greek Column Circle) */}
-                  <div className="flex items-center gap-2.5 text-[11.5px] text-slate-200 mt-3 font-semibold min-w-0">
-                    <div className="h-7 w-7 rounded-full bg-[#081a36] border border-[#E2B755]/30 flex items-center justify-center shrink-0 shadow-[0_2px_8px_rgba(0,0,0,0.1)]">
-                      <ColumnIcon />
-                    </div>
-                    <span className="truncate max-w-[150px] sm:max-w-[220px] tracking-wide">
-                      {tutor.tagline || tutor.about || "Experienced faculty tutor"}
-                    </span>
-                  </div>
+                  {/* Clean Tagline line */}
+                  <p className="mt-2 text-xs font-semibold text-slate-300 truncate max-w-[170px] sm:max-w-[220px]">
+                    {tutor.tagline || tutor.about || "Experienced faculty tutor"}
+                  </p>
                 </div>
               </div>
 
@@ -458,52 +422,25 @@ function TutorCard({ tutor, onViewProfile, onBook, swipeMode = false }) {
           {/* Body Section (Light Theme) */}
           <div className="p-6 flex flex-col justify-between flex-1 bg-white">
             <div>
-              {/* Language Tag */}
-              <div className="flex flex-wrap gap-2 mb-4">
-                {(tutor.languages || ["English", "Hindi"])
-                  .slice(0, 3)
-                  .map((lang) => (
-                    <span
-                      key={lang}
-                      className="inline-flex items-center gap-1.5 bg-blue-50/70 border border-blue-100/60 rounded-full px-3 py-1 text-xs font-semibold text-blue-600 shadow-sm"
-                    >
-                      <Globe className="h-3.5 w-3.5 text-blue-500" />
-                      {lang}
-                    </span>
-                  ))}
-              </div>
-
               {/* 2x2 Details Grid */}
               <div className="grid grid-cols-2 gap-3">
                 {/* Rating */}
-                <div className="flex items-center gap-3.5 bg-slate-50/60 border border-slate-100 rounded-2xl p-3.5 shadow-[0_2px_10px_rgba(0,0,0,0.01)]">
-                  <div className="h-10 w-10 rounded-xl bg-amber-500/5 flex items-center justify-center shrink-0 border border-amber-500/10 shadow-sm">
-                    <RatingShieldIcon />
+                <div className="flex items-center gap-3 bg-slate-50/80 border border-slate-100 rounded-2xl p-3 shadow-sm">
+                  <div className="h-9 w-9 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0">
+                    <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
                   </div>
                   <div className="min-w-0">
-                    <div className="flex items-center gap-1.5 text-sm font-extrabold text-slate-800 leading-tight">
-                      <span>{tutor.rating || "4.8"}</span>
-                      <div className="flex items-center gap-0.5">
-                        {[1, 2, 3, 4, 5].map((starIdx) => {
-                          const ratingVal = parseFloat(tutor.rating || "4.8");
-                          const isFilled = starIdx <= Math.round(ratingVal);
-                          return (
-                            <Star
-                              key={starIdx}
-                              className={`h-2.5 w-2.5 ${isFilled ? "fill-amber-400 text-amber-400" : "text-slate-200"}`}
-                            />
-                          );
-                        })}
-                      </div>
+                    <div className="text-sm font-extrabold text-slate-800 leading-tight">
+                      {tutor.rating || "4.8"}
                     </div>
                     <div className="text-[11px] font-bold text-slate-400 mt-0.5">Rating</div>
                   </div>
                 </div>
 
                 {/* Location */}
-                <div className="flex items-center gap-3.5 bg-slate-50/60 border border-slate-100 rounded-2xl p-3.5 shadow-[0_2px_10px_rgba(0,0,0,0.01)]">
-                  <div className="h-10 w-10 rounded-xl bg-blue-500/5 text-blue-600 flex items-center justify-center shrink-0 border border-blue-500/10 shadow-sm">
-                    <MapPin className="h-5 w-5" />
+                <div className="flex items-center gap-3 bg-slate-50/80 border border-slate-100 rounded-2xl p-3 shadow-sm">
+                  <div className="h-9 w-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                    <MapPin className="h-4 w-4" />
                   </div>
                   <div className="min-w-0">
                     <div className="text-xs font-extrabold text-slate-800 truncate leading-tight">
@@ -514,12 +451,12 @@ function TutorCard({ tutor, onViewProfile, onBook, swipeMode = false }) {
                 </div>
 
                 {/* Experience */}
-                <div className="flex items-center gap-3.5 bg-slate-50/60 border border-slate-100 rounded-2xl p-3.5 shadow-[0_2px_10px_rgba(0,0,0,0.01)]">
-                  <div className="h-10 w-10 rounded-xl bg-emerald-500/5 flex items-center justify-center shrink-0 border border-emerald-500/10 shadow-sm">
-                    <ExperienceCalendarIcon />
+                <div className="flex items-center gap-3 bg-slate-50/80 border border-slate-100 rounded-2xl p-3 shadow-sm">
+                  <div className="h-9 w-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                    <Calendar className="h-4 w-4" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-sm font-extrabold text-slate-805 leading-tight">
+                    <div className="text-sm font-extrabold text-slate-800 leading-tight">
                       {tutor.experience || "10+ years"}
                     </div>
                     <div className="text-[11px] font-bold text-slate-400 mt-0.5">Experience</div>
@@ -527,12 +464,12 @@ function TutorCard({ tutor, onViewProfile, onBook, swipeMode = false }) {
                 </div>
 
                 {/* Teaching Mode */}
-                <div className="flex items-center gap-3.5 bg-slate-50/60 border border-slate-100 rounded-2xl p-3.5 shadow-[0_2px_10px_rgba(0,0,0,0.01)]">
-                  <div className="h-10 w-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-500/10 shadow-sm">
-                    <GraduationCap className="h-5 w-5" />
+                <div className="flex items-center gap-3 bg-slate-50/80 border border-slate-100 rounded-2xl p-3 shadow-sm">
+                  <div className="h-9 w-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                    <GraduationCap className="h-4 w-4" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-sm font-extrabold text-slate-805 leading-tight">
+                    <div className="text-sm font-extrabold text-slate-800 leading-tight">
                       {tutor.mode || "Online/Home"}
                     </div>
                     <div className="text-[11px] font-bold text-slate-400 mt-0.5">Teaching Mode</div>
@@ -544,42 +481,27 @@ function TutorCard({ tutor, onViewProfile, onBook, swipeMode = false }) {
             {/* Action Buttons Row */}
             <div className="mt-6 flex flex-col sm:flex-row gap-2">
               <Button
-                className="flex-1 rounded-[14px] bg-[#0B1B33] px-4 py-2.5 font-bold text-white shadow-md hover:bg-slate-900 transition duration-300 flex items-center justify-between text-[11.5px] cursor-pointer"
+                className="flex-1 rounded-xl bg-[#0B1B33] px-3.5 py-2.5 font-bold text-white shadow-md hover:bg-slate-900 transition duration-200 flex items-center justify-center gap-1.5 text-xs cursor-pointer"
                 onClick={() => onBook(tutor)}
               >
-                <div className="flex items-center gap-2">
-                  <div className="h-7 w-7 rounded-lg bg-white/10 flex items-center justify-center shrink-0 border border-white/5">
-                    <Calendar className="h-4 w-4 text-slate-400" />
-                  </div>
-                  <span>Request Demo</span>
-                </div>
-                <ChevronRight className="h-4 w-4 text-slate-400" />
+                <span>Request Demo</span>
+                <ChevronRight className="h-3.5 w-3.5 text-slate-300" />
               </Button>
               
               <Link
                 to="/payment"
-                className="flex-1 inline-flex items-center justify-between rounded-[14px] bg-[#008A3B] px-4 py-2.5 font-bold text-white shadow-md hover:bg-green-700 transition duration-300 text-[11.5px] cursor-pointer"
+                className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#008A3B] px-3.5 py-2.5 font-bold text-white shadow-md hover:bg-green-700 transition duration-200 text-xs cursor-pointer"
               >
-                <div className="flex items-center gap-2">
-                  <div className="h-7 w-7 rounded-lg bg-white/10 flex items-center justify-center shrink-0 border border-white/5">
-                    <ShieldCheck className="h-4 w-4 text-green-300" />
-                  </div>
-                  <span>Pay for Demo</span>
-                </div>
-                <ChevronRight className="h-4 w-4 text-green-300" />
+                <span>Pay for Demo</span>
+                <ChevronRight className="h-3.5 w-3.5 text-green-200" />
               </Link>
 
               <Button
-                className="flex-1 rounded-[14px] border border-blue-200 bg-white px-4 py-2.5 font-bold text-blue-600 shadow-sm hover:bg-blue-50/50 transition duration-300 flex items-center justify-between text-[11.5px] cursor-pointer"
+                className="flex-1 rounded-xl border border-blue-200 bg-white px-3.5 py-2.5 font-bold text-blue-600 shadow-sm hover:bg-blue-50/50 transition duration-200 flex items-center justify-center gap-1.5 text-xs cursor-pointer"
                 onClick={() => onViewProfile(tutor)}
               >
-                <div className="flex items-center gap-2">
-                  <div className="h-7 w-7 rounded-lg bg-blue-50 flex items-center justify-center shrink-0 border border-blue-100">
-                    <User className="h-4 w-4 text-blue-400" />
-                  </div>
-                  <span>View Profile</span>
-                </div>
-                <ChevronRight className="h-4 w-4 text-blue-500" />
+                <span>View Profile</span>
+                <ChevronRight className="h-3.5 w-3.5 text-blue-500" />
               </Button>
             </div>
           </div>
@@ -918,17 +840,16 @@ export default function HomePage() {
   const whyChooseUs = [
     { title: "Verified & Experienced Tutors", desc: "All our tutors undergo strict background checks and academic evaluations.", icon: ShieldCheck },
     { title: "One-to-One Personalized Classes", desc: "Customized attention mapping to your child's learning pace.", icon: Users },
-    { title: "Home & Online Tuition Available", desc: "Flexible modes—learn offline at home or online via live interactive classes.", icon: Award },
-    { title: "Bi-Weekly Tests & Tracking", desc: "Bi-weekly academic tests, progress reviews, and parent updates for close performance monitoring.", icon: CheckCircle2 },
+    { title: "Home & Online Tuition Available", desc: "Flexible modes—learn offline at home or online via live interactive classes.", icon: Home },
+    { title: "Bi-Weekly Tests & Tracking", desc: "Bi-weekly academic tests, progress reviews, and parent updates for close performance monitoring.", icon: ClipboardCheck },
     { title: "Flexible Timings", desc: "Sessions scheduled around your child's school and daily routine.", icon: Clock },
     { title: "Tutors for All Major Boards", desc: "Expert syllabus mapping for CBSE, ICSE, IGCSE, IB, and State Board.", icon: BookOpen },
-    { title: "Affordable Fee Structure", desc: "High-quality academic support customized to fit family budgets.", icon: CreditCard },
-    { title: "Free Demo Class Available", desc: "Book a trial class with no commitment to test compatibility.", icon: Sparkles },
-    { title: "Priority Tutor Allocation", desc: "Accelerated tutor matchmaking from areas near you.", icon: Rocket },
-    { title: "Personalized Academic Planning", desc: "Tailored study maps and milestones designed around the student's curriculum goals.", icon: GraduationCap },
-    { title: "24-Hour Online Support", desc: "Access to online academic guidance and doubt solving within 24 hours.", icon: Clock },
-    { title: "Priority Tutor Replacement", desc: "Hassle-free tutor replacement matching within 24 to 48 hours.", icon: Users },
-    { title: "Performance-Focused Mentoring", desc: "Target-oriented guidance focusing on high academic precision and result orientation.", icon: Star }
+    { title: "Affordable Fee Structure", desc: "High-quality academic support customized to fit family budgets.", icon: IndianRupee },
+    { title: "Free Demo Class Available", desc: "Book a trial class with no commitment to test compatibility.", icon: Tv },
+    { title: "Fast Learning Progress", desc: "Concept clarity, regular practice, and doubt-solving for steady improvement.", icon: TrendingUp },
+    { title: "Expert Subject Teachers", desc: "Qualified and experienced teachers specialized in their subjects.", icon: GraduationCap },
+    { title: "Regular Attendance & Updates", desc: "Daily attendance tracking and regular updates shared with parents.", icon: CalendarCheck },
+    { title: "Parent Support & Guidance", desc: "Dedicated support to help parents stay informed and involved.", icon: Users }
   ];
 
   const schoolSubjects = [
@@ -1322,24 +1243,17 @@ export default function HomePage() {
                   <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
                 </MotionLink>
 
-                <a
-                  href="#tutors"
-                  className="rounded-2xl border border-white/10 bg-white/5 px-7 py-4 font-black text-white backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/10 text-center"
-                >
-                  Find a Home Tutor
-                </a>
-
-                {/* Standalone Preview Dashboard button */}
+                {/* Parents Dashboard Preview button */}
                 <motion.button
-                  id="preview-dashboard-btn"
+                  id="parents-dashboard-btn"
                   type="button"
                   onClick={() => setShowDemoPreview(true)}
-                  whileHover={{ scale: 1.03, translateY: -2 }}
+                  whileHover={{ scale: 1.03, translateY: -2, boxShadow: "0 10px 25px rgba(15,23,42,0.6)" }}
                   whileTap={{ scale: 0.97 }}
-                  className="group inline-flex items-center gap-2 rounded-2xl border border-purple-500/40 bg-purple-600/15 px-7 py-4 font-black text-purple-300 backdrop-blur transition-all duration-300 hover:bg-purple-600/30 hover:border-purple-400/60 hover:text-white hover:shadow-lg hover:shadow-purple-900/30"
-                  aria-label="Preview parent dashboard"
+                  className="group inline-flex items-center gap-2 rounded-2xl border border-slate-700/80 bg-slate-900/90 px-7 py-4 font-black text-slate-100 backdrop-blur-xl transition-all duration-300 hover:bg-slate-800 hover:border-slate-500 hover:text-white shadow-xl shadow-slate-950/50 cursor-pointer"
+                  aria-label="Parents dashboard preview"
                 >
-                  Preview Dashboard
+                  Parents Dashboard
                 </motion.button>
               </div>
 
@@ -1688,20 +1602,54 @@ export default function HomePage() {
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {whyChooseUs.map((item, idx) => {
               const IconComp = item.icon;
+              const glassThemes = [
+                // 1. Verified Tutors (Blue Glass)
+                { bg: "bg-blue-500/12", border: "border-blue-300/70", icon: "text-blue-600", glow: "group-hover:shadow-[0_12px_28px_rgba(37,99,235,0.18)]" },
+                // 2. One-to-One (Purple Glass)
+                { bg: "bg-purple-500/12", border: "border-purple-300/70", icon: "text-purple-600", glow: "group-hover:shadow-[0_12px_28px_rgba(147,51,234,0.18)]" },
+                // 3. Home & Online (Orange Glass)
+                { bg: "bg-orange-500/12", border: "border-orange-300/70", icon: "text-orange-500", glow: "group-hover:shadow-[0_12px_28px_rgba(249,115,22,0.18)]" },
+                // 4. Bi-Weekly Tests (Green Glass)
+                { bg: "bg-emerald-500/12", border: "border-emerald-300/70", icon: "text-emerald-600", glow: "group-hover:shadow-[0_12px_28px_rgba(16,185,129,0.18)]" },
+                // 5. Flexible Timings (Pink Glass)
+                { bg: "bg-rose-500/12", border: "border-rose-300/70", icon: "text-rose-500", glow: "group-hover:shadow-[0_12px_28px_rgba(244,63,94,0.18)]" },
+                // 6. All Boards (Blue Glass)
+                { bg: "bg-blue-500/12", border: "border-blue-300/70", icon: "text-blue-600", glow: "group-hover:shadow-[0_12px_28px_rgba(37,99,235,0.18)]" },
+                // 7. Affordable Fee (Amber Glass)
+                { bg: "bg-amber-500/12", border: "border-amber-300/70", icon: "text-amber-500", glow: "group-hover:shadow-[0_12px_28px_rgba(245,158,11,0.18)]" },
+                // 8. Free Demo (Pink Glass)
+                { bg: "bg-pink-500/12", border: "border-pink-300/70", icon: "text-pink-500", glow: "group-hover:shadow-[0_12px_28px_rgba(236,72,153,0.18)]" },
+                // 9. Fast Progress (Teal Glass)
+                { bg: "bg-teal-500/12", border: "border-teal-300/70", icon: "text-teal-600", glow: "group-hover:shadow-[0_12px_28px_rgba(20,184,166,0.18)]" },
+                // 10. Expert Teachers (Purple Glass)
+                { bg: "bg-purple-500/12", border: "border-purple-300/70", icon: "text-purple-600", glow: "group-hover:shadow-[0_12px_28px_rgba(147,51,234,0.18)]" },
+                // 11. Regular Attendance (Blue Glass)
+                { bg: "bg-blue-500/12", border: "border-blue-300/70", icon: "text-blue-600", glow: "group-hover:shadow-[0_12px_28px_rgba(37,99,235,0.18)]" },
+                // 12. Parent Support (Cyan Glass)
+                { bg: "bg-cyan-500/12", border: "border-cyan-300/70", icon: "text-cyan-600", glow: "group-hover:shadow-[0_12px_28px_rgba(6,182,212,0.18)]" },
+              ];
+              const theme = glassThemes[idx % glassThemes.length];
+
               return (
                 <motion.div
-                  whileHover={{ y: -5 }}
-                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  whileHover={{ y: -6, scale: 1.02 }}
+                  transition={{ duration: 0.25, ease: "easeOut" }}
                   key={idx}
-                  className="group relative overflow-hidden rounded-3xl border border-slate-200 bg-white/70 backdrop-blur-md p-6 shadow-sm transition-all duration-300 hover:border-blue-500 hover:shadow-[0_15px_30px_rgba(59,130,246,0.12)] hover:scale-[1.01]"
+                  className="group relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all duration-300 hover:border-slate-300 hover:shadow-[0_20px_35px_rgba(0,0,0,0.06)]"
                 >
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-800 transition-colors duration-300 group-hover:bg-blue-50 group-hover:text-blue-600">
-                    <IconComp className="h-6 w-6" />
+                  {/* 3D Transparent Water Glass Badge Container */}
+                  <div className={`relative flex h-16 w-16 items-center justify-center rounded-[1.35rem] ${theme.bg} backdrop-blur-xl border ${theme.border} shadow-[inset_0_1.5px_2px_rgba(255,255,255,0.9),0_6px_16px_rgba(0,0,0,0.04)] transition-all duration-300 group-hover:scale-105 group-hover:-rotate-2 ${theme.glow}`}>
+                    {/* Water gloss highlight reflection */}
+                    <div className="absolute top-1 left-2.5 right-2.5 h-[3px] rounded-full bg-gradient-to-r from-transparent via-white/90 to-transparent pointer-events-none" />
+                    {/* Inner glass bevel rim */}
+                    <div className="absolute inset-0 rounded-[1.35rem] ring-1 ring-inset ring-white/60 pointer-events-none" />
+                    <IconComp className={`relative z-10 h-7 w-7 ${theme.icon} filter drop-shadow-[0_2px_3px_rgba(0,0,0,0.08)] stroke-[2.2]`} />
                   </div>
-                  <h4 className="mt-5 text-lg font-black text-slate-950 transition-colors duration-300 group-hover:text-blue-600">
+
+                  <h4 className="mt-5 text-lg font-black text-slate-900 leading-snug">
                     {item.title}
                   </h4>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-500 transition-colors duration-300">
+                  <p className="mt-2 text-xs font-semibold leading-relaxed text-slate-500">
                     {item.desc}
                   </p>
                 </motion.div>

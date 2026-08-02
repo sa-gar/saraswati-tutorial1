@@ -554,6 +554,8 @@ const getBenefitIcon = (title, planTheme) => {
   return <SimpleBenefitIcon title={title} planTheme={planTheme} />;
 };
 
+const DRAFT_KEY = "parentEnquiryDraft";
+
 export default function ParentEnquiryForm() {
   const navigate = useNavigate();
 
@@ -566,8 +568,28 @@ export default function ParentEnquiryForm() {
   const isMumbai = selectedCity === "Mumbai";
   const schoolOptions = isMumbai ? mumbaiSchoolOptions : bangaloreSchoolOptions;
 
-  const [step, setStep] = useState(1);
-  const [form, setForm] = useState(initialForm);
+  const [step, setStep] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(DRAFT_KEY) || "null");
+      return saved?.step || 1;
+    } catch {
+      return 1;
+    }
+  });
+
+  const [form, setForm] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(DRAFT_KEY) || "null");
+      if (saved?.form) {
+        return {
+          ...initialForm,
+          ...saved.form,
+        };
+      }
+    } catch {}
+    return initialForm;
+  });
+
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState({});
@@ -578,6 +600,28 @@ export default function ParentEnquiryForm() {
   const [openFaqIndex, setOpenFaqIndex] = useState(null);
   const [showAllFeatures, setShowAllFeatures] = useState(false);
   const [showDemoPreview, setShowDemoPreview] = useState(false);
+
+  // Auto-save form draft whenever step or form state changes
+  useEffect(() => {
+    try {
+      const draft = { step, form };
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    } catch {}
+  }, [step, form]);
+
+  // Auto-save when tab or window is hidden / closed
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        try {
+          const draft = { step, form };
+          localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+        } catch {}
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [step, form]);
 
   useEffect(() => {
     setOpenFaqIndex(null);
@@ -1132,7 +1176,9 @@ export default function ParentEnquiryForm() {
 
       sessionStorage.setItem("enquiry_form_submitted", "true");
       trackEvent("form_submitted", form.planType, true);
+      localStorage.removeItem(DRAFT_KEY);
       setForm(initialForm);
+      setStep(1);
       setErrors({});
       navigate("/thank-you");
     } catch (error) {

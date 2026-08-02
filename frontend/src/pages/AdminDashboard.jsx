@@ -980,8 +980,37 @@ export default function AdminDashboard() {
       `}</style>
 
       <div className="mx-auto max-w-7xl">
-        <div className="mb-8 overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 p-6 text-white shadow-xl relative border border-slate-800/80 md:p-8">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(59,130,246,0.15),transparent)] pointer-events-none" />
+        {/* Persistent Top System Alerts Banner */}
+        {activeAlerts.length > 0 && (
+          <div className="mb-6 rounded-3xl border border-rose-200 bg-rose-50/90 backdrop-blur-xl p-4 text-slate-900 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-slideFade">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-2xl bg-rose-500 text-white flex items-center justify-center shrink-0 animate-pulse shadow-md shadow-rose-500/20">
+                <Bell className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs font-black uppercase text-rose-600 tracking-wider">System Alert ({activeAlerts.length} Pending)</p>
+                <p className="text-xs font-semibold text-slate-800 mt-0.5">{activeAlerts[0]?.message}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0 justify-end">
+              <button
+                onClick={() => dismissAlert(activeAlerts[0].id)}
+                className="rounded-xl border border-rose-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-rose-100 transition cursor-pointer"
+              >
+                Dismiss
+              </button>
+              <button
+                onClick={() => setShowAlertsDropdown(!showAlertsDropdown)}
+                className="rounded-xl bg-rose-600 px-4 py-1.5 text-xs font-bold text-white shadow hover:bg-rose-700 transition cursor-pointer"
+              >
+                View All Alerts ({activeAlerts.length})
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="mb-8 rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 p-6 text-white shadow-xl relative border border-slate-800/80 md:p-8">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(59,130,246,0.15),transparent)] pointer-events-none rounded-3xl overflow-hidden" />
 
           <div className="relative z-10 flex flex-col justify-between gap-6 md:flex-row md:items-center">
             <div>
@@ -1002,7 +1031,7 @@ export default function AdminDashboard() {
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-3 items-center relative">
+            <div className="flex flex-wrap gap-3 items-center relative z-20">
               {/* Notification Center Bell */}
               <div className="relative">
                 <button
@@ -1019,7 +1048,7 @@ export default function AdminDashboard() {
                 </button>
 
                 {showAlertsDropdown && (
-                  <div className="absolute right-0 mt-3 w-80 sm:w-96 rounded-3xl bg-white text-slate-800 shadow-2xl border border-slate-150 p-4 z-50 animate-slideFade">
+                  <div className="absolute right-0 top-14 w-[calc(100vw-2.5rem)] sm:w-96 max-w-sm sm:max-w-md rounded-3xl bg-white text-slate-800 shadow-2xl border border-slate-200 p-4 z-50 animate-slideFade">
                     <div className="flex justify-between items-center pb-2 border-b border-slate-100">
                       <span className="text-xs font-black text-slate-800 uppercase tracking-wider">System Alerts ({activeAlerts.length})</span>
                       {activeAlerts.length > 0 && (
@@ -1468,7 +1497,7 @@ export default function AdminDashboard() {
                             <div className="space-y-1">
                               <InfoRow icon={BookOpen} label="Preferred Mode" value={p.preferredMode} />
                               <InfoRow icon={User} label="Preferred Gender" value={p.preferredGender} />
-                              <InfoRow icon={Clock} label="Preferred Time" value={p.preferredTime} />
+                              <InfoRow icon={Clock} label="Preferred Time" value={p.classTimingSlot || (p.startTime && p.endTime ? `${p.startTime} – ${p.endTime}` : (p.preferredTime && !p.preferredTime.includes("Days") ? p.preferredTime : "Flexible / Any Slot"))} />
                               <InfoRow icon={Clock} label="Class Duration" value={getClassDuration(p)} />
                               <InfoRow icon={Calendar} label="Preferred Days" value={getPreferredDays(p.preferredDays)} />
                               {p.classTimingType && (
