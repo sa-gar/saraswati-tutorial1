@@ -982,28 +982,28 @@ export default function AdminDashboard() {
       <div className="mx-auto max-w-7xl">
         {/* Persistent Top System Alerts Banner */}
         {activeAlerts.length > 0 && (
-          <div className="mb-6 rounded-3xl border border-rose-200 bg-rose-50/90 backdrop-blur-xl p-4 text-slate-900 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-slideFade">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-2xl bg-rose-500 text-white flex items-center justify-center shrink-0 animate-pulse shadow-md shadow-rose-500/20">
-                <Bell className="h-5 w-5" />
+          <div className="mb-6 rounded-2xl sm:rounded-3xl border border-rose-200 bg-rose-50/95 backdrop-blur-xl p-3.5 sm:p-4 text-slate-900 shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-slideFade">
+            <div className="flex items-start sm:items-center gap-3">
+              <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-2xl bg-rose-500 text-white flex items-center justify-center shrink-0 animate-pulse shadow-md shadow-rose-500/20 mt-0.5 sm:mt-0">
+                <Bell className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
               </div>
               <div>
-                <p className="text-xs font-black uppercase text-rose-600 tracking-wider">System Alert ({activeAlerts.length} Pending)</p>
-                <p className="text-xs font-semibold text-slate-800 mt-0.5">{activeAlerts[0]?.message}</p>
+                <p className="text-[11px] sm:text-xs font-black uppercase text-rose-600 tracking-wider">System Alert ({activeAlerts.length} Pending)</p>
+                <p className="text-xs font-semibold text-slate-800 mt-0.5 leading-snug break-words">{activeAlerts[0]?.message}</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 shrink-0 justify-end">
+            <div className="flex items-center gap-2 shrink-0 justify-end w-full sm:w-auto pt-2 sm:pt-0 border-t border-rose-200/60 sm:border-0">
               <button
                 onClick={() => dismissAlert(activeAlerts[0].id)}
-                className="rounded-xl border border-rose-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-rose-100 transition cursor-pointer"
+                className="flex-1 sm:flex-none rounded-xl border border-rose-200 bg-white px-3.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-rose-100 transition cursor-pointer text-center"
               >
                 Dismiss
               </button>
               <button
                 onClick={() => setShowAlertsDropdown(!showAlertsDropdown)}
-                className="rounded-xl bg-rose-600 px-4 py-1.5 text-xs font-bold text-white shadow hover:bg-rose-700 transition cursor-pointer"
+                className="flex-1 sm:flex-none rounded-xl bg-rose-600 px-4 py-1.5 text-xs font-bold text-white shadow hover:bg-rose-700 transition cursor-pointer text-center"
               >
-                View All Alerts ({activeAlerts.length})
+                View All ({activeAlerts.length})
               </button>
             </div>
           </div>
@@ -1048,52 +1048,70 @@ export default function AdminDashboard() {
                 </button>
 
                 {showAlertsDropdown && (
-                  <div className="absolute right-0 top-14 w-[calc(100vw-2.5rem)] sm:w-96 max-w-sm sm:max-w-md rounded-3xl bg-white text-slate-800 shadow-2xl border border-slate-200 p-4 z-50 animate-slideFade">
-                    <div className="flex justify-between items-center pb-2 border-b border-slate-100">
-                      <span className="text-xs font-black text-slate-800 uppercase tracking-wider">System Alerts ({activeAlerts.length})</span>
-                      {activeAlerts.length > 0 && (
-                        <button
-                          onClick={() => {
-                            const allIds = activeAlerts.map(a => a.id);
-                            const updated = [...dismissedAlerts, ...allIds];
-                            setDismissedAlerts(updated);
-                            localStorage.setItem("dismissedAlerts", JSON.stringify(updated));
-                          }}
-                          className="text-[10px] font-bold text-slate-400 hover:text-slate-600 hover:underline cursor-pointer"
-                        >
-                          Clear All
-                        </button>
-                      )}
-                    </div>
-                    <div className="mt-3 max-h-72 overflow-y-auto space-y-2 pr-1">
-                      {activeAlerts.length === 0 ? (
-                        <p className="text-xs font-bold text-slate-500 py-6 text-center">
-                          🎉 No pending attendance alerts!
-                        </p>
-                      ) : (
-                        activeAlerts.map(alert => (
-                          <div
-                            key={alert.id}
-                            className={`p-3 rounded-2xl border text-xs flex flex-col gap-2 ${
-                              alert.severity === "high"
-                                ? "bg-rose-50/50 border-rose-150 text-rose-850"
-                                : "bg-amber-50/50 border-amber-150 text-amber-850"
-                            }`}
+                  <>
+                    {/* Mobile Backdrop Overlay */}
+                    <div
+                      className="fixed inset-0 bg-slate-950/50 backdrop-blur-xs z-[290] sm:hidden"
+                      onClick={() => setShowAlertsDropdown(false)}
+                    />
+                    <div className="fixed left-4 right-4 top-20 max-w-md mx-auto sm:absolute sm:left-auto sm:right-0 sm:top-14 sm:w-96 rounded-3xl bg-white text-slate-800 shadow-2xl border border-slate-200 p-4.5 z-[300] animate-slideFade">
+                      <div className="flex justify-between items-center pb-2.5 border-b border-slate-100">
+                        <div className="flex items-center gap-2">
+                          <Bell className="h-4 w-4 text-rose-500" />
+                          <span className="text-xs font-black text-slate-800 uppercase tracking-wider">System Alerts ({activeAlerts.length})</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {activeAlerts.length > 0 && (
+                            <button
+                              onClick={() => {
+                                const allIds = activeAlerts.map(a => a.id);
+                                const updated = [...dismissedAlerts, ...allIds];
+                                setDismissedAlerts(updated);
+                                localStorage.setItem("dismissedAlerts", JSON.stringify(updated));
+                              }}
+                              className="text-[10px] font-bold text-rose-600 hover:underline cursor-pointer"
+                            >
+                              Clear All
+                            </button>
+                          )}
+                          <button
+                            onClick={() => setShowAlertsDropdown(false)}
+                            className="p-1 text-slate-400 hover:text-slate-700 rounded-lg sm:hidden cursor-pointer"
                           >
-                            <p className="font-semibold leading-normal">{alert.message}</p>
-                            <div className="flex justify-end">
-                              <button
-                                onClick={() => dismissAlert(alert.id)}
-                                className="text-[10px] font-black underline cursor-pointer hover:opacity-80"
-                              >
-                                Dismiss
-                              </button>
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="mt-3 max-h-72 overflow-y-auto space-y-2 pr-1">
+                        {activeAlerts.length === 0 ? (
+                          <p className="text-xs font-bold text-slate-500 py-6 text-center">
+                            🎉 No pending attendance alerts!
+                          </p>
+                        ) : (
+                          activeAlerts.map(alert => (
+                            <div
+                              key={alert.id}
+                              className={`p-3 rounded-2xl border text-xs flex flex-col gap-2 ${
+                                alert.severity === "high"
+                                  ? "bg-rose-50/80 border-rose-200 text-rose-950"
+                                  : "bg-amber-50/80 border-amber-200 text-amber-950"
+                              }`}
+                            >
+                              <p className="font-semibold leading-normal text-slate-800">{alert.message}</p>
+                              <div className="flex justify-end">
+                                <button
+                                  onClick={() => dismissAlert(alert.id)}
+                                  className="text-[10px] font-black uppercase tracking-wider bg-white border border-rose-200 text-rose-600 px-3 py-1 rounded-lg hover:bg-rose-50 transition cursor-pointer"
+                                >
+                                  Dismiss
+                                </button>
+                              </div>
                             </div>
-                          </div>
-                        ))
-                      )}
+                          ))
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  </>
                 )}
               </div>
 
