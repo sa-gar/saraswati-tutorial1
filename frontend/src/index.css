@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@variant dark (&:where(.dark, .dark *));
+
 .backdrop-blur-sm {
   -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);

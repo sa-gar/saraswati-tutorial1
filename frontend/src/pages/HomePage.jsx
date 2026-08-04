@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { motion, AnimatePresence } from "framer-motion";
 import PlansSection from "../components/PlansSection";
+import ThemeToggle from "../components/ThemeToggle";
 import { API_BASE } from "../config";
 import { trackEvent } from "../utils/analytics";
 import {
@@ -1015,7 +1016,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,#eff6ff,transparent_50%),radial-gradient(ellipse_at_bottom,#f5f3ff,transparent_50%),linear-gradient(to_bottom,#f8fafc,#f1f5f9)] font-sans text-slate-900 selection:bg-blue-600 selection:text-white">
+    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,#eff6ff,transparent_50%),radial-gradient(ellipse_at_bottom,#f5f3ff,transparent_50%),linear-gradient(to_bottom,#f8fafc,#f1f5f9)] dark:bg-none dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 selection:bg-blue-600 selection:text-white">
       <Helmet>
         <title>Private Home Tutors near me in Bangalore | Saraswati Tutorials</title>
         <meta
@@ -1030,7 +1031,7 @@ export default function HomePage() {
       </Helmet>
 
       <header className="sticky top-0 z-50 w-full py-3 px-4 sm:px-6 lg:px-8 bg-transparent">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 xl:px-6 py-2.5 xl:py-3.5 bg-white/95 backdrop-blur-md border border-slate-200/50 rounded-[1.75rem] shadow-[0_8px_30px_rgba(0,0,0,0.05)]">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 xl:px-6 py-2.5 xl:py-3.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/50 dark:border-slate-800/80 rounded-[1.75rem] shadow-[0_8px_30px_rgba(0,0,0,0.05)] dark:shadow-none">
           <div className="flex items-center gap-2 xl:gap-3 shrink-0">
             <Link to="/" className="flex items-center gap-2 xl:gap-3 group shrink-0">
               <motion.div
@@ -1124,16 +1125,20 @@ export default function HomePage() {
               <User className="h-3.5 w-3.5 xl:h-4 xl:w-4 text-slate-500" />
               Become a Tutor
             </MotionLink>
+            <ThemeToggle />
           </div>
 
-          <motion.button
-            onClick={() => setMenuOpen(!menuOpen)}
-            whileTap={{ scale: 0.95, backgroundColor: "rgba(15, 23, 42, 0.1)" }}
-            className="rounded-xl border border-slate-200 bg-white p-2 text-slate-800 xl:hidden"
-            aria-label="Open Navigation Menu"
-          >
-            {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </motion.button>
+          <div className="flex items-center gap-2 xl:hidden">
+            <ThemeToggle />
+            <motion.button
+              onClick={() => setMenuOpen(!menuOpen)}
+              whileTap={{ scale: 0.95, backgroundColor: "rgba(15, 23, 42, 0.1)" }}
+              className="rounded-xl border border-slate-200 bg-white p-2 text-slate-800 cursor-pointer"
+              aria-label="Open Navigation Menu"
+            >
+              {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </motion.button>
+          </div>
         </div>
 
         {/* Mobile Navigation */}

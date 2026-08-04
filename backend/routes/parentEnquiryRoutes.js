@@ -544,7 +544,8 @@ router.post("/:id/broadcast", verifyToken(["admin"]), async (req, res) => {
         // Fallback if no specific link is found, to prevent WhatsApp parameter validation errors
         if (!tutorSignLink) {
           console.warn(`[Odoo Sign] Fallback to general sign dashboard for tutor ${tutor.name}`);
-          tutorSignLink = "https://saraswati-tutorials.odoo.com/sign";
+          const odooBaseUrl = (process.env.ODOO_URL || "https://odoo.saraswatitutorials.com").replace(/\/+$/, "");
+          tutorSignLink = `${odooBaseUrl}/sign`;
         }
 
         const sendResult = await sendWhatsAppToTutor({
@@ -1192,7 +1193,8 @@ async function autoBroadcastTutorsForLead(leadData) {
         }
 
         if (!tutorSignLink) {
-          tutorSignLink = "https://saraswati-tutorials.odoo.com/sign";
+          const odooBaseUrl = (process.env.ODOO_URL || "https://odoo.saraswatitutorials.com").replace(/\/+$/, "");
+          tutorSignLink = `${odooBaseUrl}/sign`;
         }
 
         const sendResult = await sendWhatsAppToTutor({

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import ThemeToggle from "../components/ThemeToggle";
 import { Link } from "react-router-dom";
 import {
   Search,
@@ -122,7 +123,7 @@ function BlogMeta({ blog }) {
 
 function BlogCard({ blog, compact = false }) {
   return (
-    <article className="group overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-200 transition hover:-translate-y-1 hover:shadow-md">
+    <article className="group overflow-hidden rounded-3xl bg-white dark:bg-slate-900 shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 transition hover:-translate-y-1 hover:shadow-md dark:hover:shadow-slate-900/50">
       <Link to={`/blogs/${blog.slug || blog._id}`} className="block">
         {blog.image ? (
           <div className={compact ? "h-52 overflow-hidden" : "h-64 overflow-hidden"}>
@@ -134,31 +135,31 @@ function BlogCard({ blog, compact = false }) {
             />
           </div>
         ) : (
-          <div className={compact ? "h-52 bg-slate-100" : "h-64 bg-slate-100"} />
+          <div className={compact ? "h-52 bg-slate-100 dark:bg-slate-800" : "h-64 bg-slate-100 dark:bg-slate-800"} />
         )}
 
         <div className="p-6">
-          <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
+          <span className="inline-flex rounded-full bg-slate-100 dark:bg-slate-800 px-3 py-1 text-xs font-medium text-slate-700 dark:text-slate-300">
             {getCategory(blog)}
           </span>
 
           <h2
             className={
               compact
-                ? "mt-4 text-xl font-bold text-slate-900 group-hover:underline"
-                : "mt-4 text-2xl font-bold text-slate-900 group-hover:underline"
+                ? "mt-4 text-xl font-bold text-slate-900 dark:text-white group-hover:underline"
+                : "mt-4 text-2xl font-bold text-slate-900 dark:text-white group-hover:underline"
             }
           >
             {blog.title}
           </h2>
 
-          <p className="mt-3 leading-7 text-slate-600">
+          <p className="mt-3 leading-7 text-slate-600 dark:text-slate-400">
             {getExcerpt(blog.content, compact ? 120 : 170)}
           </p>
 
           <BlogMeta blog={blog} />
 
-          <div className="mt-5 inline-flex items-center gap-2 font-medium text-slate-900">
+          <div className="mt-5 inline-flex items-center gap-2 font-medium text-slate-900 dark:text-white">
             Read article
             <ArrowRight className="h-4 w-4" />
           </div>
@@ -212,42 +213,45 @@ export default function BlogPage() {
   const restBlogs = filteredBlogs.slice(1);
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-200">
+      <header className="sticky top-0 z-40 border-b border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-950/90 backdrop-blur">
         <div className="mx-auto flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between px-4 sm:px-6 py-4">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Blog & Insights</h1>
-            <p className="text-sm text-slate-500">
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Blog &amp; Insights</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               Study tips, exam strategy, tutoring guidance, and parent resources
             </p>
           </div>
 
-          <Link
-            to="/"
-            className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
-          >
-            Back to Home
-          </Link>
+          <div className="flex items-center gap-3">
+            <ThemeToggle />
+            <Link
+              to="/"
+              className="rounded-xl border border-slate-300 dark:border-slate-700 px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
+            >
+              Back to Home
+            </Link>
+          </div>
         </div>
       </header>
 
-      <section className="border-b border-slate-200 bg-white">
+      <section className="border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
         <div className="mx-auto max-w-7xl px-6 py-10">
           <div className="grid gap-4 md:grid-cols-[1.2fr_220px]">
             <div className="relative">
-              <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search blog posts..."
-                className="h-12 w-full rounded-2xl border border-slate-200 bg-white pl-11 pr-4 outline-none"
+                className="h-12 w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white pl-11 pr-4 outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
 
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="h-12 rounded-2xl border border-slate-200 bg-white px-4 outline-none"
+              className="h-12 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white px-4 outline-none"
             >
               {categories.map((item) => (
                 <option key={item}>{item}</option>
@@ -259,13 +263,13 @@ export default function BlogPage() {
 
       <main className="mx-auto max-w-7xl px-6 py-10">
         {loading ? (
-          <div className="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
+          <div className="rounded-3xl bg-white dark:bg-slate-900 p-8 shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 text-slate-600 dark:text-slate-400">
             Loading blogs...
           </div>
         ) : filteredBlogs.length === 0 ? (
-          <div className="rounded-3xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
-            <h2 className="text-xl font-bold text-slate-900">No blogs found</h2>
-            <p className="mt-2 text-slate-600">
+          <div className="rounded-3xl bg-white dark:bg-slate-900 p-8 shadow-sm ring-1 ring-slate-200 dark:ring-slate-800">
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">No blogs found</h2>
+            <p className="mt-2 text-slate-600 dark:text-slate-400">
               Try a different search term or category.
             </p>
           </div>
@@ -274,15 +278,15 @@ export default function BlogPage() {
             {featuredBlog && (
               <section className="mb-12">
                 <div className="mb-5 flex items-center gap-2">
-                  <span className="rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white">
+                  <span className="rounded-full bg-slate-900 dark:bg-white px-3 py-1 text-xs font-semibold text-white dark:text-slate-900">
                     Featured
                   </span>
-                  <span className="text-sm text-slate-500">
+                  <span className="text-sm text-slate-500 dark:text-slate-400">
                     Latest highlighted article
                   </span>
                 </div>
 
-                <article className="overflow-hidden rounded-[32px] bg-white shadow-sm ring-1 ring-slate-200">
+                <article className="overflow-hidden rounded-[32px] bg-white dark:bg-slate-900 shadow-sm ring-1 ring-slate-200 dark:ring-slate-800">
                   <div className="grid gap-0 lg:grid-cols-2">
                     <Link to={`/blogs/${featuredBlog.slug || featuredBlog._id}`} className="block">
                       {featuredBlog.image ? (
@@ -293,22 +297,22 @@ export default function BlogPage() {
                           className="h-full min-h-[320px] w-full object-cover"
                         />
                       ) : (
-                        <div className="min-h-[320px] bg-slate-100" />
+                        <div className="min-h-[320px] bg-slate-100 dark:bg-slate-800" />
                       )}
                     </Link>
 
                     <div className="p-8 md:p-10">
-                      <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
+                      <span className="inline-flex rounded-full bg-slate-100 dark:bg-slate-800 px-3 py-1 text-xs font-medium text-slate-700 dark:text-slate-300">
                         {getCategory(featuredBlog)}
                       </span>
 
                       <Link to={`/blogs/${featuredBlog.slug || featuredBlog._id}`}>
-                        <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-900 md:text-4xl hover:underline">
+                        <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-900 dark:text-white md:text-4xl hover:underline">
                           {featuredBlog.title}
                         </h2>
                       </Link>
 
-                      <p className="mt-5 text-base leading-8 text-slate-600">
+                      <p className="mt-5 text-base leading-8 text-slate-600 dark:text-slate-400">
                         {getExcerpt(featuredBlog.content, 260)}
                       </p>
 
@@ -316,7 +320,7 @@ export default function BlogPage() {
 
                       <Link
                         to={`/blogs/${featuredBlog.slug || featuredBlog._id}`}
-                        className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-5 py-3 font-medium text-white"
+                        className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-slate-900 dark:bg-white px-5 py-3 font-medium text-white dark:text-slate-900"
                       >
                         Read full article
                         <ArrowRight className="h-4 w-4" />
@@ -329,10 +333,10 @@ export default function BlogPage() {
 
             <section>
               <div className="mb-6 flex items-center justify-between">
-                <h3 className="text-2xl font-bold text-slate-900">
+                <h3 className="text-2xl font-bold text-slate-900 dark:text-white">
                   Latest Articles
                 </h3>
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-slate-500 dark:text-slate-400">
                   {filteredBlogs.length} post{filteredBlogs.length > 1 ? "s" : ""}
                 </p>
               </div>

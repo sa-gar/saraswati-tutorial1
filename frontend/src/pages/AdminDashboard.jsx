@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
+import { useTheme } from "../context/ThemeContext";
 import { useNavigate } from "react-router-dom";
 import {
   Users,
@@ -20,6 +21,7 @@ import {
   Edit,
   ShieldCheck,
   ChevronDown,
+  ChevronUp,
   User,
   Phone,
   MapPin,
@@ -47,6 +49,7 @@ import {
 } from "lucide-react";
 
 import { API_BASE } from "../config";
+import ThemeToggle from "../components/ThemeToggle";
 import {
   AreaChart,
   Area,
@@ -257,6 +260,9 @@ export default function AdminDashboard() {
   const [enquiries, setEnquiries] = useState([]);
   const [parentEnquiries, setParentEnquiries] = useState([]);
   const [drafts, setDrafts] = useState([]);
+  const [tutorDrafts, setTutorDrafts] = useState([]);
+  const [tutorDraftSearch, setTutorDraftSearch] = useState("");
+  const [expandedTutorDraftId, setExpandedTutorDraftId] = useState(null);
   const [bookings, setBookings] = useState([]);
   const [tutors, setTutors] = useState([]);
   const [leadTab, setLeadTab] = useState("active");
@@ -401,12 +407,13 @@ export default function AdminDashboard() {
         "Authorization": `Bearer ${token}`,
       };
 
-      const [eRes, peRes, bRes, tRes, dRes] = await Promise.all([
+      const [eRes, peRes, bRes, tRes, dRes, tdRes] = await Promise.all([
         fetch(`${API_BASE}/enquiries`, { headers }),
         fetch(`${API_BASE}/parent-enquiries`, { headers }),
         fetch(`${API_BASE}/bookings`, { headers }),
         fetch(`${API_BASE}/tutors`, { headers }),
         fetch(`${API_BASE}/parent-enquiries/drafts`, { headers }),
+        fetch(`${API_BASE}/tutors/drafts`, { headers }),
       ]);
 
       if (
@@ -414,18 +421,20 @@ export default function AdminDashboard() {
         peRes.status === 401 ||
         bRes.status === 401 ||
         tRes.status === 401 ||
-        dRes.status === 401
+        dRes.status === 401 ||
+        tdRes.status === 401
       ) {
         handleLogout();
         return;
       }
 
-      const [eData, peData, bData, tData, dData] = await Promise.all([
+      const [eData, peData, bData, tData, dData, tdData] = await Promise.all([
         eRes.json(),
         peRes.json(),
         bRes.json(),
         tRes.json(),
         dRes.json(),
+        tdRes.json(),
       ]);
 
       setEnquiries(Array.isArray(eData) ? eData : []);
@@ -433,6 +442,7 @@ export default function AdminDashboard() {
       setBookings(Array.isArray(bData) ? bData : []);
       setTutors(Array.isArray(tData) ? tData : []);
       setDrafts(Array.isArray(dData) ? dData : []);
+      setTutorDrafts(Array.isArray(tdData) ? tdData : []);
       fetchAlerts();
     } catch (err) {
       console.error("Dashboard fetch error:", err);
@@ -962,7 +972,7 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#e0f2fe,transparent_35%),radial-gradient(circle_at_bottom_right,#f3e8ff,transparent_30%),linear-gradient(135deg,#f8fafc,#f1f5f9)] px-4 py-8 md:px-6 md:py-12">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#e0f2fe,transparent_35%),radial-gradient(circle_at_bottom_right,#f3e8ff,transparent_30%),linear-gradient(135deg,#f8fafc,#f1f5f9)] dark:bg-[radial-gradient(circle_at_top_left,rgba(30,58,138,0.15),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(88,28,135,0.1),transparent_30%),linear-gradient(135deg,#0f172a,#090e1a)] px-4 py-8 md:px-6 md:py-12 transition-colors duration-300">
       <style>{`
         .animate-slideFade {
           animation: slideFade 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
@@ -976,6 +986,12 @@ export default function AdminDashboard() {
           backdrop-filter: blur(18px);
           -webkit-backdrop-filter: blur(18px);
           border: 1px solid rgba(226, 232, 240, 0.6);
+        }
+        .dark .glass-card {
+          background: rgba(15, 23, 42, 0.85);
+          backdrop-filter: blur(18px);
+          -webkit-backdrop-filter: blur(18px);
+          border: 1px solid rgba(30, 41, 59, 0.8);
         }
       `}</style>
 
@@ -1131,6 +1147,8 @@ export default function AdminDashboard() {
                 Refresh
               </button>
 
+              <ThemeToggle />
+
               <button
                 onClick={handleLogout}
                 className="flex items-center gap-2 rounded-2xl bg-rose-500 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-rose-500/20 transition duration-300 hover:bg-rose-600 hover:scale-[1.02] cursor-pointer"
@@ -1143,13 +1161,13 @@ export default function AdminDashboard() {
         </div>
 
         {/* Main Tab Switcher */}
-        <div className="mb-8 flex border-b border-slate-200/80 gap-6">
+        <div className="mb-8 flex flex-wrap border-b border-slate-200/80 dark:border-slate-800 gap-6">
           <button
             onClick={() => setCurrentMainTab("leads")}
             className={`pb-4 text-base font-extrabold transition-all relative cursor-pointer ${
               currentMainTab === "leads"
                 ? "text-blue-600 font-extrabold"
-                : "text-slate-500 hover:text-slate-800"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
             }`}
           >
             Admission Leads
@@ -1163,10 +1181,10 @@ export default function AdminDashboard() {
             className={`pb-4 text-base font-extrabold transition-all relative cursor-pointer ${
               currentMainTab === "analytics"
                 ? "text-blue-650 font-extrabold"
-                : "text-slate-500 hover:text-slate-800"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
             }`}
           >
-            Analytics & Visitor Insights
+            Analytics &amp; Visitor Insights
             {currentMainTab === "analytics" && (
               <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-full" />
             )}
@@ -1178,15 +1196,228 @@ export default function AdminDashboard() {
             className={`pb-4 text-base font-extrabold transition-all relative cursor-pointer ${
               currentMainTab === "attendance"
                 ? "text-blue-650 font-extrabold"
-                : "text-slate-500 hover:text-slate-800"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
             }`}
           >
-            Attendance & Class Tracking
+            Attendance &amp; Class Tracking
             {currentMainTab === "attendance" && (
               <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 rounded-full" />
             )}
           </button>
+
+          {/* NEW: Tutor Drafts tab */}
+          <button
+            type="button"
+            onClick={() => setCurrentMainTab("tutorDrafts")}
+            className={`pb-4 text-base font-extrabold transition-all relative cursor-pointer ${
+              currentMainTab === "tutorDrafts"
+                ? "text-violet-600 font-extrabold"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+            }`}
+          >
+            Tutor Drafts
+            {tutorDrafts.length > 0 && (
+              <span className="ml-2 inline-flex items-center justify-center rounded-full bg-violet-100 dark:bg-violet-900/40 px-2 py-0.5 text-[10px] font-black text-violet-700 dark:text-violet-300">
+                {tutorDrafts.length}
+              </span>
+            )}
+            {currentMainTab === "tutorDrafts" && (
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-violet-600 rounded-full" />
+            )}
+          </button>
         </div>
+
+        {/* ───────────────── TUTOR DRAFTS PANEL ───────────────── */}
+        {currentMainTab === "tutorDrafts" && (
+          <div className="animate-slideFade">
+            {/* Header */}
+            <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100">
+                  Tutor Registration Drafts
+                </h2>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  {tutorDrafts.length} incomplete tutor registration{tutorDrafts.length !== 1 ? "s" : ""} — auto-expire after 30 days.
+                </p>
+              </div>
+              <button
+                onClick={fetchData}
+                className="flex items-center gap-2 rounded-2xl border border-violet-200 dark:border-violet-900/60 bg-violet-50 dark:bg-violet-900/20 px-4 py-2.5 text-sm font-bold text-violet-700 dark:text-violet-300 transition hover:bg-violet-100 dark:hover:bg-violet-900/40 cursor-pointer"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Refresh
+              </button>
+            </div>
+
+            {/* Search */}
+            <div className="mb-6 relative">
+              <input
+                type="text"
+                value={tutorDraftSearch}
+                onChange={(e) => setTutorDraftSearch(e.target.value)}
+                placeholder="Search by name, phone, city, subjects…"
+                className="w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3 pl-10 text-sm font-medium text-slate-800 dark:text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-400 transition"
+              />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            </div>
+
+            {/* Draft Cards */}
+            {tutorDrafts.length === 0 ? (
+              <div className="rounded-3xl border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 p-16 text-center">
+                <GraduationCap className="mx-auto mb-4 h-12 w-12 text-slate-300 dark:text-slate-600" />
+                <p className="text-base font-black text-slate-400 dark:text-slate-500">No tutor drafts found</p>
+                <p className="mt-1 text-sm text-slate-400 dark:text-slate-600">Drafts appear here when tutors save progress on the registration form.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {tutorDrafts
+                  .filter((d) => {
+                    if (!tutorDraftSearch.trim()) return true;
+                    const q = tutorDraftSearch.toLowerCase();
+                    const fd = d.formData || {};
+                    return (
+                      (fd.name || "").toLowerCase().includes(q) ||
+                      (d.phone || "").includes(q) ||
+                      (fd.city || "").toLowerCase().includes(q) ||
+                      (fd.qualification || "").toLowerCase().includes(q) ||
+                      ((fd.subjects || []).join(" ")).toLowerCase().includes(q)
+                    );
+                  })
+                  .map((draft) => {
+                    const fd = draft.formData || {};
+                    const isExpanded = expandedTutorDraftId === draft._id;
+                    const stepLabels = ["", "Personal Info", "Teaching Profile", "Location & Docs"];
+                    const stepColors = ["", "bg-blue-100 text-blue-700", "bg-amber-100 text-amber-700", "bg-emerald-100 text-emerald-700"];
+
+                    return (
+                      <div
+                        key={draft._id}
+                        className="glass-card rounded-3xl overflow-hidden transition-all duration-300"
+                      >
+                        {/* Card Header */}
+                        <div className="p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+                          {/* Avatar */}
+                          <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white font-black text-lg shrink-0 shadow-lg shadow-violet-500/20">
+                            {(fd.name || "?")[0].toUpperCase()}
+                          </div>
+
+                          {/* Info */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-wrap items-center gap-2 mb-1">
+                              <p className="font-black text-slate-900 dark:text-slate-100 text-base truncate">
+                                {fd.name || <span className="text-slate-400 italic">Name not provided</span>}
+                              </p>
+                              <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full ${stepColors[draft.stepReached] || "bg-slate-100 text-slate-600"}`}>
+                                Step {draft.stepReached} — {stepLabels[draft.stepReached] || "Unknown"}
+                              </span>
+                            </div>
+                            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-slate-400 font-semibold">
+                              {draft.phone && <span>📱 {draft.phone}</span>}
+                              {fd.city && <span>📍 {fd.city}{fd.area ? `, ${fd.area}` : ""}</span>}
+                              {fd.qualification && <span>🎓 {fd.qualification}</span>}
+                              {(fd.subjects || []).length > 0 && (
+                                <span>📚 {fd.subjects.slice(0, 3).join(", ")}{fd.subjects.length > 3 ? " +" + (fd.subjects.length - 3) : ""}</span>
+                              )}
+                            </div>
+                            <p className="mt-1 text-[10px] text-slate-400 dark:text-slate-500 font-medium">
+                              Last updated: {new Date(draft.updatedAt).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                            </p>
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex items-center gap-2 shrink-0">
+                            <button
+                              onClick={() => setExpandedTutorDraftId(isExpanded ? null : draft._id)}
+                              className="flex items-center gap-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer"
+                            >
+                              {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                              {isExpanded ? "Hide" : "Details"}
+                            </button>
+                            <button
+                              onClick={async () => {
+                                if (!window.confirm(`Delete draft for ${fd.name || draft.phone}?`)) return;
+                                const token = localStorage.getItem("adminToken");
+                                try {
+                                  const res = await fetch(`${API_BASE}/tutors/drafts/${draft._id}`, {
+                                    method: "DELETE",
+                                    headers: { Authorization: `Bearer ${token}` },
+                                  });
+                                  if (res.ok) {
+                                    setTutorDrafts((prev) => prev.filter((d) => d._id !== draft._id));
+                                  } else {
+                                    alert("Failed to delete draft");
+                                  }
+                                } catch (err) {
+                                  alert("Error: " + err.message);
+                                }
+                              }}
+                              className="flex items-center gap-1.5 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-900/20 px-3.5 py-2 text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/40 transition cursor-pointer"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Expanded Detail Panel */}
+                        {isExpanded && (
+                          <div className="border-t border-slate-100 dark:border-slate-800 px-5 py-5 bg-slate-50/60 dark:bg-slate-900/30">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+                              {[
+                                { label: "Full Name", value: fd.name },
+                                { label: "Phone", value: fd.phone || draft.phone },
+                                { label: "WhatsApp", value: fd.whatsapp },
+                                { label: "Email", value: fd.email },
+                                { label: "Gender", value: fd.gender },
+                                { label: "Date of Birth", value: fd.dob },
+                                { label: "Qualification", value: fd.qualification },
+                                { label: "Experience", value: fd.experience },
+                                { label: "Occupation Status", value: fd.hasOccupation === "yes" ? `Working — ${fd.occupation || ""}` : "Not Working" },
+                                { label: "City", value: fd.city },
+                                { label: "Area", value: fd.area },
+                                { label: "Full Address", value: fd.fullAddress },
+                                { label: "Pincode", value: fd.pincode },
+                                { label: "Has Vehicle", value: fd.hasVehicle === "yes" ? "Yes" : "No" },
+                                { label: "Max Travel Distance", value: fd.maxTravelDistance },
+                                { label: "Teaching Mode", value: fd.mode },
+                                { label: "Grades", value: (fd.grades || []).join(", ") },
+                                { label: "Boards", value: (fd.boards || []).join(", ") },
+                                { label: "Subjects", value: (fd.subjects || []).join(", ") },
+                                { label: "Timings", value: (fd.timings || []).join(", ") },
+                                { label: "Languages", value: (fd.languages || []).join(", ") },
+                                { label: "Service Areas", value: (fd.locations || []).join(", ") },
+                                { label: "About", value: fd.about },
+                                { label: "IP Address", value: draft.ipAddress },
+                              ]
+                                .filter((row) => row.value)
+                                .map((row) => (
+                                  <div key={row.label} className="rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-3.5">
+                                    <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1">{row.label}</p>
+                                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 break-words">{row.value}</p>
+                                  </div>
+                                ))}
+                            </div>
+
+                            <div className="mt-5 flex justify-end">
+                              <a
+                                href="/tutor-register"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 px-5 py-2.5 text-sm font-black text-white shadow-lg shadow-violet-500/20 hover:opacity-90 transition cursor-pointer"
+                              >
+                                <GraduationCap className="h-4 w-4" />
+                                Open Registration Form
+                              </a>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
+          </div>
+        )}
 
         {currentMainTab === "leads" && (
           <>

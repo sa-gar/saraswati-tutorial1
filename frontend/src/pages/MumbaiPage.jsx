@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { motion, AnimatePresence } from "framer-motion";
 import PlansSection from "../components/PlansSection";
+import DemoParentDashboard from "./DemoParentDashboard";
+import ThemeToggle from "../components/ThemeToggle";
 import {
   Star,
   MapPin,
@@ -177,6 +179,7 @@ export default function MumbaiPage() {
   const [mobileResourcesOpen, setMobileResourcesOpen] = useState(false);
   const [activeFaq, setActiveFaq] = useState(null);
   const [activeSection, setActiveSection] = useState("home");
+  const [showDemoPreview, setShowDemoPreview] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -448,7 +451,7 @@ export default function MumbaiPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,#eff6ff,transparent_50%),radial-gradient(ellipse_at_bottom,#f5f3ff,transparent_50%),linear-gradient(to_bottom,#f8fafc,#f1f5f9)] font-sans text-slate-900 selection:bg-blue-600 selection:text-white">
+    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,#eff6ff,transparent_50%),radial-gradient(ellipse_at_bottom,#f5f3ff,transparent_50%),linear-gradient(to_bottom,#f8fafc,#f1f5f9)] dark:bg-none dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 selection:bg-blue-600 selection:text-white">
       <Helmet>
         <title>Home Tuition in Mumbai | Best Home Tutors for Class 6-12</title>
         <meta
@@ -462,7 +465,7 @@ export default function MumbaiPage() {
         <script type="application/ld+json">{JSON.stringify(localBusinessSchema)}</script>
       </Helmet>
       <header className="sticky top-0 z-50 w-full py-3 px-4 sm:px-6 lg:px-8 bg-transparent">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 xl:px-6 py-2.5 xl:py-3.5 bg-white/95 backdrop-blur-md border border-slate-200/50 rounded-[1.75rem] shadow-[0_8px_30px_rgba(0,0,0,0.05)]">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 xl:px-6 py-2.5 xl:py-3.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/50 dark:border-slate-800/80 rounded-[1.75rem] shadow-[0_8px_30px_rgba(0,0,0,0.05)] dark:shadow-none">
           <div className="flex items-center gap-2 xl:gap-3 shrink-0">
             <Link to="/" className="flex items-center gap-2 xl:gap-3 group shrink-0">
               <motion.div
@@ -555,16 +558,20 @@ export default function MumbaiPage() {
               <User className="h-3.5 w-3.5 xl:h-4 xl:w-4 text-slate-500" />
               Become a Tutor
             </MotionLink>
+            <ThemeToggle />
           </div>
 
-          <motion.button
-            onClick={() => setMenuOpen(!menuOpen)}
-            whileTap={{ scale: 0.95, backgroundColor: "rgba(15, 23, 42, 0.1)" }}
-            className="rounded-xl border border-slate-200 bg-white p-2 text-slate-800 xl:hidden"
-            aria-label="Open Navigation Menu"
-          >
-            {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </motion.button>
+          <div className="flex items-center gap-2 xl:hidden">
+            <ThemeToggle />
+            <motion.button
+              onClick={() => setMenuOpen(!menuOpen)}
+              whileTap={{ scale: 0.95, backgroundColor: "rgba(15, 23, 42, 0.1)" }}
+              className="rounded-xl border border-slate-200 bg-white p-2 text-slate-800 cursor-pointer"
+              aria-label="Open Navigation Menu"
+            >
+              {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </motion.button>
+          </div>
         </div>
 
         {/* Mobile Navigation */}
@@ -672,13 +679,18 @@ export default function MumbaiPage() {
                   <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
                 </MotionLink>
 
-                <MotionLink
-                  to="/parent-enquiry"
-                  whileTap={{ scale: 0.95, backgroundColor: "rgba(255, 255, 255, 0.05)", borderColor: "rgba(255, 255, 255, 0.2)" }}
-                  className="rounded-2xl border border-white/10 bg-white/5 px-7 py-4 font-black text-white backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/10 text-center"
+                <button
+                  id="parents-dashboard-btn"
+                  type="button"
+                  onClick={() => setShowDemoPreview(true)}
+                  className="rounded-2xl border border-slate-700/80 bg-slate-900/90 px-7 py-4 font-black text-white backdrop-blur-xl transition duration-300 hover:-translate-y-0.5 hover:bg-slate-800 hover:border-slate-600 shadow-lg shadow-slate-950/40 flex items-center justify-center gap-2.5 cursor-pointer"
                 >
-                  Hire a Home Tutor
-                </MotionLink>
+                  <span className="relative flex h-2.5 w-2.5 items-center justify-center">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500" />
+                  </span>
+                  Parents Dashboard
+                </button>
               </div>
               {/* Quick Stats Grid */}
               <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -888,20 +900,54 @@ export default function MumbaiPage() {
           <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {whyChooseUs.map((item, idx) => {
               const IconComp = item.icon;
+              const glassThemes = [
+                // 1. Verified Tutors (Blue Glass)
+                { bg: "bg-blue-500/12", border: "border-blue-300/70", icon: "text-blue-600", glow: "group-hover:shadow-[0_12px_28px_rgba(37,99,235,0.18)]" },
+                // 2. One-to-One (Purple Glass)
+                { bg: "bg-purple-500/12", border: "border-purple-300/70", icon: "text-purple-600", glow: "group-hover:shadow-[0_12px_28px_rgba(147,51,234,0.18)]" },
+                // 3. Home & Online (Orange Glass)
+                { bg: "bg-orange-500/12", border: "border-orange-300/70", icon: "text-orange-500", glow: "group-hover:shadow-[0_12px_28px_rgba(249,115,22,0.18)]" },
+                // 4. Bi-Weekly Tests (Green Glass)
+                { bg: "bg-emerald-500/12", border: "border-emerald-300/70", icon: "text-emerald-600", glow: "group-hover:shadow-[0_12px_28px_rgba(16,185,129,0.18)]" },
+                // 5. Flexible Timings (Pink Glass)
+                { bg: "bg-rose-500/12", border: "border-rose-300/70", icon: "text-rose-500", glow: "group-hover:shadow-[0_12px_28px_rgba(244,63,94,0.18)]" },
+                // 6. All Boards (Blue Glass)
+                { bg: "bg-blue-500/12", border: "border-blue-300/70", icon: "text-blue-600", glow: "group-hover:shadow-[0_12px_28px_rgba(37,99,235,0.18)]" },
+                // 7. Affordable Fee (Amber Glass)
+                { bg: "bg-amber-500/12", border: "border-amber-300/70", icon: "text-amber-500", glow: "group-hover:shadow-[0_12px_28px_rgba(245,158,11,0.18)]" },
+                // 8. Free Demo (Pink Glass)
+                { bg: "bg-pink-500/12", border: "border-pink-300/70", icon: "text-pink-500", glow: "group-hover:shadow-[0_12px_28px_rgba(236,72,153,0.18)]" },
+                // 9. Fast Progress (Teal Glass)
+                { bg: "bg-teal-500/12", border: "border-teal-300/70", icon: "text-teal-600", glow: "group-hover:shadow-[0_12px_28px_rgba(20,184,166,0.18)]" },
+                // 10. Expert Teachers (Purple Glass)
+                { bg: "bg-purple-500/12", border: "border-purple-300/70", icon: "text-purple-600", glow: "group-hover:shadow-[0_12px_28px_rgba(147,51,234,0.18)]" },
+                // 11. Regular Attendance (Blue Glass)
+                { bg: "bg-blue-500/12", border: "border-blue-300/70", icon: "text-blue-600", glow: "group-hover:shadow-[0_12px_28px_rgba(37,99,235,0.18)]" },
+                // 12. Parent Support (Cyan Glass)
+                { bg: "bg-cyan-500/12", border: "border-cyan-300/70", icon: "text-cyan-600", glow: "group-hover:shadow-[0_12px_28px_rgba(6,182,212,0.18)]" },
+              ];
+              const theme = glassThemes[idx % glassThemes.length];
+
               return (
                 <motion.div
-                  whileHover={{ y: -5 }}
-                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  whileHover={{ y: -6, scale: 1.02 }}
+                  transition={{ duration: 0.25, ease: "easeOut" }}
                   key={idx}
-                  className="group relative overflow-hidden rounded-3xl border border-slate-200 bg-white/70 backdrop-blur-md p-6 shadow-sm transition-all duration-300 hover:border-blue-500 hover:shadow-[0_15px_30px_rgba(59,130,246,0.12)] hover:scale-[1.01]"
+                  className="group relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all duration-300 hover:border-slate-300 hover:shadow-[0_20px_35px_rgba(0,0,0,0.06)]"
                 >
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-800 transition-colors duration-300 group-hover:bg-blue-50 group-hover:text-blue-600">
-                    <IconComp className="h-6 w-6" />
+                  {/* 3D Transparent Water Glass Badge Container */}
+                  <div className={`relative flex h-16 w-16 items-center justify-center rounded-[1.35rem] ${theme.bg} backdrop-blur-xl border ${theme.border} shadow-[inset_0_1.5px_2px_rgba(255,255,255,0.9),0_6px_16px_rgba(0,0,0,0.04)] transition-all duration-300 group-hover:scale-105 group-hover:-rotate-2 ${theme.glow}`}>
+                    {/* Water gloss highlight reflection */}
+                    <div className="absolute top-1 left-2.5 right-2.5 h-[3px] rounded-full bg-gradient-to-r from-transparent via-white/90 to-transparent pointer-events-none" />
+                    {/* Inner glass bevel rim */}
+                    <div className="absolute inset-0 rounded-[1.35rem] ring-1 ring-inset ring-white/60 pointer-events-none" />
+                    <IconComp className={`relative z-10 h-7 w-7 ${theme.icon} filter drop-shadow-[0_2px_3px_rgba(0,0,0,0.08)] stroke-[2.2]`} />
                   </div>
-                  <h4 className="mt-5 text-lg font-black text-slate-950 transition-colors duration-300 group-hover:text-blue-600">
+
+                  <h4 className="mt-5 text-lg font-black text-slate-900 leading-snug">
                     {item.title}
                   </h4>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-500 transition-colors duration-300">
+                  <p className="mt-2 text-xs font-semibold leading-relaxed text-slate-500">
                     {item.desc}
                   </p>
                 </motion.div>
@@ -1315,6 +1361,9 @@ export default function MumbaiPage() {
           />
         </svg>
       </motion.a>
+      {showDemoPreview && (
+        <DemoParentDashboard onClose={() => setShowDemoPreview(false)} />
+      )}
     </div>
   );
 }

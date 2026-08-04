@@ -2694,23 +2694,23 @@ function ErrorText({ message }) {
 function Input({ label, error, icon: Icon, ...props }) {
   return (
     <div>
-      <label className="mb-2 block text-sm font-bold text-slate-705">
+      <label className="mb-2 block text-sm font-bold text-slate-705 dark:text-slate-300">
         {label}
       </label>
       <div className="relative">
         {Icon && (
-          <div className="absolute left-4.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10 transition-colors duration-200">
+          <div className="absolute left-4.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none z-10 transition-colors duration-200">
             <Icon className="h-5 w-5" />
           </div>
         )}
         <input
           {...props}
-          className={`h-14 w-full rounded-3xl border bg-white/60 backdrop-blur-sm text-sm outline-none transition-all duration-300 hover:border-slate-300 hover:bg-white focus:ring-4 focus:bg-white ${
+          className={`h-14 w-full rounded-3xl border bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm text-sm outline-none transition-all duration-300 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-white dark:hover:bg-slate-900 focus:ring-4 focus:bg-white dark:focus:bg-slate-900 text-slate-850 dark:text-slate-100 ${
             Icon ? "pl-12 pr-5" : "px-5"
           } ${
             error
-              ? "border-red-400 focus:ring-red-100"
-              : "border-slate-200 focus:border-blue-600 focus:ring-blue-100"
+              ? "border-red-400 focus:ring-red-100 dark:focus:ring-red-950"
+              : "border-slate-200 dark:border-slate-800 focus:border-blue-600 dark:focus:border-blue-500 focus:ring-blue-100 dark:focus:ring-blue-900/30"
           }`}
         />
       </div>
@@ -2722,23 +2722,23 @@ function Input({ label, error, icon: Icon, ...props }) {
 function TextArea({ label, error, icon: Icon, ...props }) {
   return (
     <div>
-      <label className="mb-2 block text-sm font-bold text-slate-705">
+      <label className="mb-2 block text-sm font-bold text-slate-705 dark:text-slate-300">
         {label}
       </label>
       <div className="relative">
         {Icon && (
-          <div className="absolute left-4.5 top-4.5 text-slate-400 pointer-events-none z-10">
+          <div className="absolute left-4.5 top-4.5 text-slate-400 dark:text-slate-500 pointer-events-none z-10">
             <Icon className="h-5 w-5" />
           </div>
         )}
         <textarea
           {...props}
-          className={`min-h-[120px] w-full rounded-3xl border bg-white/60 backdrop-blur-sm text-sm outline-none transition-all duration-300 hover:border-slate-300 hover:bg-white focus:ring-4 focus:bg-white ${
+          className={`min-h-[120px] w-full rounded-3xl border bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm text-sm outline-none transition-all duration-300 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-white dark:hover:bg-slate-900 focus:ring-4 focus:bg-white dark:focus:bg-slate-900 text-slate-850 dark:text-slate-100 ${
             Icon ? "pl-12 pr-5 pt-3.5" : "px-5 py-4"
           } ${
             error
-              ? "border-red-400 focus:ring-red-100"
-              : "border-slate-200 focus:border-blue-600 focus:ring-blue-100"
+              ? "border-red-400 focus:ring-red-100 dark:focus:ring-red-950"
+              : "border-slate-200 dark:border-slate-800 focus:border-blue-600 dark:focus:border-blue-500 focus:ring-blue-100 dark:focus:ring-blue-900/30"
           }`}
         />
       </div>
@@ -2760,12 +2760,12 @@ function SearchableInput({
 }) {
   return (
     <div>
-      <label className="mb-2 block text-sm font-bold text-slate-705">
+      <label className="mb-2 block text-sm font-bold text-slate-705 dark:text-slate-300">
         {label}
       </label>
       <div className="relative">
         {Icon && (
-          <div className="absolute left-4.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10">
+          <div className="absolute left-4.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none z-10">
             <Icon className="h-5 w-5" />
           </div>
         )}
@@ -2774,18 +2774,18 @@ function SearchableInput({
           name={name}
           value={value}
           onChange={onChange}
-          className={`h-14 w-full rounded-3xl border bg-white/60 backdrop-blur-sm text-sm outline-none transition-all duration-300 hover:border-slate-300 hover:bg-white focus:ring-4 focus:bg-white ${
+          className={`h-14 w-full rounded-3xl border bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm text-sm outline-none transition-all duration-300 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-white dark:hover:bg-slate-900 focus:ring-4 focus:bg-white dark:focus:bg-slate-900 text-slate-850 dark:text-slate-100 ${
             Icon ? "pl-12 pr-5" : "px-5"
           } ${
             error
-              ? "border-red-400 focus:ring-red-100"
-              : "border-slate-200 focus:border-blue-600 focus:ring-blue-100"
+              ? "border-red-400 focus:ring-red-100 dark:focus:ring-red-950"
+              : "border-slate-200 dark:border-slate-800 focus:border-blue-600 dark:focus:border-blue-500 focus:ring-blue-100 dark:focus:ring-blue-900/30"
           }`}
           {...props}
         />
         <datalist id={listId}>
           {options.map((option) => (
-            <option key={option} value={option} />
+            <option key={option} value={option} className="dark:bg-slate-950 dark:text-white" />
           ))}
         </datalist>
       </div>
@@ -2806,12 +2806,12 @@ function SelectBox({
 }) {
   return (
     <div>
-      <label className="mb-2 block text-sm font-bold text-slate-705">
+      <label className="mb-2 block text-sm font-bold text-slate-705 dark:text-slate-300">
         {label}
       </label>
       <div className="relative">
         {Icon && (
-          <div className="absolute left-4.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none z-10">
+          <div className="absolute left-4.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none z-10">
             <Icon className="h-5 w-5" />
           </div>
         )}
@@ -2819,23 +2819,23 @@ function SelectBox({
           name={name}
           value={value}
           onChange={onChange}
-          className={`h-14 w-full rounded-3xl border bg-white/60 backdrop-blur-sm text-sm outline-none transition-all duration-300 hover:border-slate-300 hover:bg-white appearance-none focus:ring-4 focus:bg-white ${
+          className={`h-14 w-full rounded-3xl border bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm text-sm outline-none transition-all duration-300 hover:border-slate-300 dark:hover:border-slate-700 hover:bg-white dark:hover:bg-slate-900 appearance-none focus:ring-4 focus:bg-white dark:focus:bg-slate-900 text-slate-850 dark:text-slate-100 ${
             Icon ? "pl-12 pr-10" : "pl-5 pr-10"
           } ${
             error
-              ? "border-red-400 focus:ring-red-100"
-              : "border-slate-200 focus:border-blue-600 focus:ring-blue-100"
+              ? "border-red-400 focus:ring-red-100 dark:focus:ring-red-950"
+              : "border-slate-200 dark:border-slate-800 focus:border-blue-600 dark:focus:border-blue-500 focus:ring-blue-100 dark:focus:ring-blue-900/30"
           }`}
         >
-          <option value="">{placeholder}</option>
+          <option value="" className="dark:bg-slate-950 dark:text-white">{placeholder}</option>
 
           {options.map((option) => (
-            <option key={option} value={option}>
+            <option key={option} value={option} className="dark:bg-slate-950 dark:text-white">
               {option}
             </option>
           ))}
         </select>
-        <div className="absolute right-4.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 z-10">
+        <div className="absolute right-4.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 dark:text-slate-500 z-10">
           <ChevronDown className="h-4 w-4" />
         </div>
       </div>

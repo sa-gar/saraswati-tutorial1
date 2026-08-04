@@ -292,6 +292,8 @@ export default function TutorRegistration() {
   const [touched, setTouched] = useState({});
   const [previewPhoto, setPreviewPhoto] = useState(null);
   const [showInstructionsModal, setShowInstructionsModal] = useState(false);
+  // Cloud draft sync state
+  const [draftSyncStatus, setDraftSyncStatus] = useState(null); // null | 'saving' | 'saved' | 'error'
 
   const isMumbai = formData.city === "Mumbai";
   const areaGroups = isMumbai ? mumbaiAreaGroups : bangaloreAreaGroups;
@@ -322,7 +324,7 @@ export default function TutorRegistration() {
     } catch {}
   }, [step, formData, sameAsMobile]);
 
-  // Also save when the tab is hidden / minimised
+  // Also save to backend when the tab is hidden / minimised
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") {
@@ -337,6 +339,8 @@ export default function TutorRegistration() {
           };
           localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
         } catch {}
+        // Also silently push to backend if phone is known
+        if (formData.phone) { saveDraftToServer(step, formData, sameAsMobile); }
       }
     };
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -636,6 +640,43 @@ export default function TutorRegistration() {
     });
   };
 
+  // ─── Backend draft sync ──────────────────────────────────────────────────────
+  // Mirrors the ParentEnquiry saveDraft pattern.
+  // Called on every validated step advance and on tab-hide.
+  const saveDraftToServer = async (stepReached, currentFormData, currentSameAsMobile) => {
+    const phone = currentFormData.phone;
+    if (!phone) return; // phone is the key; cannot save without it
+
+    setDraftSyncStatus("saving");
+    try {
+      await fetch(`${API_BASE}/tutors/draft`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone,
+          stepReached,
+          sameAsMobile: currentSameAsMobile,
+          formData: {
+            ...currentFormData,
+            // Strip File objects — cannot be serialised
+            photo: null,
+            idProof: null,
+            expCert: null,
+            otherDoc: null,
+          },
+          visitor_id: localStorage.getItem("visitor_id") || "",
+          session_id: sessionStorage.getItem("session_id") || "",
+        }),
+      });
+      setDraftSyncStatus("saved");
+      setTimeout(() => setDraftSyncStatus(null), 3000);
+    } catch (err) {
+      console.warn("[TutorDraft] Backend sync failed:", err.message);
+      setDraftSyncStatus("error");
+      setTimeout(() => setDraftSyncStatus(null), 4000);
+    }
+  };
+
   const processUploadFile = async (file, fallbackPrefix) => {
     if (!file) return null;
     const extension = file.name.split(".").pop();
@@ -743,7 +784,10 @@ export default function TutorRegistration() {
       }
     }
 
-    setStep((prev) => Math.min(prev + 1, 3));
+    const nextStepVal = Math.min(step + 1, 3);
+    // Sync to backend on every validated step advance
+    saveDraftToServer(nextStepVal, formData, sameAsMobile);
+    setStep(nextStepVal);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -863,13 +907,29 @@ export default function TutorRegistration() {
                 <Sparkles className="h-4.5 w-4.5 text-emerald-600 animate-pulse" />
                 Draft restored — continue from where you left off.
               </span>
-              <button
-                type="button"
-                onClick={() => setShowDraftBanner(false)}
-                className="text-emerald-500 hover:text-emerald-700 cursor-pointer"
-              >
-                <X className="h-4 w-4" />
-              </button>
+              <div className="flex items-center gap-3">
+                {/* Cloud sync status indicator */}
+                {draftSyncStatus === "saving" && (
+                  <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" /> Syncing…
+                  </span>
+                )}
+                {draftSyncStatus === "saved" && (
+                  <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
+                    <CheckCircle2 className="h-3.5 w-3.5" /> Saved to cloud
+                  </span>
+                )}
+                {draftSyncStatus === "error" && (
+                  <span className="text-xs font-semibold text-amber-600">⚠ Offline — saved locally</span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setShowDraftBanner(false)}
+                  className="text-emerald-500 hover:text-emerald-700 cursor-pointer"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
             </div>
           )}
 
@@ -1661,10 +1721,10 @@ function StepHeader({ eyebrow, title, description }) {
       <p className="mb-2 text-xs font-black uppercase tracking-[0.25em] text-blue-600">
         {eyebrow}
       </p>
-      <h2 className="text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
+      <h2 className="text-3xl font-black tracking-tight text-slate-950 dark:text-white md:text-4xl">
         {title}
       </h2>
-      <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-500">
+      <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-500 dark:text-slate-400">
         {description}
       </p>
     </div>
@@ -1682,31 +1742,31 @@ function InputField({
 }) {
   return (
     <div className={className}>
-      <label className="mb-2 block text-sm font-black text-slate-700">
+      <label className="mb-2 block text-sm font-black text-slate-700 dark:text-slate-300">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
 
       <div
-        className={`flex items-start gap-3 rounded-3xl border bg-white px-4 py-3 transition focus-within:ring-4 ${
+        className={`flex items-start gap-3 rounded-3xl border bg-white dark:bg-slate-900 px-4 py-3 transition focus-within:ring-4 ${
           type === "textarea" ? "min-h-28" : "h-14 items-center"
         } ${
           error
-            ? "border-red-400 focus-within:ring-red-100"
-            : "border-slate-200 focus-within:border-slate-950 focus-within:ring-slate-100"
+            ? "border-red-400 focus-within:ring-red-100 dark:focus-within:ring-red-950"
+            : "border-slate-200 dark:border-slate-800 focus-within:border-slate-950 dark:focus-within:border-slate-400 focus-within:ring-slate-100 dark:focus-within:ring-slate-900/30"
         }`}
       >
-        {Icon && <Icon className={`h-5 w-5 text-slate-400 ${type === "textarea" ? "mt-1" : ""}`} />}
+        {Icon && <Icon className={`h-5 w-5 text-slate-400 dark:text-slate-500 ${type === "textarea" ? "mt-1" : ""}`} />}
         {type === "textarea" ? (
           <textarea
             {...props}
             rows={3}
-            className="h-full w-full bg-transparent text-sm font-semibold text-slate-800 outline-none placeholder:text-slate-400 resize-none"
+            className="h-full w-full bg-transparent text-sm font-semibold text-slate-800 dark:text-slate-100 outline-none placeholder:text-slate-400 resize-none"
           />
         ) : (
           <input
             {...props}
             type={type}
-            className="h-full w-full bg-transparent text-sm font-semibold text-slate-800 outline-none placeholder:text-slate-400"
+            className="h-full w-full bg-transparent text-sm font-semibold text-slate-800 dark:text-slate-100 outline-none placeholder:text-slate-400"
           />
         )}
       </div>
@@ -1728,25 +1788,25 @@ function SelectField({
 }) {
   return (
     <div className={className}>
-      <label className="mb-2 block text-sm font-black text-slate-700">
+      <label className="mb-2 block text-sm font-black text-slate-700 dark:text-slate-300">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
 
       <div
-        className={`flex h-14 items-center gap-3 rounded-3xl border bg-white px-4 transition focus-within:ring-4 ${
+        className={`flex h-14 items-center gap-3 rounded-3xl border bg-white dark:bg-slate-900 px-4 transition focus-within:ring-4 ${
           error
-            ? "border-red-400 focus-within:ring-red-100"
-            : "border-slate-200 focus-within:border-slate-950 focus-within:ring-slate-100"
+            ? "border-red-400 focus-within:ring-red-100 dark:focus-within:ring-red-950"
+            : "border-slate-200 dark:border-slate-800 focus-within:border-slate-950 dark:focus-within:border-slate-400 focus-within:ring-slate-100 dark:focus-within:ring-slate-900/30"
         }`}
       >
-        {Icon && <Icon className="h-5 w-5 text-slate-400" />}
+        {Icon && <Icon className="h-5 w-5 text-slate-400 dark:text-slate-500" />}
         <select
           {...props}
-          className="h-full w-full bg-transparent text-sm font-semibold text-slate-800 outline-none"
+          className="h-full w-full bg-transparent text-sm font-semibold text-slate-800 dark:text-slate-100 outline-none"
         >
-          <option value="">{placeholder || "Select"}</option>
+          <option value="" className="dark:bg-slate-950 dark:text-white">{placeholder || "Select"}</option>
           {options.map((option) => (
-            <option key={option} value={option}>
+            <option key={option} value={option} className="dark:bg-slate-950 dark:text-white">
               {option}
             </option>
           ))}
@@ -1766,10 +1826,10 @@ function SegmentedButtons({ value, options, onChange }) {
           key={option.value}
           type="button"
           onClick={() => onChange(option.value)}
-          className={`rounded-2xl px-5 py-3 text-sm font-black transition ${
+          className={`rounded-2xl px-5 py-3 text-sm font-black transition cursor-pointer ${
             value === option.value
-              ? "bg-slate-950 text-white shadow-lg shadow-slate-300"
-              : "bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
+              ? "bg-slate-950 dark:bg-white text-white dark:text-slate-950 shadow-lg shadow-slate-300 dark:shadow-none"
+              : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 ring-1 ring-slate-200 dark:ring-slate-850 hover:bg-slate-50 dark:hover:bg-slate-850"
           }`}
         >
           {option.label}
@@ -1796,10 +1856,10 @@ function FileUploadCard({
     <div
       className={`rounded-[2rem] border p-5 transition ${
         uploaded
-          ? "border-emerald-200 bg-emerald-50"
+          ? "border-emerald-200 dark:border-emerald-800/80 bg-emerald-50 dark:bg-emerald-950/20"
           : required
-          ? "border-red-200 bg-red-50"
-          : "border-slate-200 bg-white"
+          ? "border-red-200 dark:border-red-800/80 bg-red-50 dark:bg-red-950/10"
+          : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
       }`}
     >
       <input
@@ -1815,24 +1875,24 @@ function FileUploadCard({
           <div className="flex gap-4">
             <div
               className={`flex h-14 w-14 items-center justify-center rounded-2xl ${
-                uploaded ? "bg-emerald-100 text-emerald-700" : "bg-white text-slate-600"
+                uploaded ? "bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300" : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-100 dark:border-slate-700"
               }`}
             >
               <Icon className="h-6 w-6" />
             </div>
 
             <div>
-              <p className="font-black text-slate-900">
+              <p className="font-black text-slate-900 dark:text-slate-100">
                 {title} {required && <span className="text-red-500">*</span>}
               </p>
-              <p className="mt-1 text-sm text-slate-500">{subtitle}</p>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{subtitle}</p>
             </div>
           </div>
 
           {uploaded ? (
-            <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+            <CheckCircle2 className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
           ) : (
-            <UploadCloud className="h-6 w-6 text-slate-400" />
+            <UploadCloud className="h-6 w-6 text-slate-400 dark:text-slate-500" />
           )}
         </div>
 
@@ -1840,17 +1900,17 @@ function FileUploadCard({
           <img
             src={preview}
             alt="Preview"
-            className="mt-4 h-28 w-28 rounded-2xl object-cover ring-1 ring-slate-200"
+            className="mt-4 h-28 w-28 rounded-2xl object-cover ring-1 ring-slate-200 dark:ring-slate-800"
           />
         )}
 
-        <div className="mt-4 rounded-2xl bg-white/70 px-4 py-3 text-sm font-bold">
+        <div className="mt-4 rounded-2xl bg-white/70 dark:bg-slate-800/80 px-4 py-3 text-sm font-bold">
           {uploaded ? (
-            <span className="text-emerald-700">✓ {file.name}</span>
+            <span className="text-emerald-700 dark:text-emerald-300">✓ {file.name}</span>
           ) : required ? (
-            <span className="text-red-600">Required - click to upload</span>
+            <span className="text-red-600 dark:text-red-400">Required - click to upload</span>
           ) : (
-            <span className="text-slate-500">Optional - click to upload</span>
+            <span className="text-slate-500 dark:text-slate-400">Optional - click to upload</span>
           )}
         </div>
       </label>
@@ -1860,12 +1920,12 @@ function FileUploadCard({
 
 function ReviewCard({ title, icon: Icon, children }) {
   return (
-    <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="rounded-[2rem] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
       <div className="mb-4 flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950 text-white">
+        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950 dark:bg-white text-white dark:text-slate-950">
           <Icon className="h-5 w-5" />
         </div>
-        <h3 className="text-lg font-black text-slate-900">{title}</h3>
+        <h3 className="text-lg font-black text-slate-900 dark:text-slate-100">{title}</h3>
       </div>
       <div className="space-y-2">{children}</div>
     </div>
@@ -1875,8 +1935,8 @@ function ReviewCard({ title, icon: Icon, children }) {
 function ReviewRow({ label, value }) {
   return (
     <p className="text-sm leading-6">
-      <span className="font-black text-slate-800">{label}: </span>
-      <span className="text-slate-600">{value || "Not provided"}</span>
+      <span className="font-black text-slate-800 dark:text-slate-200">{label}: </span>
+      <span className="text-slate-600 dark:text-slate-400">{value || "Not provided"}</span>
     </p>
   );
 }
@@ -1911,7 +1971,7 @@ function SecondaryButton({ children, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-300 bg-white px-7 py-4 text-sm font-black text-slate-700 transition hover:bg-slate-50"
+      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-7 py-4 text-sm font-black text-slate-700 dark:text-slate-300 transition hover:bg-slate-50 dark:hover:bg-slate-800"
     >
       {children}
     </button>

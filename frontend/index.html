@@ -2,7 +2,22 @@
 <html lang="en">
 
 <head>
-<link rel="apple-touch-icon" href="/logo.png" />
+  <script>
+    (function() {
+      try {
+        const theme = localStorage.getItem('theme') || 'system';
+        const isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        if (isDark) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      } catch (e) {
+        console.error('Failed to set initial dark mode theme:', e);
+      }
+    })();
+  </script>
+  <link rel="apple-touch-icon" href="/logo.png" />
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 

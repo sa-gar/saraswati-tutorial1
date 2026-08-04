@@ -1,5 +1,6 @@
 import express from "express";
 import Tutor from "../models/Tutor.js";
+import TutorRegistrationDraft from "../models/TutorRegistrationDraft.js";
 import ParentEnquiry from "../models/ParentEnquiry.js";
 import BroadcastLog from "../models/BroadcastLog.js";
 import fetch from "node-fetch";
@@ -225,6 +226,88 @@ router.post("/match", async (req, res) => {
   }
 });
 
+// =============================================================
+// AUTO-SAVE tutor registration draft
+// POST /api/tutors/draft  (public — no auth required)
+// =============================================================
+router.post("/draft", async (req, res) => {
+  try {
+    const { phone, stepReached, formData, sameAsMobile, geoInfo, ipAddress, visitor_id, session_id } = req.body;
+
+    if (!phone) {
+      return res.status(400).json({ message: "phone is required" });
+    }
+
+    // Resolve client IP for geo analytics
+    let clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "";
+    if (clientIp.includes(",")) clientIp = clientIp.split(",")[0].trim();
+    if (clientIp.startsWith("::ffff:")) clientIp = clientIp.substring(7);
+
+    const draft = await TutorRegistrationDraft.findOneAndUpdate(
+      { phone: phone.trim() },
+      {
+        stepReached: stepReached || 1,
+        formData: formData || {},
+        sameAsMobile: sameAsMobile !== false,
+        geoInfo: geoInfo || {},
+        ipAddress: ipAddress || clientIp,
+        visitor_id: visitor_id || "",
+        session_id: session_id || "",
+      },
+      { new: true, upsert: true }
+    );
+
+    res.status(200).json(draft);
+  } catch (error) {
+    console.error("[TutorDraft] Save error:", error);
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// =============================================================
+// GET all tutor registration drafts  (admin only)
+// GET /api/tutors/drafts
+// =============================================================
+router.get("/drafts", verifyToken(["admin"]), async (req, res) => {
+  try {
+    const drafts = await TutorRegistrationDraft.find().sort({ updatedAt: -1 });
+    res.json(drafts);
+  } catch (error) {
+    console.error("[TutorDraft] Fetch all error:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// =============================================================
+// GET single tutor draft  (admin only)
+// GET /api/tutors/drafts/:id
+// =============================================================
+router.get("/drafts/:id", verifyToken(["admin"]), async (req, res) => {
+  try {
+    const draft = await TutorRegistrationDraft.findById(req.params.id);
+    if (!draft) return res.status(404).json({ message: "Draft not found" });
+    res.json(draft);
+  } catch (error) {
+    console.error("[TutorDraft] Fetch single error:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// =============================================================
+// DELETE tutor registration draft  (admin only)
+// DELETE /api/tutors/drafts/:id
+// =============================================================
+router.delete("/drafts/:id", verifyToken(["admin"]), async (req, res) => {
+  try {
+    const draft = await TutorRegistrationDraft.findByIdAndDelete(req.params.id);
+    if (!draft) return res.status(404).json({ message: "Draft not found" });
+    res.json({ message: "Draft deleted successfully" });
+  } catch (error) {
+    console.error("[TutorDraft] Delete error:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
 router.post("/", async (req, res) => {
   try {
     const { phone } = req.body;
@@ -276,6 +359,14 @@ router.post("/", async (req, res) => {
       console.log(`[MongoDB] Creating new tutor record with phone ${phone}...`);
       tutor = new Tutor(tutorData);
       await tutor.save();
+    }
+
+    // Auto-delete matching draft on successful registration
+    try {
+      await TutorRegistrationDraft.deleteOne({ phone: phone.trim() });
+      console.log(`[TutorDraft] Draft auto-deleted for phone ${phone} after registration.`);
+    } catch (draftErr) {
+      console.warn("[TutorDraft] Could not delete draft after registration:", draftErr.message);
     }
 
     res.status(201).json(tutor);

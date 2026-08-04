@@ -238,9 +238,9 @@ export default function ParentPortal() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-16">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-16 text-slate-800 dark:text-slate-100 transition-colors duration-200">
       {/* Brand Header */}
-      <header className="bg-slate-900 text-white shadow-md">
+      <header className="bg-slate-900 dark:bg-slate-950 text-white shadow-md border-b border-slate-850">
         <div className="mx-auto max-w-3xl px-4 py-5 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="h-9 w-9 rounded-xl bg-indigo-600 flex items-center justify-center font-bold text-white shadow-md">
@@ -255,17 +255,17 @@ export default function ParentPortal() {
       <main className="mx-auto max-w-3xl px-4 mt-8">
         
         {/* Search Panel */}
-        <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm">
           <div className="mb-4">
-            <h2 className="text-lg font-extrabold text-slate-800">Check Class Attendance & Progress</h2>
-            <p className="text-xs text-slate-500 mt-1">
+            <h2 className="text-lg font-extrabold text-slate-800 dark:text-white">Check Class Attendance & Progress</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               Enter your registered parent phone number to verify class details, timeline logs, and progress.
             </p>
           </div>
 
           <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400 dark:text-slate-500">
                 <Phone className="h-4 w-4" />
               </span>
               <input
@@ -274,7 +274,7 @@ export default function ParentPortal() {
                 placeholder="Registered phone number (e.g. 9876543210)"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full h-12 pl-10 pr-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all text-slate-800"
+                className="w-full h-12 pl-10 pr-4 rounded-2xl bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-slate-900 transition-all text-slate-800 dark:text-white"
               />
             </div>
             
@@ -293,7 +293,7 @@ export default function ParentPortal() {
           </form>
 
           {error && (
-            <div className="mt-4 rounded-xl bg-rose-50 border border-rose-100 p-3 text-xs font-bold text-rose-700">
+            <div className="mt-4 rounded-xl bg-rose-50 dark:bg-rose-955/20 border border-rose-100 dark:border-rose-900/60 p-3 text-xs font-bold text-rose-700 dark:text-rose-400">
               {error}
             </div>
           )}

@@ -33,7 +33,8 @@ app.use(
       "http://localhost:5174",
       "https://saraswatitutorial.com",
       "https://mumbai.saraswatitutorial.com",
-      "https://saraswati-tutorials.odoo.com"
+      "https://saraswati-tutorials.odoo.com",
+      "https://odoo.saraswatitutorials.com"
     ],
     credentials: true,
   })
@@ -57,7 +58,7 @@ app.get("/s/:shortId", (req, res) => {
 
   // Hardcoded mapping (test)
   const links = {
-    abc123: "https://saraswati-tutorials.odoo.com/sign/document/mail/2/0d0ea973-17e1-4b9d-ba88-d45a7ad21f3",
+    abc123: "https://odoo.saraswatitutorials.com/sign/document/mail/2/0d0ea973-17e1-4b9d-ba88-d45a7ad21f3",
   };
 
   const fullUrl = links[shortId];
