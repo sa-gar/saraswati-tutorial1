@@ -1189,7 +1189,7 @@ export default function ParentEnquiryForm() {
   };
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#dbeafe,transparent_35%),radial-gradient(circle_at_top_right,#fce7f3,transparent_30%),linear-gradient(135deg,#f8fafc,#eef2ff)] px-4 py-8 md:px-6 md:py-12">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#dbeafe,transparent_35%),radial-gradient(circle_at_top_right,#fce7f3,transparent_30%),linear-gradient(135deg,#f8fafc,#eef2ff)] dark:bg-none dark:bg-slate-950 px-4 py-8 md:px-6 md:py-12">
       <style>{`
         .animate-slideFade {
           animation: slideFade 0.28s ease both;
@@ -1211,6 +1211,9 @@ export default function ParentEnquiryForm() {
           background: rgba(255, 255, 255, 0.82);
           backdrop-filter: blur(18px);
           -webkit-backdrop-filter: blur(18px);
+        }
+        :root.dark .glass-card {
+          background: rgba(15, 23, 42, 0.85);
         }
 
         @keyframes shineEffect {
@@ -1241,35 +1244,35 @@ export default function ParentEnquiryForm() {
       `}</style>
 
       <div className="mx-auto max-w-6xl">
-        <div className="mb-8 overflow-hidden rounded-[1.5rem] md:rounded-[2.5rem] bg-gradient-to-br from-white to-slate-50 border border-slate-200/60 shadow-xl shadow-slate-100/70">
-          <div className="relative p-4 sm:p-6 text-slate-800 md:p-10">
+        <div className="mb-8 overflow-hidden rounded-[1.5rem] md:rounded-[2.5rem] bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-800 border border-slate-200/60 dark:border-slate-700/60 shadow-xl shadow-slate-100/70 dark:shadow-slate-950/50">
+          <div className="relative p-4 sm:p-6 text-slate-800 dark:text-slate-100 md:p-10">
             <div className="absolute right-0 top-0 h-48 w-48 rounded-full bg-blue-500/5 blur-3xl pointer-events-none" />
             <div className="absolute bottom-0 left-1/3 h-40 w-40 rounded-full bg-indigo-500/5 blur-3xl pointer-events-none" />
 
             <div className="relative z-10 grid gap-8 md:grid-cols-[1.4fr_0.6fr] md:items-center">
               <div>
-                <div className="mb-4 inline-flex rounded-full bg-blue-50 border border-blue-200/60 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-blue-800 shadow-sm">
+                <div className="mb-4 inline-flex rounded-full bg-blue-50 dark:bg-blue-950/50 border border-blue-200/60 dark:border-blue-800/50 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.2em] text-blue-800 dark:text-blue-300 shadow-sm">
                   Premium Parent Enquiry
                 </div>
 
-                <h1 className="text-4xl font-black tracking-tight text-slate-900 md:text-5xl leading-tight">
+                <h1 className="text-4xl font-black tracking-tight text-slate-900 dark:text-white md:text-5xl leading-tight">
                   Find the <span className="bg-gradient-to-r from-blue-600 via-blue-500 to-blue-700 bg-clip-text text-transparent">perfect tutor</span> for your child
                 </h1>
 
-                <p className="mt-4 max-w-2xl text-base leading-7 text-slate-500 md:text-lg font-medium">
+                <p className="mt-4 max-w-2xl text-base leading-7 text-slate-500 dark:text-slate-400 md:text-lg font-medium">
                   Share student details, tuition preferences, and parent information.
                   Our team will match you with the right tutor.
                 </p>
               </div>
 
-              <div className="rounded-[2.2rem] bg-white border border-slate-200/80 p-6 shadow-md flex items-center gap-5">
+              <div className="rounded-[2.2rem] bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 p-6 shadow-md flex items-center gap-5">
                 <div className="relative flex items-center justify-center shrink-0">
                   <svg className="h-16 w-16 -rotate-90">
                     <circle
                       cx="32"
                       cy="32"
                       r="28"
-                      className="stroke-slate-100 fill-none"
+                      className="stroke-slate-100 dark:stroke-slate-700 fill-none"
                       strokeWidth="5.5"
                     />
                     <circle
@@ -1283,18 +1286,18 @@ export default function ParentEnquiryForm() {
                       strokeLinecap="round"
                     />
                   </svg>
-                  <span className="absolute text-sm font-extrabold text-slate-800">
+                  <span className="absolute text-sm font-extrabold text-slate-800 dark:text-white">
                     {step}/{totalSteps}
                   </span>
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Progress</p>
-                  <h4 className="text-base font-black text-slate-855 mt-0.5 leading-snug">
+                  <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Progress</p>
+                  <h4 className="text-base font-black text-slate-800 dark:text-white mt-0.5 leading-snug">
                     {step === 1 && "Parent Details"}
                     {step === 2 && "Student Details"}
                     {step === 3 && "Tutor Preferences & Plan"}
                   </h4>
-                  <p className="text-xs text-slate-455 font-semibold mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold mt-0.5">
                     Step {step} of {totalSteps}
                   </p>
                 </div>
@@ -1330,7 +1333,7 @@ export default function ParentEnquiryForm() {
           />
         </div>        <form
           onSubmit={(e) => e.preventDefault()}
-          className="glass-card rounded-[1.5rem] md:rounded-[2.5rem] border border-white/70 p-4 sm:p-5 shadow-2xl shadow-slate-200/80 md:p-8"
+          className="glass-card rounded-[1.5rem] md:rounded-[2.5rem] border border-white/70 dark:border-slate-700/60 p-4 sm:p-5 shadow-2xl shadow-slate-200/80 dark:shadow-slate-950/50 md:p-8"
         >
           <AnimatePresence mode="wait">
             {/* STEP 1: Parent Details */}
@@ -2567,8 +2570,8 @@ export default function ParentEnquiryForm() {
           {message && (
             <div
               className={`mt-8 rounded-2xl px-5 py-4 text-sm font-bold flex items-center gap-2 ${message.toLowerCase().includes("success")
-                ? "bg-emerald-50 text-emerald-750 border border-emerald-200"
-                : "bg-red-50 text-red-755 border border-red-200"
+                ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-750 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50"
+                : "bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800/50"
                 }`}
             >
               <Info className="h-5 w-5 shrink-0" />
@@ -2576,12 +2579,12 @@ export default function ParentEnquiryForm() {
             </div>
           )}
 
-          <div className="mt-10 pt-6 border-t border-slate-100 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-10 pt-6 border-t border-slate-100 dark:border-slate-800 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
             {step > 1 ? (
               <button
                 type="button"
                 onClick={prevStep}
-                className="rounded-2xl border border-slate-200 bg-white px-7 py-4 text-sm font-black text-slate-700 shadow-sm transition-all duration-300 hover:bg-slate-50 hover:border-slate-300 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
+                className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-7 py-4 text-sm font-black text-slate-700 dark:text-slate-200 shadow-sm transition-all duration-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-300 dark:hover:border-slate-600 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
               >
                 <ArrowLeft className="h-4 w-4" /> Previous
               </button>
@@ -2631,10 +2634,10 @@ function StepBox({ number, active, done, title, subtitle, icon: Icon }) {
     <div
       className={`relative overflow-hidden rounded-[1.2rem] sm:rounded-[1.8rem] border p-2 sm:p-3.5 transition-all duration-300 flex items-center gap-2 sm:gap-3.5 cursor-default ${
         active
-          ? "border-slate-900 bg-slate-900 text-white shadow-lg shadow-slate-900/10 scale-[1.02]"
+          ? "border-slate-900 dark:border-blue-700 bg-slate-900 dark:bg-slate-800 text-white shadow-lg shadow-slate-900/10 scale-[1.02]"
           : done
-          ? "border-emerald-200 bg-emerald-50 text-emerald-850"
-          : "border-slate-200 bg-white/80 backdrop-blur-md text-slate-550 shadow-sm hover:border-slate-300"
+          ? "border-emerald-200 dark:border-emerald-800/50 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-850 dark:text-emerald-300"
+          : "border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/60 backdrop-blur-md text-slate-550 dark:text-slate-400 shadow-sm hover:border-slate-300 dark:hover:border-slate-600"
       }`}
     >
       {active && (
@@ -2645,8 +2648,8 @@ function StepBox({ number, active, done, title, subtitle, icon: Icon }) {
           active
             ? "bg-blue-600 text-white font-extrabold"
             : done
-            ? "bg-emerald-100 text-emerald-800"
-            : "bg-slate-50 text-slate-450"
+            ? "bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300"
+            : "bg-slate-50 dark:bg-slate-700 text-slate-450 dark:text-slate-400"
         }`}
       >
         {done ? <Check className="h-4.5 w-4.5 sm:h-5 sm:w-5" /> : Icon ? <Icon className="h-4.5 w-4.5 sm:h-5 sm:w-5" /> : <span>{number}</span>}
@@ -2665,15 +2668,15 @@ function SectionTitle({ eyebrow, title, description }) {
   return (
     <div className="mb-8 flex flex-col items-start">
       <div className="flex items-center gap-2">
-        <span className="h-1.5 w-1.5 rounded-full bg-blue-650 animate-pulse" />
-        <p className="text-xs font-black uppercase tracking-[0.25em] text-blue-650">
+        <span className="h-1.5 w-1.5 rounded-full bg-blue-600 animate-pulse" />
+        <p className="text-xs font-black uppercase tracking-[0.25em] text-blue-600">
           {eyebrow}
         </p>
       </div>
-      <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-4xl bg-gradient-to-br from-slate-950 to-slate-800 bg-clip-text text-transparent">
+      <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 dark:text-white md:text-4xl">
         {title}
       </h2>
-      <p className="mt-2.5 max-w-2xl text-sm leading-6 text-slate-500 font-medium">
+      <p className="mt-2.5 max-w-2xl text-sm leading-6 text-slate-500 dark:text-slate-400 font-medium">
         {description}
       </p>
     </div>

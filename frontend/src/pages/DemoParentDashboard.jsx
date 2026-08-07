@@ -206,9 +206,9 @@ export default function DemoParentDashboard({ onClose, selectedPlan = "advance" 
 
             {/* Top Demo Notice Alert Banner */}
             {showNotice && (
-              <div className="bg-blue-50/90 border border-blue-200/80 rounded-2xl p-4 text-xs font-semibold text-blue-900 flex items-center justify-between shadow-sm">
+              <div className="bg-blue-50/90 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-800/50 rounded-2xl p-4 text-xs font-semibold text-blue-900 dark:text-blue-200 flex items-center justify-between shadow-sm">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-xl bg-blue-100 text-blue-700 shrink-0">
+                  <div className="p-2 rounded-xl bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 shrink-0">
                     <Info className="h-4 w-4" />
                   </div>
                   <p>
@@ -217,7 +217,7 @@ export default function DemoParentDashboard({ onClose, selectedPlan = "advance" 
                 </div>
                 <button
                   onClick={() => setShowNotice(false)}
-                  className="p-1 rounded-lg text-blue-400 hover:text-blue-700 transition cursor-pointer shrink-0"
+                  className="p-1 rounded-lg text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition cursor-pointer shrink-0"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -474,20 +474,20 @@ export default function DemoParentDashboard({ onClose, selectedPlan = "advance" 
                     <div className="space-y-3.5">
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-2.5">
-                          <div className="p-1.5 rounded-full bg-emerald-50 text-emerald-600">
+                          <div className="p-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600">
                             <CheckCircle2 className="h-4 w-4" />
                           </div>
-                          <span className="font-bold text-slate-800">Science assignment submitted</span>
+                          <span className="font-bold text-slate-800 dark:text-slate-200">Science assignment submitted</span>
                         </div>
                         <span className="text-[10px] font-semibold text-slate-400">2 hours ago</span>
                       </div>
 
                       <div className="flex items-center justify-between text-xs">
                         <div className="flex items-center gap-2.5">
-                          <div className="p-1.5 rounded-full bg-blue-50 text-blue-600">
+                          <div className="p-1.5 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-600">
                             <FileText className="h-4 w-4" />
                           </div>
-                          <span className="font-bold text-slate-800">Maths test conducted</span>
+                          <span className="font-bold text-slate-800 dark:text-slate-200">Maths test conducted</span>
                         </div>
                         <span className="text-[10px] font-semibold text-slate-400">1 day ago</span>
                       </div>
@@ -503,18 +503,18 @@ export default function DemoParentDashboard({ onClose, selectedPlan = "advance" 
               <div className="space-y-6">
                 {/* Attendance Summary Stat Row */}
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                  <div className="bg-white rounded-2xl border border-slate-200/90 p-4 flex items-center gap-3.5 shadow-sm">
-                    <div className="p-3 rounded-xl bg-blue-50 text-blue-600">
+                  <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/90 dark:border-slate-700 p-4 flex items-center gap-3.5 shadow-sm">
+                    <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600">
                       <Calendar className="h-5 w-5" />
                     </div>
                     <div>
                       <p className="text-[10px] font-black uppercase text-slate-400">Total Classes</p>
-                      <p className="text-xl font-black text-slate-900">20</p>
+                      <p className="text-xl font-black text-slate-900 dark:text-white">20</p>
                     </div>
                   </div>
 
-                  <div className="bg-white rounded-2xl border border-slate-200/90 p-4 flex items-center gap-3.5 shadow-sm">
-                    <div className="p-3 rounded-xl bg-emerald-50 text-emerald-600">
+                  <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/90 dark:border-slate-700 p-4 flex items-center gap-3.5 shadow-sm">
+                    <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600">
                       <CheckCircle2 className="h-5 w-5" />
                     </div>
                     <div>
@@ -523,8 +523,8 @@ export default function DemoParentDashboard({ onClose, selectedPlan = "advance" 
                     </div>
                   </div>
 
-                  <div className="bg-white rounded-2xl border border-slate-200/90 p-4 flex items-center gap-3.5 shadow-sm">
-                    <div className="p-3 rounded-xl bg-rose-50 text-rose-600">
+                  <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/90 dark:border-slate-700 p-4 flex items-center gap-3.5 shadow-sm">
+                    <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600">
                       <XCircle className="h-5 w-5" />
                     </div>
                     <div>
@@ -533,8 +533,8 @@ export default function DemoParentDashboard({ onClose, selectedPlan = "advance" 
                     </div>
                   </div>
 
-                  <div className="bg-white rounded-2xl border border-slate-200/90 p-4 flex items-center gap-3.5 shadow-sm">
-                    <div className="p-3 rounded-xl bg-amber-50 text-amber-600">
+                  <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/90 dark:border-slate-700 p-4 flex items-center gap-3.5 shadow-sm">
+                    <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600">
                       <Clock className="h-5 w-5" />
                     </div>
                     <div>
@@ -545,32 +545,32 @@ export default function DemoParentDashboard({ onClose, selectedPlan = "advance" 
                 </div>
 
                 {/* Attendance Timeline Table Card */}
-                <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-5">
+                <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/90 dark:border-slate-700 p-6 shadow-sm">
+                  <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-4 mb-5">
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-blue-600" />
-                      <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">Class Attendance Log</h3>
+                      <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">Class Attendance Log</h3>
                     </div>
-                    <span className="text-xs font-bold text-slate-500">Jul 2026</span>
+                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Jul 2026</span>
                   </div>
 
-                  <div className="divide-y divide-slate-100">
+                  <div className="divide-y divide-slate-100 dark:divide-slate-700">
                     {DEMO_ATTENDANCE.map((entry, idx) => (
                       <div key={idx} className="py-3.5 flex items-center justify-between gap-4">
                         <div className="flex items-center gap-3.5">
                           <div className={`p-2.5 rounded-xl shrink-0 ${
-                            entry.status === "Done" ? "bg-emerald-50 text-emerald-600 border border-emerald-200/60" : "bg-rose-50 text-rose-600 border border-rose-200/60"
+                            entry.status === "Done" ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 border border-emerald-200/60 dark:border-emerald-800/40" : "bg-rose-50 dark:bg-rose-950/40 text-rose-600 border border-rose-200/60 dark:border-rose-800/40"
                           }`}>
                             {entry.status === "Done" ? <CheckCircle2 className="h-4.5 w-4.5" /> : <XCircle className="h-4.5 w-4.5" />}
                           </div>
                           <div>
-                            <h4 className="text-xs font-black text-slate-900">{entry.topic}</h4>
-                            <p className="text-[11px] font-semibold text-slate-400 mt-0.5">{entry.date} &bull; {entry.day} &bull; Teacher: Mrs. Priya Nair</p>
+                            <h4 className="text-xs font-black text-slate-900 dark:text-white">{entry.topic}</h4>
+                            <p className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 mt-0.5">{entry.date} &bull; {entry.day} &bull; Teacher: Mrs. Priya Nair</p>
                           </div>
                         </div>
 
                         <span className={`text-[10px] font-black px-3 py-1 rounded-full shrink-0 ${
-                          entry.status === "Done" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-rose-50 text-rose-700 border border-rose-200"
+                          entry.status === "Done" ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40" : "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40"
                         }`}>
                           {entry.status}
                         </span>
@@ -585,10 +585,10 @@ export default function DemoParentDashboard({ onClose, selectedPlan = "advance" 
             {activeTab === "progress" && (
               <div className="space-y-6">
                 {/* Subject Progress Card */}
-                <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm">
-                  <div className="flex items-center gap-2 border-b border-slate-100 pb-3.5 mb-5">
+                <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/90 dark:border-slate-700 p-6 shadow-sm">
+                  <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-700 pb-3.5 mb-5">
                     <TrendingUp className="h-4 w-4 text-emerald-600" />
-                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">Subject-wise Progress</h3>
+                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">Subject-wise Progress</h3>
                   </div>
 
                   <div className="space-y-5">
@@ -599,23 +599,23 @@ export default function DemoParentDashboard({ onClose, selectedPlan = "advance" 
                     ].map((item) => (
                       <div key={item.subject} className="space-y-1.5">
                         <div className="flex items-center justify-between text-xs">
-                          <span className="font-extrabold text-slate-800">{item.subject}</span>
+                          <span className="font-extrabold text-slate-800 dark:text-slate-100">{item.subject}</span>
                           <span className={`font-black ${item.textColor}`}>{item.percent}%</span>
                         </div>
-                        <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-2.5 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
                           <div className={`h-full ${item.color} rounded-full transition-all duration-700`} style={{ width: `${item.percent}%` }} />
                         </div>
-                        <p className="text-[10px] text-slate-400 font-semibold">Teacher: {item.teacher}</p>
+                        <p className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold">Teacher: {item.teacher}</p>
                       </div>
                     ))}
                   </div>
                 </div>
 
                 {/* Topics Covered Grid */}
-                <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm">
-                  <div className="flex items-center gap-2 border-b border-slate-100 pb-3.5 mb-5">
+                <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/90 dark:border-slate-700 p-6 shadow-sm">
+                  <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-700 pb-3.5 mb-5">
                     <BookOpen className="h-4 w-4 text-blue-600" />
-                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">Syllabus & Topics Tracker</h3>
+                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">Syllabus & Topics Tracker</h3>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -646,16 +646,16 @@ export default function DemoParentDashboard({ onClose, selectedPlan = "advance" 
                         ]
                       }
                     ].map((col) => (
-                      <div key={col.subj} className="bg-slate-50 border border-slate-150 rounded-2xl p-4 space-y-3">
-                        <h4 className="text-xs font-black uppercase text-slate-700 border-b border-slate-200 pb-2">{col.subj}</h4>
+                      <div key={col.subj} className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 space-y-3">
+                        <h4 className="text-xs font-black uppercase text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700 pb-2">{col.subj}</h4>
                         <div className="space-y-2">
                           {col.topics.map((t, i) => (
                             <div key={i} className="flex items-center justify-between text-xs">
-                              <span className="font-semibold text-slate-700">{t.name}</span>
+                              <span className="font-semibold text-slate-700 dark:text-slate-300">{t.name}</span>
                               <span className={`text-[9px] font-black px-2 py-0.5 rounded-md ${
-                                t.status === "Completed" ? "bg-emerald-100 text-emerald-800" :
-                                t.status === "In Progress" ? "bg-blue-100 text-blue-800" :
-                                "bg-amber-100 text-amber-800"
+                                t.status === "Completed" ? "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300" :
+                                t.status === "In Progress" ? "bg-blue-100 dark:bg-blue-950/50 text-blue-800 dark:text-blue-300" :
+                                "bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300"
                               }`}>
                                 {t.status}
                               </span>
@@ -668,19 +668,19 @@ export default function DemoParentDashboard({ onClose, selectedPlan = "advance" 
                 </div>
 
                 {/* Teacher Remarks */}
-                <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm">
-                  <div className="flex items-center gap-2 border-b border-slate-100 pb-3.5 mb-4">
+                <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/90 dark:border-slate-700 p-6 shadow-sm">
+                  <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-700 pb-3.5 mb-4">
                     <MessageSquare className="h-4 w-4 text-purple-600" />
-                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">Teacher Remarks</h3>
+                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">Teacher Remarks</h3>
                   </div>
 
                   <div className="space-y-3">
                     {DEMO_REMARKS.map((r, i) => (
-                      <div key={i} className="bg-slate-50 border border-slate-150 rounded-2xl p-4 flex gap-3.5">
+                      <div key={i} className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 flex gap-3.5">
                         <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
                         <div>
-                          <p className="text-xs font-semibold text-slate-800 leading-relaxed">{r.remark}</p>
-                          <p className="text-[10px] text-slate-400 font-bold mt-1.5">— {DEMO_TEACHER.name} &bull; {r.date}</p>
+                          <p className="text-xs font-semibold text-slate-800 dark:text-slate-200 leading-relaxed">{r.remark}</p>
+                          <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold mt-1.5">— {DEMO_TEACHER.name} &bull; {r.date}</p>
                         </div>
                       </div>
                     ))}
@@ -692,30 +692,30 @@ export default function DemoParentDashboard({ onClose, selectedPlan = "advance" 
             {/* ══ HOMEWORK TAB CONTENT ══════════════════════════════════ */}
             {activeTab === "homework" && (
               <div className="space-y-6">
-                <div className="bg-white rounded-3xl border border-slate-200/90 p-6 shadow-sm">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-3.5 mb-5">
+                <div className="bg-white dark:bg-slate-800 rounded-3xl border border-slate-200/90 dark:border-slate-700 p-6 shadow-sm">
+                  <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3.5 mb-5">
                     <div className="flex items-center gap-2">
                       <FileText className="h-4 w-4 text-rose-600" />
-                      <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">Homework & Assignments</h3>
+                      <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">Homework & Assignments</h3>
                     </div>
-                    <span className="text-xs font-bold text-slate-500">3 Total Assignments</span>
+                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400">3 Total Assignments</span>
                   </div>
 
                   <div className="space-y-3">
                     {DEMO_HOMEWORK.map((hw, idx) => (
-                      <div key={idx} className="bg-slate-50 border border-slate-150 rounded-2xl p-4 flex items-center justify-between gap-4">
+                      <div key={idx} className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 flex items-center justify-between gap-4">
                         <div className="flex items-center gap-3.5">
-                          <div className={`p-2.5 rounded-xl ${hw.status === "Submitted" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
+                          <div className={`p-2.5 rounded-xl ${hw.status === "Submitted" ? "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400" : "bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400"}`}>
                             {hw.status === "Submitted" ? <CheckCheck className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
                           </div>
                           <div>
-                            <h4 className="text-xs font-black text-slate-900">{hw.task}</h4>
-                            <p className="text-[11px] font-semibold text-slate-500 mt-0.5">{hw.subject} &bull; Due: {hw.due}</p>
+                            <h4 className="text-xs font-black text-slate-900 dark:text-white">{hw.task}</h4>
+                            <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mt-0.5">{hw.subject} &bull; Due: {hw.due}</p>
                           </div>
                         </div>
 
                         <span className={`text-[10px] font-black px-3 py-1 rounded-full shrink-0 ${
-                          hw.status === "Submitted" ? "bg-emerald-100 text-emerald-800 border border-emerald-200" : "bg-amber-100 text-amber-800 border border-amber-200"
+                          hw.status === "Submitted" ? "bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/40" : "bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/40"
                         }`}>
                           {hw.status}
                         </span>

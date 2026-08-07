@@ -853,7 +853,7 @@ export default function TutorRegistration() {
         </div>
       )}
 
-      <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#dbeafe,transparent_30%),radial-gradient(circle_at_top_right,#e0e7ff,transparent_28%),linear-gradient(135deg,#f8fafc,#eef2ff)] px-4 py-8 md:px-6 md:py-12">
+      <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#dbeafe,transparent_30%),radial-gradient(circle_at_top_right,#e0e7ff,transparent_28%),linear-gradient(135deg,#f8fafc,#eef2ff)] dark:bg-none dark:bg-slate-950 px-4 py-8 md:px-6 md:py-12">
         <div className="mx-auto max-w-6xl">
           <div className="mb-8 overflow-hidden rounded-[1.5rem] md:rounded-[2.5rem] bg-slate-950 shadow-2xl">
             <div className="relative p-4 sm:p-6 text-white md:p-10">
@@ -944,28 +944,46 @@ export default function TutorRegistration() {
                   key={item.number}
                   className={`rounded-[1.2rem] sm:rounded-[1.5rem] border p-3 sm:p-4 transition ${
                     active
-                      ? "border-slate-950 bg-slate-950 text-white shadow-xl shadow-slate-300"
+                      ? "border-slate-950 dark:border-slate-800 bg-slate-950 dark:bg-slate-900 text-white shadow-xl shadow-slate-300 dark:shadow-none"
                       : done
-                      ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                      : "border-white bg-white/80 text-slate-600 shadow-sm"
+                      ? "border-emerald-200 dark:border-emerald-800/60 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300"
+                      : "border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/60 text-slate-500 dark:text-slate-300 shadow-sm"
                   }`}
                 >
                   <div className="mb-3 flex items-center justify-between">
-                    <Icon className="h-5 w-5" />
-                    <span className="text-xs font-black">
+                    <Icon className={`h-5 w-5 ${
+                      active ? "text-blue-500 dark:text-blue-400" :
+                      done ? "text-emerald-600 dark:text-emerald-400" :
+                      "text-slate-400 dark:text-slate-500"
+                    }`} />
+                    <span className={`text-xs font-black ${
+                      active ? "text-white" :
+                      done ? "text-emerald-700 dark:text-emerald-400" :
+                      "text-slate-400 dark:text-slate-500"
+                    }`}>
                       {done ? "✓" : `0${item.number}`}
                     </span>
                   </div>
-                  <p className="text-sm font-black md:text-base">
+                  <p className={`text-sm font-black md:text-base ${
+                    active ? "text-white" :
+                    done ? "text-emerald-850 dark:text-emerald-200" :
+                    "text-slate-700 dark:text-slate-200"
+                  }`}>
                     {item.title}
                   </p>
-                  <p className="mt-1 text-xs opacity-70">{item.subtitle}</p>
+                  <p className={`mt-1 text-xs font-medium ${
+                    active ? "text-white/70" :
+                    done ? "text-emerald-600 dark:text-emerald-450" :
+                    "text-slate-450 dark:text-slate-400"
+                  }`}>
+                    {item.subtitle}
+                  </p>
                 </div>
               );
             })}
           </div>
 
-          <div className="rounded-[1.5rem] md:rounded-[2.5rem] border border-white/70 bg-white/85 p-4 sm:p-5 shadow-2xl shadow-slate-200 backdrop-blur-xl md:p-8">
+          <div className="rounded-[1.5rem] md:rounded-[2.5rem] border border-white/70 dark:border-slate-800 bg-white/85 dark:bg-slate-900/85 p-4 sm:p-5 shadow-2xl shadow-slate-200 dark:shadow-slate-950/50 backdrop-blur-xl md:p-8">
             {step === 1 && (
               <section className="animate-fadeIn">
                 <StepHeader
@@ -1180,8 +1198,8 @@ export default function TutorRegistration() {
                     </div>
                   </div>
 
-                  <div className="rounded-[2rem] border border-slate-200 bg-slate-50 p-5">
-                    <p className="mb-3 text-sm font-black text-slate-800">
+                  <div className="rounded-[2rem] border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 p-5">
+                    <p className="mb-3 text-sm font-black text-slate-800 dark:text-slate-200">
                       Have you worked or are you working in any school, college,
                       or institute?
                     </p>
@@ -1348,7 +1366,7 @@ export default function TutorRegistration() {
                       <input
                         type="text"
                         placeholder="Search location..."
-                        className="h-13 w-full rounded-2xl border border-slate-200 bg-slate-50 px-11 py-3 text-sm outline-none transition focus:border-slate-950 focus:bg-white focus:ring-4 focus:ring-slate-100"
+                        className="h-13 w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-11 py-3 text-sm outline-none transition focus:border-slate-950 dark:focus:border-slate-400 focus:bg-white dark:focus:bg-slate-850 focus:ring-4 focus:ring-slate-100 dark:focus:ring-slate-900/30 text-slate-800 dark:text-slate-100"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                       />
@@ -1365,19 +1383,19 @@ export default function TutorRegistration() {
                         return (
                           <div
                             key={group}
-                            className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
+                            className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900"
                           >
                             <button
                               type="button"
                               onClick={() =>
                                 setOpenGroup(openGroup === group ? null : group)
                               }
-                              className="flex w-full items-center justify-between bg-slate-50 px-4 py-3 text-left"
+                              className="flex w-full items-center justify-between bg-slate-50 dark:bg-slate-800 px-4 py-3 text-left"
                             >
-                              <span className="font-black text-slate-800">
+                              <span className="font-black text-slate-800 dark:text-slate-200">
                                 {group}
                               </span>
-                              <span className="rounded-full bg-white px-3 py-1 text-sm font-black text-slate-500 shadow-sm">
+                              <span className="rounded-full bg-white dark:bg-slate-950 px-3 py-1 text-sm font-black text-slate-500 shadow-sm">
                                 {openGroup === group ? "−" : "+"}
                               </span>
                             </button>
@@ -1395,7 +1413,7 @@ export default function TutorRegistration() {
                                       className={`rounded-2xl border px-3 py-3 text-left text-sm font-bold transition ${
                                         active
                                           ? "border-blue-300 bg-blue-50 text-blue-700"
-                                          : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                                          : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
                                       }`}
                                     >
                                       {active ? "✓ " : ""}
@@ -1414,7 +1432,7 @@ export default function TutorRegistration() {
                         .filter((area) =>
                           area.toLowerCase().includes(search.toLowerCase())
                         ).length === 0 && (
-                        <p className="rounded-2xl bg-slate-50 p-5 text-center text-sm font-semibold text-slate-500">
+                        <p className="rounded-2xl bg-slate-50 dark:bg-slate-800/40 p-5 text-center text-sm font-semibold text-slate-500 dark:text-slate-400">
                           No locations found
                         </p>
                       )}
@@ -1428,7 +1446,7 @@ export default function TutorRegistration() {
                   </div>
 
                   {/* Vehicle Availability */}
-                  <div className="rounded-[2rem] border border-slate-200 bg-slate-50 p-5">
+                  <div className="rounded-[2rem] border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 p-5">
                     <div className="mb-3 flex items-center gap-2">
                       <Car className="h-5 w-5 text-slate-700" />
                       <p className="font-black text-slate-800">
@@ -1523,7 +1541,7 @@ export default function TutorRegistration() {
                   </div>
 
                   {/* Available Timings Section */}
-                  <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm">
+                  <div className="rounded-[2rem] border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
                     <div className="mb-5 flex items-center justify-between">
                       <div>
                         <h3 className="text-xl font-black text-slate-900">
@@ -1555,7 +1573,7 @@ export default function TutorRegistration() {
                                   className={`rounded-2xl border px-4 py-3 text-sm font-bold transition ${
                                     active
                                       ? "border-blue-300 bg-blue-50 text-blue-700"
-                                      : "border-slate-200 bg-slate-50 text-slate-600 hover:bg-white"
+                                      : "border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-800"
                                   }`}
                                 >
                                   {active ? "✓ " : ""}
@@ -1569,7 +1587,7 @@ export default function TutorRegistration() {
                     </div>
 
                     {formData.timings.length > 0 && (
-                      <p className="mt-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700">
+                      <p className="mt-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/20 px-4 py-3 text-sm font-bold text-emerald-700 dark:text-emerald-300">
                         Selected: {formData.timings.join(", ")}
                       </p>
                     )}
@@ -1579,8 +1597,8 @@ export default function TutorRegistration() {
                   <div
                     className={`rounded-[2rem] border p-5 transition ${
                       formData.agreement
-                        ? "border-emerald-200 bg-emerald-50"
-                        : "border-red-200 bg-red-50"
+                        ? "border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950/20"
+                        : "border-red-200 dark:border-red-950 bg-red-50 dark:bg-red-950/20"
                     }`}
                   >
                     <label className="flex cursor-pointer items-start gap-3">
@@ -1621,8 +1639,8 @@ export default function TutorRegistration() {
                   <div
                     className={`rounded-[2rem] border p-5 transition mt-4 ${
                       formData.attendanceAgreement
-                        ? "border-emerald-200 bg-emerald-50"
-                        : "border-red-200 bg-red-50"
+                        ? "border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950/20"
+                        : "border-red-200 dark:border-red-950 bg-red-50 dark:bg-red-950/20"
                     }`}
                   >
                     <label className="flex cursor-pointer items-start gap-3">
@@ -1655,7 +1673,7 @@ export default function TutorRegistration() {
 
                     {/* Inline expanded guidelines */}
                     {showInstructionsModal && (
-                      <div className="mt-2 rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm flex flex-col items-center p-2">
+                      <div className="mt-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-sm flex flex-col items-center p-2">
                         <img
                           src="/attendance_instructions.png"
                           alt="Attendance Guidelines"
@@ -1958,7 +1976,7 @@ function PrimaryButton({ children, disabled, onClick }) {
       className={`inline-flex items-center justify-center gap-2 rounded-2xl px-7 py-4 text-sm font-black text-white shadow-xl transition ${
         disabled
           ? "cursor-not-allowed bg-slate-400 shadow-none"
-          : "bg-gradient-to-r from-blue-600 to-indigo-600 shadow-blue-200 hover:-translate-y-0.5 hover:from-blue-700 hover:to-indigo-700"
+          : "bg-gradient-to-r from-blue-600 to-indigo-600 shadow-blue-200 dark:shadow-none hover:-translate-y-0.5 hover:from-blue-700 hover:to-indigo-700"
       }`}
     >
       {children}

@@ -465,7 +465,7 @@ export default function MumbaiPage() {
         <script type="application/ld+json">{JSON.stringify(localBusinessSchema)}</script>
       </Helmet>
       <header className="sticky top-0 z-50 w-full py-3 px-4 sm:px-6 lg:px-8 bg-transparent">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 xl:px-6 py-2.5 xl:py-3.5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/50 dark:border-slate-800/80 rounded-[1.75rem] shadow-[0_8px_30px_rgba(0,0,0,0.05)] dark:shadow-none">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 xl:px-6 py-2.5 xl:py-3.5 bg-white/95 dark:bg-[#0c1a2e]/95 backdrop-blur-md border border-slate-200/50 dark:border-slate-700/50 rounded-[1.75rem] shadow-[0_8px_30px_rgba(0,0,0,0.05)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)]">
           <div className="flex items-center gap-2 xl:gap-3 shrink-0">
             <Link to="/" className="flex items-center gap-2 xl:gap-3 group shrink-0">
               <motion.div
@@ -485,17 +485,17 @@ export default function MumbaiPage() {
               <div className="hidden sm:block shrink-0 leading-tight">
                 <motion.div 
                   whileHover={{ x: 2 }}
-                  className="text-lg xl:text-xl font-black tracking-tight text-slate-900 transition-all duration-300 group-hover:text-blue-600"
+                  className="text-lg xl:text-xl font-black tracking-tight text-slate-900 dark:text-white transition-all duration-300 group-hover:text-blue-600 dark:group-hover:text-blue-400"
                 >
                   Saraswati Tutorials
                 </motion.div>
-                <div className="text-[10px] xl:text-[11px] font-black uppercase tracking-widest text-blue-600">
+                <div className="text-[10px] xl:text-[11px] font-black uppercase tracking-widest text-blue-600 dark:text-blue-400">
                   “Beyond Tuition”
                 </div>
               </div>
             </Link>
 
-            <div className="hidden sm:block h-8 w-px bg-slate-200 mx-2 xl:mx-3 shrink-0" />
+            <div className="hidden sm:block h-8 w-px bg-slate-200 dark:bg-slate-700 mx-2 xl:mx-3 shrink-0" />
 
             <div className="shrink-0">
               <LocationSelector activeCity="Mumbai" />
@@ -503,7 +503,7 @@ export default function MumbaiPage() {
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden items-center gap-2 xl:gap-3.5 2xl:gap-5 text-xs xl:text-[13px] 2xl:text-[14px] font-bold text-slate-600 xl:flex shrink-0">
+          <nav className="hidden items-center gap-2 xl:gap-3.5 2xl:gap-5 text-xs xl:text-[13px] 2xl:text-[14px] font-bold text-slate-600 dark:text-slate-300 xl:flex shrink-0">
             {[
               { href: "#home", label: "Home", id: "home" },
               { href: "#why-choose", label: "Why Us", id: "why-choose" },
@@ -518,7 +518,7 @@ export default function MumbaiPage() {
                   key={link.id}
                   href={link.href}
                   className={`relative py-1.5 transition duration-300 whitespace-nowrap shrink-0 ${
-                    isActive ? "text-blue-600 font-extrabold" : "text-slate-600 hover:text-slate-950"
+                    isActive ? "text-blue-600 dark:text-blue-400 font-extrabold" : "text-slate-600 dark:text-slate-300 hover:text-slate-955 dark:hover:text-white"
                   }`}
                 >
                   {link.label}
@@ -553,9 +553,9 @@ export default function MumbaiPage() {
               whileHover={{ scale: 1.05, translateY: -2, boxShadow: "0 8px 16px rgba(15,23,42,0.06)" }}
               whileTap={{ scale: 0.97 }}
               transition={{ type: "spring", stiffness: 400, damping: 17 }}
-              className="whitespace-nowrap flex items-center gap-1.5 xl:gap-2 rounded-xl xl:rounded-[14px] border border-slate-200 bg-white px-3.5 xl:px-5 py-2 xl:py-2.5 text-[11px] xl:text-xs font-black text-slate-800 shadow-sm transition-all duration-300 hover:bg-slate-50 hover:border-slate-350 shrink-0"
+              className="whitespace-nowrap flex items-center gap-1.5 xl:gap-2 rounded-xl xl:rounded-[14px] border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 xl:px-5 py-2 xl:py-2.5 text-[11px] xl:text-xs font-black text-slate-800 dark:text-slate-200 shadow-sm transition-all duration-300 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-350 shrink-0"
             >
-              <User className="h-3.5 w-3.5 xl:h-4 xl:w-4 text-slate-500" />
+              <User className="h-3.5 w-3.5 xl:h-4 xl:w-4 text-slate-500 dark:text-slate-400" />
               Become a Tutor
             </MotionLink>
             <ThemeToggle />
@@ -566,7 +566,7 @@ export default function MumbaiPage() {
             <motion.button
               onClick={() => setMenuOpen(!menuOpen)}
               whileTap={{ scale: 0.95, backgroundColor: "rgba(15, 23, 42, 0.1)" }}
-              className="rounded-xl border border-slate-200 bg-white p-2 text-slate-800 cursor-pointer"
+              className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-2 text-slate-800 dark:text-slate-200 cursor-pointer"
               aria-label="Open Navigation Menu"
             >
               {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -581,33 +581,33 @@ export default function MumbaiPage() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="border-t border-white/20 bg-white/80 backdrop-blur-lg px-6 py-4 xl:hidden shadow-xl"
+              className="border-t border-white/20 dark:border-slate-700/50 bg-white/80 dark:bg-[#0c1a2e]/95 backdrop-blur-lg px-6 py-4 xl:hidden shadow-xl"
             >
-              <div className="flex flex-col gap-4 text-base font-bold text-slate-800">
-                <div className="flex items-center justify-between py-2 border-b border-white/20">
-                  <span className="text-xs font-black uppercase text-slate-400">Select City:</span>
+              <div className="flex flex-col gap-4 text-base font-bold text-slate-800 dark:text-slate-200">
+                <div className="flex items-center justify-between py-2 border-b border-white/20 dark:border-slate-700/50">
+                  <span className="text-xs font-black uppercase text-slate-400 dark:text-slate-500">Select City:</span>
                   <LocationSelector activeCity="Mumbai" />
                 </div>
-                <a href="#home" onClick={() => setMenuOpen(false)} className="py-2">Home</a>
-                <a href="#why-choose" onClick={() => setMenuOpen(false)} className="py-2">Why Us</a>
-                <a href="#plans" onClick={() => setMenuOpen(false)} className="py-2">Plans</a>
-                <a href="#subjects" onClick={() => setMenuOpen(false)} className="py-2">Subjects</a>
-                <a href="#boards" onClick={() => setMenuOpen(false)} className="py-2">Boards</a>
-                <a href="#areas" onClick={() => setMenuOpen(false)} className="py-2">Areas We Serve</a>
+                <a href="#home" onClick={() => setMenuOpen(false)} className="py-2 hover:text-blue-600 dark:hover:text-blue-400 transition">Home</a>
+                <a href="#why-choose" onClick={() => setMenuOpen(false)} className="py-2 hover:text-blue-600 dark:hover:text-blue-400 transition">Why Us</a>
+                <a href="#plans" onClick={() => setMenuOpen(false)} className="py-2 hover:text-blue-600 dark:hover:text-blue-400 transition">Plans</a>
+                <a href="#subjects" onClick={() => setMenuOpen(false)} className="py-2 hover:text-blue-600 dark:hover:text-blue-400 transition">Subjects</a>
+                <a href="#boards" onClick={() => setMenuOpen(false)} className="py-2 hover:text-blue-600 dark:hover:text-blue-400 transition">Boards</a>
+                <a href="#areas" onClick={() => setMenuOpen(false)} className="py-2 hover:text-blue-600 dark:hover:text-blue-400 transition">Areas We Serve</a>
                 
                 <div className="flex flex-col">
                   <button 
                     type="button"
                     onClick={() => setMobileResourcesOpen(!mobileResourcesOpen)}
-                    className="flex items-center justify-between py-2 text-left font-bold text-slate-800"
+                    className="flex items-center justify-between py-2 text-left font-bold text-slate-800 dark:text-slate-200"
                   >
                     <span>Resources</span>
-                    <ChevronDown className={`h-4 w-4 text-slate-500 transition-transform duration-200 ${mobileResourcesOpen ? "rotate-180" : ""}`} />
+                    <ChevronDown className={`h-4 w-4 text-slate-500 dark:text-slate-400 transition-transform duration-200 ${mobileResourcesOpen ? "rotate-180" : ""}`} />
                   </button>
                   {mobileResourcesOpen && (
-                    <div className="pl-4 flex flex-col gap-2 border-l border-slate-100 my-1 animate-slideFade">
-                      <a href="#faqs" onClick={() => { setMenuOpen(false); setMobileResourcesOpen(false); }} className="py-1.5 text-slate-600 font-bold text-sm">FAQ</a>
-                      <Link to="/blogs" onClick={() => { setMenuOpen(false); setMobileResourcesOpen(false); }} className="py-1.5 text-slate-600 font-bold text-sm">Blog</Link>
+                    <div className="pl-4 flex flex-col gap-2 border-l border-slate-100 dark:border-slate-700 my-1 animate-slideFade">
+                      <a href="#faqs" onClick={() => { setMenuOpen(false); setMobileResourcesOpen(false); }} className="py-1.5 text-slate-600 dark:text-slate-400 font-bold text-sm">FAQ</a>
+                      <Link to="/blogs" onClick={() => { setMenuOpen(false); setMobileResourcesOpen(false); }} className="py-1.5 text-slate-600 dark:text-slate-400 font-bold text-sm">Blog</Link>
                     </div>
                   )}
                 </div>
@@ -626,7 +626,7 @@ export default function MumbaiPage() {
                   onClick={() => { setMenuOpen(false); trackEvent("become_tutor"); }}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="rounded-xl border border-slate-200 bg-white py-3 text-center text-slate-800 font-black transition-all duration-300 shadow-sm"
+                  className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-3 text-center text-slate-800 dark:text-slate-200 font-black transition-all duration-300 shadow-sm"
                 >
                   Become a Tutor
                 </MotionLink>
@@ -865,14 +865,14 @@ export default function MumbaiPage() {
 
       {/* SEO Intro Section */}
       <section className="mx-auto max-w-7xl px-6 py-16">
-        <div className="rounded-[1.5rem] sm:rounded-[2.5rem] border border-white/50 bg-white/30 backdrop-blur-xl p-5 sm:p-8 shadow-xl shadow-slate-100/10 md:p-12">
+        <div className="rounded-[1.5rem] sm:rounded-[2.5rem] border border-white/50 dark:border-slate-700/50 bg-white/30 dark:bg-slate-800/30 backdrop-blur-xl p-5 sm:p-8 shadow-xl shadow-slate-100/10 dark:shadow-none md:p-12">
           <div className="max-w-4xl">
-            <h2 className="text-xs font-black uppercase tracking-[0.2em] text-blue-600">Overview</h2>
-            <h3 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
+            <h2 className="text-xs font-black uppercase tracking-[0.2em] text-blue-600 dark:text-blue-400">Overview</h2>
+            <h3 className="mt-2 text-3xl font-black tracking-tight text-slate-950 dark:text-white md:text-4xl">
               Home Tuition in Mumbai for Class 6 to 12
             </h3>
 
-            <div className="mt-6 space-y-4 text-base leading-relaxed text-slate-600">
+            <div className="mt-6 space-y-4 text-base leading-relaxed text-slate-600 dark:text-slate-400">
               <p>
                 Saraswati Tutorials provides trusted and result-oriented home tuition in Mumbai for students from Class 6 to 12. We offer experienced private tutors for CBSE, ICSE, IGCSE, IB and Maharashtra State Board students across major areas of Mumbai including Andheri, Bandra, Powai, Borivali, Thane, Navi Mumbai and more. Our personalized one-to-one teaching approach helps students improve conceptual understanding, confidence and academic performance.
               </p>
@@ -888,11 +888,11 @@ export default function MumbaiPage() {
       <section id="why-choose" className="py-16 md:py-24">
         <div className="mx-auto max-w-7xl px-6">
           <div className="text-center">
-            <p className="text-xs font-black uppercase tracking-[0.25em] text-blue-600">Core Benefits</p>
-            <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-5xl">
+            <p className="text-xs font-black uppercase tracking-[0.25em] text-blue-600 dark:text-blue-400">Core Benefits</p>
+            <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 dark:text-white md:text-5xl">
               Why Parents Prefer Saraswati Tutorials in Mumbai
             </h2>
-            <p className="mx-auto mt-4 max-w-2xl text-slate-600">
+            <p className="mx-auto mt-4 max-w-2xl text-slate-600 dark:text-slate-400">
               We stand apart through our student-first philosophy, matching children with vetted subject-matter experts who act as academic mentors.
             </p>
           </div>
@@ -902,29 +902,29 @@ export default function MumbaiPage() {
               const IconComp = item.icon;
               const glassThemes = [
                 // 1. Verified Tutors (Blue Glass)
-                { bg: "bg-blue-500/12", border: "border-blue-300/70", icon: "text-blue-600", glow: "group-hover:shadow-[0_12px_28px_rgba(37,99,235,0.18)]" },
+                { bg: "bg-blue-500/12 dark:bg-blue-500/20", border: "border-blue-300/70 dark:border-blue-400/30", icon: "text-blue-600 dark:text-blue-400", glow: "group-hover:shadow-[0_12px_28px_rgba(37,99,235,0.18)] dark:group-hover:shadow-[0_12px_28px_rgba(59,130,246,0.25)]" },
                 // 2. One-to-One (Purple Glass)
-                { bg: "bg-purple-500/12", border: "border-purple-300/70", icon: "text-purple-600", glow: "group-hover:shadow-[0_12px_28px_rgba(147,51,234,0.18)]" },
+                { bg: "bg-purple-500/12 dark:bg-purple-500/20", border: "border-purple-300/70 dark:border-purple-400/30", icon: "text-purple-600 dark:text-purple-400", glow: "group-hover:shadow-[0_12px_28px_rgba(147,51,234,0.18)] dark:group-hover:shadow-[0_12px_28px_rgba(168,85,247,0.25)]" },
                 // 3. Home & Online (Orange Glass)
-                { bg: "bg-orange-500/12", border: "border-orange-300/70", icon: "text-orange-500", glow: "group-hover:shadow-[0_12px_28px_rgba(249,115,22,0.18)]" },
+                { bg: "bg-orange-500/12 dark:bg-orange-500/20", border: "border-orange-300/70 dark:border-orange-400/30", icon: "text-orange-500 dark:text-orange-400", glow: "group-hover:shadow-[0_12px_28px_rgba(249,115,22,0.18)] dark:group-hover:shadow-[0_12px_28px_rgba(251,146,60,0.25)]" },
                 // 4. Bi-Weekly Tests (Green Glass)
-                { bg: "bg-emerald-500/12", border: "border-emerald-300/70", icon: "text-emerald-600", glow: "group-hover:shadow-[0_12px_28px_rgba(16,185,129,0.18)]" },
+                { bg: "bg-emerald-500/12 dark:bg-emerald-500/20", border: "border-emerald-300/70 dark:border-emerald-400/30", icon: "text-emerald-600 dark:text-emerald-400", glow: "group-hover:shadow-[0_12px_28px_rgba(16,185,129,0.18)] dark:group-hover:shadow-[0_12px_28px_rgba(52,211,153,0.25)]" },
                 // 5. Flexible Timings (Pink Glass)
-                { bg: "bg-rose-500/12", border: "border-rose-300/70", icon: "text-rose-500", glow: "group-hover:shadow-[0_12px_28px_rgba(244,63,94,0.18)]" },
+                { bg: "bg-rose-500/12 dark:bg-rose-500/20", border: "border-rose-300/70 dark:border-rose-400/30", icon: "text-rose-500 dark:text-rose-400", glow: "group-hover:shadow-[0_12px_28px_rgba(244,63,94,0.18)] dark:group-hover:shadow-[0_12px_28px_rgba(251,113,133,0.25)]" },
                 // 6. All Boards (Blue Glass)
-                { bg: "bg-blue-500/12", border: "border-blue-300/70", icon: "text-blue-600", glow: "group-hover:shadow-[0_12px_28px_rgba(37,99,235,0.18)]" },
+                { bg: "bg-blue-500/12 dark:bg-blue-500/20", border: "border-blue-300/70 dark:border-blue-400/30", icon: "text-blue-600 dark:text-blue-400", glow: "group-hover:shadow-[0_12px_28px_rgba(37,99,235,0.18)] dark:group-hover:shadow-[0_12px_28px_rgba(59,130,246,0.25)]" },
                 // 7. Affordable Fee (Amber Glass)
-                { bg: "bg-amber-500/12", border: "border-amber-300/70", icon: "text-amber-500", glow: "group-hover:shadow-[0_12px_28px_rgba(245,158,11,0.18)]" },
+                { bg: "bg-amber-500/12 dark:bg-amber-500/20", border: "border-amber-300/70 dark:border-amber-400/30", icon: "text-amber-500 dark:text-amber-400", glow: "group-hover:shadow-[0_12px_28px_rgba(245,158,11,0.18)] dark:group-hover:shadow-[0_12px_28px_rgba(251,191,36,0.25)]" },
                 // 8. Free Demo (Pink Glass)
-                { bg: "bg-pink-500/12", border: "border-pink-300/70", icon: "text-pink-500", glow: "group-hover:shadow-[0_12px_28px_rgba(236,72,153,0.18)]" },
+                { bg: "bg-pink-500/12 dark:bg-pink-500/20", border: "border-pink-300/70 dark:border-pink-400/30", icon: "text-pink-500 dark:text-pink-400", glow: "group-hover:shadow-[0_12px_28px_rgba(236,72,153,0.18)] dark:group-hover:shadow-[0_12px_28px_rgba(244,114,182,0.25)]" },
                 // 9. Fast Progress (Teal Glass)
-                { bg: "bg-teal-500/12", border: "border-teal-300/70", icon: "text-teal-600", glow: "group-hover:shadow-[0_12px_28px_rgba(20,184,166,0.18)]" },
+                { bg: "bg-teal-500/12 dark:bg-teal-500/20", border: "border-teal-300/70 dark:border-teal-400/30", icon: "text-teal-600 dark:text-teal-400", glow: "group-hover:shadow-[0_12px_28px_rgba(20,184,166,0.18)] dark:group-hover:shadow-[0_12px_28px_rgba(45,212,191,0.25)]" },
                 // 10. Expert Teachers (Purple Glass)
-                { bg: "bg-purple-500/12", border: "border-purple-300/70", icon: "text-purple-600", glow: "group-hover:shadow-[0_12px_28px_rgba(147,51,234,0.18)]" },
+                { bg: "bg-purple-500/12 dark:bg-purple-500/20", border: "border-purple-300/70 dark:border-purple-400/30", icon: "text-purple-600 dark:text-purple-400", glow: "group-hover:shadow-[0_12px_28px_rgba(147,51,234,0.18)] dark:group-hover:shadow-[0_12px_28px_rgba(168,85,247,0.25)]" },
                 // 11. Regular Attendance (Blue Glass)
-                { bg: "bg-blue-500/12", border: "border-blue-300/70", icon: "text-blue-600", glow: "group-hover:shadow-[0_12px_28px_rgba(37,99,235,0.18)]" },
+                { bg: "bg-blue-500/12 dark:bg-blue-500/20", border: "border-blue-300/70 dark:border-blue-400/30", icon: "text-blue-600 dark:text-blue-400", glow: "group-hover:shadow-[0_12px_28px_rgba(37,99,235,0.18)] dark:group-hover:shadow-[0_12px_28px_rgba(59,130,246,0.25)]" },
                 // 12. Parent Support (Cyan Glass)
-                { bg: "bg-cyan-500/12", border: "border-cyan-300/70", icon: "text-cyan-600", glow: "group-hover:shadow-[0_12px_28px_rgba(6,182,212,0.18)]" },
+                { bg: "bg-cyan-500/12 dark:bg-cyan-500/20", border: "border-cyan-300/70 dark:border-cyan-400/30", icon: "text-cyan-600 dark:text-cyan-400", glow: "group-hover:shadow-[0_12px_28px_rgba(6,182,212,0.18)] dark:group-hover:shadow-[0_12px_28px_rgba(34,211,238,0.25)]" },
               ];
               const theme = glassThemes[idx % glassThemes.length];
 
@@ -933,21 +933,21 @@ export default function MumbaiPage() {
                   whileHover={{ y: -6, scale: 1.02 }}
                   transition={{ duration: 0.25, ease: "easeOut" }}
                   key={idx}
-                  className="group relative overflow-hidden rounded-3xl border border-slate-200/90 bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all duration-300 hover:border-slate-300 hover:shadow-[0_20px_35px_rgba(0,0,0,0.06)]"
+                  className="group relative overflow-hidden rounded-3xl border border-slate-200/90 dark:border-slate-700/60 bg-white dark:bg-slate-900 p-6 shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-300 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-[0_20px_35px_rgba(0,0,0,0.06)] dark:hover:shadow-[0_20px_35px_rgba(0,0,0,0.4)]"
                 >
                   {/* 3D Transparent Water Glass Badge Container */}
-                  <div className={`relative flex h-16 w-16 items-center justify-center rounded-[1.35rem] ${theme.bg} backdrop-blur-xl border ${theme.border} shadow-[inset_0_1.5px_2px_rgba(255,255,255,0.9),0_6px_16px_rgba(0,0,0,0.04)] transition-all duration-300 group-hover:scale-105 group-hover:-rotate-2 ${theme.glow}`}>
+                  <div className={`relative flex h-16 w-16 items-center justify-center rounded-[1.35rem] ${theme.bg} backdrop-blur-xl border ${theme.border} shadow-[inset_0_1.5px_2px_rgba(255,255,255,0.9),0_6px_16px_rgba(0,0,0,0.04)] dark:shadow-[inset_0_1.5px_2px_rgba(255,255,255,0.1),0_6px_16px_rgba(0,0,0,0.3)] transition-all duration-300 group-hover:scale-105 group-hover:-rotate-2 ${theme.glow}`}>
                     {/* Water gloss highlight reflection */}
                     <div className="absolute top-1 left-2.5 right-2.5 h-[3px] rounded-full bg-gradient-to-r from-transparent via-white/90 to-transparent pointer-events-none" />
                     {/* Inner glass bevel rim */}
-                    <div className="absolute inset-0 rounded-[1.35rem] ring-1 ring-inset ring-white/60 pointer-events-none" />
+                    <div className="absolute inset-0 rounded-[1.35rem] ring-1 ring-inset ring-white/60 dark:ring-white/10 pointer-events-none" />
                     <IconComp className={`relative z-10 h-7 w-7 ${theme.icon} filter drop-shadow-[0_2px_3px_rgba(0,0,0,0.08)] stroke-[2.2]`} />
                   </div>
 
-                  <h4 className="mt-5 text-lg font-black text-slate-900 leading-snug">
+                  <h4 className="mt-5 text-lg font-black text-slate-900 dark:text-white leading-snug">
                     {item.title}
                   </h4>
-                  <p className="mt-2 text-xs font-semibold leading-relaxed text-slate-500">
+                  <p className="mt-2 text-xs font-semibold leading-relaxed text-slate-500 dark:text-slate-400">
                     {item.desc}
                   </p>
                 </motion.div>
@@ -960,11 +960,11 @@ export default function MumbaiPage() {
       {/* Subjects Section */}
       <section id="subjects" className="mx-auto max-w-7xl px-6 py-16 md:py-24">
         <div className="text-center">
-          <p className="text-xs font-black uppercase tracking-[0.25em] text-blue-600">Tuition Programs</p>
-          <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-5xl">
+          <p className="text-xs font-black uppercase tracking-[0.25em] text-blue-600 dark:text-blue-400">Tuition Programs</p>
+          <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 dark:text-white md:text-5xl">
             Subjects Available for Home Tuition in Mumbai
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-slate-600">
+          <p className="mx-auto mt-4 max-w-2xl text-slate-600 dark:text-slate-400">
             Comprehensive curriculum guidance covering science, mathematics, literature, and accounting.
           </p>
         </div>
@@ -972,14 +972,14 @@ export default function MumbaiPage() {
         <div className="mt-12 space-y-12">
           {/* School Subjects */}
           <div>
-            <h3 className="text-xl font-black text-slate-800 border-l-4 border-blue-600 pl-3 mb-6">
+            <h3 className="text-xl font-black text-slate-800 dark:text-white border-l-4 border-blue-600 pl-3 mb-6">
               School Subjects
             </h3>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {schoolSubjects.map((subj, idx) => (
                 <div
                   key={idx}
-                  className="overflow-hidden group rounded-3xl border border-white/60 bg-white/30 backdrop-blur-md shadow-sm shadow-slate-100/20 transition hover:bg-white/50 hover:shadow-xl hover:scale-[1.03] duration-300"
+                  className="overflow-hidden group rounded-3xl border border-white/60 dark:border-slate-700/60 bg-white/30 dark:bg-slate-900/80 backdrop-blur-md shadow-sm shadow-slate-100/20 dark:shadow-none transition hover:bg-white/50 dark:hover:bg-slate-800/80 hover:shadow-xl dark:hover:shadow-blue-900/10 hover:scale-[1.03] duration-300"
                 >
                   <div className="h-44 w-full overflow-hidden">
                     <img
@@ -990,11 +990,11 @@ export default function MumbaiPage() {
                     />
                   </div>
                   <div className="p-6">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 font-black text-blue-600 transition group-hover:bg-blue-100">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-500/20 font-black text-blue-600 dark:text-blue-400 transition group-hover:bg-blue-100 dark:group-hover:bg-blue-500/30">
                       {idx + 1}
                     </div>
-                    <h4 className="mt-4 text-xl font-black text-slate-950">{subj.title}</h4>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-500">
+                    <h4 className="mt-4 text-xl font-black text-slate-950 dark:text-white">{subj.title}</h4>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
                       {subj.desc}
                     </p>
                   </div>
@@ -1005,14 +1005,14 @@ export default function MumbaiPage() {
 
           {/* Commerce Subjects */}
           <div>
-            <h3 className="text-xl font-black text-slate-800 border-l-4 border-indigo-600 pl-3 mb-6">
+            <h3 className="text-xl font-black text-slate-800 dark:text-white border-l-4 border-indigo-600 pl-3 mb-6">
               Commerce Subjects
             </h3>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {commerceSubjects.map((subj, idx) => (
                 <div
                   key={idx}
-                  className="overflow-hidden group rounded-3xl border border-white/60 bg-white/30 backdrop-blur-md shadow-sm shadow-slate-100/20 transition hover:bg-white/50 hover:shadow-xl hover:scale-[1.03] duration-300"
+                  className="overflow-hidden group rounded-3xl border border-white/60 dark:border-slate-700/60 bg-white/30 dark:bg-slate-900/80 backdrop-blur-md shadow-sm shadow-slate-100/20 dark:shadow-none transition hover:bg-white/50 dark:hover:bg-slate-800/80 hover:shadow-xl dark:hover:shadow-indigo-900/10 hover:scale-[1.03] duration-300"
                 >
                   <div className="h-44 w-full overflow-hidden">
                     <img
@@ -1023,11 +1023,11 @@ export default function MumbaiPage() {
                     />
                   </div>
                   <div className="p-6">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 font-black text-indigo-600 transition group-hover:bg-indigo-100">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 dark:bg-indigo-500/20 font-black text-indigo-600 dark:text-indigo-400 transition group-hover:bg-indigo-100 dark:group-hover:bg-indigo-500/30">
                       {idx + 1}
                     </div>
-                    <h4 className="mt-4 text-xl font-black text-slate-950">{subj.title}</h4>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-500">
+                    <h4 className="mt-4 text-xl font-black text-slate-950 dark:text-white">{subj.title}</h4>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
                       {subj.desc}
                     </p>
                   </div>
@@ -1070,11 +1070,11 @@ export default function MumbaiPage() {
       {/* Classes Section */}
       <section className="mx-auto max-w-7xl px-6 py-16 md:py-24">
         <div className="text-center">
-          <p className="text-xs font-black uppercase tracking-[0.25em] text-blue-600">Structured Modules</p>
-          <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-5xl">
+          <p className="text-xs font-black uppercase tracking-[0.25em] text-blue-600 dark:text-blue-400">Structured Modules</p>
+          <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 dark:text-white md:text-5xl">
             Tuition Classes Available
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-slate-600">
+          <p className="mx-auto mt-4 max-w-2xl text-slate-600 dark:text-slate-400">
             Tailored grade-wise guidance designed to secure high scores and bolster conceptual foundations.
           </p>
         </div>
@@ -1083,7 +1083,7 @@ export default function MumbaiPage() {
           {classesList.map((cls, idx) => (
             <div
               key={idx}
-              className="overflow-hidden group rounded-3xl border border-white/60 bg-white/30 backdrop-blur-md shadow-sm shadow-slate-100/20 transition hover:bg-white/50 hover:shadow-xl hover:scale-[1.03] duration-300"
+              className="overflow-hidden group rounded-3xl border border-white/60 dark:border-slate-700/60 bg-white/30 dark:bg-slate-900/80 backdrop-blur-md shadow-sm shadow-slate-100/20 dark:shadow-none transition hover:bg-white/50 dark:hover:bg-slate-800/80 hover:shadow-xl dark:hover:shadow-blue-900/10 hover:scale-[1.03] duration-300"
             >
               <div className="h-32 w-full overflow-hidden">
                 <img
@@ -1094,8 +1094,8 @@ export default function MumbaiPage() {
                 />
               </div>
               <div className="p-6">
-                <h4 className="mt-4 text-lg font-black text-slate-950">{cls.title}</h4>
-                <p className="mt-2 text-xs leading-relaxed text-slate-500">{cls.desc}</p>
+                <h4 className="mt-4 text-lg font-black text-slate-950 dark:text-white">{cls.title}</h4>
+                <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400">{cls.desc}</p>
               </div>
             </div>
           ))}
@@ -1106,11 +1106,11 @@ export default function MumbaiPage() {
       <section id="areas" className="py-16 md:py-24">
         <div className="mx-auto max-w-7xl px-6">
           <div className="text-center">
-            <p className="text-xs font-black uppercase tracking-[0.25em] text-blue-600">Locations</p>
-            <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-5xl">
+            <p className="text-xs font-black uppercase tracking-[0.25em] text-blue-600 dark:text-blue-400">Locations</p>
+            <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 dark:text-white md:text-5xl">
               Home Tuition Available Across Mumbai
             </h2>
-            <p className="mx-auto mt-4 max-w-2xl text-slate-600">
+            <p className="mx-auto mt-4 max-w-2xl text-slate-600 dark:text-slate-400">
               Our network of verified home tutors reaches all major commercial and residential pockets in Mumbai.
             </p>
           </div>
@@ -1119,15 +1119,15 @@ export default function MumbaiPage() {
             {areas.map((area, idx) => (
               <div
                 key={idx}
-                className="flex items-center gap-2 rounded-2xl border border-white/50 bg-white/40 backdrop-blur-sm p-4 transition hover:bg-white/60 hover:scale-[1.02]"
+                className="flex items-center gap-2 rounded-2xl border border-white/50 dark:border-slate-700/60 bg-white/40 dark:bg-slate-800/50 backdrop-blur-sm p-4 transition hover:bg-white/60 dark:hover:bg-slate-700/60 hover:scale-[1.02]"
               >
-                <MapPin className="h-4 w-4 text-blue-600 shrink-0" />
-                <span className="text-sm font-bold text-slate-800">{area}</span>
+                <MapPin className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0" />
+                <span className="text-sm font-bold text-slate-800 dark:text-slate-200">{area}</span>
               </div>
             ))}
           </div>
 
-          <div className="mx-auto mt-8 max-w-3xl text-center text-sm leading-relaxed text-slate-500">
+          <div className="mx-auto mt-8 max-w-3xl text-center text-sm leading-relaxed text-slate-500 dark:text-slate-400">
             <p>
               Saraswati Tutorials has a widespread network of home tutors spanning across the entire Mumbai metropolitan region. Whether you live in South Mumbai, the Western Suburbs, the Eastern Suburbs, or neighboring areas like Thane and Navi Mumbai, we can match you with an experienced private tutor who can conduct offline classes at your residence. In addition to offline sessions, our tutors are equipped to offer highly engaging and interactive online live classes, providing flexibility for busy student schedules.
             </p>
@@ -1138,23 +1138,23 @@ export default function MumbaiPage() {
       {/* How it Works */}
       <section className="mx-auto max-w-7xl px-6 py-16 md:py-24">
         <div className="text-center">
-          <p className="text-xs font-black uppercase tracking-[0.25em] text-blue-600">Process Flow</p>
-          <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-5xl">
+          <p className="text-xs font-black uppercase tracking-[0.25em] text-blue-600 dark:text-blue-400">Process Flow</p>
+          <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 dark:text-white md:text-5xl">
             How Our Tutor Matching Process Works
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-slate-600">
+          <p className="mx-auto mt-4 max-w-2xl text-slate-600 dark:text-slate-400">
             Four simple steps to match your child with their perfect private home tutor.
           </p>
         </div>
 
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {steps.map((step, idx) => (
-            <div key={idx} className="relative rounded-3xl border border-white/60 bg-white/30 backdrop-blur-md p-6 shadow-sm transition hover:bg-white/50 hover:scale-[1.02]">
+            <div key={idx} className="relative rounded-3xl border border-white/60 dark:border-slate-700/60 bg-white/30 dark:bg-slate-900/80 backdrop-blur-md p-6 shadow-sm dark:shadow-none transition hover:bg-white/50 dark:hover:bg-slate-800/80 hover:scale-[1.02]">
               <div className="absolute -top-4 left-6 flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 font-black text-white shadow">
                 {idx + 1}
               </div>
-              <h4 className="mt-4 text-lg font-black text-slate-950">{step.title}</h4>
-              <p className="mt-2 text-xs leading-relaxed text-slate-500">{step.desc}</p>
+              <h4 className="mt-4 text-lg font-black text-slate-950 dark:text-white">{step.title}</h4>
+              <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400">{step.desc}</p>
             </div>
           ))}
         </div>
@@ -1196,8 +1196,8 @@ export default function MumbaiPage() {
       {/* FAQ Section */}
       <section id="faqs" className="mx-auto max-w-4xl px-6 py-16 md:py-24">
         <div className="text-center">
-          <p className="text-xs font-black uppercase tracking-[0.25em] text-blue-600">Questions</p>
-          <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-5xl">
+          <p className="text-xs font-black uppercase tracking-[0.25em] text-blue-600 dark:text-blue-400">Questions</p>
+          <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 dark:text-white md:text-5xl">
             Frequently Asked Questions
           </h2>
         </div>
@@ -1208,15 +1208,15 @@ export default function MumbaiPage() {
             return (
               <div
                 key={idx}
-                className="overflow-hidden rounded-2xl border border-white/60 bg-white/30 backdrop-blur-md shadow-sm transition hover:bg-white/40"
+                className="overflow-hidden rounded-2xl border border-white/60 dark:border-slate-700/60 bg-white/30 dark:bg-slate-900/80 backdrop-blur-md shadow-sm dark:shadow-none transition hover:bg-white/40 dark:hover:bg-slate-800/80"
               >
                 <motion.button
                   onClick={() => toggleFaq(idx)}
-                  whileTap={{ scale: 0.99, backgroundColor: "rgba(255, 255, 255, 0.4)" }}
-                  className="flex w-full items-center justify-between px-6 py-5 text-left font-black text-slate-950 hover:bg-slate-50/50"
+                  whileTap={{ scale: 0.99 }}
+                  className="flex w-full items-center justify-between px-6 py-5 text-left font-black text-slate-950 dark:text-white hover:bg-slate-50/50 dark:hover:bg-slate-800/50"
                 >
                   <span>{faq.q}</span>
-                  {isOpen ? <ChevronUp className="h-5 w-5 text-blue-600" /> : <ChevronDown className="h-5 w-5 text-slate-400" />}
+                  {isOpen ? <ChevronUp className="h-5 w-5 text-blue-600 dark:text-blue-400" /> : <ChevronDown className="h-5 w-5 text-slate-400 dark:text-slate-500" />}
                 </motion.button>
 
                 <AnimatePresence initial={false}>
@@ -1227,7 +1227,7 @@ export default function MumbaiPage() {
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.2 }}
                     >
-                      <div className="border-t border-white/20 bg-white/20 px-6 py-5 text-sm leading-relaxed text-slate-700">
+                      <div className="border-t border-white/20 dark:border-slate-700/50 bg-white/20 dark:bg-slate-800/40 px-6 py-5 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
                         {faq.a}
                       </div>
                     </motion.div>
@@ -1238,8 +1238,6 @@ export default function MumbaiPage() {
           })}
         </div>
       </section>
-
-
 
       {/* CTA Section */}
       <section className="relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 py-20 text-white border-t border-white/10">
@@ -1265,7 +1263,7 @@ export default function MumbaiPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/20 bg-white/30 backdrop-blur-md py-12 text-slate-600">
+      <footer className="border-t border-white/20 dark:border-slate-700/50 bg-white/30 dark:bg-[#060f1e]/95 backdrop-blur-md py-12 text-slate-600 dark:text-slate-400">
         <div className="mx-auto max-w-7xl px-6">
           <div className="grid gap-8 md:grid-cols-4">
             <div>
@@ -1278,48 +1276,48 @@ export default function MumbaiPage() {
                     e.target.src = "https://placehold.co/100x100?text=ST";
                   }}
                 />
-                <span className="text-lg font-black text-slate-950">Saraswati Tutorial</span>
+                <span className="text-lg font-black text-slate-950 dark:text-white">Saraswati Tutorial</span>
               </div>
-              <p className="mt-4 text-sm leading-relaxed text-slate-500">
+              <p className="mt-4 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
                 Expert tutoring services mapping local academic boards across Bangalore and Mumbai.
               </p>
             </div>
 
             <div>
-              <h5 className="font-bold text-slate-900 uppercase tracking-wider text-xs">Direct Services</h5>
+              <h5 className="font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider text-xs">Direct Services</h5>
               <ul className="mt-4 space-y-2 text-sm">
-                <li><Link to="/parent-enquiry" className="hover:text-blue-600">Parent Enquiry</Link></li>
-                <li><Link to="/tutor-register" className="hover:text-blue-600">Become a Tutor</Link></li>
-                <li><a href="https://saraswatitutorial.com/" className="hover:text-blue-600">Home Tuition Services</a></li>
-                <li><a href="https://saraswatitutorial.com/#tutors" className="hover:text-blue-600">Online Tuition</a></li>
+                <li><Link to="/parent-enquiry" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Parent Enquiry</Link></li>
+                <li><Link to="/tutor-register" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Become a Tutor</Link></li>
+                <li><a href="https://saraswatitutorial.com/" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Home Tuition Services</a></li>
+                <li><a href="https://saraswatitutorial.com/#tutors" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Online Tuition</a></li>
               </ul>
             </div>
 
             <div>
-              <h5 className="font-bold text-slate-900 uppercase tracking-wider text-xs">Legal Details</h5>
+              <h5 className="font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider text-xs">Legal Details</h5>
               <ul className="mt-4 space-y-2 text-sm">
-                <li><Link to="/terms-conditions" className="hover:text-blue-600">Terms & Conditions</Link></li>
-                <li><Link to="/privacy-policy" className="hover:text-blue-600">Privacy Policy</Link></li>
-                <li><Link to="/disclaimer" className="hover:text-blue-600">Disclaimer</Link></li>
+                <li><Link to="/terms-conditions" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Terms & Conditions</Link></li>
+                <li><Link to="/privacy-policy" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Privacy Policy</Link></li>
+                <li><Link to="/disclaimer" className="hover:text-blue-600 dark:hover:text-blue-400 transition">Disclaimer</Link></li>
               </ul>
             </div>
 
             <div>
-              <h5 className="font-bold text-slate-900 uppercase tracking-wider text-xs">Support Contact</h5>
+              <h5 className="font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider text-xs">Support Contact</h5>
               <ul className="mt-4 space-y-2 text-sm">
                 <li className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-blue-600" />
+                  <Phone className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   <span>+91 9041157689</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-blue-600" />
+                  <Mail className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   <span>services@saraswatitutorial.com</span>
                 </li>
               </ul>
             </div>
           </div>
 
-          <div className="mt-12 border-t border-slate-100 pt-6 text-center text-xs text-slate-400">
+          <div className="mt-12 border-t border-slate-100 dark:border-slate-800 pt-6 text-center text-xs text-slate-400 dark:text-slate-500">
             &copy; {new Date().getFullYear()} Saraswati Tutorials. All rights reserved.
           </div>
         </div>

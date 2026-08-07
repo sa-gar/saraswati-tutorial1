@@ -26,3 +26,105 @@
 .animate-fadeIn {
   animation: fadeIn 0.25s ease-out forwards;
 }
+
+/* ─── Global Dark Mode Overrides ───────────────────────────────────────────── */
+/* Ensure all body text is legible in dark mode */
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+  color: #f1f5f9; /* slate-100 */
+}
+.dark p {
+  color: #cbd5e1; /* slate-300 */
+}
+.dark span {
+  color: inherit;
+}
+
+/* Glass card containers - light bg becomes dark glass in dark mode */
+.dark .bg-white\/30,
+.dark .bg-white\/40,
+.dark .bg-white\/50,
+.dark .bg-white\/60 {
+  background-color: rgba(30, 41, 59, 0.7) !important; /* slate-800/70 */
+}
+.dark .bg-white\/20 {
+  background-color: rgba(30, 41, 59, 0.5) !important;
+}
+.dark .bg-white\/10 {
+  background-color: rgba(30, 41, 59, 0.3) !important;
+}
+
+/* Solid white backgrounds become dark */
+.dark .bg-white {
+  background-color: #1e293b !important; /* slate-800 */
+}
+
+/* Borders */
+.dark .border-white\/50,
+.dark .border-white\/60 {
+  border-color: rgba(71, 85, 105, 0.5) !important; /* slate-600/50 */
+}
+.dark .border-slate-200\/90 {
+  border-color: rgba(51, 65, 85, 0.9) !important; /* slate-700 */
+}
+.dark .border-slate-100 {
+  border-color: #334155 !important; /* slate-700 */
+}
+.dark .border-slate-200 {
+  border-color: #334155 !important;
+}
+.dark .border-slate-300 {
+  border-color: #475569 !important;
+}
+
+/* Footer */
+.dark footer {
+  background-color: rgba(15, 23, 42, 0.8) !important;
+  border-color: rgba(51, 65, 85, 0.5) !important;
+}
+.dark footer h5,
+.dark footer .font-bold {
+  color: #94a3b8 !important; /* slate-400 */
+}
+.dark footer a,
+.dark footer span,
+.dark footer li {
+  color: #94a3b8 !important;
+}
+.dark footer a:hover {
+  color: #60a5fa !important;
+}
+
+/* Area pill tags */
+.dark .bg-white\/40 {
+  background-color: rgba(30, 41, 59, 0.7) !important;
+}
+
+/* Blue number badges in subject cards */
+.dark .bg-blue-50 {
+  background-color: rgba(37, 99, 235, 0.2) !important;
+}
+.dark .bg-indigo-50 {
+  background-color: rgba(79, 70, 229, 0.2) !important;
+}
+
+/* FAQ button hover */
+.dark .hover\:bg-slate-50\/50:hover {
+  background-color: rgba(30, 41, 59, 0.5) !important;
+}
+
+/* See More Tutors button */
+.dark .bg-white.border-blue-600 {
+  background-color: transparent !important;
+  color: #60a5fa !important;
+  border-color: #3b82f6 !important;
+}
+
+/* Process step number */
+.dark .text-slate-800 { color: #e2e8f0 !important; }
+.dark .text-slate-900 { color: #f1f5f9 !important; }
+.dark .text-slate-950 { color: #f8fafc !important; }
+.dark .text-slate-700 { color: #cbd5e1 !important; }
+.dark .text-slate-600 { color: #94a3b8 !important; }
+.dark .text-slate-500 { color: #94a3b8 !important; }
+.dark .text-slate-400 { color: #64748b !important; }
+

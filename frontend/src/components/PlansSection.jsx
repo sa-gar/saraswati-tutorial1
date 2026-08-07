@@ -681,7 +681,7 @@ function PlanCard({ plan, isActive, isSelectedAny, isCenter, position, onClick }
   // Card theme classes
   const getCardThemeClasses = () => {
     if (isSilver) {
-      return "bg-gradient-to-br from-[#F8FAFC] to-[#CBD5E1] border-white/30 text-slate-800 shadow-[0_15px_30px_-5px_rgba(203,213,225,0.15)] premium-shine-card";
+      return "bg-gradient-to-br from-[#F8FAFC] to-[#CBD5E1] dark:from-[#1e293b] dark:to-[#0f172a] border-white/30 dark:border-slate-700/50 text-slate-800 dark:text-slate-100 shadow-[0_15px_30px_-5px_rgba(203,213,225,0.15)] dark:shadow-[0_15px_30px_-5px_rgba(0,0,0,0.5)] premium-shine-card";
     }
     if (isGold) {
       return "bg-gradient-to-br from-[#FFE082] via-[#F59E0B] to-[#D97706] border-[#FFE082]/30 text-slate-955 shadow-[0_20px_40px_-5px_rgba(245,158,11,0.3)] premium-shine-card";
@@ -769,13 +769,13 @@ function PlanCard({ plan, isActive, isSelectedAny, isCenter, position, onClick }
 
 
   const getBenefitTitleColor = () => {
-    if (isSilver) return "text-slate-700";
+    if (isSilver) return "text-slate-700 dark:text-slate-100";
     if (isGold) return "text-slate-900";
     return "text-white";
   };
 
   const getBenefitDescColor = () => {
-    if (isSilver) return "text-slate-500";
+    if (isSilver) return "text-slate-500 dark:text-slate-400";
     if (isGold) return "text-slate-700";
     return "text-slate-400";
   };
@@ -787,13 +787,13 @@ function PlanCard({ plan, isActive, isSelectedAny, isCenter, position, onClick }
   };
 
   const getBadgeBg = () => {
-    if (isSilver) return "bg-slate-900/10 text-slate-700 border-slate-400/20";
+    if (isSilver) return "bg-slate-900/10 dark:bg-white/10 text-slate-700 dark:text-slate-200 border-slate-400/20 dark:border-white/20";
     if (isGold) return "bg-black/10 text-slate-900 border-black/20";
     return "bg-white/10 text-white border-white/20";
   };
 
   const getStarColor = () => {
-    if (isSilver) return "text-slate-600 fill-slate-600";
+    if (isSilver) return "text-slate-600 fill-slate-600 dark:text-slate-300 dark:fill-slate-300";
     if (isGold) return "text-slate-900 fill-slate-900";
     return "text-white fill-white";
   };
@@ -894,7 +894,7 @@ function PlanCard({ plan, isActive, isSelectedAny, isCenter, position, onClick }
           <button
             onClick={(e) => { e.stopPropagation(); setShowMore(prev => !prev); }}
             className={`mt-1 self-start flex items-center gap-1 text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all duration-200 ${
-              isSilver ? "text-slate-600 hover:text-slate-900" :
+              isSilver ? "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white" :
               isGold   ? "text-slate-900/70 hover:text-slate-900" :
                          "text-white/50 hover:text-white"
             }`}

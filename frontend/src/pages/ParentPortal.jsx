@@ -303,7 +303,7 @@ export default function ParentPortal() {
         {data && (
           <div className="mt-8 space-y-6">
             <div className="flex items-center justify-between px-1">
-              <h3 className="text-sm font-extrabold text-slate-800">Active Tuitions ({data.length})</h3>
+              <h3 className="text-sm font-extrabold text-slate-800 dark:text-slate-200">Active Tuitions ({data.length})</h3>
               <p className="text-[10px] font-bold text-slate-400 flex items-center gap-1">
                 <Info className="h-3 w-3" /> Click cards to show timelines
               </p>
@@ -318,51 +318,51 @@ export default function ParentPortal() {
               return (
                 <div 
                   key={card._id} 
-                  className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden"
+                  className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden"
                 >
                   {/* Summary Card Header */}
                   <div 
                     onClick={() => toggleCard(card._id)}
-                    className="p-6 cursor-pointer hover:bg-slate-50/50 transition-all"
+                    className="p-6 cursor-pointer hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-all"
                   >
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-[10px] font-black bg-indigo-50 border border-indigo-100 text-indigo-700 px-2 py-0.5 rounded-lg">
+                          <span className="text-[10px] font-black bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/40 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-lg">
                             {card.requirementId}
                           </span>
                           <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg border ${
                             card.currentAttendanceStatus === "Done"
-                              ? "bg-emerald-50 border-emerald-150 text-emerald-700"
+                              ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-150 dark:border-emerald-900/40 text-emerald-700 dark:text-emerald-300"
                               : card.currentAttendanceStatus === "Missed"
-                              ? "bg-rose-50 border-rose-150 text-rose-700"
-                              : "bg-amber-50 border-amber-150 text-amber-700"
+                              ? "bg-rose-50 dark:bg-rose-955/20 border-rose-150 dark:border-rose-900/60 text-rose-700 dark:text-rose-400"
+                              : "bg-amber-50 dark:bg-amber-950/40 border-amber-150 dark:border-amber-900/40 text-amber-700 dark:text-amber-300"
                           }`}>
                             {card.currentAttendanceStatus === "Done" ? "Done Today" : card.currentAttendanceStatus === "Missed" ? "Missed Today" : "Pending Today"}
                           </span>
                         </div>
-                        <h4 className="text-base font-black text-slate-800 mt-1">{card.studentName}</h4>
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] font-bold text-slate-500 pt-1">
+                        <h4 className="text-base font-black text-slate-800 dark:text-white mt-1">{card.studentName}</h4>
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] font-bold text-slate-500 dark:text-slate-400 pt-1">
                           <div className="flex items-center gap-1">
-                            <User className="h-3.5 w-3.5 text-slate-400" />
+                            <User className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
                             <span>Teacher: {card.tutorName}</span>
                           </div>
                           <div className="flex items-center gap-1">
-                            <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                            <Calendar className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
                             <span>Schedule: {card.classSchedule}</span>
                           </div>
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between md:justify-end gap-6 border-t md:border-t-0 border-slate-100 pt-3 md:pt-0">
+                      <div className="flex items-center justify-between md:justify-end gap-6 border-t md:border-t-0 border-slate-100 dark:border-slate-800 pt-3 md:pt-0">
                         {/* Counter */}
                         <div className="text-right">
-                          <span className="text-[10px] font-black text-slate-400 block uppercase tracking-wider">Attendance Summary</span>
-                          <strong className="text-sm font-extrabold text-slate-800">{card.completedClasses} / {card.totalClasses} Classes</strong>
+                          <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 block uppercase tracking-wider">Attendance Summary</span>
+                          <strong className="text-sm font-extrabold text-slate-800 dark:text-slate-200">{card.completedClasses} / {card.totalClasses} Classes</strong>
                         </div>
                         
                         {/* Chevron Toggle */}
-                        <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
+                        <div className="h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-450">
                           {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                         </div>
                       </div>
@@ -370,13 +370,13 @@ export default function ParentPortal() {
 
                     {/* Progress bar for summary */}
                     <div>
-                      <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                         <div 
                           className="h-full bg-indigo-600 rounded-full transition-all duration-300"
                           style={{ width: `${percent}%` }}
                         ></div>
                       </div>
-                      <div className="flex justify-between mt-1 text-[9px] font-black text-slate-400">
+                      <div className="flex justify-between mt-1 text-[9px] font-black text-slate-400 dark:text-slate-500">
                         <span>{percent}% Classes Completed</span>
                         <span>Remaining: {card.remainingClasses}</span>
                       </div>
@@ -385,25 +385,25 @@ export default function ParentPortal() {
 
                   {/* Expandable History Detail */}
                   {isExpanded && (
-                    <div className="border-t border-slate-150 bg-slate-50/50 p-6 animate-slideFade">
+                    <div className="border-t border-slate-150 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 p-6 animate-slideFade">
                       
                       {/* Attendance Grid Summary details */}
                       <div className="grid grid-cols-4 gap-2 mb-6 text-center">
-                        <div className="bg-white border border-slate-200/80 rounded-2xl p-3 shadow-sm">
-                          <span className="text-[9px] font-black text-slate-400 block uppercase">Total</span>
-                          <strong className="text-base font-black text-slate-800 mt-0.5 block">{card.totalClasses}</strong>
+                        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-3 shadow-sm">
+                          <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 block uppercase">Total</span>
+                          <strong className="text-base font-black text-slate-800 dark:text-white mt-0.5 block">{card.totalClasses}</strong>
                         </div>
-                        <div className="bg-white border border-slate-200/80 rounded-2xl p-3 shadow-sm">
-                          <span className="text-[9px] font-black text-slate-400 block uppercase">Completed</span>
+                        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-3 shadow-sm">
+                          <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 block uppercase">Completed</span>
                           <strong className="text-base font-black text-emerald-600 mt-0.5 block">{card.completedClasses}</strong>
                         </div>
-                        <div className="bg-white border border-slate-200/80 rounded-2xl p-3 shadow-sm">
-                          <span className="text-[9px] font-black text-slate-400 block uppercase">Missed</span>
+                        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-3 shadow-sm">
+                          <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 block uppercase">Missed</span>
                           <strong className="text-base font-black text-rose-600 mt-0.5 block">{card.missedClasses}</strong>
                         </div>
-                        <div className="bg-white border border-slate-200/80 rounded-2xl p-3 shadow-sm">
-                          <span className="text-[9px] font-black text-slate-400 block uppercase">Remaining</span>
-                          <strong className="text-base font-black text-indigo-600 mt-0.5 block">{card.remainingClasses}</strong>
+                        <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800/80 rounded-2xl p-3 shadow-sm">
+                          <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 block uppercase">Remaining</span>
+                          <strong className="text-base font-black text-indigo-600 dark:text-indigo-400 mt-0.5 block">{card.remainingClasses}</strong>
                         </div>
                       </div>
 
@@ -424,15 +424,15 @@ export default function ParentPortal() {
                       </div>
 
                       {/* Class Log Timeline */}
-                      <h5 className="text-xs font-black text-slate-700 uppercase tracking-wider mb-4 border-b border-slate-200/80 pb-2">Class Attendance Timeline</h5>
+                      <h5 className="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-4 border-b border-slate-200/80 dark:border-slate-800 pb-2">Class Attendance Timeline</h5>
                       
                       {logs.length === 0 ? (
-                        <div className="bg-white rounded-2xl p-6 text-center border border-slate-200/80 shadow-sm flex flex-col items-center justify-center gap-2">
+                        <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 text-center border border-slate-200/80 dark:border-slate-800 shadow-sm flex flex-col items-center justify-center gap-2">
                           <Activity className="h-6 w-6 text-slate-300" />
-                          <p className="text-xs font-bold text-slate-500">No classes logged yet for this tuition.</p>
+                          <p className="text-xs font-bold text-slate-500 dark:text-slate-400">No classes logged yet for this tuition.</p>
                         </div>
                       ) : (
-                        <div className="relative pl-4 space-y-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-[1.5px] before:bg-slate-200">
+                        <div className="relative pl-4 space-y-6 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-[1.5px] before:bg-slate-200 dark:before:bg-slate-800">
                           {logs.map((log, index) => {
                             const classIndex = logs.length - index;
                             return (
@@ -443,28 +443,28 @@ export default function ParentPortal() {
                                 {/* Circle icon marker on line */}
                                 <div className="absolute -left-[19px] top-1 z-10">
                                   {log.status === "Done" ? (
-                                    <div className="h-4.5 w-4.5 rounded-full bg-emerald-100 border border-emerald-300 flex items-center justify-center">
-                                      <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                                    <div className="h-4.5 w-4.5 rounded-full bg-emerald-100 dark:bg-emerald-950 border border-emerald-300 dark:border-emerald-800 flex items-center justify-center">
+                                      <CheckCircle2 className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
                                     </div>
                                   ) : (
-                                    <div className="h-4.5 w-4.5 rounded-full bg-rose-100 border border-rose-300 flex items-center justify-center">
-                                      <XCircle className="h-3 w-3 text-rose-600" />
+                                    <div className="h-4.5 w-4.5 rounded-full bg-rose-100 dark:bg-rose-955/40 border border-rose-300 dark:border-rose-900/60 flex items-center justify-center">
+                                      <XCircle className="h-3 w-3 text-rose-600 dark:text-rose-450" />
                                     </div>
                                   )}
                                 </div>
 
                                 {/* Timeline Card */}
-                                <div className="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm">
-                                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2 pb-2 border-b border-slate-100">
-                                    <h6 className="text-xs font-black text-slate-800 flex items-center gap-1.5">
+                                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-4 shadow-sm">
+                                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2 pb-2 border-b border-slate-100 dark:border-slate-800">
+                                    <h6 className="text-xs font-black text-slate-800 dark:text-white flex items-center gap-1.5">
                                       <span>Class {classIndex}</span>
-                                      <span className="text-slate-300">•</span>
-                                      <span className="text-slate-500 font-bold">{log.date}</span>
+                                      <span className="text-slate-300 dark:text-slate-700">•</span>
+                                      <span className="text-slate-500 dark:text-slate-400 font-bold">{log.date}</span>
                                     </h6>
                                     <span className={`text-[10px] font-black px-2 py-0.5 rounded-md border ${
                                       log.status === "Done" 
-                                        ? "bg-emerald-50 border-emerald-100 text-emerald-700" 
-                                        : "bg-rose-50 border-rose-100 text-rose-700"
+                                        ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-100 dark:border-emerald-900/40 text-emerald-700 dark:text-emerald-300" 
+                                        : "bg-rose-50 dark:bg-rose-955/20 border-rose-100 dark:border-rose-900/60 text-rose-700 dark:text-rose-450"
                                     }`}>
                                       {log.status === "Done" ? "Completed" : "Missed"}
                                     </span>
@@ -472,21 +472,21 @@ export default function ParentPortal() {
 
                                   {log.status === "Done" ? (
                                     <div className="space-y-1">
-                                      <span className="text-[9px] font-black text-slate-400 block uppercase tracking-wider">Topics Covered</span>
-                                      <p className="text-xs font-semibold text-slate-700 bg-slate-50 rounded-xl p-3 border border-slate-100">
+                                      <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 block uppercase tracking-wider">Topics Covered</span>
+                                      <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-950/40 rounded-xl p-3 border border-slate-100 dark:border-slate-800">
                                         {log.topicsCovered}
                                       </p>
                                     </div>
                                   ) : (
                                     <div className="space-y-1">
-                                      <span className="text-[9px] font-black text-slate-400 block uppercase tracking-wider">Missed Reason</span>
-                                      <p className="text-xs font-semibold text-slate-700 bg-slate-50 rounded-xl p-3 border border-slate-100">
+                                      <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 block uppercase tracking-wider">Missed Reason</span>
+                                      <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-950/40 rounded-xl p-3 border border-slate-100 dark:border-slate-800">
                                         {log.missedReason === "Other" ? log.customReason : log.missedReason}
                                       </p>
                                     </div>
                                   )}
                                   
-                                  <div className="mt-3 flex justify-between items-center text-[9px] font-bold text-slate-400">
+                                  <div className="mt-3 flex justify-between items-center text-[9px] font-bold text-slate-400 dark:text-slate-500">
                                     <span>Logged by: {log.tutorName}</span>
                                     <span>Updated: {new Date(log.timestamp).toLocaleDateString()}</span>
                                   </div>

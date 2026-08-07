@@ -1442,7 +1442,7 @@ export default function AdminDashboard() {
             value={parentEnquiries.length}
             subtitle={`${filteredParentEnquiries.length} visible`}
             icon={Users}
-            gradientClass="bg-blue-50 text-blue-650"
+            gradientClass="bg-blue-50 dark:bg-blue-950/40 text-blue-650 dark:text-blue-400"
           />
 
           <StatCard
@@ -1450,7 +1450,7 @@ export default function AdminDashboard() {
             value={drafts.length}
             subtitle={`${filteredDrafts.length} filtered`}
             icon={FileText}
-            gradientClass="bg-amber-50 text-amber-650"
+            gradientClass="bg-amber-50 dark:bg-amber-950/40 text-amber-650 dark:text-amber-400"
           />
 
           <StatCard
@@ -1458,7 +1458,7 @@ export default function AdminDashboard() {
             value={enquiries.length}
             subtitle="Website enquiries"
             icon={Mail}
-            gradientClass="bg-teal-50 text-teal-650"
+            gradientClass="bg-teal-50 dark:bg-teal-950/40 text-teal-650 dark:text-teal-400"
           />
 
           <StatCard
@@ -1466,7 +1466,7 @@ export default function AdminDashboard() {
             value={bookings.length}
             subtitle="Scheduled sessions"
             icon={Calendar}
-            gradientClass="bg-purple-50 text-purple-650"
+            gradientClass="bg-purple-50 dark:bg-purple-950/40 text-purple-650 dark:text-purple-400"
           />
         </div>
 
@@ -1476,7 +1476,7 @@ export default function AdminDashboard() {
           <MiniStat title="Rejected Tutors" value={rejectedTutors} color="red" icon={XCircle} />
         </div>
 
-        <div className="mb-8 rounded-3xl bg-white p-5 shadow-sm border border-slate-200/80">
+        <div className="mb-8 rounded-3xl bg-white dark:bg-slate-900 p-5 shadow-sm border border-slate-200/80 dark:border-slate-800">
           <div className="grid gap-4 md:grid-cols-[1fr_240px_auto_auto_auto]">
             <div className="relative">
               <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">
@@ -1493,7 +1493,7 @@ export default function AdminDashboard() {
                   setTimeout(() => setShowSuggestions(false), 200);
                 }}
                 placeholder="Search parent, student, phone, area, subject, school..."
-                className="h-12 w-full rounded-2xl border border-slate-200/80 pl-11 pr-4 text-sm font-semibold outline-none transition duration-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                className="h-12 w-full rounded-2xl border border-slate-200/80 dark:border-slate-700 pl-11 pr-4 text-sm font-semibold outline-none transition duration-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 bg-white dark:bg-slate-800 text-slate-800 dark:text-white"
               />
 
               {showSuggestions && suggestions.length > 0 && (
@@ -1519,7 +1519,7 @@ export default function AdminDashboard() {
               <select
                 value={leadFilter}
                 onChange={(e) => setLeadFilter(e.target.value)}
-                className="h-12 w-full appearance-none rounded-2xl border border-slate-200/80 bg-white px-4 pr-10 text-sm font-bold text-slate-700 outline-none transition duration-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
+                className="h-12 w-full appearance-none rounded-2xl border border-slate-200/80 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 pr-10 text-sm font-bold text-slate-700 dark:text-slate-200 outline-none transition duration-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
               >
                 {FILTER_OPTIONS.map((option) => (
                   <option key={option} value={option}>
@@ -1632,9 +1632,9 @@ export default function AdminDashboard() {
                     return (
                       <div
                         key={p._id}
-                        className={`overflow-hidden rounded-3xl bg-white shadow-sm border border-slate-200/80 transition duration-300 hover:shadow-lg ${borderClass} animate-slideFade`}
+                        className={`overflow-hidden rounded-3xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200/80 dark:border-slate-800 transition duration-300 hover:shadow-lg ${borderClass} animate-slideFade`}
                       >
-                        <div className="border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white p-5">
+                        <div className="border-b border-slate-100 dark:border-slate-800 bg-gradient-to-r from-slate-50 to-white dark:from-slate-800/80 dark:to-slate-900 p-5">
                           <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
                             <div>
                               <div className="flex flex-wrap items-center gap-2">
@@ -1679,7 +1679,7 @@ export default function AdminDashboard() {
                                   onChange={(e) =>
                                     updateLeadStatus(p._id, e.target.value)
                                   }
-                                  className="h-11 appearance-none rounded-2xl border border-slate-200 bg-white pl-4 pr-10 text-xs font-bold text-slate-700 outline-none focus:border-blue-500"
+                                  className="h-11 appearance-none rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 pl-4 pr-10 text-xs font-bold text-slate-700 dark:text-slate-200 outline-none focus:border-blue-500"
                                 >
                                   {LEAD_STATUSES.map((status) => (
                                     <option key={status} value={status}>
@@ -1783,7 +1783,7 @@ export default function AdminDashboard() {
                           )}
 
                           {(p.businessName || p.professionType || p.otherOccupation) && (
-                            <div className="rounded-2xl bg-slate-50/60 border border-slate-100 p-5 transition hover:bg-slate-50">
+                            <div className="rounded-2xl bg-slate-50/60 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700 p-5 transition hover:bg-slate-50 dark:hover:bg-slate-800">
                               <h4 className="mb-4 text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                                 <Briefcase className="h-4 w-4 text-indigo-500" />
                                 Dynamic Occupation Info
@@ -1809,14 +1809,14 @@ export default function AdminDashboard() {
                               p.wards.map((ward, index) => (
                                 <div
                                   key={index}
-                                  className="rounded-2xl border border-slate-200/85 bg-white p-5 shadow-sm transition duration-200 hover:shadow"
+                                  className="rounded-2xl border border-slate-200 dark:border-slate-700/80 bg-white dark:bg-slate-800/40 p-5 shadow-sm transition duration-200 hover:shadow"
                                 >
                                   <div className="mb-3.5 flex items-center justify-between">
-                                    <h5 className="font-extrabold text-slate-900 flex items-center gap-1.5">
+                                    <h5 className="font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5">
                                       <User className="h-4 w-4 text-slate-400" />
                                       Student {index + 1}
                                     </h5>
-                                    <span className="rounded-full bg-slate-100 border border-slate-200 px-3 py-1 text-xs font-bold text-slate-650">
+                                    <span className="rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1 text-xs font-bold text-slate-655 dark:text-slate-300">
                                       {ward.classGrade ? `Class ${ward.classGrade}` : "Class NA"}
                                     </span>
                                   </div>
@@ -1832,7 +1832,7 @@ export default function AdminDashboard() {
                                 </div>
                               ))
                             ) : (
-                              <p className="text-sm text-slate-500">
+                              <p className="text-sm text-slate-500 dark:text-slate-400">
                                 No ward data available.
                               </p>
                             )}
@@ -1840,16 +1840,16 @@ export default function AdminDashboard() {
                         </div>
 
                         {/* Expandable Match Tutors Panel */}
-                        <div className="px-5 pb-5 border-t border-slate-100 pt-5">
+                        <div className="px-5 pb-5 border-t border-slate-100 dark:border-slate-800 pt-5">
                           <div className="flex flex-wrap items-center justify-between gap-3">
                             <div className="flex items-center gap-2">
                               {p.requirementId && (
-                                <span className="rounded-full bg-indigo-50 border border-indigo-150 px-3 py-1.5 text-xs font-black text-indigo-700">
+                                <span className="rounded-full bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-150 dark:border-indigo-800 px-3 py-1.5 text-xs font-black text-indigo-700 dark:text-indigo-300">
                                   ID: {p.requirementId}
                                 </span>
                               )}
                               {p.assignedTutor && (
-                                <span className="rounded-full bg-emerald-50 border border-emerald-150 px-3 py-1.5 text-xs font-black text-emerald-700">
+                                <span className="rounded-full bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-150 dark:border-emerald-800 px-3 py-1.5 text-xs font-black text-emerald-700 dark:text-emerald-300">
                                   Assigned Tutor: {p.assignedTutor}
                                 </span>
                               )}
@@ -1871,8 +1871,8 @@ export default function AdminDashboard() {
                               }}
                               className={`h-11 flex items-center justify-center gap-1.5 rounded-2xl px-5 text-xs font-extrabold transition-all duration-200 cursor-pointer ${
                                 matchingLeadId === p._id
-                                  ? "bg-slate-900 text-white shadow-lg shadow-slate-950/20"
-                                  : "bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100"
+                                  ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-lg shadow-slate-950/20"
+                                  : "bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/40"
                               }`}
                             >
                               <Search className="h-4 w-4" />
@@ -1881,13 +1881,13 @@ export default function AdminDashboard() {
                           </div>
 
                           {matchingLeadId === p._id && (
-                            <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50/50 p-5 animate-slideFade">
-                              <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/80 pb-4">
+                            <div className="mt-5 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 p-5 animate-slideFade">
+                              <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/80 dark:border-slate-700 pb-4">
                                 <div>
-                                  <h4 className="text-sm font-black text-slate-800">
+                                  <h4 className="text-sm font-black text-slate-800 dark:text-slate-100">
                                     Matching Tutors ({matchedTutors.length} found)
                                   </h4>
-                                  <p className="text-[11px] font-bold text-slate-500 mt-0.5">
+                                  <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 mt-0.5">
                                     Matched on Grade, Timing, Gender, and Locality.
                                   </p>
                                 </div>
@@ -1903,7 +1903,7 @@ export default function AdminDashboard() {
                                           setSelectedTutorIds(matchedTutors.map(t => t._id));
                                         }
                                       }}
-                                      className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                                      className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-xs font-black text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition cursor-pointer"
                                     >
                                       {selectedTutorIds.length === matchedTutors.length
                                         ? "Deselect All"
@@ -1950,7 +1950,7 @@ export default function AdminDashboard() {
                                         )}
                                         <button
                                           onClick={() => setSelectedTutorIds([])}
-                                          className="rounded-xl bg-slate-200 px-3 py-2 text-xs font-black text-slate-755 hover:bg-slate-300 transition cursor-pointer"
+                                          className="rounded-xl bg-slate-200 dark:bg-slate-700 px-3 py-2 text-xs font-black text-slate-755 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600 transition cursor-pointer"
                                         >
                                           Clear Selection
                                         </button>
@@ -1961,7 +1961,7 @@ export default function AdminDashboard() {
                               </div>
 
                               {/* Tab selector for Best Matches vs Search All Tutors */}
-                              <div className="mb-4 flex border-b border-slate-200/80 text-[11px] font-black uppercase tracking-wider">
+                              <div className="mb-4 flex border-b border-slate-200/80 dark:border-slate-700 text-[11px] font-black uppercase tracking-wider">
                                 <button
                                   type="button"
                                   onClick={() => {
@@ -1969,12 +1969,12 @@ export default function AdminDashboard() {
                                     setSelectedTutorIds([]);
                                   }}
                                   className={`pb-2.5 pr-4 transition-all relative cursor-pointer ${
-                                    tutorPanelTab === "matches" ? "text-indigo-650 font-black" : "text-slate-450 hover:text-slate-700"
+                                    tutorPanelTab === "matches" ? "text-indigo-650 dark:text-indigo-400 font-black" : "text-slate-450 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                                   }`}
                                 >
                                   Best Matches ({matchedTutors.length})
                                   {tutorPanelTab === "matches" && (
-                                    <span className="absolute bottom-0 left-0 right-4 h-0.5 bg-indigo-600 rounded-full" />
+                                    <span className="absolute bottom-0 left-0 right-4 h-0.5 bg-indigo-600 dark:bg-indigo-500 rounded-full" />
                                   )}
                                 </button>
                                 <button
@@ -1984,12 +1984,12 @@ export default function AdminDashboard() {
                                     setSelectedTutorIds([]);
                                   }}
                                   className={`pb-2.5 px-4 transition-all relative cursor-pointer ${
-                                    tutorPanelTab === "all" ? "text-indigo-650 font-black" : "text-slate-450 hover:text-slate-700"
+                                    tutorPanelTab === "all" ? "text-indigo-650 dark:text-indigo-400 font-black" : "text-slate-450 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                                   }`}
                                 >
                                   Search Other Tutors
                                   {tutorPanelTab === "all" && (
-                                    <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-indigo-600 rounded-full" />
+                                    <span className="absolute bottom-0 left-4 right-4 h-0.5 bg-indigo-600 dark:bg-indigo-500 rounded-full" />
                                   )}
                                 </button>
                               </div>
@@ -2031,25 +2031,25 @@ export default function AdminDashboard() {
                                           placeholder="Type name, phone, email, or code to search any tutor..."
                                           value={tutorSearchQuery}
                                           onChange={(e) => setTutorSearchQuery(e.target.value)}
-                                          className="w-full h-10 pl-9 pr-4 rounded-xl bg-white border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-800"
+                                          className="w-full h-10 pl-9 pr-4 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-slate-800 dark:text-slate-200"
                                         />
                                       </div>
                                     )}
 
                                     {tutorPanelTab === "all" && !tutorSearchQuery.trim() && (
-                                      <div className="py-8 text-center text-xs font-bold text-slate-450">
+                                      <div className="py-8 text-center text-xs font-bold text-slate-450 dark:text-slate-500">
                                         Enter search query above to find any tutor in the master database.
                                       </div>
                                     )}
 
                                     {tutorPanelTab === "matches" && tutorsList.length === 0 && (
-                                      <div className="py-6 text-center text-xs font-bold text-slate-450">
+                                      <div className="py-6 text-center text-xs font-bold text-slate-450 dark:text-slate-500">
                                         No best matches found for this tuition location.
                                       </div>
                                     )}
 
                                     {tutorSearchQuery.trim() && tutorPanelTab === "all" && tutorsList.length === 0 && (
-                                      <div className="py-6 text-center text-xs font-bold text-slate-450">
+                                      <div className="py-6 text-center text-xs font-bold text-slate-450 dark:text-slate-500">
                                         No tutors found matching your search.
                                       </div>
                                     )}
@@ -2061,8 +2061,8 @@ export default function AdminDashboard() {
                                     return (
                                       <div
                                         key={t._id}
-                                        className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl border transition duration-200 bg-white ${
-                                          isSelected ? "border-indigo-400 bg-indigo-50/20" : "border-slate-150 hover:border-slate-350"
+                                        className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl border transition duration-200 bg-white dark:bg-slate-800 ${
+                                          isSelected ? "border-indigo-400 bg-indigo-50/20 dark:border-indigo-600 dark:bg-indigo-900/30" : "border-slate-150 dark:border-slate-700 hover:border-slate-350 dark:hover:border-slate-600"
                                         }`}
                                       >
                                         <div className="flex items-center gap-3">
@@ -2076,59 +2076,59 @@ export default function AdminDashboard() {
                                                 setSelectedTutorIds([...selectedTutorIds, t._id]);
                                               }
                                             }}
-                                            className="h-4.5 w-4.5 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500"
+                                            className="h-4.5 w-4.5 rounded text-indigo-600 dark:bg-slate-900 border-slate-300 dark:border-slate-600 focus:ring-indigo-500"
                                           />
                                           {t.photo ? (
                                             <img
                                               src={t.photo}
                                               alt={t.name}
-                                              className="h-12 w-12 rounded-xl object-cover border border-slate-200"
+                                              className="h-12 w-12 rounded-xl object-cover border border-slate-200 dark:border-slate-700"
                                             />
                                           ) : (
-                                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-100 to-blue-100 text-xs font-black text-indigo-600">
+                                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-100 to-blue-100 dark:from-indigo-900 dark:to-blue-900 text-xs font-black text-indigo-600 dark:text-indigo-300">
                                               {t.name?.charAt(0) || "?"}
                                             </div>
                                           )}
 
                                           <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap">
-                                              <p className="font-extrabold text-slate-900 text-sm">{t.name}</p>
+                                              <p className="font-extrabold text-slate-900 dark:text-white text-sm">{t.name}</p>
 
                                               {/* Match % badge */}
                                               {t.matchPercentage !== undefined && t.matchPercentage > 0 ? (
                                                 <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-black border ${
                                                   t.matchPercentage >= 80
-                                                    ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                                                    ? "bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300"
                                                     : t.matchPercentage >= 60
-                                                    ? "bg-blue-50 border-blue-200 text-blue-700"
-                                                    : "bg-amber-50 border-amber-200 text-amber-700"
+                                                    ? "bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300"
+                                                    : "bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300"
                                                 }`}>
                                                   {t.matchPercentage}% Match
                                                 </span>
                                               ) : (
-                                                <span className="inline-flex items-center rounded-full bg-slate-50 border border-slate-200 px-2 py-0.5 text-[10px] font-black text-slate-500">
+                                                <span className="inline-flex items-center rounded-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-2 py-0.5 text-[10px] font-black text-slate-500 dark:text-slate-300">
                                                   No Match
                                                 </span>
                                               )}
 
                                               {/* Distance badge */}
                                               {t.distanceTier && t.distanceTier !== "Unknown" && (
-                                                <span className="inline-flex items-center rounded-full bg-violet-50 border border-violet-200 px-2 py-0.5 text-[10px] font-black text-violet-700">
+                                                <span className="inline-flex items-center rounded-full bg-violet-50 dark:bg-violet-900/30 border border-violet-200 dark:border-violet-800 px-2 py-0.5 text-[10px] font-black text-violet-700 dark:text-violet-300">
                                                   📍 {t.distanceTier}
                                                 </span>
                                               )}
 
                                               {/* Onboarding badge */}
                                               {t.onboardingCompleted ? (
-                                                <span className="inline-flex items-center rounded-full bg-emerald-50 border border-emerald-250 px-2 py-0.5 text-[10px] font-black text-emerald-700">
+                                                <span className="inline-flex items-center rounded-full bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-250 dark:border-emerald-800 px-2 py-0.5 text-[10px] font-black text-emerald-700 dark:text-emerald-300">
                                                   🟢 Ready to Broadcast
                                                 </span>
                                               ) : t.onboardingMessageSentAt ? (
-                                                <span className="inline-flex items-center rounded-full bg-amber-50 border border-amber-250 px-2 py-0.5 text-[10px] font-black text-amber-700">
+                                                <span className="inline-flex items-center rounded-full bg-amber-50 dark:bg-amber-900/30 border border-amber-250 dark:border-amber-800 px-2 py-0.5 text-[10px] font-black text-amber-700 dark:text-amber-300">
                                                   🟡 Onboarding Sent
                                                 </span>
                                               ) : (
-                                                <span className="inline-flex items-center rounded-full bg-orange-50 border border-orange-250 px-2 py-0.5 text-[10px] font-black text-orange-700">
+                                                <span className="inline-flex items-center rounded-full bg-orange-50 dark:bg-orange-900/30 border border-orange-250 dark:border-orange-800 px-2 py-0.5 text-[10px] font-black text-orange-700 dark:text-orange-300">
                                                   🟠 Onboarding Pending
                                                 </span>
                                               )}
@@ -2137,12 +2137,12 @@ export default function AdminDashboard() {
                                               {t.broadcastStatus && (
                                                 <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-black border ${
                                                   t.broadcastResponseStatus === "Assigned"
-                                                    ? "bg-indigo-50 border-indigo-200 text-indigo-700"
+                                                    ? "bg-indigo-50 dark:bg-indigo-900/30 border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300"
                                                     : t.broadcastResponseStatus === "Interested"
-                                                    ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                                                    ? "bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300"
                                                     : t.broadcastResponseStatus === "Not Interested"
-                                                    ? "bg-rose-50 border-rose-200 text-rose-700"
-                                                    : "bg-slate-100 border-slate-200 text-slate-600"
+                                                    ? "bg-rose-50 dark:bg-rose-900/30 border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300"
+                                                    : "bg-slate-100 dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300"
                                                 }`}>
                                                   {t.broadcastResponseStatus === "Assigned" ? "✓ Assigned" :
                                                    t.broadcastResponseStatus === "Interested" ? "✓ Interested" :
@@ -2154,53 +2154,53 @@ export default function AdminDashboard() {
                                               )}
                                             </div>
 
-                                            <div className="mt-1 flex flex-wrap gap-1.5 text-[10px] text-slate-500 font-bold">
-                                              <span className="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">
+                                            <div className="mt-1 flex flex-wrap gap-1.5 text-[10px] text-slate-500 dark:text-slate-400 font-bold">
+                                              <span className="bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-2 py-0.5 rounded-full">
                                                 {t.gender || "N/A"}
                                               </span>
-                                              <span className="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">
+                                              <span className="bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-2 py-0.5 rounded-full">
                                                 Exp: {t.experience || "N/A"}
                                               </span>
-                                              <span className="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">
+                                              <span className="bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-2 py-0.5 rounded-full">
                                                 {t.area || t.location || "N/A"}
                                               </span>
                                               {t.grades?.length > 0 && (
-                                                <span className="bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded-full text-indigo-600">
+                                                <span className="bg-indigo-50 dark:bg-indigo-900/30 border border-indigo-100 dark:border-indigo-800 px-2 py-0.5 rounded-full text-indigo-600 dark:text-indigo-300">
                                                   {t.grades.join(", ")}
                                                 </span>
                                               )}
                                               {t.boards?.length > 0 && (
-                                                <span className="bg-teal-50 border border-teal-100 px-2 py-0.5 rounded-full text-teal-700">
+                                                <span className="bg-teal-50 dark:bg-teal-900/30 border border-teal-100 dark:border-teal-800 px-2 py-0.5 rounded-full text-teal-700 dark:text-teal-300">
                                                   {t.boards.slice(0,3).join(" • ")}
                                                 </span>
                                               )}
                                               {t.subjects?.length > 0 && (
-                                                <span className="bg-purple-50 border border-purple-100 px-2 py-0.5 rounded-full text-purple-700">
+                                                <span className="bg-purple-50 dark:bg-purple-900/30 border border-purple-100 dark:border-purple-800 px-2 py-0.5 rounded-full text-purple-700 dark:text-purple-300">
                                                   {t.subjects.slice(0,3).join(", ")}
                                                 </span>
                                               )}
                                               <span className={`px-2 py-0.5 rounded-full border ${
                                                 t.availabilityStatus === "Available"
-                                                  ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                                                  ? "bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300"
                                                   : t.availabilityStatus === "Busy"
-                                                  ? "bg-amber-50 border-amber-200 text-amber-700"
+                                                  ? "bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300"
                                                   : t.availabilityStatus === "Blocked"
-                                                  ? "bg-red-50 border-red-200 text-red-700"
-                                                  : "bg-slate-100 border-slate-200 text-slate-600"
+                                                  ? "bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300"
+                                                  : "bg-slate-100 dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300"
                                               }`}>
                                                 {t.availabilityStatus || "Available"}
                                               </span>
                                               <span className={`px-2 py-0.5 rounded-full border ${
                                                 t.status === "approved"
-                                                  ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                                                  ? "bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300"
                                                   : t.status === "rejected"
-                                                  ? "bg-rose-50 border-rose-200 text-rose-700"
-                                                  : "bg-amber-50 border-amber-200 text-amber-700"
+                                                  ? "bg-rose-50 dark:bg-rose-900/30 border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300"
+                                                  : "bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300"
                                               }`}>
                                                 {t.status?.toUpperCase() || "PENDING"}
                                               </span>
                                               {t.qualification && (
-                                                <span className="bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">
+                                                <span className="bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-2 py-0.5 rounded-full">
                                                   {t.qualification}
                                                 </span>
                                               )}
@@ -2215,7 +2215,7 @@ export default function AdminDashboard() {
                                               setAssignDemoDate("");
                                               setAssignDemoTime("");
                                             }}
-                                            className="px-3 py-1.5 text-xs font-black text-indigo-600 hover:bg-indigo-50 border border-indigo-150 rounded-xl transition cursor-pointer"
+                                            className="px-3 py-1.5 text-xs font-black text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 border border-indigo-150 dark:border-indigo-800 rounded-xl transition cursor-pointer"
                                           >
                                             Assign
                                           </button>
@@ -2244,13 +2244,13 @@ export default function AdminDashboard() {
                   {filteredDrafts.map((p) => (
                     <div
                       key={p._id}
-                      className="overflow-hidden rounded-3xl bg-white shadow-sm border border-slate-200/80 border-l-4 border-l-amber-500 transition duration-300 hover:shadow-lg animate-slideFade"
+                      className="overflow-hidden rounded-3xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200/80 dark:border-slate-800 border-l-4 border-l-amber-500 transition duration-300 hover:shadow-lg animate-slideFade"
                     >
-                      <div className="border-b border-slate-100 bg-gradient-to-r from-amber-50/20 to-white p-5">
+                      <div className="border-b border-slate-100 dark:border-slate-800 bg-gradient-to-r from-amber-50/20 to-white dark:from-amber-900/10 dark:to-slate-900 p-5">
                         <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
                           <div>
                             <div className="flex flex-wrap items-center gap-2">
-                              <h3 className="text-xl font-black text-slate-900">
+                              <h3 className="text-xl font-black text-slate-900 dark:text-white">
                                 {p.formData?.parentName || p.formData?.name || "Anonymous Parent"}
                               </h3>
 
@@ -2267,13 +2267,13 @@ export default function AdminDashboard() {
                               )}
 
                               {p.ipAddress && (
-                                <span className="text-xs text-slate-400 font-semibold">
+                                <span className="text-xs text-slate-400 dark:text-slate-500 font-semibold">
                                   IP: {p.ipAddress}
                                 </span>
                               )}
                             </div>
 
-                            <p className="mt-2 text-xs font-bold text-slate-450">
+                            <p className="mt-2 text-xs font-bold text-slate-450 dark:text-slate-500">
                               Last Updated: {formatSubmittedDate(p.updatedAt)}
                             </p>
                           </div>
@@ -2291,8 +2291,8 @@ export default function AdminDashboard() {
                       </div>
 
                       <div className="grid gap-5 p-5 lg:grid-cols-3">
-                        <div className="rounded-2xl bg-slate-50/60 border border-slate-100 p-5 transition hover:bg-slate-50">
-                          <h4 className="mb-4 text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                        <div className="rounded-2xl bg-slate-50/60 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-700 p-5 transition hover:bg-slate-50 dark:hover:bg-slate-800">
+                          <h4 className="mb-4 text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
                             <User className="h-4 w-4 text-blue-500" />
                             Contact Details
                           </h4>
@@ -2305,8 +2305,8 @@ export default function AdminDashboard() {
                         </div>
 
                         {p.stepReached >= 3 && p.formData?.preferredMode ? (
-                          <div className="rounded-2xl bg-slate-50/60 border border-slate-100 p-5 transition hover:bg-slate-50">
-                            <h4 className="mb-4 text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                          <div className="rounded-2xl bg-slate-50/60 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-700 p-5 transition hover:bg-slate-50 dark:hover:bg-slate-800">
+                            <h4 className="mb-4 text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
                               <Settings className="h-4 w-4 text-purple-500" />
                               Tutor Preference
                             </h4>
@@ -2319,16 +2319,16 @@ export default function AdminDashboard() {
                             </div>
                           </div>
                         ) : (
-                          <div className="rounded-2xl bg-slate-50/40 border border-dashed border-slate-200 p-5 flex flex-col justify-center items-center text-center">
+                          <div className="rounded-2xl bg-slate-50/40 dark:bg-slate-800/20 border border-dashed border-slate-200 dark:border-slate-700 p-5 flex flex-col justify-center items-center text-center">
                             <AlertCircle className="h-5 w-5 text-slate-400 mb-2" />
-                            <p className="text-xs font-bold text-slate-400">Tutor Preferences</p>
-                            <p className="text-[10px] text-slate-400 mt-1">Not reached/filled yet</p>
+                            <p className="text-xs font-bold text-slate-400 dark:text-slate-500">Tutor Preferences</p>
+                            <p className="text-[10px] text-slate-400 dark:text-slate-600 mt-1">Not reached/filled yet</p>
                           </div>
                         )}
 
                         {p.formData?.planType ? (
-                          <div className="rounded-2xl bg-amber-50/20 border border-amber-100 p-5 transition hover:bg-amber-50/30">
-                            <h4 className="mb-4 text-xs font-black uppercase tracking-wider text-amber-750 flex items-center gap-1.5">
+                          <div className="rounded-2xl bg-amber-50/20 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/30 p-5 transition hover:bg-amber-50/30 dark:hover:bg-amber-900/20">
+                            <h4 className="mb-4 text-xs font-black uppercase tracking-wider text-amber-750 dark:text-amber-500 flex items-center gap-1.5">
                               <Award className="h-4 w-4 text-amber-700" />
                               Selected Plan & Pricing
                             </h4>
@@ -2348,8 +2348,8 @@ export default function AdminDashboard() {
                         ) : null}
 
                         {p.geoInfo && Object.keys(p.geoInfo).length > 0 && (
-                          <div className="rounded-2xl bg-slate-50/60 border border-slate-100 p-5 transition hover:bg-slate-50">
-                            <h4 className="mb-4 text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                          <div className="rounded-2xl bg-slate-50/60 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-700 p-5 transition hover:bg-slate-50 dark:hover:bg-slate-800">
+                            <h4 className="mb-4 text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
                               <MapPin className="h-4 w-4 text-emerald-500" />
                               Geolocation Meta
                             </h4>
@@ -2367,7 +2367,7 @@ export default function AdminDashboard() {
 
                       {p.stepReached >= 2 && p.formData?.wards?.length > 0 ? (
                         <div className="px-5 pb-5">
-                          <h4 className="mb-4 text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                          <h4 className="mb-4 text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
                             <GraduationCap className="h-4.5 w-4.5 text-indigo-500" />
                             Wards/Students Details (Incomplete)
                           </h4>
@@ -2376,14 +2376,14 @@ export default function AdminDashboard() {
                             {p.formData.wards.map((ward, index) => (
                               <div
                                 key={index}
-                                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+                                className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/40 p-5 shadow-sm"
                               >
                                 <div className="mb-3.5 flex items-center justify-between">
-                                  <h5 className="font-extrabold text-slate-900 flex items-center gap-1.5">
+                                  <h5 className="font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5">
                                     <User className="h-4 w-4 text-slate-400" />
                                     Student {index + 1}
                                   </h5>
-                                  <span className="rounded-full bg-slate-100 border border-slate-200 px-3 py-1 text-xs font-bold text-slate-600">
+                                  <span className="rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-1 text-xs font-bold text-slate-600 dark:text-slate-300">
                                     {ward.classGrade ? `Class ${ward.classGrade}` : "Class NA"}
                                   </span>
                                 </div>
@@ -2419,18 +2419,18 @@ export default function AdminDashboard() {
               {enquiries.map((e) => (
                 <div
                   key={e._id}
-                  className="rounded-3xl bg-white p-6 shadow-sm border border-slate-200/80 transition duration-300 hover:shadow-lg"
+                  className="rounded-3xl bg-white dark:bg-slate-900 p-6 shadow-sm border border-slate-200/80 dark:border-slate-800 transition duration-300 hover:shadow-lg"
                 >
-                  <p className="text-lg font-black text-slate-900">
+                  <p className="text-lg font-black text-slate-900 dark:text-white">
                     {e.parentName || e.name || "Unnamed"}
                   </p>
-                  <p className="mt-1 text-sm font-semibold text-slate-500">
+                  <p className="mt-1 text-sm font-semibold text-slate-500 dark:text-slate-400">
                     Student: {e.studentName || "Not provided"}
                   </p>
-                  <p className="mt-3 text-sm font-medium text-slate-700">
+                  <p className="mt-3 text-sm font-medium text-slate-700 dark:text-slate-300">
                     {e.phone || "No phone"} | {e.email || "No email"}
                   </p>
-                  <p className="mt-3 rounded-2xl bg-slate-50 border border-slate-100 px-4 py-3 text-sm font-semibold text-slate-700">
+                  <p className="mt-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 px-4 py-3 text-sm font-semibold text-slate-700 dark:text-slate-300">
                     Subject required: {e.subjectNeeded || e.subject || "Subject not provided"}
                   </p>
                 </div>
@@ -2449,15 +2449,15 @@ export default function AdminDashboard() {
               {bookings.map((b) => (
                 <div
                   key={b._id}
-                  className="rounded-3xl bg-white p-6 shadow-sm border border-slate-200/80 transition duration-300 hover:shadow-lg"
+                  className="rounded-3xl bg-white dark:bg-slate-900 p-6 shadow-sm border border-slate-200/80 dark:border-slate-800 transition duration-300 hover:shadow-lg"
                 >
-                  <p className="text-lg font-black text-slate-900">
+                  <p className="text-lg font-black text-slate-900 dark:text-white">
                     Tutor: {b.tutorName || "Tutor not provided"}
                   </p>
-                  <p className="mt-1 text-sm font-semibold text-slate-650">
+                  <p className="mt-1 text-sm font-semibold text-slate-650 dark:text-slate-400">
                     Learner: {b.learnerName || "Learner not provided"} | Phone: {b.phone || "No phone"}
                   </p>
-                  <p className="mt-3 rounded-2xl bg-slate-50 border border-slate-100 px-4 py-3 text-sm font-semibold text-slate-700">
+                  <p className="mt-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 px-4 py-3 text-sm font-semibold text-slate-700 dark:text-slate-300">
                     Slot: {b.preferredDate || "Date not provided"} - {b.preferredSlot || "Slot not provided"}
                   </p>
                 </div>
@@ -2490,7 +2490,7 @@ export default function AdminDashboard() {
                   return (
                     <div
                       key={t._id}
-                      className={`rounded-3xl bg-white p-6 shadow-sm border border-slate-200/80 transition duration-300 hover:shadow-lg ${tBorderClass} animate-slideFade`}
+                      className={`rounded-3xl bg-white dark:bg-slate-900 p-6 shadow-sm border border-slate-200/80 dark:border-slate-800 transition duration-300 hover:shadow-lg ${tBorderClass} animate-slideFade`}
                     >
                       <div className="flex flex-col justify-between gap-6 lg:flex-row">
                         <div className="flex flex-col gap-6 sm:flex-row items-start">
@@ -2502,17 +2502,17 @@ export default function AdminDashboard() {
                               )}
                               alt={t.name}
                               loading="lazy"
-                              className="h-28 w-28 rounded-3xl object-cover border border-slate-200 shadow-sm"
+                              className="h-28 w-28 rounded-3xl object-cover border border-slate-200 dark:border-slate-700 shadow-sm"
                             />
                           ) : (
-                            <div className="flex h-28 w-28 items-center justify-center rounded-3xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-400">
+                            <div className="flex h-28 w-28 items-center justify-center rounded-3xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-400">
                               No Image
                             </div>
                           )}
 
                           <div className="flex-1">
                             <div className="mb-3.5 flex flex-wrap items-center gap-2">
-                              <h3 className="text-xl font-black text-slate-900">
+                              <h3 className="text-xl font-black text-slate-900 dark:text-white">
                                 {t.name || "Unnamed Tutor"}
                               </h3>
 
@@ -2535,7 +2535,7 @@ export default function AdminDashboard() {
                               )}
                             </div>
 
-                            <div className="grid gap-x-8 gap-y-2 text-sm text-slate-700 md:grid-cols-2">
+                            <div className="grid gap-x-8 gap-y-2 text-sm text-slate-700 dark:text-slate-300 md:grid-cols-2">
                               <InfoRow icon={Mail} label="Email" value={t.email} />
                               <InfoRow icon={Phone} label="Phone" value={t.phone} />
                               <InfoRow
@@ -2568,8 +2568,8 @@ export default function AdminDashboard() {
                               />
                             </div>
 
-                            <div className="mt-5 pt-4 border-t border-slate-100">
-                              <p className="mb-2.5 text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                            <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800">
+                              <p className="mb-2.5 text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
                                 <FileText className="h-4 w-4" />
                                 Verification Documents
                               </p>
@@ -2594,39 +2594,39 @@ export default function AdminDashboard() {
                             </div>
 
                             {t.performanceStats && (
-                              <div className="mt-5 pt-4 border-t border-slate-100 animate-slideFade">
-                                <p className="mb-3 text-xs font-black uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                              <div className="mt-5 pt-4 border-t border-slate-100 dark:border-slate-800 animate-slideFade">
+                                <p className="mb-3 text-xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
                                   <Activity className="h-4 w-4 text-indigo-500" />
                                   CRM Performance Statistics
                                 </p>
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50/50 p-4 rounded-2xl border border-slate-150">
-                                  <div className="text-center p-2 rounded-xl bg-white shadow-sm border border-slate-100">
-                                    <span className="block text-[10px] font-black uppercase text-slate-455">Total Assignments</span>
-                                    <span className="block text-lg font-black text-slate-800 mt-0.5">{t.performanceStats.totalAssignments}</span>
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50/50 dark:bg-slate-800/30 p-4 rounded-2xl border border-slate-150 dark:border-slate-700">
+                                  <div className="text-center p-2 rounded-xl bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700">
+                                    <span className="block text-[10px] font-black uppercase text-slate-455 dark:text-slate-500">Total Assignments</span>
+                                    <span className="block text-lg font-black text-slate-800 dark:text-white mt-0.5">{t.performanceStats.totalAssignments}</span>
                                   </div>
-                                  <div className="text-center p-2 rounded-xl bg-white shadow-sm border border-slate-100">
+                                  <div className="text-center p-2 rounded-xl bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700">
                                     <span className="block text-[10px] font-black uppercase text-amber-500">Demo Scheduled</span>
-                                    <span className="block text-lg font-black text-amber-600 mt-0.5">{t.performanceStats.demoScheduled}</span>
+                                    <span className="block text-lg font-black text-amber-600 dark:text-amber-400 mt-0.5">{t.performanceStats.demoScheduled}</span>
                                   </div>
-                                  <div className="text-center p-2 rounded-xl bg-white shadow-sm border border-slate-100">
+                                  <div className="text-center p-2 rounded-xl bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700">
                                     <span className="block text-[10px] font-black uppercase text-rose-500">Demo Cancelled</span>
-                                    <span className="block text-lg font-black text-rose-650 mt-0.5">{t.performanceStats.demoCancelled}</span>
+                                    <span className="block text-lg font-black text-rose-650 dark:text-rose-400 mt-0.5">{t.performanceStats.demoCancelled}</span>
                                   </div>
-                                  <div className="text-center p-2 rounded-xl bg-white shadow-sm border border-slate-100">
+                                  <div className="text-center p-2 rounded-xl bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700">
                                     <span className="block text-[10px] font-black uppercase text-red-500">Rejected</span>
-                                    <span className="block text-lg font-black text-red-650 mt-0.5">{t.performanceStats.rejected}</span>
+                                    <span className="block text-lg font-black text-red-650 dark:text-red-400 mt-0.5">{t.performanceStats.rejected}</span>
                                   </div>
-                                  <div className="text-center p-2 rounded-xl bg-white shadow-sm border border-slate-100">
+                                  <div className="text-center p-2 rounded-xl bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700">
                                     <span className="block text-[10px] font-black uppercase text-emerald-500">Enrolled</span>
-                                    <span className="block text-lg font-black text-emerald-600 mt-0.5">{t.performanceStats.successfullyEnrolled}</span>
+                                    <span className="block text-lg font-black text-emerald-600 dark:text-emerald-400 mt-0.5">{t.performanceStats.successfullyEnrolled}</span>
                                   </div>
-                                  <div className="text-center p-2 rounded-xl bg-white shadow-sm border border-slate-100">
+                                  <div className="text-center p-2 rounded-xl bg-white dark:bg-slate-800 shadow-sm border border-slate-100 dark:border-slate-700">
                                     <span className="block text-[10px] font-black uppercase text-indigo-500">Active Tuitions</span>
-                                    <span className="block text-lg font-black text-indigo-600 mt-0.5">{t.performanceStats.activeTuitionCount}</span>
+                                    <span className="block text-lg font-black text-indigo-600 dark:text-indigo-400 mt-0.5">{t.performanceStats.activeTuitionCount}</span>
                                   </div>
-                                  <div className="col-span-2 text-center p-2 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-150 flex flex-col justify-center">
-                                    <span className="block text-[10px] font-black uppercase text-indigo-600">Success Rate</span>
-                                    <span className="block text-xl font-black text-indigo-700">{t.performanceStats.successPercentage}%</span>
+                                  <div className="col-span-2 text-center p-2 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/40 dark:to-purple-900/40 border border-indigo-150 dark:border-indigo-800 flex flex-col justify-center">
+                                    <span className="block text-[10px] font-black uppercase text-indigo-600 dark:text-indigo-300">Success Rate</span>
+                                    <span className="block text-xl font-black text-indigo-700 dark:text-indigo-200">{t.performanceStats.successPercentage}%</span>
                                   </div>
                                 </div>
                               </div>
@@ -2634,7 +2634,7 @@ export default function AdminDashboard() {
                           </div>
                         </div>
 
-                        <div className="flex flex-row flex-wrap items-center gap-2 lg:flex-col lg:items-stretch lg:justify-start lg:w-32 shrink-0 border-t border-slate-100 pt-4 lg:border-t-0 lg:pt-0 lg:pl-4 lg:border-l lg:border-slate-105">
+                        <div className="flex flex-row flex-wrap items-center gap-2 lg:flex-col lg:items-stretch lg:justify-start lg:w-32 shrink-0 border-t border-slate-100 dark:border-slate-800 pt-4 lg:border-t-0 lg:pt-0 lg:pl-4 lg:border-l lg:border-slate-105">
                           <button
                             onClick={() => approveTutor(t._id)}
                             className="flex-1 flex items-center justify-center gap-1 rounded-2xl bg-emerald-600 px-4 py-2.5 text-xs font-bold text-white transition duration-200 hover:bg-emerald-700 hover:scale-[1.02] cursor-pointer"
@@ -2767,27 +2767,27 @@ export default function AdminDashboard() {
         {/* Broadcast Confirm + Results Modal */}
         {showBroadcastModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm animate-slideFade">
-            <div className="w-full max-w-lg overflow-hidden rounded-3xl bg-white border border-slate-200 p-6 shadow-2xl flex flex-col relative z-50 max-h-[85vh]">
-              <div className="flex items-center justify-between border-b border-slate-200 pb-4 mb-4">
+            <div className="w-full max-w-lg overflow-hidden rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-6 shadow-2xl flex flex-col relative z-50 max-h-[85vh]">
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-4 mb-4">
                 <div>
-                  <h3 className="text-lg font-black text-slate-800">
+                  <h3 className="text-lg font-black text-slate-800 dark:text-white">
                     WhatsApp Broadcast
                   </h3>
-                  <p className="text-xs text-slate-500 font-semibold mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold mt-0.5">
                     Sending target messages to {selectedTutorIds.length} tutor(s) via Odoo WhatsApp.
                   </p>
                 </div>
                 <button
                   onClick={() => { setShowBroadcastModal(false); setBroadcastResults([]); }}
-                  className="rounded-full bg-slate-100 hover:bg-slate-200 p-2 text-slate-500 transition cursor-pointer"
+                  className="rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 p-2 text-slate-500 transition cursor-pointer"
                 >
                   <X className="h-4.5 w-4.5" />
                 </button>
               </div>
 
               {/* Privacy Notice */}
-              <div className="mb-4 rounded-2xl bg-amber-50 border border-amber-200 p-3.5">
-                <p className="text-xs font-bold text-amber-800">
+              <div className="mb-4 rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-3.5">
+                <p className="text-xs font-bold text-amber-800 dark:text-amber-200">
                   🔒 <strong>Privacy Protected:</strong> Parent details (name, phone, address, map link) are NEVER shared with tutors during broadcasts.
                 </p>
               </div>
@@ -2795,14 +2795,14 @@ export default function AdminDashboard() {
               {/* Template Picker */}
               {broadcastResults.length === 0 && (
                 <div className="mb-4">
-                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1.5">
+                  <label className="block text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">
                     WhatsApp Template {loadingTemplates && <span className="font-normal text-slate-400">(loading...)</span>}
                   </label>
                   {whatsappTemplates.length > 0 ? (
                     <select
                       value={selectedTemplateId}
                       onChange={e => setSelectedTemplateId(e.target.value)}
-                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-bold text-slate-800 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition cursor-pointer"
+                      className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2.5 text-xs font-bold text-slate-800 dark:text-slate-200 focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100 transition cursor-pointer"
                     >
                       <option value="">— Auto-select (use env default) —</option>
                       {whatsappTemplates.map(t => (
@@ -2812,7 +2812,7 @@ export default function AdminDashboard() {
                       ))}
                     </select>
                   ) : (
-                    <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-2.5 text-[11px] font-semibold text-slate-400">
+                    <div className="rounded-xl border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2.5 text-[11px] font-semibold text-slate-400 dark:text-slate-500">
                       {loadingTemplates ? "Fetching approved templates from Odoo…" : "No approved templates found — using environment default."}
                     </div>
                   )}
@@ -2821,22 +2821,22 @@ export default function AdminDashboard() {
 
               {/* Pre-broadcast Preview list */}
               {broadcastResults.length === 0 && (
-                <div className="flex-1 overflow-y-auto space-y-2 mb-4 max-h-[260px] border border-slate-100 p-2 rounded-2xl bg-slate-50/50">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Tutor Workflow Breakdown:</p>
+                <div className="flex-1 overflow-y-auto space-y-2 mb-4 max-h-[260px] border border-slate-100 dark:border-slate-700 p-2 rounded-2xl bg-slate-50/50 dark:bg-slate-800/50">
+                  <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Tutor Workflow Breakdown:</p>
                   {selectedTutorIds.map((tId) => {
                     const tutor = matchedTutors.find(t => t._id === tId);
                     if (!tutor) return null;
                     const isNewTutorWorkflow = !(tutor.status === "approved" && tutor.onboardingCompleted);
                     return (
-                      <div key={tId} className="flex items-center justify-between rounded-xl p-2.5 border border-slate-150 text-xs font-bold bg-white shadow-sm">
-                        <span className="text-slate-800">{tutor.name}</span>
+                      <div key={tId} className="flex items-center justify-between rounded-xl p-2.5 border border-slate-150 dark:border-slate-700 text-xs font-bold bg-white dark:bg-slate-700 shadow-sm">
+                        <span className="text-slate-800 dark:text-slate-200">{tutor.name}</span>
                         <span>
                           {isNewTutorWorkflow ? (
-                            <span className="inline-flex items-center rounded-full bg-orange-50 border border-orange-200 px-2 py-0.5 text-[10px] font-black text-orange-700">
+                            <span className="inline-flex items-center rounded-full bg-orange-50 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-800 px-2 py-0.5 text-[10px] font-black text-orange-700 dark:text-orange-300">
                               🔐 Onboarding Msg (Odoo ID 72)
                             </span>
                           ) : (
-                            <span className="inline-flex items-center rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-black text-emerald-700">
+                            <span className="inline-flex items-center rounded-full bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 text-[10px] font-black text-emerald-700 dark:text-emerald-300">
                               📋 Requirement Msg
                             </span>
                           )}
@@ -2855,9 +2855,9 @@ export default function AdminDashboard() {
                     const isNewTutorWorkflow = tutor ? !(tutor.status === "approved" && tutor.onboardingCompleted) : (r.workflow === "onboarding");
                     return (
                       <div key={i} className={`flex flex-col rounded-xl p-3 border text-xs font-bold ${
-                        r.status === "Sent" ? "bg-emerald-50 border-emerald-200 text-emerald-800"
-                        : r.status === "Suppressed" ? "bg-amber-50 border-amber-200 text-amber-800"
-                        : "bg-rose-50 border-rose-200 text-rose-800"
+                        r.status === "Sent" ? "bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200"
+                        : r.status === "Suppressed" ? "bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-200"
+                        : "bg-rose-50 dark:bg-rose-900/30 border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-200"
                       }`}>
                         <div className="flex items-center justify-between">
                           <span>{r.tutorName || r.tutorId}</span>
@@ -2865,7 +2865,7 @@ export default function AdminDashboard() {
                             {r.status === "Sent" ? "✅ Sent" : r.status === "Suppressed" ? "⚠ Suppressed" : `❌ ${r.failureReason || "Failed"}`}
                           </span>
                         </div>
-                        <div className="text-[10px] text-slate-500 mt-1 font-semibold">
+                        <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 font-semibold">
                           Workflow: {isNewTutorWorkflow ? "🔐 Onboarding Message" : "📋 Requirement Notification"}
                         </div>
                       </div>
@@ -2874,10 +2874,10 @@ export default function AdminDashboard() {
                 </div>
               )}
 
-              <div className="mt-auto pt-4 border-t border-slate-200 flex items-center justify-between gap-3">
+              <div className="mt-auto pt-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
                 <button
                   onClick={() => { setShowBroadcastModal(false); setSelectedTutorIds([]); setBroadcastResults([]); }}
-                  className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold transition cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-bold transition cursor-pointer"
                 >
                   {broadcastResults.length > 0 ? "Close" : "Cancel"}
                 </button>
@@ -2902,35 +2902,35 @@ export default function AdminDashboard() {
         {/* Assign Demo Modal */}
         {assignModalTutorId && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm animate-slideFade">
-            <div className="w-full max-w-sm rounded-3xl bg-white border border-slate-200 p-6 shadow-2xl">
-              <h3 className="text-lg font-black text-slate-800 mb-1">Assign & Schedule Demo</h3>
-              <p className="text-xs text-slate-500 font-semibold mb-5">
+            <div className="w-full max-w-sm rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-6 shadow-2xl">
+              <h3 className="text-lg font-black text-slate-800 dark:text-white mb-1">Assign & Schedule Demo</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold mb-5">
                 Parent contact details will be sent to the tutor automatically via WhatsApp after assignment.
               </p>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-black text-slate-700 mb-1.5">Demo Date <span className="text-slate-400 font-semibold">(optional)</span></label>
+                  <label className="block text-xs font-black text-slate-700 dark:text-slate-300 mb-1.5">Demo Date <span className="text-slate-400 font-semibold">(optional)</span></label>
                   <input
                     type="date"
                     value={assignDemoDate}
                     onChange={e => setAssignDemoDate(e.target.value)}
-                    className="h-11 w-full rounded-2xl border border-slate-200 px-4 text-sm font-semibold outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                    className="h-11 w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 text-sm font-semibold outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-black text-slate-700 mb-1.5">Demo Time <span className="text-slate-400 font-semibold">(optional)</span></label>
+                  <label className="block text-xs font-black text-slate-700 dark:text-slate-300 mb-1.5">Demo Time <span className="text-slate-400 font-semibold">(optional)</span></label>
                   <input
                     type="time"
                     value={assignDemoTime}
                     onChange={e => setAssignDemoTime(e.target.value)}
-                    className="h-11 w-full rounded-2xl border border-slate-200 px-4 text-sm font-semibold outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
+                    className="h-11 w-full rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 text-sm font-semibold outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100"
                   />
                 </div>
               </div>
               <div className="mt-6 flex items-center justify-end gap-3">
                 <button
                   onClick={() => setAssignModalTutorId(null)}
-                  className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold transition cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-bold transition cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -2951,20 +2951,20 @@ export default function AdminDashboard() {
         {/* Broadcast Logs Modal */}
         {showLogsModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm animate-slideFade">
-            <div className="max-h-[85vh] w-full max-w-5xl overflow-hidden rounded-3xl bg-white border border-slate-200 p-6 shadow-2xl flex flex-col relative z-50">
-              <div className="flex items-center justify-between border-b border-slate-200 pb-4 mb-4">
+            <div className="max-h-[85vh] w-full max-w-5xl overflow-hidden rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-6 shadow-2xl flex flex-col relative z-50">
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-4 mb-4">
                 <div>
-                  <h3 className="text-xl font-black text-slate-850 flex items-center gap-2">
+                  <h3 className="text-xl font-black text-slate-850 dark:text-white flex items-center gap-2">
                     <Users className="h-5 w-5 text-indigo-500" />
                     Broadcast History Logs
                   </h3>
-                  <p className="text-xs text-slate-500 font-semibold mt-0.5">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold mt-0.5">
                     Real-time WhatsApp delivery tracking, tutor responses, and failure diagnostics.
                   </p>
                 </div>
                 <button
                   onClick={() => setShowLogsModal(false)}
-                  className="rounded-full bg-slate-100 hover:bg-slate-200 p-2 text-slate-500 transition cursor-pointer"
+                  className="rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 p-2 text-slate-500 transition cursor-pointer"
                 >
                   <X className="h-4.5 w-4.5" />
                 </button>
@@ -2974,10 +2974,10 @@ export default function AdminDashboard() {
                 {broadcastLogs.length === 0 ? (
                   <div className="text-center py-20 text-xs text-slate-450 font-semibold italic">No broadcast events logged yet.</div>
                 ) : (
-                  <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-                    <table className="w-full text-xs font-semibold text-slate-700">
+                  <div className="overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+                    <table className="w-full text-xs font-semibold text-slate-700 dark:text-slate-300">
                       <thead>
-                        <tr className="text-left border-b border-slate-200 bg-slate-50/50 text-[10px] text-slate-500 uppercase tracking-wider">
+                        <tr className="text-left border-b border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900 text-[10px] text-slate-500 uppercase tracking-wider">
                           <th className="p-3">Time</th>
                           <th className="p-3">Tutor</th>
                           <th className="p-3">Req ID</th>
@@ -2992,45 +2992,45 @@ export default function AdminDashboard() {
                         {broadcastLogs.map((log) => {
                           const timeStr = formatSubmittedDate(log.time || log.createdAt);
                           return (
-                            <tr key={log._id} className="border-b border-slate-150/70 last:border-0 hover:bg-slate-50/50">
-                              <td className="p-3 text-slate-500 text-[10px]">{timeStr}</td>
-                              <td className="p-3 text-slate-900 font-bold">
+                            <tr key={log._id} className="border-b border-slate-150/70 dark:border-slate-700 last:border-0 hover:bg-slate-50/50 dark:hover:bg-slate-700/50">
+                              <td className="p-3 text-slate-500 dark:text-slate-400 text-[10px]">{timeStr}</td>
+                              <td className="p-3 text-slate-900 dark:text-white font-bold">
                                 <span className="block">{log.tutorName}</span>
-                                {log.tutorCode && <span className="text-[10px] text-indigo-500 font-black">{log.tutorCode}</span>}
+                                {log.tutorCode && <span className="text-[10px] text-indigo-500 dark:text-indigo-400 font-black">{log.tutorCode}</span>}
                               </td>
-                              <td className="p-3 text-indigo-600 font-black text-[10px]">{log.requirementId}</td>
+                              <td className="p-3 text-indigo-600 dark:text-indigo-400 font-black text-[10px]">{log.requirementId}</td>
                               <td className="p-3">
                                 {log.matchPercentage != null ? (
                                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border ${
-                                    log.matchPercentage >= 80 ? "bg-emerald-50 border-emerald-200 text-emerald-700"
-                                    : log.matchPercentage >= 60 ? "bg-blue-50 border-blue-200 text-blue-700"
-                                    : "bg-amber-50 border-amber-200 text-amber-700"
+                                    log.matchPercentage >= 80 ? "bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300"
+                                    : log.matchPercentage >= 60 ? "bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300"
+                                    : "bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300"
                                   }`}>{log.matchPercentage}%</span>
                                 ) : <span className="text-slate-400">—</span>}
                               </td>
                               <td className="p-3">
                                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border ${
                                   log.status === "Delivered" || log.status === "Read" || log.status === "Replied"
-                                    ? "bg-emerald-50 border-emerald-200 text-emerald-700"
+                                    ? "bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300"
                                     : log.status === "Sent"
-                                    ? "bg-blue-50 border-blue-200 text-blue-700"
+                                    ? "bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300"
                                     : log.status === "Failed"
-                                    ? "bg-rose-50 border-rose-200 text-rose-700"
+                                    ? "bg-rose-50 dark:bg-rose-900/30 border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300"
                                     : log.status === "Suppressed"
-                                    ? "bg-amber-50 border-amber-200 text-amber-700"
-                                    : "bg-slate-100 border-slate-200 text-slate-600"
+                                    ? "bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300"
+                                    : "bg-slate-100 dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300"
                                 }`}>
                                   {log.status}
                                 </span>
                               </td>
-                              <td className="p-3 text-[10px] text-rose-600 font-semibold max-w-[120px] truncate">
+                              <td className="p-3 text-[10px] text-rose-600 dark:text-rose-400 font-semibold max-w-[120px] truncate">
                                 {log.failureReason || "—"}
                               </td>
                               <td className="p-3">
                                 <select
                                   value={log.responseStatus || "No Response"}
                                   onChange={(e) => handleUpdateResponseStatus(log._id, e.target.value)}
-                                  className="bg-slate-50 border border-slate-200 text-[10px] font-black text-slate-700 rounded-lg p-1.5 outline-none focus:border-indigo-500 cursor-pointer"
+                                  className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-[10px] font-black text-slate-700 dark:text-slate-300 rounded-lg p-1.5 outline-none focus:border-indigo-500 cursor-pointer"
                                 >
                                   <option value="No Response">No Response</option>
                                   <option value="Interested">Interested</option>
@@ -3054,7 +3054,7 @@ export default function AdminDashboard() {
                                       alert(data.message);
                                       fetchBroadcastLogs();
                                     }}
-                                    className="px-2.5 py-1 text-[10px] font-black bg-rose-50 border border-rose-200 text-rose-700 rounded-lg hover:bg-rose-100 transition cursor-pointer"
+                                    className="px-2.5 py-1 text-[10px] font-black bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 rounded-lg hover:bg-rose-100 transition cursor-pointer"
                                   >
                                     Retry
                                   </button>
@@ -3069,7 +3069,7 @@ export default function AdminDashboard() {
                 )}
               </div>
 
-              <div className="mt-4 pt-4 border-t border-slate-200 flex justify-end">
+              <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 flex justify-end">
                 <button
                   onClick={() => setShowLogsModal(false)}
                   className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-xs font-black rounded-xl transition cursor-pointer text-white shadow-lg shadow-indigo-600/20"
@@ -3100,14 +3100,14 @@ function getStatusColor(status) {
 
 function StatCard({ title, value, subtitle, icon: Icon, gradientClass }) {
   return (
-    <div className="rounded-3xl p-6 shadow-sm border border-slate-205/60 transition duration-300 hover:-translate-y-1 hover:shadow-md glass-card flex items-center justify-between">
+    <div className="rounded-3xl p-6 shadow-sm border border-slate-205/60 dark:border-slate-800 transition duration-300 hover:-translate-y-1 hover:shadow-md glass-card bg-white dark:bg-slate-900 flex items-center justify-between">
       <div>
-        <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">{title}</p>
-        <p className="mt-2 text-4xl font-black text-slate-900 tracking-tight">{value}</p>
-        <p className="mt-1.5 text-xs font-bold text-slate-500">{subtitle}</p>
+        <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">{title}</p>
+        <p className="mt-2 text-4xl font-black text-slate-900 dark:text-white tracking-tight">{value}</p>
+        <p className="mt-1.5 text-xs font-bold text-slate-500 dark:text-slate-400">{subtitle}</p>
       </div>
       {Icon && (
-        <div className={`p-3.5 rounded-2xl ${gradientClass || 'bg-slate-100 text-slate-650'}`}>
+        <div className={`p-3.5 rounded-2xl ${gradientClass || 'bg-slate-100 dark:bg-slate-800 text-slate-650 dark:text-slate-300'}`}>
           <Icon className="h-5 w-5 stroke-[2.5]" />
         </div>
       )}
@@ -3333,11 +3333,11 @@ function AdminAttendanceConsole({
   };
 
   return (
-    <div className="rounded-3xl bg-white p-6 shadow-sm border border-slate-200/80">
+    <div className="rounded-3xl bg-white dark:bg-slate-900 p-6 shadow-sm border border-slate-200/80 dark:border-slate-800">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h2 className="text-xl font-extrabold text-slate-800">Attendance & Class Tracking Dashboard</h2>
-          <p className="text-xs text-slate-500 mt-1">
+          <h2 className="text-xl font-extrabold text-slate-800 dark:text-white">Attendance & Class Tracking Dashboard</h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             Centralized monitoring of teacher logs, completed classes, remaining classes, and topics covered.
           </p>
         </div>
@@ -3352,16 +3352,16 @@ function AdminAttendanceConsole({
               placeholder="Search student, parent, teacher, ID..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full h-11 pl-9 pr-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all text-slate-800"
+              className="w-full h-11 pl-9 pr-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-slate-800 transition-all text-slate-800 dark:text-white"
             />
           </div>
 
           <button
             type="button"
             onClick={() => setShowCustomizeModal(true)}
-            className="flex items-center gap-1.5 px-3.5 h-11 rounded-2xl border border-slate-250 bg-white text-xs font-black text-slate-700 hover:bg-slate-50 transition cursor-pointer shrink-0 shadow-sm"
+            className="flex items-center gap-1.5 px-3.5 h-11 rounded-2xl border border-slate-250 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-black text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition cursor-pointer shrink-0 shadow-sm"
           >
-            <Settings className="h-4 w-4 text-slate-500" />
+            <Settings className="h-4 w-4 text-slate-500 dark:text-slate-400" />
             Columns
           </button>
         </div>

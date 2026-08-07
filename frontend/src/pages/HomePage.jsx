@@ -250,14 +250,14 @@ function getTutorImage(photo) {
 
 function InfoPill({ icon: Icon, text, highlight }) {
   return (
-    <div className="flex min-w-0 items-center gap-2 rounded-2xl bg-slate-50 px-3 py-2">
+    <div className="flex min-w-0 items-center gap-2 rounded-2xl bg-slate-50 dark:bg-slate-800/60 px-3 py-2">
       <Icon
         className={cn(
           "h-4 w-4 flex-shrink-0",
-          highlight ? "text-amber-500" : "text-slate-500"
+          highlight ? "text-amber-500" : "text-slate-500 dark:text-slate-400"
         )}
       />
-      <span className="truncate font-semibold text-slate-700 text-xs">{text}</span>
+      <span className="truncate font-semibold text-slate-700 dark:text-slate-200 text-xs">{text}</span>
     </div>
   );
 }
@@ -348,7 +348,7 @@ function TutorCard({ tutor, onViewProfile, onBook, swipeMode = false }) {
           : ""
       }
     >
-      <Card className="group h-full overflow-hidden rounded-[2rem] border-0 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.04)] ring-1 ring-slate-100 transition hover:shadow-2xl hover:shadow-slate-200/80">
+      <Card className="group h-full overflow-hidden rounded-[2rem] border-0 bg-white dark:bg-slate-900 shadow-[0_8px_30px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgba(0,0,0,0.4)] ring-1 ring-slate-100 dark:ring-slate-800 transition hover:shadow-2xl hover:shadow-slate-200/80 dark:hover:shadow-blue-900/20">
         <CardContent className="p-0 flex flex-col h-full">
           {/* Header section (Dark cosmic background) */}
           <div className="relative overflow-hidden bg-gradient-to-br from-[#061530] via-[#091f42] to-[#041126] p-6 text-white rounded-t-[2rem] z-10 shrink-0">
@@ -420,60 +420,60 @@ function TutorCard({ tutor, onViewProfile, onBook, swipeMode = false }) {
             </div>
           </div>
 
-          {/* Body Section (Light Theme) */}
-          <div className="p-6 flex flex-col justify-between flex-1 bg-white">
+          {/* Body Section */}
+          <div className="p-6 flex flex-col justify-between flex-1 bg-white dark:bg-slate-900">
             <div>
               {/* 2x2 Details Grid */}
               <div className="grid grid-cols-2 gap-3">
                 {/* Rating */}
-                <div className="flex items-center gap-3 bg-slate-50/80 border border-slate-100 rounded-2xl p-3 shadow-sm">
-                  <div className="h-9 w-9 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center shrink-0">
+                <div className="flex items-center gap-3 bg-slate-50/80 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60 rounded-2xl p-3 shadow-sm">
+                  <div className="h-9 w-9 rounded-xl bg-amber-500/10 dark:bg-amber-500/15 text-amber-600 flex items-center justify-center shrink-0">
                     <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-sm font-extrabold text-slate-800 leading-tight">
+                    <div className="text-sm font-extrabold text-slate-800 dark:text-slate-100 leading-tight">
                       {tutor.rating || "4.8"}
                     </div>
-                    <div className="text-[11px] font-bold text-slate-400 mt-0.5">Rating</div>
+                    <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">Rating</div>
                   </div>
                 </div>
 
                 {/* Location */}
-                <div className="flex items-center gap-3 bg-slate-50/80 border border-slate-100 rounded-2xl p-3 shadow-sm">
-                  <div className="h-9 w-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                <div className="flex items-center gap-3 bg-slate-50/80 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60 rounded-2xl p-3 shadow-sm">
+                  <div className="h-9 w-9 rounded-xl bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
                     <MapPin className="h-4 w-4" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs font-extrabold text-slate-800 truncate leading-tight">
+                    <div className="text-xs font-extrabold text-slate-800 dark:text-slate-100 truncate leading-tight">
                       {tutor.location || tutor.locations?.[0] || "Bangalore"}
                     </div>
-                    <div className="text-[11px] font-bold text-slate-400 mt-0.5">Location</div>
+                    <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">Location</div>
                   </div>
                 </div>
 
                 {/* Experience */}
-                <div className="flex items-center gap-3 bg-slate-50/80 border border-slate-100 rounded-2xl p-3 shadow-sm">
-                  <div className="h-9 w-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                <div className="flex items-center gap-3 bg-slate-50/80 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60 rounded-2xl p-3 shadow-sm">
+                  <div className="h-9 w-9 rounded-xl bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                     <Calendar className="h-4 w-4" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-sm font-extrabold text-slate-800 leading-tight">
+                    <div className="text-sm font-extrabold text-slate-800 dark:text-slate-100 leading-tight">
                       {tutor.experience || "10+ years"}
                     </div>
-                    <div className="text-[11px] font-bold text-slate-400 mt-0.5">Experience</div>
+                    <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">Experience</div>
                   </div>
                 </div>
 
                 {/* Teaching Mode */}
-                <div className="flex items-center gap-3 bg-slate-50/80 border border-slate-100 rounded-2xl p-3 shadow-sm">
-                  <div className="h-9 w-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+                <div className="flex items-center gap-3 bg-slate-50/80 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60 rounded-2xl p-3 shadow-sm">
+                  <div className="h-9 w-9 rounded-xl bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
                     <GraduationCap className="h-4 w-4" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-sm font-extrabold text-slate-800 leading-tight">
+                    <div className="text-sm font-extrabold text-slate-800 dark:text-slate-100 leading-tight">
                       {tutor.mode || "Online/Home"}
                     </div>
-                    <div className="text-[11px] font-bold text-slate-400 mt-0.5">Teaching Mode</div>
+                    <div className="text-[11px] font-bold text-slate-400 dark:text-slate-500 mt-0.5">Teaching Mode</div>
                   </div>
                 </div>
               </div>
@@ -482,7 +482,7 @@ function TutorCard({ tutor, onViewProfile, onBook, swipeMode = false }) {
             {/* Action Buttons Row */}
             <div className="mt-6 flex flex-col sm:flex-row gap-2">
               <Button
-                className="flex-1 rounded-xl bg-[#0B1B33] px-3.5 py-2.5 font-bold text-white shadow-md hover:bg-slate-900 transition duration-200 flex items-center justify-center gap-1.5 text-xs cursor-pointer"
+                className="flex-1 rounded-xl bg-[#0B1B33] dark:bg-blue-600 dark:hover:bg-blue-500 px-3.5 py-2.5 font-bold text-white shadow-md hover:bg-slate-900 transition duration-200 flex items-center justify-center gap-1.5 text-xs cursor-pointer"
                 onClick={() => onBook(tutor)}
               >
                 <span>Request Demo</span>
@@ -498,11 +498,11 @@ function TutorCard({ tutor, onViewProfile, onBook, swipeMode = false }) {
               </Link>
 
               <Button
-                className="flex-1 rounded-xl border border-blue-200 bg-white px-3.5 py-2.5 font-bold text-blue-600 shadow-sm hover:bg-blue-50/50 transition duration-200 flex items-center justify-center gap-1.5 text-xs cursor-pointer"
+                className="flex-1 rounded-xl border border-blue-200 dark:border-blue-800/80 bg-white dark:bg-slate-800 px-3.5 py-2.5 font-bold text-blue-600 dark:text-blue-400 shadow-sm hover:bg-blue-50/50 dark:hover:bg-slate-700 transition duration-200 flex items-center justify-center gap-1.5 text-xs cursor-pointer"
                 onClick={() => onViewProfile(tutor)}
               >
                 <span>View Profile</span>
-                <ChevronRight className="h-3.5 w-3.5 text-blue-500" />
+                <ChevronRight className="h-3.5 w-3.5 text-blue-500 dark:text-blue-400" />
               </Button>
             </div>
           </div>
@@ -516,23 +516,24 @@ function SectionTitle({ eyebrow, title, subtitle, center = false }) {
   return (
     <div className={cn("max-w-3xl", center && "mx-auto text-center")}>
       {eyebrow ? (
-        <p className="mb-3 inline-flex rounded-full bg-blue-50 px-4 py-2 text-xs font-black uppercase tracking-[0.22em] text-blue-700 ring-1 ring-blue-100">
+        <p className="mb-3 inline-flex rounded-full bg-blue-50 dark:bg-blue-500/15 px-4 py-2 text-xs font-black uppercase tracking-[0.22em] text-blue-700 dark:text-blue-300 ring-1 ring-blue-100 dark:ring-blue-500/30">
           {eyebrow}
         </p>
       ) : null}
 
-      <h2 className="text-3xl font-black tracking-tight text-slate-950 md:text-5xl">
+      <h2 className="text-3xl font-black tracking-tight text-slate-950 dark:text-white md:text-5xl">
         {title}
       </h2>
 
       {subtitle ? (
-        <p className="mt-4 text-base leading-8 text-slate-600 md:text-lg">
+        <p className="mt-4 text-base leading-8 text-slate-600 dark:text-slate-400 md:text-lg">
           {subtitle}
         </p>
       ) : null}
     </div>
   );
 }
+
 
 function Modal({ open, onClose, title, children }) {
   return (
@@ -542,28 +543,28 @@ function Modal({ open, onClose, title, children }) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-4 backdrop-blur-md"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 p-4 backdrop-blur-md"
         >
           <motion.div
             initial={{ y: 28, scale: 0.96, opacity: 0 }}
             animate={{ y: 0, scale: 1, opacity: 1 }}
             exit={{ y: 20, scale: 0.97, opacity: 0 }}
             transition={{ type: "spring", stiffness: 260, damping: 24 }}
-            className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-[2rem] bg-white shadow-2xl"
+            className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-[2rem] bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800/80 shadow-2xl"
           >
-            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white/90 px-6 py-5 backdrop-blur">
-              <h3 className="text-xl font-black text-slate-950">{title}</h3>
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 px-6 py-5 backdrop-blur">
+              <h3 className="text-xl font-black text-slate-950 dark:text-slate-100">{title}</h3>
 
               <button
                 onClick={onClose}
-                className="rounded-2xl border border-slate-200 bg-white p-2.5 text-slate-600 transition hover:bg-slate-50"
+                className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-2.5 text-slate-600 dark:text-slate-350 transition hover:bg-slate-50 dark:hover:bg-slate-750 cursor-pointer"
                 aria-label="Close modal"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            <div className="p-6">{children}</div>
+            <div className="p-6 text-slate-800 dark:text-slate-200">{children}</div>
           </motion.div>
         </motion.div>
       ) : null}
@@ -573,9 +574,9 @@ function Modal({ open, onClose, title, children }) {
 
 function ProfileStat({ title, label }) {
   return (
-    <div className="rounded-2xl bg-slate-50 p-4">
-      <div className="font-black text-slate-950">{title}</div>
-      <div className="mt-1 text-sm text-slate-500">{label}</div>
+    <div className="rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800/60 p-4">
+      <div className="font-black text-slate-950 dark:text-slate-100">{title}</div>
+      <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">{label}</div>
     </div>
   );
 }
@@ -586,8 +587,8 @@ function FilterToggle({ checked, onChange, label }) {
       className={cn(
         "flex cursor-pointer items-center gap-2 rounded-2xl px-4 py-3 text-xs font-black transition",
         checked
-          ? "bg-slate-950 text-white"
-          : "bg-slate-50 text-slate-700 hover:bg-slate-100"
+          ? "bg-slate-950 dark:bg-blue-600 text-white"
+          : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-750"
       )}
     >
       <input
@@ -607,7 +608,7 @@ function LoadingTutors() {
       {[1, 2, 3, 4].map((item) => (
         <div
           key={item}
-          className="h-80 animate-pulse rounded-[2rem] bg-white ring-1 ring-slate-200"
+          className="h-80 animate-pulse rounded-[2rem] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 ring-1 ring-slate-200 dark:ring-slate-850"
         />
       ))}
     </div>
