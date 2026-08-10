@@ -295,8 +295,14 @@ export default function AdminDashboard() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newTutor, setNewTutor] = useState(emptyTutor);
 
-  const [currentMainTab, setCurrentMainTab] = useState("leads"); // "leads" or "analytics"
+  const [currentMainTab, setCurrentMainTab] = useState("leads"); // "leads" | "analytics" | "attendance" | "tutorDrafts" | "tncAcceptances"
   const [alerts, setAlerts] = useState([]);
+
+  // T&C Acceptances state
+  const [tncRecords, setTncRecords]         = useState([]);
+  const [tncStats, setTncStats]             = useState({ totalAccepted: 0, totalDismissed: 0, total: 0 });
+  const [tncFilter, setTncFilter]           = useState("all");  // "all" | "accepted" | "dismissed"
+  const [tncLoading, setTncLoading]         = useState(false);
   const [dismissedAlerts, setDismissedAlerts] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem("dismissedAlerts") || "[]");
@@ -395,6 +401,30 @@ export default function AdminDashboard() {
       console.error("Error fetching analytics stats:", err);
     } finally {
       setLoadingAnalytics(false);
+    }
+  };
+
+  const fetchTncRecords = async (actionFilter = "all") => {
+    setTncLoading(true);
+    try {
+      const token = localStorage.getItem("adminToken");
+      const query = actionFilter !== "all" ? `?action=${actionFilter}` : "";
+      const res = await fetch(`${API_BASE}/tnc/all${query}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setTncRecords(data.records || []);
+        setTncStats({
+          totalAccepted:  data.totalAccepted  || 0,
+          totalDismissed: data.totalDismissed || 0,
+          total:          data.total          || 0,
+        });
+      }
+    } catch (err) {
+      console.error("[TNC] fetch error:", err);
+    } finally {
+      setTncLoading(false);
     }
   };
 
@@ -1225,7 +1255,130 @@ export default function AdminDashboard() {
               <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-violet-600 rounded-full" />
             )}
           </button>
+          {/* T&C Acceptances tab */}
+          <button
+            type="button"
+            onClick={() => { setCurrentMainTab("tncAcceptances"); fetchTncRecords(tncFilter); }}
+            className={`pb-4 text-base font-extrabold transition-all relative cursor-pointer ${
+              currentMainTab === "tncAcceptances"
+                ? "text-emerald-600 font-extrabold"
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+            }`}
+          >
+            T&amp;C Acceptances
+            {tncStats.totalAccepted > 0 && (
+              <span className="ml-2 inline-flex items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/40 px-2 py-0.5 text-[10px] font-black text-emerald-700 dark:text-emerald-300">
+                {tncStats.totalAccepted}
+              </span>
+            )}
+            {currentMainTab === "tncAcceptances" && (
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-600 rounded-full" />
+            )}
+          </button>
         </div>
+
+        {/* ───────────────── T&C ACCEPTANCES PANEL ───────────────── */}
+        {currentMainTab === "tncAcceptances" && (
+          <div className="animate-slideFade">
+            {/* Header */}
+            <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-black text-slate-900 dark:text-slate-100">
+                  T&amp;C Acceptances
+                </h2>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                  Parents who clicked Accept or Dismiss on the Terms &amp; Conditions page.
+                </p>
+              </div>
+              <button
+                onClick={() => fetchTncRecords(tncFilter)}
+                className="flex items-center gap-2 rounded-2xl border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50 dark:bg-emerald-900/20 px-4 py-2.5 text-sm font-bold text-emerald-700 dark:text-emerald-300 transition hover:bg-emerald-100 dark:hover:bg-emerald-900/40 cursor-pointer"
+              >
+                <RefreshCw className="h-4 w-4" />
+                Refresh
+              </button>
+            </div>
+
+            {/* Stats row */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              {[
+                { label: "Total Responses", value: tncStats.total,          color: "text-slate-700 dark:text-slate-200",  bg: "bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700" },
+                { label: "Accepted",        value: tncStats.totalAccepted,  color: "text-emerald-700 dark:text-emerald-300", bg: "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-700" },
+                { label: "Dismissed",       value: tncStats.totalDismissed, color: "text-rose-700 dark:text-rose-300",     bg: "bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-700" },
+              ].map(s => (
+                <div key={s.label} className={`rounded-2xl border p-4 text-center ${s.bg}`}>
+                  <p className={`text-2xl font-black ${s.color}`}>{s.value}</p>
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5">{s.label}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Filter */}
+            <div className="mb-4 flex gap-2 flex-wrap">
+              {["all", "accepted", "dismissed"].map(f => (
+                <button
+                  key={f}
+                  onClick={() => { setTncFilter(f); fetchTncRecords(f); }}
+                  className={`rounded-xl px-4 py-1.5 text-xs font-bold capitalize transition cursor-pointer ${
+                    tncFilter === f
+                      ? "bg-emerald-600 text-white shadow"
+                      : "bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700"
+                  }`}
+                >
+                  {f === "all" ? "All" : f.charAt(0).toUpperCase() + f.slice(1)}
+                </button>
+              ))}
+            </div>
+
+            {/* Table */}
+            {tncLoading ? (
+              <div className="py-16 text-center">
+                <RefreshCw className="mx-auto h-8 w-8 text-emerald-400 animate-spin mb-3" />
+                <p className="text-sm text-slate-400">Loading records…</p>
+              </div>
+            ) : tncRecords.length === 0 ? (
+              <div className="rounded-3xl border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 p-16 text-center">
+                <ShieldCheck className="mx-auto mb-4 h-12 w-12 text-slate-300 dark:text-slate-600" />
+                <p className="text-base font-black text-slate-400 dark:text-slate-500">No T&amp;C records yet</p>
+                <p className="mt-1 text-sm text-slate-400 dark:text-slate-600">Records appear here when parents click Accept or Dismiss on the Terms &amp; Conditions page.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-700">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-slate-50 dark:bg-slate-900 text-left">
+                      {["#", "Action", "Name", "Phone", "Source", "IP Address", "Date & Time"].map(h => (
+                        <th key={h} className="px-4 py-3 text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider whitespace-nowrap border-b border-slate-200 dark:border-slate-700">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
+                    {tncRecords.map((rec, idx) => (
+                      <tr key={rec._id} className="hover:bg-slate-50/70 dark:hover:bg-slate-800/60 transition-colors">
+                        <td className="px-4 py-3 text-xs text-slate-400 dark:text-slate-500 font-mono">{idx + 1}</td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                            rec.action === "accepted"
+                              ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300"
+                              : "bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300"
+                          }`}>
+                            {rec.action === "accepted" ? <CheckCircle2 className="h-3 w-3" /> : <XCircle className="h-3 w-3" />}
+                            {rec.action.charAt(0).toUpperCase() + rec.action.slice(1)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-slate-800 dark:text-slate-200 font-medium whitespace-nowrap">{rec.name || <span className="text-slate-400 italic">—</span>}</td>
+                        <td className="px-4 py-3 text-slate-700 dark:text-slate-300 whitespace-nowrap font-mono text-xs">{rec.phone || <span className="text-slate-400 italic">—</span>}</td>
+                        <td className="px-4 py-3 text-slate-500 dark:text-slate-400 text-xs whitespace-nowrap">{rec.source || "tnc-page"}</td>
+                        <td className="px-4 py-3 text-slate-400 dark:text-slate-500 text-xs font-mono whitespace-nowrap">{rec.ipAddress || "—"}</td>
+                        <td className="px-4 py-3 text-slate-500 dark:text-slate-400 text-xs whitespace-nowrap">{formatSubmittedDate(rec.createdAt)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ───────────────── TUTOR DRAFTS PANEL ───────────────── */}
         {currentMainTab === "tutorDrafts" && (

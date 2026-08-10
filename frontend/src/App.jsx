@@ -25,6 +25,7 @@ import AnalyticsTracker from "./components/AnalyticsTracker";
 import TeacherLogin from "./pages/TeacherLogin";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import ParentPortal from "./pages/ParentPortal";
+import ParentOnboarding from "./pages/ParentOnboarding";
 
 // Admin Protected Route
 function ProtectedRoute({ children }) {
@@ -51,6 +52,12 @@ export default function App() {
     host === "mumbai.saraswatitutorial.com" ||
     host.startsWith("mumbai.");
 
+  // tnc.saraswatitutorials.com (handles both spellings of domain)
+  const isTncSubdomain =
+    host === "tnc.saraswatitutorials.com" ||
+    host === "tnc.saraswatitutorial.com" ||
+    host.startsWith("tnc.");
+
   return (
     <HelmetProvider>
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-200">
@@ -59,7 +66,13 @@ export default function App() {
           {/* Public Pages */}
           <Route
             path="/"
-            element={isMumbaiSubdomain ? <MumbaiPage /> : <HomePage />}
+            element={
+              isTncSubdomain
+                ? <ParentOnboarding />
+                : isMumbaiSubdomain
+                ? <MumbaiPage />
+                : <HomePage />
+            }
           />
 
           <Route path="/mumbai" element={<MumbaiPage />} />

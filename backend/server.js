@@ -15,6 +15,7 @@ import analyticsRoutes from "./routes/analyticsRoutes.js";
 import attendanceRoutes from "./routes/attendanceRoutes.js";
 import broadcastDashboardRoutes from "./routes/broadcastDashboardRoutes.js";
 import broadcastOdooRoutes from "./routes/broadcastOdooRoutes.js";
+import tncRoutes from "./routes/tncRoutes.js";
 
 import { startReminderScheduler, startRetryScheduler, startSyncScheduler } from "./utils/reminderScheduler.js";
 import BroadcastLog from "./models/BroadcastLog.js";
@@ -33,6 +34,8 @@ app.use(
       "http://localhost:5174",
       "https://saraswatitutorial.com",
       "https://mumbai.saraswatitutorial.com",
+      "https://tnc.saraswatitutorials.com",
+      "https://tnc.saraswatitutorial.com",
       "https://saraswati-tutorials.odoo.com",
       "https://odoo.saraswatitutorials.com"
     ],
@@ -81,6 +84,7 @@ app.use("/api/upload",           uploadRoutes);
 app.use("/api/blog-auth",        blogAuthRoutes);
 app.use("/api/analytics",        analyticsRoutes);
 app.use("/api/attendance",       attendanceRoutes);
+app.use("/api/tnc",              tncRoutes);
 
 // ── Broadcast Dashboard APIs ──────────────────────────────────────────────────
 app.use("/api", broadcastDashboardRoutes);
