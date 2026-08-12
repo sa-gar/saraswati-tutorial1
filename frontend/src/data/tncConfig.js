@@ -18,7 +18,7 @@ export const TNC_CONFIG = {
   backupReplacementPercent: 20,
 
   /** Fallback example tuition when no parent enquiry data is available */
-  exampleMonthlyTuition: 10000,
+  exampleMonthlyTuition: 7500,
 
   // ── Demo policy ──────────────────────────────────────────────────────────
   /** First demo is free. Additional demos are charged at this amount (₹). */
@@ -52,11 +52,14 @@ export const TNC_CONFIG = {
 
   // ── WhatsApp redirect ────────────────────────────────────────────────────
   /**
-   * Parent WhatsApp return URL.
-   * Update this when the client provides the final production link.
-   * Do NOT expose tokens or sensitive credentials here.
+   * Parent WhatsApp return URL (for successful acceptance flow)
    */
   whatsappReturnUrl: "https://wa.me/message/VX2T7QEATZPRL1",
+
+  /**
+   * Business WhatsApp URL (for help / clarification flow)
+   */
+  whatsappBusinessUrl: "https://wa.me/918904457689",
 };
 
 // ── Calculation helpers ───────────────────────────────────────────────────────

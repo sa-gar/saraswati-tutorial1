@@ -4,7 +4,7 @@ import {
   ShieldCheck, CheckCircle, XCircle, Loader2, ChevronDown, ChevronUp,
   Users, MapPin, Home, Clock, RefreshCw, LayoutDashboard,
   BadgeCheck, AlertTriangle, Info, IndianRupee, CalendarX2,
-  ArrowRight, X as XIcon,
+  ArrowRight, X as XIcon, HelpCircle, CheckSquare, MessageCircle
 } from "lucide-react";
 import { API_BASE } from "../config";
 import { TNC_CONFIG, computeFees, formatINR } from "../data/tncConfig";
@@ -42,29 +42,63 @@ async function recordAction(action, snapshot = {}) {
   }
 }
 
+// Helper to open WhatsApp for clarification
+function openClarificationWhatsApp() {
+  const text = encodeURIComponent("I need some clarification regarding Terms & Conditions.");
+  window.open(`${TNC_CONFIG.whatsappBusinessUrl}?text=${text}`, "_blank", "noopener,noreferrer");
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
-// SMALL DESIGN PRIMITIVES
+// DESIGN SYSTEM PRIMITIVES (Semantic color coding system)
 // ─────────────────────────────────────────────────────────────────────────────
 
-function SectionCard({ id, children, className = "" }) {
+/**
+ * Card wrapper supporting the requested semantic color coding:
+ * - 'blue'   = Information / Timing
+ * - 'green'  = Benefits / Positive service coverage
+ * - 'orange' = Caution / Precaution
+ * - 'red'    = Policy risk / Restricted policy / Penalty
+ */
+function SectionCard({ id, color = "blue", children, className = "" }) {
+  const borderColors = {
+    blue:   "border-blue-200 dark:border-blue-900/60 focus-within:ring-blue-400",
+    green:  "border-emerald-200 dark:border-emerald-900/60 focus-within:ring-emerald-400",
+    orange: "border-amber-200 dark:border-amber-900/60 focus-within:ring-amber-400",
+    red:    "border-rose-200 dark:border-rose-900/60 focus-within:ring-rose-400",
+  };
+
   return (
     <section
       id={id}
-      className={`bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden ${className}`}
+      className={`bg-white dark:bg-slate-800 rounded-2xl border-2 shadow-sm overflow-hidden transition-all duration-200 ${borderColors[color]} ${className}`}
     >
       {children}
     </section>
   );
 }
 
-function SectionHead({ icon: Icon, iconColor = "text-blue-600 dark:text-blue-400", bg = "bg-blue-50 dark:bg-blue-900/20", title, subtitle }) {
+function SectionHead({
+  icon: Icon,
+  color = "blue",
+  title,
+  subtitle
+}) {
+  const headers = {
+    blue:   { text: "text-blue-700 dark:text-blue-300", bg: "bg-blue-50/70 dark:bg-blue-950/20", icon: "text-blue-600 dark:text-blue-400" },
+    green:  { text: "text-emerald-700 dark:text-emerald-300", bg: "bg-emerald-50/70 dark:bg-emerald-950/20", icon: "text-emerald-600 dark:text-emerald-400" },
+    orange: { text: "text-amber-700 dark:text-amber-300", bg: "bg-amber-50/70 dark:bg-amber-950/20", icon: "text-amber-600 dark:text-amber-400" },
+    red:    { text: "text-rose-700 dark:text-rose-300", bg: "bg-rose-50/70 dark:bg-rose-950/20", icon: "text-rose-600 dark:text-rose-400" },
+  };
+
+  const style = headers[color] || headers.blue;
+
   return (
-    <div className={`px-4 py-3 sm:px-6 sm:py-4 border-b border-slate-100 dark:border-slate-700 flex items-center gap-2.5 sm:gap-3 ${bg}`}>
+    <div className={`px-4 py-3 sm:px-6 sm:py-4 border-b border-slate-100 dark:border-slate-700 flex items-center gap-2.5 sm:gap-3 ${style.bg}`}>
       <div className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-xl bg-white/80 dark:bg-slate-700/60 shadow-sm">
-        <Icon className={`h-4.5 w-4.5 sm:h-5 sm:w-5 ${iconColor}`} />
+        <Icon className={`h-4.5 w-4.5 sm:h-5 sm:w-5 ${style.icon}`} />
       </div>
       <div>
-        <h2 className="text-xs sm:text-sm font-black uppercase tracking-widest text-slate-700 dark:text-slate-200">
+        <h2 className={`text-xs sm:text-sm font-black uppercase tracking-widest ${style.text}`}>
           {title}
         </h2>
         {subtitle && <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">{subtitle}</p>}
@@ -77,28 +111,65 @@ function Divider() {
   return <hr className="border-slate-100 dark:border-slate-700 my-1" />;
 }
 
-function InfoBox({ icon: Icon = Info, color = "blue", children }) {
-  const colors = {
-    blue:   "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 text-blue-800 dark:text-blue-300",
-    emerald:"bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-700 text-emerald-800 dark:text-emerald-300",
-    amber:  "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700 text-amber-800 dark:text-amber-300",
-    red:    "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700 text-red-800 dark:text-red-300",
-    violet: "bg-violet-50 dark:bg-violet-900/20 border-violet-200 dark:border-violet-700 text-violet-800 dark:text-violet-300",
-  };
-  const iconColors = {
-    blue:   "text-blue-500", emerald: "text-emerald-500",
-    amber:  "text-amber-500", red: "text-red-500", violet: "text-violet-500",
-  };
+// ─────────────────────────────────────────────────────────────────────────────
+// 19. TOP SUMMARY ("Summary Before Proceeding")
+// ─────────────────────────────────────────────────────────────────────────────
+function TopSummaryCard({ fees }) {
   return (
-    <div className={`flex items-start gap-3 rounded-xl border px-4 py-3 ${colors[color]}`}>
-      <Icon className={`h-4 w-4 mt-0.5 shrink-0 ${iconColors[color]}`} />
-      <div className="text-sm leading-relaxed">{children}</div>
-    </div>
+    <SectionCard id="summary-before-proceeding" color="green">
+      <SectionHead
+        icon={BadgeCheck}
+        color="green"
+        title="Summary Before Proceeding"
+        subtitle="Key financial and service highlights at a glance"
+      />
+      <div className="p-4 sm:p-6 space-y-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Tuition Details</p>
+            <div className="space-y-1">
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-600 dark:text-slate-400">Monthly Tuition Fee:</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200">{formatINR(fees.tuition)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-600 dark:text-slate-400">Parents Onboarding Fee (59%):</span>
+                <span className="font-bold text-emerald-600 dark:text-emerald-400">{formatINR(fees.admissionFee)}</span>
+              </div>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Payment Timeline</p>
+            <div className="space-y-1">
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-600 dark:text-slate-400">First Month:</span>
+                <span className="font-semibold text-slate-700 dark:text-slate-300">Parents Onboarding Fee Only</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-600 dark:text-slate-400">Second Month:</span>
+                <span className="font-semibold text-slate-700 dark:text-slate-300">Regular Monthly Tuition Starts</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <Divider />
+
+        <div className="text-sm text-slate-700 dark:text-slate-300 space-y-2 leading-relaxed">
+          <p>
+            <strong>Prepayment Rule:</strong> The Parents Onboarding Fee is payable after tutor confirmation and before the first class.
+          </p>
+          <p>
+            <strong>Core Services:</strong> Includes verified home tutors, tutor replacement support (within 72 hours max), class compensation option, and full Parents Dashboard access.
+          </p>
+        </div>
+      </div>
+    </SectionCard>
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 1 — SERVICES
+// 1. SERVICES PROVIDE
 // ─────────────────────────────────────────────────────────────────────────────
 const SERVICES = [
   {
@@ -106,21 +177,21 @@ const SERVICES = [
     color: "text-violet-600 dark:text-violet-400",
     bg: "bg-violet-50 dark:bg-violet-900/20",
     title: "Background-Verified Tutors",
-    body: "Every tutor is verified before allocation. We check Government ID, education certificates, and previous teaching feedback and demo records.",
+    body: "We verify the tutor before allocation, checking Government ID, education credentials, and previous teaching/demo feedback and records.",
   },
   {
     icon: Users,
     color: "text-blue-600 dark:text-blue-400",
     bg: "bg-blue-50 dark:bg-blue-900/20",
     title: "Tutor Shortlisting",
-    body: "We shortlist tutors from our pool of 3200+ based on your requirements — location, subject, grade, teaching style, and other preferences.",
+    body: "We shortlist tutors from our pool based on the parent's requirements: location, subject, grade/class, teaching requirements, and other preferences.",
   },
   {
     icon: Home,
     color: "text-emerald-600 dark:text-emerald-400",
     bg: "bg-emerald-50 dark:bg-emerald-900/20",
-    title: "Tutor Home Allocation",
-    body: "After matching your requirement, we allocate the tutor and send them directly to the student's home or given location.",
+    title: "Tutor Allocation",
+    body: "After matching the requirement, we allocate the tutor and send the tutor directly to the student's given home/location.",
   },
   {
     icon: RefreshCw,
@@ -133,27 +204,26 @@ const SERVICES = [
     icon: BadgeCheck,
     color: "text-rose-600 dark:text-rose-400",
     bg: "bg-rose-50 dark:bg-rose-900/20",
-    title: "Parent Support & Class Compensation",
-    body: "We support parents for genuine class-related concerns, including applicable compensation for missed classes when 24-hour advance notice is provided.",
+    title: "Parent Support & Compensation",
+    body: "We support parents for genuine class-related concerns, including applicable compensation for missed classes when the required advance notice is provided.",
   },
   {
     icon: LayoutDashboard,
     color: "text-indigo-600 dark:text-indigo-400",
     bg: "bg-indigo-50 dark:bg-indigo-900/20",
-    title: "Parent Dashboard",
-    body: "Access your parent dashboard to view tutor details, class and attendance records, progress updates, and topics covered.",
+    title: "Parents Dashboard",
+    body: "Parents get access to a dashboard to view relevant information: tutor details, class and attendance records, and topics covered.",
   },
 ];
 
 function ServicesSection() {
   return (
-    <SectionCard id="services">
+    <SectionCard id="services" color="green">
       <SectionHead
         icon={CheckCircle}
-        iconColor="text-emerald-600 dark:text-emerald-400"
-        bg="bg-emerald-50 dark:bg-emerald-900/20"
+        color="green"
         title="What Services We Provide"
-        subtitle="Everything included when you enrol with Saraswati Tutorials"
+        subtitle="Saraswati Tutorials onboarding and learning support guarantees"
       />
       <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
         {SERVICES.map((s) => {
@@ -174,34 +244,43 @@ function ServicesSection() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 2 — ADMISSION FEE + CALCULATOR
+// 2. PARENTS ONBOARDING FEE + CALCULATOR
 // ─────────────────────────────────────────────────────────────────────────────
 function FeeSection({ fees }) {
   const pct = TNC_CONFIG.admissionFeePercent;
   return (
-    <SectionCard id="fee">
+    <SectionCard id="fee" color="green">
       <SectionHead
         icon={IndianRupee}
-        iconColor="text-emerald-600 dark:text-emerald-400"
-        bg="bg-emerald-50 dark:bg-emerald-900/20"
-        title="Admission / Onboarding Fee"
-        subtitle="One-time consultation & onboarding fee — not a school admission fee"
+        color="green"
+        title="Parents Onboarding Fee"
+        subtitle="One-time onboarding and administration fee"
       />
       <div className="p-4 sm:p-6 space-y-4">
-        <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-          A one-time prepaid fee of <strong className="text-slate-900 dark:text-slate-100">{pct}%</strong> of
-          one month's tuition fee is applicable after tutor confirmation and before the first regular class.
-          This covers all the onboarding and service work done by Saraswati Tutorials on your behalf.
+        <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-semibold">
+          A one-time prepaid Parents Onboarding Fee of <strong className="text-slate-900 dark:text-slate-100">{pct}%</strong> of
+          one month's tuition fee is applicable after tutor confirmation and before the first class.
         </p>
+
+        {/* 20. WHY WE CHARGE 59% EXPLANATION BOX */}
+        <div className="text-xs text-slate-650 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/50 rounded-xl p-3.5 border border-slate-100 dark:border-slate-800 leading-relaxed space-y-1.5">
+          <p className="font-bold text-slate-800 dark:text-slate-200">Why does Saraswati Tutorials charge a 59% onboarding fee?</p>
+          <p>
+            This fee is a one-time prepay model that resources all backend activities before classes start. It covers tutor sourcing from a vetted pool of 3,200+ professionals, government ID and certification checks, direct tutor home allocation, active customer support, and continuous replacement backup support.
+          </p>
+          <p>
+            The fee calculates dynamically in proportion to your finalized monthly tuition rate. The calculation below is an illustrative example; your actual charge will dynamically match your specific tuition quote.
+          </p>
+        </div>
 
         {/* Calculator card */}
         <div className="rounded-2xl border-2 border-emerald-300 dark:border-emerald-600 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 p-4 sm:p-5">
           <p className="text-xs font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-400 mb-3">
-            Fee Example
+            Dynamic Calculation
           </p>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="text-center sm:text-left">
-              <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">Monthly Tuition</p>
+              <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-wider">Monthly Tuition Fee</p>
               <p className="text-2.5xl sm:text-3xl font-black text-slate-800 dark:text-slate-100">{formatINR(fees.tuition)}</p>
             </div>
             <div className="flex items-center justify-center gap-2 text-slate-400 dark:text-slate-500 text-xl font-bold">
@@ -210,13 +289,13 @@ function FeeSection({ fees }) {
               <span>=</span>
             </div>
             <div className="text-center sm:text-right">
-              <p className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold uppercase tracking-wider">Admission / Onboarding Fee</p>
+              <p className="text-[10px] sm:text-xs text-emerald-600 dark:text-emerald-400 font-semibold uppercase tracking-wider">Parents Onboarding Fee</p>
               <p className="text-2.5xl sm:text-3xl font-black text-emerald-700 dark:text-emerald-300">{formatINR(fees.admissionFee)}</p>
             </div>
           </div>
           {fees.tuition === TNC_CONFIG.exampleMonthlyTuition && (
-            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-3 text-center">
-              * Example calculation. Actual amount depends on your finalized tuition fee.
+            <p className="text-[11px] text-emerald-600/80 dark:text-emerald-450 mt-3 text-center font-medium">
+              * This is just an example calculation based on {formatINR(TNC_CONFIG.exampleMonthlyTuition)} monthly tuition. Your actual Parents Onboarding Fee will calculate automatically matching your specific package.
             </p>
           )}
         </div>
@@ -226,14 +305,14 @@ function FeeSection({ fees }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 3 — WHAT THE FEE COVERS
+// 3. WHAT THE FEE COVERS (20% breakdown × 5)
 // ─────────────────────────────────────────────────────────────────────────────
 const FEE_BREAKDOWN = [
-  { label: "Tutor Sourcing",            pct: 20, color: "blue",   desc: "Shortlisting from 3200+ tutors based on your requirements." },
-  { label: "Verification",              pct: 20, color: "violet", desc: "Government ID and complete background verification." },
-  { label: "Allocation & Home Visit",   pct: 20, color: "emerald",desc: "Sending the tutor directly to the student's home / given location." },
-  { label: "Parent Support",            pct: 20, color: "amber",  desc: "Support for changes in subject focus, strategy, and timings." },
-  { label: "Backup & Replacement",      pct: 20, color: "rose",   desc: "Replacement within 72 hours on parent request or tutor emergency." },
+  { label: "Tutor Sourcing",            pct: 20, color: "blue",   desc: "Shortlisting from 3200+ tutors based on parent requirements." },
+  { label: "Verification",              pct: 20, color: "violet", desc: "Government ID, education credentials, and performance feedback verification." },
+  { label: "Allocation & Home Visit",   pct: 20, color: "emerald",desc: "Allocating the tutor and arranging direct physical home visits." },
+  { label: "Parents Dashboard",         pct: 20, color: "amber",  desc: "Access details, class calendar records, and performance tracking." },
+  { label: "Backup & Replacement",      pct: 20, color: "rose",   desc: "Guaranteed backup replacement within 72 hours maximum." },
 ];
 
 const pillColors = {
@@ -246,13 +325,12 @@ const pillColors = {
 
 function FeeCoversSection({ fees }) {
   return (
-    <SectionCard id="covers">
+    <SectionCard id="covers" color="green">
       <SectionHead
         icon={CheckCircle}
-        iconColor="text-blue-600 dark:text-blue-400"
-        bg="bg-blue-50 dark:bg-blue-900/20"
+        color="green"
         title="What This Fee Covers"
-        subtitle={`Based on admission fee of ${formatINR(fees.admissionFee)}`}
+        subtitle={`Rupee breakdown calculated dynamically against Parents Onboarding Fee (${formatINR(fees.admissionFee)})`}
       />
       <div className="p-4 sm:p-6 space-y-3">
         {FEE_BREAKDOWN.map((item) => {
@@ -274,7 +352,7 @@ function FeeCoversSection({ fees }) {
           );
         })}
         <p className="text-[11px] text-slate-400 dark:text-slate-500 text-right">
-          Each item = {FEE_BREAKDOWN[0].pct}% of admission fee {formatINR(fees.admissionFee)}
+          * Dynamic breakdown calculated at 20% increments of the Parents Onboarding Fee.
         </p>
       </div>
     </SectionCard>
@@ -282,43 +360,29 @@ function FeeCoversSection({ fees }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 4 — DEMO POLICY (exactly 2 boxes)
+// 8. DEMO POLICY (exactly ONE box: FREE COMPLIMENTARY DEMO)
 // ─────────────────────────────────────────────────────────────────────────────
 function DemoSection() {
-  const { additionalDemoFeeRs, demoDurationHours } = TNC_CONFIG;
+  const { demoDurationHours } = TNC_CONFIG;
   return (
-    <SectionCard id="demo">
+    <SectionCard id="demo" color="green">
       <SectionHead
         icon={Clock}
-        iconColor="text-amber-600 dark:text-amber-400"
-        bg="bg-amber-50 dark:bg-amber-900/20"
+        color="green"
         title="Demo Session Policy"
+        subtitle="Risk-free learning evaluation"
       />
-      <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Box 1 — FREE */}
-        <div className="relative rounded-2xl border-2 border-emerald-400 dark:border-emerald-500 bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 p-4 sm:p-5 overflow-hidden">
+      <div className="p-4 sm:p-6">
+        <div className="relative rounded-2xl border-2 border-emerald-400 dark:border-emerald-500 bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-900/20 dark:to-green-900/20 p-5 overflow-hidden">
           <div className="absolute top-0 right-0 bg-emerald-500 text-white text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-bl-xl">
             Complimentary
           </div>
           <p className="text-[11px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-1">First Demo Session</p>
-          <p className="text-3xl sm:text-4xl font-black text-emerald-700 dark:text-emerald-300 leading-none mb-2">₹0</p>
-          <ul className="space-y-1 text-xs text-emerald-700 dark:text-emerald-300">
-            <li className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />First demo is completely free</li>
-            <li className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />Duration: {demoDurationHours} hour</li>
-            <li className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />No obligation, full evaluation</li>
-          </ul>
-        </div>
-        {/* Box 2 — PAID */}
-        <div className="relative rounded-2xl border-2 border-amber-400 dark:border-amber-500 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 p-4 sm:p-5 overflow-hidden">
-          <div className="absolute top-0 right-0 bg-amber-500 text-white text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-bl-xl">
-            Chargeable
-          </div>
-          <p className="text-[11px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-400 mb-1">Additional Demo Sessions</p>
-          <p className="text-4xl font-black text-amber-700 dark:text-amber-300 leading-none mb-2">{formatINR(additionalDemoFeeRs)}</p>
-          <ul className="space-y-1 text-xs text-amber-700 dark:text-amber-300">
-            <li className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" />Applicable from the 2nd demo onwards</li>
-            <li className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" />Duration: {demoDurationHours} hour per session</li>
-            <li className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" />Payable before the session begins</li>
+          <p className="text-4xl font-black text-emerald-700 dark:text-emerald-300 leading-none mb-3">₹0</p>
+          <ul className="space-y-1.5 text-sm text-emerald-700 dark:text-emerald-300">
+            <li className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />First demo session is completely free.</li>
+            <li className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />Demo duration: {demoDurationHours} hour.</li>
+            <li className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />Evaluate with no upfront commitment.</li>
           </ul>
         </div>
       </div>
@@ -332,12 +396,12 @@ function DemoSection() {
 function ReservationSection() {
   const { tutorReservationHours } = TNC_CONFIG;
   return (
-    <SectionCard id="reservation">
+    <SectionCard id="reservation" color="blue">
       <SectionHead
         icon={Clock}
-        iconColor="text-blue-600 dark:text-blue-400"
-        bg="bg-blue-50 dark:bg-blue-900/20"
+        color="blue"
         title="Tutor Reservation"
+        subtitle="Availability and shortlisting rules"
       />
       <div className="p-4 sm:p-6 space-y-3">
         <div className="flex items-start gap-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 px-4 py-3">
@@ -345,7 +409,7 @@ function ReservationSection() {
             {tutorReservationHours}h
           </div>
           <p className="text-sm text-blue-800 dark:text-blue-300 leading-relaxed">
-            <strong>To reserve the same tutor,</strong> admission confirmation is required
+            <strong>To reserve the same tutor,</strong> onboarding confirmation is required
             within <strong>{tutorReservationHours} hours</strong> of the demo session.
           </p>
         </div>
@@ -359,22 +423,22 @@ function ReservationSection() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 6 — REFUND & CANCELLATION
+// SECTION 6 — REFUND & CANCELLATION (Orange/Caution Theme)
 // ─────────────────────────────────────────────────────────────────────────────
 function RefundSection({ fees }) {
   const { backupReplacementPercent } = TNC_CONFIG;
   return (
-    <SectionCard id="refund">
+    <SectionCard id="refund" color="orange">
       <SectionHead
         icon={RefreshCw}
-        iconColor="text-violet-600 dark:text-violet-400"
-        bg="bg-violet-50 dark:bg-violet-900/20"
+        color="orange"
         title="Refund & Cancellation Policy"
+        subtitle="Rules regarding Parents Onboarding Fee reversals"
       />
       <div className="p-4 sm:p-6 space-y-4">
         <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
           Once the applicable onboarding, verification, tutor allocation, and related services
-          have been provided, that portion of the admission fee is not refundable.
+          have been provided, that portion of the onboarding fee is not refundable.
         </p>
 
         {/* Refundable component — visually emphasized */}
@@ -386,7 +450,7 @@ function RefundSection({ fees }) {
                 {backupReplacementPercent}% Backup & Replacement Component — May Be Refunded
               </p>
               <p className="text-sm text-emerald-700 dark:text-emerald-400 mt-1 leading-relaxed">
-                {backupReplacementPercent}% of the admission fee ({formatINR(fees.backupComponent)}) allocated for
+                {backupReplacementPercent}% of the onboarding fee ({formatINR(fees.backupComponent)}) allocated for
                 backup and replacement support <strong>may be refunded</strong> if Saraswati Tutorials is
                 unable to provide the required replacement under the applicable service commitment.
               </p>
@@ -399,17 +463,17 @@ function RefundSection({ fees }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 7 — REPLACEMENT & CLASS COMPENSATION
+// SECTION 7 — REPLACEMENT & CLASS COMPENSATION (Orange/Caution Theme)
 // ─────────────────────────────────────────────────────────────────────────────
 function ReplacementSection() {
   const { replacementTimelineHours, classCompensationNoticeHours } = TNC_CONFIG;
   return (
-    <SectionCard id="replacement">
+    <SectionCard id="replacement" color="orange">
       <SectionHead
         icon={RefreshCw}
-        iconColor="text-amber-600 dark:text-amber-400"
-        bg="bg-amber-50 dark:bg-amber-900/20"
+        color="orange"
         title="Tutor Replacement & Class Compensation"
+        subtitle="Policy details for class modifications and tutor changes"
       />
       <div className="p-4 sm:p-6 space-y-4">
         {/* Replacement */}
@@ -420,8 +484,7 @@ function ReplacementSection() {
               72h<br/>max
             </div>
             <div className="text-sm text-amber-800 dark:text-amber-300 leading-relaxed">
-              On a genuine concern regarding the allocated tutor, replacement can be requested.
-              Maximum replacement timeline: <strong>within {replacementTimelineHours} hours.</strong>
+              Tutor replacement will be provided within a maximum of {replacementTimelineHours} hours for a genuine concern.
             </div>
           </div>
         </div>
@@ -434,9 +497,7 @@ function ReplacementSection() {
               {classCompensationNoticeHours}h<br/>notice
             </div>
             <p className="text-sm text-blue-800 dark:text-blue-300 leading-relaxed">
-              If you inform us at least <strong>{classCompensationNoticeHours} hours in advance</strong> about
-              a class rescheduling or cancellation, the applicable missed class can be compensated
-              per the service policy.
+              When a parent informs the business at least {classCompensationNoticeHours} hours before a missed class, the eligible class should be compensated according to the existing policy.
             </p>
           </div>
         </div>
@@ -446,37 +507,43 @@ function ReplacementSection() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 8 — PAYMENT TERMS & BYPASS POLICY
+// SECTION 8 — PAYMENT TERMS & BYPASS POLICY (Red/Risk Theme for bypass warning)
 // ─────────────────────────────────────────────────────────────────────────────
 function PaymentSection({ fees }) {
   const { bypassPenaltyMonths } = TNC_CONFIG;
   return (
-    <SectionCard id="payment">
+    <SectionCard id="payment" color="red">
       <SectionHead
         icon={IndianRupee}
-        iconColor="text-blue-600 dark:text-blue-400"
-        bg="bg-blue-50 dark:bg-blue-900/20"
+        color="red"
         title="Payment Terms & Bypass Policy"
+        subtitle="Payment structure contrast and restricted direct hiring regulations"
       />
       <div className="p-4 sm:p-6 space-y-5">
-        {/* Two fee types */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/40 p-4">
-            <p className="text-xs font-black uppercase tracking-widest text-blue-600 dark:text-blue-400 mb-2">Admission / Onboarding Fee</p>
-            <ul className="space-y-1.5 text-sm text-slate-700 dark:text-slate-300">
-              <li className="flex items-center gap-2"><ArrowRight className="h-3 w-3 text-blue-400 shrink-0" />One-time payment</li>
-              <li className="flex items-center gap-2"><ArrowRight className="h-3 w-3 text-blue-400 shrink-0" />{TNC_CONFIG.admissionFeePercent}% of one month's tuition</li>
-              <li className="flex items-center gap-2"><ArrowRight className="h-3 w-3 text-blue-400 shrink-0" />Payable after tutor confirmation</li>
-              <li className="flex items-center gap-2"><ArrowRight className="h-3 w-3 text-blue-400 shrink-0" />Paid before first regular class</li>
-            </ul>
+        {/* 6. First Month vs Second Month table/timeline contrast */}
+        <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden shadow-sm">
+          <div className="bg-slate-50 dark:bg-slate-900 px-4 py-2 border-b border-slate-200 dark:border-slate-700 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+            Payment Timelines
           </div>
-          <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-700/40 p-4">
-            <p className="text-xs font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400 mb-2">Monthly Tuition Fee</p>
-            <ul className="space-y-1.5 text-sm text-slate-700 dark:text-slate-300">
-              <li className="flex items-center gap-2"><ArrowRight className="h-3 w-3 text-emerald-400 shrink-0" />Regular monthly tuition</li>
-              <li className="flex items-center gap-2"><ArrowRight className="h-3 w-3 text-emerald-400 shrink-0" />Paid directly to Saraswati Tutorials</li>
-              <li className="flex items-center gap-2"><ArrowRight className="h-3 w-3 text-emerald-400 shrink-0" />Starts from the beginning of the second month</li>
-            </ul>
+          <div className="divide-y divide-slate-100 dark:divide-slate-700">
+            <div className="p-4 flex flex-col sm:flex-row sm:items-start gap-2 justify-between">
+              <div>
+                <p className="text-sm font-black text-blue-600 dark:text-blue-400">FIRST MONTH</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Registration & setup window</p>
+              </div>
+              <div className="text-sm text-slate-700 dark:text-slate-300 text-left sm:text-right font-medium max-w-md">
+                Parents Onboarding Fee is payable after tutor confirmation and before the first class.
+              </div>
+            </div>
+            <div className="p-4 flex flex-col sm:flex-row sm:items-start gap-2 justify-between">
+              <div>
+                <p className="text-sm font-black text-emerald-600 dark:text-emerald-400">SECOND MONTH</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Recurring tuition cycle</p>
+              </div>
+              <div className="text-sm text-slate-700 dark:text-slate-300 text-left sm:text-right font-medium max-w-md">
+                Monthly tuition starts from the beginning of the second month.
+              </div>
+            </div>
           </div>
         </div>
 
@@ -484,7 +551,7 @@ function PaymentSection({ fees }) {
 
         {/* Bypass policy */}
         <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-red-600 dark:text-red-400 mb-2 flex items-center gap-1.5">
+          <p className="text-xs font-bold uppercase tracking-wider text-red-650 dark:text-red-400 mb-2 flex items-center gap-1.5">
             <AlertTriangle className="h-3.5 w-3.5" />
             Bypass / Direct Payment Policy — Prohibited
           </p>
@@ -505,10 +572,10 @@ function PaymentSection({ fees }) {
           <div className="flex items-start gap-3 rounded-xl border-l-4 border-red-500 bg-red-50 dark:bg-red-900/20 px-4 py-3">
             <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400 mt-0.5 shrink-0" />
             <div>
-              <p className="text-sm font-black text-red-700 dark:text-red-300 uppercase tracking-wide">
+              <p className="text-sm font-black text-red-750 dark:text-red-300 uppercase tracking-wide">
                 Bypass Penalty — {bypassPenaltyMonths} Months' Tuition Fee
               </p>
-              <p className="text-sm text-red-700 dark:text-red-400 mt-1">
+              <p className="text-sm text-red-700 dark:text-red-455 mt-1">
                 Penalty applicable: <strong>{formatINR(fees.bypassPenalty)}</strong> (= {bypassPenaltyMonths} × {formatINR(fees.tuition)})
               </p>
             </div>
@@ -525,12 +592,12 @@ function PaymentSection({ fees }) {
 function TerminationSection() {
   const { noticePeriodDays, academicYearValidity } = TNC_CONFIG;
   return (
-    <SectionCard id="termination">
+    <SectionCard id="termination" color="blue">
       <SectionHead
         icon={CalendarX2}
-        iconColor="text-slate-600 dark:text-slate-400"
-        bg="bg-slate-50 dark:bg-slate-700/40"
-        title="Termination / Notice Period"
+        color="blue"
+        title="Termination & Replacement Notice"
+        subtitle="Arrangement discontinuation policies"
       />
       <div className="p-4 sm:p-6 space-y-3">
         <div className="flex items-start gap-3 rounded-xl bg-slate-50 dark:bg-slate-700/40 border border-slate-200 dark:border-slate-600 px-4 py-3">
@@ -538,15 +605,14 @@ function TerminationSection() {
             {noticePeriodDays}d
           </div>
           <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-            Replacement or discontinuation requests require a minimum of{" "}
+            Replacement Notice Period or arrangement discontinuation requests require a minimum of{" "}
             <strong className="text-slate-900 dark:text-slate-100">{noticePeriodDays} days' notice.</strong>
           </p>
         </div>
         <div className="flex items-center gap-3 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 px-4 py-2.5">
           <BadgeCheck className="h-4 w-4 text-blue-500 shrink-0" />
           <p className="text-sm text-blue-800 dark:text-blue-300">
-            <strong>Validity:</strong> {academicYearValidity} — Tutors are committed for the full academic year to
-            ensure continuity through examination periods.
+            <strong>Validity:</strong> {academicYearValidity} — Arrangements hold validity for one academic year to ensure continuity.
           </p>
         </div>
       </div>
@@ -565,10 +631,10 @@ function AcceptanceSection({ fees, onAccept, onDecline, status }) {
     <div id="acceptance" className="bg-white dark:bg-slate-800 rounded-2xl border-2 border-blue-300 dark:border-blue-600 shadow-md p-4 sm:p-6 space-y-5">
       <div>
         <h2 className="text-base font-black uppercase tracking-widest text-slate-800 dark:text-slate-100 mb-1">
-          Terms & Conditions Acceptance
+          Acceptance &amp; Help
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          Please read all sections above before proceeding.
+          Review all rules above, then check the box below to sign or request support.
         </p>
       </div>
 
@@ -593,15 +659,14 @@ function AcceptanceSection({ fees, onAccept, onDecline, status }) {
           )}
         </div>
         <span className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-          I have read and understood the Terms & Conditions and agree to proceed with{" "}
-          <strong className="text-slate-900 dark:text-slate-100">Saraswati Tutorials.</strong>
+          I have read and understood the Terms &amp; Conditions and agree to proceed with <strong className="text-slate-900 dark:text-slate-100">Saraswati Tutorials.</strong>
         </span>
       </label>
 
       {!checked && (
         <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
           <Info className="h-3.5 w-3.5 shrink-0" />
-          Please check the box above to enable Accept and Decline.
+          Please check the agreement checkbox above to proceed.
         </p>
       )}
 
@@ -618,7 +683,7 @@ function AcceptanceSection({ fees, onAccept, onDecline, status }) {
           }`}
         >
           {status === "loading" ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
-          I Accept
+          Accept
         </button>
         <button
           id="tnc-decline-btn"
@@ -627,11 +692,24 @@ function AcceptanceSection({ fees, onAccept, onDecline, status }) {
           className={`flex-1 sm:flex-none flex items-center justify-center gap-2 rounded-xl border-2 font-bold text-sm px-6 py-3.5 transition-all duration-200 ${
             disabled
               ? "border-slate-200 dark:border-slate-700 text-slate-300 dark:text-slate-600 cursor-not-allowed"
-              : "border-red-600 dark:border-red-500 text-red-600 dark:text-red-450 hover:bg-red-50 dark:hover:bg-red-950/20 cursor-pointer"
+              : "border-red-600 dark:border-red-500 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 cursor-pointer"
           }`}
         >
           {status === "loading" ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
           Decline
+        </button>
+      </div>
+
+      <Divider />
+
+      {/* 20. NEED CLARIFICATION BUTTON */}
+      <div className="text-center pt-2">
+        <button
+          onClick={openClarificationWhatsApp}
+          className="inline-flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl px-4 py-2.5 transition cursor-pointer"
+        >
+          <HelpCircle className="h-4 w-4 text-slate-400" />
+          Need Clarification?
         </button>
       </div>
     </div>
@@ -655,7 +733,7 @@ function PreviewModal({ fees, onConfirm, onBack, submitting }) {
         {/* Modal header */}
         <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between bg-blue-50 dark:bg-blue-900/20 shrink-0">
           <div>
-            <p className="text-xs font-black uppercase tracking-widest text-blue-600 dark:text-blue-400">Confirmation Summary</p>
+            <p className="text-xs font-black uppercase tracking-widest text-blue-600 dark:text-blue-400">Final Onboarding Preview</p>
             <p className="text-base font-bold text-slate-800 dark:text-slate-100 mt-0.5">Please review before confirming</p>
           </div>
           <button onClick={onBack} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer">
@@ -665,22 +743,21 @@ function PreviewModal({ fees, onConfirm, onBack, submitting }) {
 
         {/* Modal body — scrollable */}
         <div className="overflow-y-auto flex-1 px-5 py-4 space-y-3 text-sm">
-          <Row label="Monthly Tuition" value={formatINR(fees.tuition)} />
-          <Row label="Admission / Onboarding Fee" value={`${cfg.admissionFeePercent}% — ${formatINR(fees.admissionFee)}`} accent />
+          <Row label="Monthly Tuition Fee" value={formatINR(fees.tuition)} />
+          <Row label="Parents Onboarding Fee" value={`${cfg.admissionFeePercent}% — ${formatINR(fees.admissionFee)}`} accent />
           <div className="rounded-xl bg-slate-50 dark:bg-slate-700/40 border border-slate-100 dark:border-slate-700 px-4 py-3">
             <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Services Included</p>
-            {["Tutor Verification", "Tutor Shortlisting & Allocation", "Home Tutor Allocation", "Parent Support", "Backup / Replacement", "Parent Dashboard"].map((s) => (
+            {["Tutor Verification", "Tutor Shortlisting & Allocation", "Home Tutor Allocation", "Parent Support", "Backup / Replacement", "Parents Dashboard"].map((s) => (
               <p key={s} className="flex items-center gap-1.5 text-xs text-slate-700 dark:text-slate-300 py-0.5">
                 <CheckCircle className="h-3 w-3 text-emerald-500 shrink-0" />{s}
               </p>
             ))}
           </div>
           <Row label="First Demo" value="FREE" />
-          <Row label="Additional Demo" value={`${formatINR(cfg.additionalDemoFeeRs)} / ${cfg.demoDurationHours} hour`} />
           <Row label="Tutor Replacement" value={`Within ${cfg.replacementTimelineHours} hours`} />
           <Row label="Class Compensation" value={`With ${cfg.classCompensationNoticeHours}-hour advance notice`} />
-          <Row label="Admission Fee" value="Prepaid after tutor confirmation" />
-          <Row label="Tuition Starts" value="From beginning of 2nd month" />
+          <Row label="Parents Onboarding Fee" value="Payable before the first class" />
+          <Row label="Tuition Fee" value="From beginning of 2nd month" />
           <Row label="Bypass Penalty" value={`${cfg.bypassPenaltyMonths} months' tuition fee`} warn />
           <Row label="Notice Period" value={`${cfg.noticePeriodDays} days`} />
           <Row label="Validity" value={cfg.academicYearValidity} />
@@ -727,34 +804,32 @@ function Row({ label, value, accent, warn }) {
 // ─────────────────────────────────────────────────────────────────────────────
 function DeclineWarning({ onGoBack }) {
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 text-center space-y-4 animate-fadeIn">
-      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-700">
-        <XCircle className="h-7 w-7 text-slate-400 dark:text-slate-500" />
+    <div className="bg-white dark:bg-slate-800 rounded-2xl border-2 border-rose-300 dark:border-rose-800 p-6 text-center space-y-4 animate-fadeIn">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-rose-100 dark:bg-rose-950/30">
+        <XCircle className="h-7 w-7 text-rose-600 dark:text-rose-400" />
       </div>
       <div>
-        <p className="font-bold text-slate-800 dark:text-slate-100">
-          These Terms & Conditions are required to proceed.
+        <p className="font-bold text-slate-800 dark:text-slate-100 text-base">
+          We can't proceed without accepting these Terms &amp; Conditions.
         </p>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          We are unable to proceed with tutor allocation or services without acceptance
-          of these Terms & Conditions.
+          Acceptance is mandatory to continue with Saraswati Tutorials services.
         </p>
       </div>
-      <div className="flex flex-col sm:flex-row gap-3 justify-center">
+      <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
         <button
           onClick={onGoBack}
           className="rounded-xl border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-bold text-sm px-6 py-3 hover:bg-slate-50 dark:hover:bg-slate-700 transition cursor-pointer"
         >
           Go Back
         </button>
-        <a
-          href="https://wa.me/918904457689"
-          target="_blank"
-          rel="noopener noreferrer"
+        <button
+          onClick={openClarificationWhatsApp}
           className="rounded-xl bg-green-600 hover:bg-green-700 text-white font-bold text-sm px-6 py-3 transition cursor-pointer inline-flex items-center justify-center gap-2"
         >
-          Contact Support
-        </a>
+          <MessageCircle className="h-4 w-4" />
+          Request Clarification
+        </button>
       </div>
     </div>
   );
@@ -770,9 +845,9 @@ function AcceptedState() {
         <CheckCircle className="h-7 w-7 text-emerald-600 dark:text-emerald-400" />
       </div>
       <div>
-        <p className="font-bold text-emerald-800 dark:text-emerald-300">Terms & Conditions Accepted!</p>
+        <p className="font-bold text-emerald-800 dark:text-emerald-300">Terms &amp; Conditions Accepted!</p>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Your acceptance has been recorded. Redirecting you to WhatsApp...
+          Your response has been recorded. Redirecting you to WhatsApp...
         </p>
       </div>
     </div>
@@ -881,21 +956,31 @@ export default function TermsConditions() {
           </div>
         </div>
 
-        <div className="max-w-3xl mx-auto px-4 pt-6 space-y-4">
+        <div className="max-w-3xl mx-auto px-4 pt-6 space-y-5">
 
           {/* Hero */}
-          <div className="text-center py-4">
-            <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-full px-4 py-1.5 mb-3">
+          <div className="text-center py-2">
+            <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-full px-4 py-1.5 mb-2.5">
               <ShieldCheck className="h-3.5 w-3.5" />
               Official Parent Guide
             </div>
             <h1 className="text-2xl sm:text-3xl font-black text-slate-800 dark:text-slate-100 tracking-tight leading-tight">
               Parent Onboarding &amp; Terms
             </h1>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              Please read all sections carefully before accepting.
+            
+            {/* 17. Estimated read time: 60 seconds */}
+            <p className="text-xs text-slate-400 dark:text-slate-500 italic mt-1.5">
+              Estimated read time: 60 seconds
+            </p>
+
+            {/* 18. Effective Date */}
+            <p className="text-[10px] text-slate-400 dark:text-slate-500 uppercase tracking-wider font-semibold mt-1">
+              Effective Date: April 2026
             </p>
           </div>
+
+          {/* Top Summary */}
+          <TopSummaryCard fees={fees} />
 
           {/* All sections */}
           <ServicesSection />
@@ -909,7 +994,7 @@ export default function TermsConditions() {
           <TerminationSection />
 
           {/* Acceptance / Decline / Accepted */}
-          <div ref={acceptRef}>
+          <div ref={acceptRef} className="pt-2">
             {flow === "idle" && (
               <AcceptanceSection
                 fees={fees}
@@ -927,9 +1012,9 @@ export default function TermsConditions() {
           </div>
 
           {/* Footer */}
-          <p className="text-center text-xs text-slate-400 dark:text-slate-500 pt-4">
+          <p className="text-center text-[11px] text-slate-400 dark:text-slate-500 pt-4">
             © {new Date().getFullYear()} Saraswati Tutorials. All rights reserved.{" "}
-            Terms Version: {TNC_CONFIG.termsVersion}
+            | Effective Date: April 2026 | Terms Version: {TNC_CONFIG.termsVersion}
           </p>
         </div>
       </div>
