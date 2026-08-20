@@ -621,21 +621,36 @@ function TerminationSection() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// SECTION 10 — ACCEPTANCE (checkbox + buttons)
+// SECTION 10 — ACCEPTANCE (name input + checkbox + buttons)
 // ─────────────────────────────────────────────────────────────────────────────
-function AcceptanceSection({ fees, onAccept, onDecline, status }) {
+function AcceptanceSection({ fees, onAccept, onDecline, status, fullName, setFullName }) {
   const [checked, setChecked] = useState(false);
-  const disabled = !checked || status === "loading";
+  const disabled = !checked || !fullName.trim() || status === "loading";
 
   return (
     <div id="acceptance" className="bg-white dark:bg-slate-800 rounded-2xl border-2 border-blue-300 dark:border-blue-600 shadow-md p-4 sm:p-6 space-y-5">
       <div>
         <h2 className="text-base font-black uppercase tracking-widest text-slate-800 dark:text-slate-100 mb-1">
-          Acceptance &amp; Help
+          Acceptance &amp; Signatory Details
         </h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          Review all rules above, then check the box below to sign or request support.
+          Please enter your full name and check the agreement box below to accept.
         </p>
+      </div>
+
+      {/* Full Name Input */}
+      <div className="space-y-1.5">
+        <label className="block text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+          Full Name / Parent Name <span className="text-rose-500">*</span>
+        </label>
+        <input
+          type="text"
+          required
+          placeholder="Enter your full name (e.g. Ramesh Sharma)"
+          value={fullName}
+          onChange={(e) => setFullName(e.target.value)}
+          className="w-full h-11 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs font-bold text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all placeholder:font-medium"
+        />
       </div>
 
       {/* Checkbox */}
@@ -659,14 +674,14 @@ function AcceptanceSection({ fees, onAccept, onDecline, status }) {
           )}
         </div>
         <span className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-          I have read and understood the Terms &amp; Conditions and agree to proceed with <strong className="text-slate-900 dark:text-slate-100">Saraswati Tutorials.</strong>
+          I, <strong className="text-slate-900 dark:text-slate-100">{fullName.trim() || "___________"}</strong>, have read and understood the Terms &amp; Conditions and agree to proceed with <strong className="text-slate-900 dark:text-slate-100">Saraswati Tutorials.</strong>
         </span>
       </label>
 
-      {!checked && (
-        <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+      {(!checked || !fullName.trim()) && (
+        <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5 font-semibold">
           <Info className="h-3.5 w-3.5 shrink-0" />
-          Please check the agreement checkbox above to proceed.
+          {!fullName.trim() ? "Please enter your full name above to enable acceptance." : "Please check the agreement checkbox above to proceed."}
         </p>
       )}
 
@@ -688,12 +703,8 @@ function AcceptanceSection({ fees, onAccept, onDecline, status }) {
         <button
           id="tnc-decline-btn"
           onClick={onDecline}
-          disabled={disabled}
-          className={`flex-1 sm:flex-none flex items-center justify-center gap-2 rounded-xl border-2 font-bold text-sm px-6 py-3.5 transition-all duration-200 ${
-            disabled
-              ? "border-slate-200 dark:border-slate-700 text-slate-300 dark:text-slate-600 cursor-not-allowed"
-              : "border-red-600 dark:border-red-500 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 cursor-pointer"
-          }`}
+          disabled={status === "loading"}
+          className="flex-1 sm:flex-none flex items-center justify-center gap-2 rounded-xl border-2 font-bold text-sm px-6 py-3.5 border-red-600 dark:border-red-500 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 cursor-pointer transition-all duration-200"
         >
           {status === "loading" ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
           Decline
@@ -719,7 +730,7 @@ function AcceptanceSection({ fees, onAccept, onDecline, status }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // PREVIEW MODAL — shown after clicking Accept
 // ─────────────────────────────────────────────────────────────────────────────
-function PreviewModal({ fees, onConfirm, onBack, submitting }) {
+function PreviewModal({ fees, fullName, onConfirm, onBack, submitting }) {
   const cfg = TNC_CONFIG;
   // Prevent body scroll while modal open
   useEffect(() => {
@@ -743,6 +754,7 @@ function PreviewModal({ fees, onConfirm, onBack, submitting }) {
 
         {/* Modal body — scrollable */}
         <div className="overflow-y-auto flex-1 px-5 py-4 space-y-3 text-sm">
+          <Row label="Signatory Name" value={fullName} accent />
           <Row label="Monthly Tuition Fee" value={formatINR(fees.tuition)} />
           <Row label="Parents Onboarding Fee" value={`${cfg.admissionFeePercent}% — ${formatINR(fees.admissionFee)}`} accent />
           <div className="rounded-xl bg-slate-50 dark:bg-slate-700/40 border border-slate-100 dark:border-slate-700 px-4 py-3">
@@ -838,7 +850,7 @@ function DeclineWarning({ onGoBack }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // SUCCESS STATE
 // ─────────────────────────────────────────────────────────────────────────────
-function AcceptedState() {
+function AcceptedState({ fullName }) {
   return (
     <div className="bg-white dark:bg-slate-800 rounded-2xl border border-emerald-300 dark:border-emerald-600 p-6 text-center space-y-3 animate-fadeIn">
       <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30">
@@ -846,8 +858,11 @@ function AcceptedState() {
       </div>
       <div>
         <p className="font-bold text-emerald-800 dark:text-emerald-300">Terms &amp; Conditions Accepted!</p>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Your response has been recorded. Redirecting you to WhatsApp...
+        <p className="text-sm text-slate-600 dark:text-slate-300 font-semibold mt-1">
+          Thank you, <strong className="text-slate-800 dark:text-white">{fullName}</strong>. Your acceptance has been recorded.
+        </p>
+        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+          Redirecting you to WhatsApp...
         </p>
       </div>
     </div>
@@ -889,6 +904,7 @@ function PageHeader() {
 export default function TermsConditions() {
   const [monthlyTuition]  = useState(() => getMonthlyTuition());
   const fees               = computeFees(monthlyTuition);
+  const [fullName, setFullName] = useState("");
 
   // "idle" | "preview" | "submitting" | "accepted" | "declined"
   const [flow, setFlow]   = useState("idle");
@@ -897,13 +913,14 @@ export default function TermsConditions() {
   const handleAcceptClick = () => setFlow("preview");
 
   const handleDeclineClick = () => {
-    recordAction("dismissed");
+    recordAction("dismissed", { name: fullName });
     setFlow("declined");
   };
 
   const handleConfirm = async () => {
     setFlow("submitting");
     await recordAction("accepted", {
+      name: fullName,
       feeSnapshot: {
         tuition:       fees.tuition,
         admissionFee:  fees.admissionFee,
@@ -942,6 +959,7 @@ export default function TermsConditions() {
       {(flow === "preview" || flow === "submitting") && (
         <PreviewModal
           fees={fees}
+          fullName={fullName}
           onConfirm={handleConfirm}
           onBack={handleBack}
           submitting={flow === "submitting"}
@@ -1001,13 +1019,15 @@ export default function TermsConditions() {
                 onAccept={handleAcceptClick}
                 onDecline={handleDeclineClick}
                 status="idle"
+                fullName={fullName}
+                setFullName={setFullName}
               />
             )}
             {flow === "declined" && (
               <DeclineWarning onGoBack={handleBack} />
             )}
             {flow === "accepted" && (
-              <AcceptedState />
+              <AcceptedState fullName={fullName} />
             )}
           </div>
 

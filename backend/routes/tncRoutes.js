@@ -35,6 +35,13 @@ router.post("/record", async (req, res) => {
       });
     }
 
+    if (action === "accepted" && !name?.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Full name is required to accept the Terms and Conditions.",
+      });
+    }
+
     const record = await TncAcceptance.create({
       action,
       name:        (name  || "").trim(),
