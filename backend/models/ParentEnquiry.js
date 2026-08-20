@@ -325,6 +325,29 @@ const parentEnquirySchema = new mongoose.Schema(
       default: 0,
     },
 
+    currentPackageCycle: {
+      type: Number,
+      default: 1,
+    },
+
+    packageStatus: {
+      type: String,
+      enum: ["active", "completed"],
+      default: "active",
+    },
+
+    packageHistory: {
+      type: [
+        {
+          cycle: Number,
+          totalClasses: Number,
+          completedClasses: Number,
+          completedAt: Date,
+        },
+      ],
+      default: [],
+    },
+
     packageAlertSentForTotal: {
       type: Number,
       default: 0,

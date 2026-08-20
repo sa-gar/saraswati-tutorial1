@@ -27,6 +27,14 @@ const attendanceSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    packageCycle: {
+      type: Number,
+      default: 1,
+    },
+    sessionNumber: {
+      type: Number,
+      default: 1,
+    },
     status: {
       type: String,
       enum: ["Done", "Missed"],
@@ -56,9 +64,9 @@ const attendanceSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Indexes for fast querying
-attendanceSchema.index({ parentEnquiryId: 1 });
+// Indexes for fast querying & uniqueness
+attendanceSchema.index({ parentEnquiryId: 1, packageCycle: 1, date: 1, status: 1 });
+attendanceSchema.index({ parentEnquiryId: 1, packageCycle: 1, sessionNumber: 1 });
 attendanceSchema.index({ tutorId: 1 });
-attendanceSchema.index({ date: 1 });
 
 export default mongoose.model("Attendance", attendanceSchema);

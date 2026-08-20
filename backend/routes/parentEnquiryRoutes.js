@@ -1,6 +1,7 @@
 import express from "express";
 import ParentEnquiry from "../models/ParentEnquiry.js";
 import ParentEnquiryDraft from "../models/ParentEnquiryDraft.js";
+import Attendance from "../models/Attendance.js";
 import AnalyticsLog from "../models/AnalyticsLog.js";
 import { createLead, updateLead, updateLeadAssignment, syncTutorStats, addOdooChatterMessage } from "../utils/odooService.js";
 import { verifyToken } from "../middleware/authMiddleware.js";
@@ -63,7 +64,29 @@ async function computeTutorStats(tutor) {
 router.get("/", verifyToken(["admin"]), async (req, res) => {
   try {
     const data = await ParentEnquiry.find().sort({ createdAt: -1 });
-    res.json(data);
+    // Synchronize completedClasses and packageStatus with Attendance single source of truth
+    const synchronizedData = await Promise.all(
+      data.map(async (lead) => {
+        if (lead.status === "Enrolled" || lead.assignedTutorId || (lead.totalClasses && lead.totalClasses > 0)) {
+          const cycle = lead.currentPackageCycle || 1;
+          const total = lead.totalClasses || 12;
+          const completedCount = await Attendance.countDocuments({
+            parentEnquiryId: lead._id,
+            packageCycle: cycle,
+            status: "Done",
+          });
+          const completed = Math.min(total, completedCount);
+          const pkgStatus = completed >= total && total > 0 ? "completed" : "active";
+          if (lead.completedClasses !== completed || lead.packageStatus !== pkgStatus) {
+            lead.completedClasses = completed;
+            lead.packageStatus = pkgStatus;
+            await lead.save({ validateBeforeSave: false }).catch(() => {});
+          }
+        }
+        return lead;
+      })
+    );
+    res.json(synchronizedData);
   } catch (error) {
     console.error("Parent enquiry fetch error:", error);
     res.status(500).json({ message: error.message });

@@ -9,23 +9,43 @@ import { verifyToken } from "../middleware/authMiddleware.js";
 const router = express.Router();
 
 // =============================================================
-// Helper: Get student card with latest status
+// Helper: Get student card with authoritative status
 // =============================================================
 async function formatStudentCard(lead) {
-  // Find the latest attendance log for this lead
-  const latestLog = await Attendance.findOne({ parentEnquiryId: lead._id })
-    .sort({ timestamp: -1 });
-
-  const studentName = lead.wards?.map(w => w.studentName).join(", ") || "Unknown Student";
-  const completed = lead.completedClasses || 0;
+  const cycle = lead.currentPackageCycle || 1;
   const total = lead.totalClasses || 12;
+
+  // Count COMPLETED ("Done") classes for the active package cycle
+  const completedCount = await Attendance.countDocuments({
+    parentEnquiryId: lead._id,
+    packageCycle: cycle,
+    status: "Done",
+  });
+
+  const completed = Math.min(total, completedCount);
   const remaining = Math.max(0, total - completed);
 
-  // Count missed classes
   const missedClasses = await Attendance.countDocuments({
     parentEnquiryId: lead._id,
+    packageCycle: cycle,
     status: "Missed",
   });
+
+  const packageStatus = completed >= total ? "completed" : "active";
+
+  // Keep Lead document state in sync with single source of truth
+  if (lead.completedClasses !== completed || lead.packageStatus !== packageStatus) {
+    lead.completedClasses = completed;
+    lead.packageStatus = packageStatus;
+    await lead.save({ validateBeforeSave: false }).catch(() => {});
+  }
+
+  const latestLog = await Attendance.findOne({
+    parentEnquiryId: lead._id,
+    packageCycle: cycle,
+  }).sort({ timestamp: -1 });
+
+  const studentName = lead.wards?.map(w => w.studentName).join(", ") || "Unknown Student";
 
   return {
     _id: lead._id,
@@ -36,6 +56,9 @@ async function formatStudentCard(lead) {
     completedClasses: completed,
     remainingClasses: remaining,
     missedClasses,
+    currentPackageCycle: cycle,
+    packageStatus,
+    packageHistory: lead.packageHistory || [],
     classSchedule: lead.classSchedule || lead.preferredTime || "Not Scheduled",
     classDuration: lead.classDuration || "Not provided",
     currentAttendanceStatus: latestLog ? latestLog.status : "Pending",
@@ -161,6 +184,76 @@ router.post("/mark", verifyToken(["admin", "tutor"]), async (req, res) => {
     const tutor = await Tutor.findById(tutorId);
     if (!tutor) return res.status(404).json({ message: "Tutor not found." });
 
+    const packageCycle = lead.currentPackageCycle || 1;
+    const totalClasses = lead.totalClasses || 12;
+
+    // Check existing completed count for this cycle
+    const currentCompleted = await Attendance.countDocuments({
+      parentEnquiryId,
+      packageCycle,
+      status: "Done",
+    });
+
+    // DUPLICATE COMPLETION PROTECTION:
+    // If status is "Done", check if an attendance record for this exact date and student/cycle already exists
+    if (status === "Done") {
+      const existingDone = await Attendance.findOne({
+        parentEnquiryId,
+        packageCycle,
+        date,
+        status: "Done",
+      });
+
+      if (existingDone) {
+        // Class already marked for this date. Return authoritative state without double-counting!
+        const updatedCard = await formatStudentCard(lead);
+        return res.json({
+          success: true,
+          message: "Attendance for this class date has already been recorded.",
+          session: {
+            sessionNumber: existingDone.sessionNumber || currentCompleted,
+            status: "completed",
+            date: existingDone.date,
+          },
+          package: {
+            totalClasses: updatedCard.totalClasses,
+            completedClasses: updatedCard.completedClasses,
+            remainingClasses: updatedCard.remainingClasses,
+            packageCycle,
+            status: updatedCard.packageStatus,
+          },
+          attendance: existingDone,
+          updatedStudentCard: updatedCard,
+        });
+      }
+
+      // If current completed count reached or exceeded total classes, auto-rollover to next cycle
+      if (currentCompleted >= totalClasses) {
+        if (!lead.packageHistory) lead.packageHistory = [];
+        lead.packageHistory.push({
+          cycle: packageCycle,
+          totalClasses: totalClasses,
+          completedClasses: totalClasses,
+          completedAt: new Date(),
+        });
+        lead.currentPackageCycle = packageCycle + 1;
+        lead.completedClasses = 0;
+        lead.packageStatus = "active";
+        await lead.save({ validateBeforeSave: false });
+      }
+    }
+
+    const activeCycle = lead.currentPackageCycle || 1;
+    const activeTotal = lead.totalClasses || 12;
+
+    const currentCompletedInActiveCycle = await Attendance.countDocuments({
+      parentEnquiryId,
+      packageCycle: activeCycle,
+      status: "Done",
+    });
+
+    const sessionNumber = currentCompletedInActiveCycle + 1;
+
     // Create the Attendance entry
     const attendance = new Attendance({
       parentEnquiryId,
@@ -168,6 +261,8 @@ router.post("/mark", verifyToken(["admin", "tutor"]), async (req, res) => {
       requirementId: lead.requirementId || "REQ-N/A",
       tutorId,
       tutorName: tutor.name,
+      packageCycle: activeCycle,
+      sessionNumber,
       status,
       topicsCovered: status === "Done" ? topicsCovered : "",
       missedReason: status === "Missed" ? missedReason : "",
@@ -177,22 +272,41 @@ router.post("/mark", verifyToken(["admin", "tutor"]), async (req, res) => {
 
     await attendance.save();
 
-    // Recalculate Completed Classes count
-    const completedCount = await Attendance.countDocuments({
+    // Recalculate Completed Classes count for active cycle
+    const newCompletedCount = await Attendance.countDocuments({
       parentEnquiryId,
+      packageCycle: activeCycle,
       status: "Done",
     });
 
-    lead.completedClasses = completedCount;
+    // Check if this attendance completion finishes the active cycle
+    let cycleCompletedNotice = "";
+    if (newCompletedCount >= activeTotal) {
+      if (!lead.packageHistory) lead.packageHistory = [];
+      lead.packageHistory.push({
+        cycle: activeCycle,
+        totalClasses: activeTotal,
+        completedClasses: activeTotal,
+        completedAt: new Date(),
+      });
+      lead.currentPackageCycle = activeCycle + 1;
+      lead.completedClasses = 0;
+      lead.packageStatus = "active";
+      cycleCompletedNotice = ` Package Cycle ${activeCycle} is now completed! Automatically starting Cycle ${activeCycle + 1} (Class 1) for next month/period.`;
+    } else {
+      lead.completedClasses = newCompletedCount;
+      lead.packageStatus = "active";
+    }
+
     await lead.save({ validateBeforeSave: false });
 
     // Sync to Odoo crm.lead asynchronously
     if (lead.odooLeadId) {
       try {
-        const remaining = Math.max(0, (lead.totalClasses || 12) - completedCount);
+        const remaining = Math.max(0, activeTotal - lead.completedClasses);
         await updateLead(lead.odooLeadId, {
-          x_studio_completed_classes: completedCount,
-          x_studio_total_classes: lead.totalClasses || 12,
+          x_studio_completed_classes: lead.completedClasses,
+          x_studio_total_classes: activeTotal,
           x_studio_remaining_classes: remaining,
           x_studio_last_attendance_status: status,
           x_studio_last_class_topics: status === "Done" ? topicsCovered : "",
@@ -207,12 +321,125 @@ router.post("/mark", verifyToken(["admin", "tutor"]), async (req, res) => {
 
     res.json({
       success: true,
-      message: "Attendance recorded successfully.",
+      message: `Attendance recorded successfully.${cycleCompletedNotice}`,
+      session: {
+        sessionNumber,
+        status: attendance.status,
+        date: attendance.date,
+      },
+      package: {
+        totalClasses: updatedCard.totalClasses,
+        completedClasses: updatedCard.completedClasses,
+        remainingClasses: updatedCard.remainingClasses,
+        packageCycle: updatedCard.currentPackageCycle,
+        status: updatedCard.packageStatus,
+      },
       attendance,
       updatedStudentCard: updatedCard,
     });
   } catch (error) {
     console.error("Mark attendance error:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// =============================================================
+// GET: Comprehensive Attendance History (all cycles)
+// =============================================================
+router.get("/history/:parentEnquiryId", async (req, res) => {
+  try {
+    const { parentEnquiryId } = req.params;
+    const lead = await ParentEnquiry.findById(parentEnquiryId);
+    if (!lead) return res.status(404).json({ message: "Student enquiry not found." });
+
+    const logs = await Attendance.find({ parentEnquiryId }).sort({ timestamp: 1 });
+
+    // Group logs by package cycle
+    const cyclesMap = {};
+    logs.forEach(log => {
+      const cycleNum = log.packageCycle || 1;
+      if (!cyclesMap[cycleNum]) {
+        cyclesMap[cycleNum] = {
+          cycle: cycleNum,
+          logs: [],
+          doneCount: 0,
+          missedCount: 0,
+          startDate: log.date,
+          endDate: log.date,
+        };
+      }
+      cyclesMap[cycleNum].logs.push(log);
+      if (log.status === "Done") cyclesMap[cycleNum].doneCount++;
+      if (log.status === "Missed") cyclesMap[cycleNum].missedCount++;
+      cyclesMap[cycleNum].endDate = log.date;
+    });
+
+    const cycles = Object.values(cyclesMap);
+
+    res.json({
+      success: true,
+      currentCycle: lead.currentPackageCycle || 1,
+      totalClassesPerCycle: lead.totalClasses || 12,
+      packageHistory: lead.packageHistory || [],
+      cycles,
+      allLogs: logs,
+    });
+  } catch (error) {
+    console.error("Fetch history error:", error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// =============================================================
+// GET: Download CSV Attendance History
+// =============================================================
+router.get("/download-history/:parentEnquiryId", async (req, res) => {
+  try {
+    const { parentEnquiryId } = req.params;
+    const cycleFilter = req.query.cycle; // 'all' or specific cycle number
+
+    const lead = await ParentEnquiry.findById(parentEnquiryId);
+    if (!lead) return res.status(404).json({ message: "Student enquiry not found." });
+
+    const query = { parentEnquiryId };
+    if (cycleFilter && cycleFilter !== "all" && !isNaN(Number(cycleFilter))) {
+      query.packageCycle = Number(cycleFilter);
+    }
+
+    const logs = await Attendance.find(query).sort({ packageCycle: 1, sessionNumber: 1, timestamp: 1 });
+
+    const studentName = lead.wards?.map(w => w.studentName).join(", ") || "Student";
+    const reqId = lead.requirementId || "REQ";
+
+    let csvContent = "Cycle,Class #,Date,Status,Student Name,Tutor Name,Requirement ID,Topics Covered / Reason\n";
+
+    logs.forEach(log => {
+      const cycleStr = `Cycle ${log.packageCycle || 1}`;
+      const sessionStr = log.sessionNumber || 1;
+      const dateStr = log.date || "";
+      const statusStr = log.status || "";
+      const sName = `"${(log.studentName || studentName).replace(/"/g, '""')}"`;
+      const tName = `"${(log.tutorName || lead.assignedTutor || "").replace(/"/g, '""')}"`;
+      const rId = `"${(log.requirementId || reqId).replace(/"/g, '""')}"`;
+      
+      let noteStr = "";
+      if (log.status === "Done") {
+        noteStr = log.topicsCovered || "";
+      } else {
+        noteStr = log.missedReason === "Other" ? (log.customReason || "Other") : (log.missedReason || "Missed");
+      }
+      noteStr = `"${noteStr.replace(/"/g, '""')}"`;
+
+      csvContent += `${cycleStr},${sessionStr},${dateStr},${statusStr},${sName},${tName},${rId},${noteStr}\n`;
+    });
+
+    const filename = `Attendance_History_${reqId}_${cycleFilter ? `cycle_${cycleFilter}` : 'all'}.csv`;
+
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    return res.status(200).send(csvContent);
+  } catch (error) {
+    console.error("Download history error:", error);
     res.status(500).json({ message: error.message });
   }
 });
@@ -334,18 +561,42 @@ router.get("/admin-alerts", verifyToken(["admin"]), async (req, res) => {
 });
 
 // =============================================================
-// PUT: Update tuition details (Admin only)
+// PUT: Update tuition details / Start New Package Cycle (Admin only)
 // =============================================================
 router.put("/update-tuition/:id", verifyToken(["admin"]), async (req, res) => {
   try {
-    const { classDuration, totalClasses, classSchedule, completedClasses } = req.body;
+    const { classDuration, totalClasses, classSchedule, completedClasses, startNewCycle } = req.body;
     const lead = await ParentEnquiry.findById(req.params.id);
     if (!lead) return res.status(404).json({ message: "Student enquiry not found." });
 
-    if (classDuration !== undefined) lead.classDuration = classDuration;
-    if (totalClasses !== undefined) lead.totalClasses = totalClasses;
-    if (classSchedule !== undefined) lead.classSchedule = classSchedule;
-    if (completedClasses !== undefined) lead.completedClasses = completedClasses;
+    if (startNewCycle) {
+      // Archive current cycle into packageHistory
+      if (!lead.packageHistory) lead.packageHistory = [];
+      lead.packageHistory.push({
+        cycle: lead.currentPackageCycle || 1,
+        totalClasses: lead.totalClasses || 12,
+        completedClasses: lead.completedClasses || 0,
+        completedAt: new Date(),
+      });
+
+      // Increment cycle, reset active counter to 0 (all DB attendance records from previous cycle remain untouched!)
+      lead.currentPackageCycle = (lead.currentPackageCycle || 1) + 1;
+      lead.completedClasses = 0;
+      lead.packageStatus = "active";
+      if (totalClasses !== undefined && totalClasses > 0) {
+        lead.totalClasses = totalClasses;
+      }
+      if (classDuration !== undefined) lead.classDuration = classDuration;
+      if (classSchedule !== undefined) lead.classSchedule = classSchedule;
+    } else {
+      if (classDuration !== undefined) lead.classDuration = classDuration;
+      if (totalClasses !== undefined && totalClasses > 0) lead.totalClasses = totalClasses;
+      if (classSchedule !== undefined) lead.classSchedule = classSchedule;
+      if (completedClasses !== undefined) {
+        lead.completedClasses = completedClasses;
+        lead.packageStatus = completedClasses >= (lead.totalClasses || 12) ? "completed" : "active";
+      }
+    }
 
     await lead.save({ validateBeforeSave: false });
 
@@ -382,28 +633,34 @@ router.delete("/log/:logId", verifyToken(["admin"]), async (req, res) => {
     if (!log) return res.status(404).json({ message: "Log not found." });
 
     const parentEnquiryId = log.parentEnquiryId;
+    const logCycle = log.packageCycle || 1;
     await Attendance.findByIdAndDelete(req.params.logId);
 
     // Recalculate Completed Classes count
     const lead = await ParentEnquiry.findById(parentEnquiryId);
     if (lead) {
-      const completedCount = await Attendance.countDocuments({
-        parentEnquiryId,
-        status: "Done",
-      });
-      lead.completedClasses = completedCount;
-      await lead.save({ validateBeforeSave: false });
+      const activeCycle = lead.currentPackageCycle || 1;
+      if (logCycle === activeCycle) {
+        const completedCount = await Attendance.countDocuments({
+          parentEnquiryId,
+          packageCycle: activeCycle,
+          status: "Done",
+        });
+        lead.completedClasses = Math.min(lead.totalClasses || 12, completedCount);
+        lead.packageStatus = lead.completedClasses >= (lead.totalClasses || 12) ? "completed" : "active";
+        await lead.save({ validateBeforeSave: false });
 
-      if (lead.odooLeadId) {
-        try {
-          const remaining = Math.max(0, (lead.totalClasses || 12) - completedCount);
-          await updateLead(lead.odooLeadId, {
-            x_studio_completed_classes: completedCount,
-            x_studio_total_classes: lead.totalClasses || 12,
-            x_studio_remaining_classes: remaining,
-          });
-        } catch (odooErr) {
-          console.error("[Odoo Sync Error after delete log]:", odooErr.message);
+        if (lead.odooLeadId) {
+          try {
+            const remaining = Math.max(0, (lead.totalClasses || 12) - lead.completedClasses);
+            await updateLead(lead.odooLeadId, {
+              x_studio_completed_classes: lead.completedClasses,
+              x_studio_total_classes: lead.totalClasses || 12,
+              x_studio_remaining_classes: remaining,
+            });
+          } catch (odooErr) {
+            console.error("[Odoo Sync Error after delete log]:", odooErr.message);
+          }
         }
       }
     }
@@ -438,28 +695,34 @@ router.put("/log/:logId", verifyToken(["admin"]), async (req, res) => {
 
     await log.save();
 
-    // Recalculate Completed Classes count for parent lead
+    // Recalculate Completed Classes count for parent lead if in active cycle
     const parentEnquiryId = log.parentEnquiryId;
     const lead = await ParentEnquiry.findById(parentEnquiryId);
     if (lead) {
-      const completedCount = await Attendance.countDocuments({
-        parentEnquiryId,
-        status: "Done",
-      });
-      lead.completedClasses = completedCount;
-      await lead.save({ validateBeforeSave: false });
+      const activeCycle = lead.currentPackageCycle || 1;
+      const logCycle = log.packageCycle || 1;
+      if (logCycle === activeCycle) {
+        const completedCount = await Attendance.countDocuments({
+          parentEnquiryId,
+          packageCycle: activeCycle,
+          status: "Done",
+        });
+        lead.completedClasses = Math.min(lead.totalClasses || 12, completedCount);
+        lead.packageStatus = lead.completedClasses >= (lead.totalClasses || 12) ? "completed" : "active";
+        await lead.save({ validateBeforeSave: false });
 
-      if (lead.odooLeadId) {
-        try {
-          const remaining = Math.max(0, (lead.totalClasses || 12) - completedCount);
-          await updateLead(lead.odooLeadId, {
-            x_studio_completed_classes: completedCount,
-            x_studio_total_classes: lead.totalClasses || 12,
-            x_studio_remaining_classes: remaining,
-            x_studio_last_attendance_status: status,
-          });
-        } catch (odooErr) {
-          console.error("[Odoo Sync Error after update log]:", odooErr.message);
+        if (lead.odooLeadId) {
+          try {
+            const remaining = Math.max(0, (lead.totalClasses || 12) - lead.completedClasses);
+            await updateLead(lead.odooLeadId, {
+              x_studio_completed_classes: lead.completedClasses,
+              x_studio_total_classes: lead.totalClasses || 12,
+              x_studio_remaining_classes: remaining,
+              x_studio_last_attendance_status: status,
+            });
+          } catch (odooErr) {
+            console.error("[Odoo Sync Error after update log]:", odooErr.message);
+          }
         }
       }
     }

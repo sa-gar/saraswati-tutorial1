@@ -3304,6 +3304,7 @@ function AdminAttendanceConsole({
   const [tTotalClasses, setTTotalClasses] = useState("");
   const [tCompletedClasses, setTCompletedClasses] = useState("");
   const [tSchedule, setTSchedule] = useState("");
+  const [startNewCycle, setStartNewCycle] = useState(false);
   const [tuitionUpdating, setTuitionUpdating] = useState(false);
   const [tuitionError, setTuitionError] = useState("");
 
@@ -3358,6 +3359,7 @@ function AdminAttendanceConsole({
       setTTotalClasses(p.totalClasses !== null && p.totalClasses !== undefined ? p.totalClasses : "");
       setTCompletedClasses(p.completedClasses || 0);
       setTSchedule(p.classSchedule || "");
+      setStartNewCycle(false);
       setTuitionError("");
     }
   };
@@ -3379,6 +3381,7 @@ function AdminAttendanceConsole({
           totalClasses: Number(tTotalClasses),
           completedClasses: Number(tCompletedClasses),
           classSchedule: tSchedule,
+          startNewCycle,
         }),
       });
 
@@ -3631,7 +3634,16 @@ function AdminAttendanceConsole({
                               
                               {/* Left Columns: Timeline and Logs */}
                               <div className="lg:col-span-2 space-y-4">
-                                <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider mb-2">Class Logs & Topics History</h4>
+                                <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+                                  <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider">Class Logs & Topics History</h4>
+                                  <button
+                                    type="button"
+                                    onClick={() => window.open(`${API_BASE}/attendance/download-history/${p._id}?cycle=all`, "_blank")}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 text-xs font-black rounded-xl transition-all cursor-pointer shadow-xs"
+                                  >
+                                    <FileDown className="h-3.5 w-3.5" /> Download History CSV
+                                  </button>
+                                </div>
 
                                 {fetchingLogsLeadId === p._id ? (
                                   <p className="text-xs font-bold text-slate-500 animate-pulse text-center py-4">
@@ -3858,6 +3870,19 @@ function AdminAttendanceConsole({
                                       onChange={(e) => setTSchedule(e.target.value)}
                                       className="w-full h-10 px-3.5 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500"
                                     />
+                                  </div>
+
+                                  <div className="flex items-center gap-2 py-1.5 px-3 bg-indigo-50/70 border border-indigo-100 rounded-xl">
+                                    <input
+                                      type="checkbox"
+                                      id={`startNewCycle-${p._id}`}
+                                      checked={startNewCycle}
+                                      onChange={(e) => setStartNewCycle(e.target.checked)}
+                                      className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 border-slate-300 cursor-pointer"
+                                    />
+                                    <label htmlFor={`startNewCycle-${p._id}`} className="text-xs font-bold text-indigo-900 cursor-pointer">
+                                      Start New Package Cycle #{ (p.currentPackageCycle || 1) + 1 } (Resets counter to 0, keeps history)
+                                    </label>
                                   </div>
 
                                   <button

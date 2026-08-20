@@ -331,6 +331,9 @@ export default function ParentPortal() {
                           <span className="text-[10px] font-black bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/40 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-lg">
                             {card.requirementId}
                           </span>
+                          <span className="text-[10px] font-black bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/40 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-lg">
+                            Cycle {card.currentPackageCycle || 1}
+                          </span>
                           <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg border ${
                             card.currentAttendanceStatus === "Done"
                               ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-150 dark:border-emerald-900/40 text-emerald-700 dark:text-emerald-300"
@@ -408,7 +411,18 @@ export default function ParentPortal() {
                       </div>
 
                       {/* Download PDF CTA */}
-                      <div className="mb-6 flex justify-end">
+                      <div className="mb-6 flex justify-end gap-2 flex-wrap">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            window.open(`${API_BASE}/attendance/download-history/${card._id}?cycle=all`, "_blank");
+                          }}
+                          className="h-10 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black shadow transition-all flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <FileDown className="h-4 w-4" />
+                          Download History CSV
+                        </button>
                         <button
                           type="button"
                           disabled={pdfGeneratingId === card._id}
@@ -419,7 +433,7 @@ export default function ParentPortal() {
                           className="h-10 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black shadow transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                         >
                           <FileDown className="h-4 w-4" />
-                          {pdfGeneratingId === card._id ? "Generating PDF..." : "Download Attendance Report"}
+                          {pdfGeneratingId === card._id ? "Generating PDF..." : "Download Attendance Report (PDF)"}
                         </button>
                       </div>
 

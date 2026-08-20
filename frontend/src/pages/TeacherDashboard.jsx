@@ -13,7 +13,8 @@ import {
   AlertCircle,
   Search,
   CheckCircle2,
-  HelpCircle
+  HelpCircle,
+  FileDown
 } from "lucide-react";
 
 export default function TeacherDashboard() {
@@ -183,12 +184,18 @@ export default function TeacherDashboard() {
 
       const data = await res.json();
       if (res.ok) {
-        // Update student card in local state
-        setStudents(prev => 
-          prev.map(s => s._id === selectedStudent._id ? data.updatedStudentCard : s)
-        );
+        if (data.updatedStudentCard) {
+          setStudents(prev => 
+            prev.map(s => s._id === selectedStudent._id ? data.updatedStudentCard : s)
+          );
+        }
         setShowModal(false);
       } else {
+        if (data.updatedStudentCard) {
+          setStudents(prev => 
+            prev.map(s => s._id === selectedStudent._id ? data.updatedStudentCard : s)
+          );
+        }
         setModalError(data.message || "Failed to submit attendance.");
       }
     } catch (err) {
@@ -334,6 +341,9 @@ export default function TeacherDashboard() {
                               <span className="bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-[10px] font-black px-2 py-0.5 rounded-lg">
                                 {student.requirementId}
                               </span>
+                              <span className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-[10px] font-black px-2 py-0.5 rounded-lg">
+                                Cycle {student.currentPackageCycle || 1}
+                              </span>
                             </div>
                             <div className="flex items-center gap-1.5 justify-end text-[10px] font-bold text-slate-500 dark:text-slate-400">
                               <Clock className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
@@ -361,20 +371,28 @@ export default function TeacherDashboard() {
                         </div>
 
                         {/* CTA Buttons */}
-                        <div className="bg-slate-50/50 dark:bg-slate-950/20 border-t border-slate-100 dark:border-slate-800 p-3 grid grid-cols-2 gap-2">
+                        <div className="bg-slate-50/50 dark:bg-slate-950/20 border-t border-slate-100 dark:border-slate-800 p-3 grid grid-cols-3 gap-2">
                           <button
                             onClick={() => openMarkModal(student, "Done")}
-                            className="flex items-center justify-center gap-1.5 h-10 rounded-xl border border-emerald-250 dark:border-emerald-800/80 bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-450 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-xs font-black transition-all cursor-pointer shadow-sm"
+                            className="flex items-center justify-center gap-1 h-9 rounded-xl border border-emerald-250 dark:border-emerald-800/80 bg-white dark:bg-slate-900 text-emerald-600 dark:text-emerald-450 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-[11px] font-black transition-all cursor-pointer shadow-xs"
                           >
-                            <CheckCircle2 className="h-4 w-4" />
+                            <CheckCircle2 className="h-3.5 w-3.5" />
                             Done
                           </button>
                           <button
                             onClick={() => openMarkModal(student, "Missed")}
-                            className="flex items-center justify-center gap-1.5 h-10 rounded-xl border border-rose-250 dark:border-rose-800/80 bg-white dark:bg-slate-900 text-rose-600 dark:text-rose-450 hover:bg-rose-50 dark:hover:bg-rose-950/20 text-xs font-black transition-all cursor-pointer shadow-sm"
+                            className="flex items-center justify-center gap-1 h-9 rounded-xl border border-rose-250 dark:border-rose-800/80 bg-white dark:bg-slate-900 text-rose-600 dark:text-rose-450 hover:bg-rose-50 dark:hover:bg-rose-950/20 text-[11px] font-black transition-all cursor-pointer shadow-xs"
                           >
-                            <X className="h-4 w-4" />
+                            <X className="h-3.5 w-3.5" />
                             Missed
+                          </button>
+                          <button
+                            onClick={() => window.open(`${API_BASE}/attendance/download-history/${student._id}?cycle=all`, "_blank")}
+                            title="Download complete attendance history CSV"
+                            className="flex items-center justify-center gap-1 h-9 rounded-xl border border-indigo-250 dark:border-indigo-800/80 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 text-[11px] font-black transition-all cursor-pointer shadow-xs"
+                          >
+                            <FileDown className="h-3.5 w-3.5" />
+                            Export CSV
                           </button>
                         </div>
                       </div>
@@ -420,9 +438,14 @@ export default function TeacherDashboard() {
                           className="p-5 cursor-pointer hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-all"
                         >
                           <div className="flex items-center justify-between gap-2 mb-2">
-                            <span className="bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-[10px] font-black px-2 py-0.5 rounded-lg">
-                              {student.requirementId}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-[10px] font-black px-2 py-0.5 rounded-lg">
+                                {student.requirementId}
+                              </span>
+                              <span className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-[10px] font-black px-2 py-0.5 rounded-lg">
+                                Cycle {student.currentPackageCycle || 1}
+                              </span>
+                            </div>
                             <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 hover:underline">
                               {isLogsExpanded ? "Collapse" : "Tap to view timeline"}
                             </span>
