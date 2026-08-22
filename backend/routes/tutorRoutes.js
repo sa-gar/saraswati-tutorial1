@@ -315,10 +315,20 @@ router.post("/", async (req, res) => {
     }
 
     let odooRes = null;
+    let odooSyncStatus = "pending";
+    let odooSyncError = "";
     try {
       odooRes = await upsertMasterTutor(req.body);
+      if (odooRes && (odooRes.id || typeof odooRes === "number")) {
+        odooSyncStatus = "synced";
+      } else {
+        odooSyncStatus = "failed";
+        odooSyncError = "Odoo returned no tutor ID";
+      }
     } catch (err) {
       console.error("[Odoo Error in upsertMasterTutor]:", err.message);
+      odooSyncStatus = "failed";
+      odooSyncError = err.message || "Odoo master tutor sync failed";
     }
 
     const hasVehicle = req.body.hasVehicle === "yes" ? "yes" : "no";
@@ -333,8 +343,10 @@ router.post("/", async (req, res) => {
       ...body,
       hasVehicle,
       hasOccupation,
-      odooLeadId: odooRes ? odooRes.id : null,
-      tutorCode: odooRes ? odooRes.tutorCode : null,
+      odooLeadId: odooRes ? odooRes.id : (tutor ? tutor.odooLeadId : null),
+      tutorCode: odooRes ? odooRes.tutorCode : (tutor ? tutor.tutorCode : null),
+      odooSyncStatus,
+      odooSyncError,
       // Matching fields — explicitly set so Mongoose strict mode never drops them
       gender: body.gender || "",
       dob: body.dob || "",
@@ -438,9 +450,19 @@ router.put("/:id", verifyToken(["admin"]), async (req, res) => {
 
     // Sync to Odoo
     try {
-      await upsertMasterTutor(updatedTutor.toObject());
+      const odooRes = await upsertMasterTutor(updatedTutor.toObject());
+      if (odooRes && odooRes.id) {
+        updatedTutor.odooLeadId = odooRes.id;
+        updatedTutor.tutorCode = odooRes.tutorCode || updatedTutor.tutorCode;
+        updatedTutor.odooSyncStatus = "synced";
+        updatedTutor.odooSyncError = "";
+        await updatedTutor.save();
+      }
     } catch (err) {
       console.error("[Odoo Sync Error on update]:", err.message);
+      updatedTutor.odooSyncStatus = "failed";
+      updatedTutor.odooSyncError = err.message || "Odoo sync failed";
+      await updatedTutor.save();
     }
 
     res.json(updatedTutor);

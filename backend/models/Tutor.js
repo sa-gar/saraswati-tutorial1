@@ -96,6 +96,12 @@ const tutorSchema = new mongoose.Schema(
     // Odoo sync
     odooLeadId: { type: mongoose.Schema.Types.Mixed, default: null },
     verified: { type: Boolean, default: false },
+    odooSyncStatus: {
+      type: String,
+      enum: ["synced", "failed", "pending"],
+      default: "pending",
+    },
+    odooSyncError: { type: String, default: "" },
 
     // Onboarding workflow
     // Set to true by admin after tutor signs the Tutor Agreement in Odoo.

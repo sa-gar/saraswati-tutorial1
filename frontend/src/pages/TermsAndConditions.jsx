@@ -5,7 +5,8 @@ import {
   Users, MapPin, Home, Clock, RefreshCw, LayoutDashboard,
   BadgeCheck, AlertTriangle, Info, IndianRupee, CalendarX2,
   ArrowRight, X as XIcon, HelpCircle, CheckSquare, MessageCircle,
-  FileText, Sparkles, Lock, ArrowUpRight, Check
+  FileText, Sparkles, Lock, ArrowUpRight, Check, Calendar,
+  CreditCard, TrendingUp, AlertCircle
 } from "lucide-react";
 import { API_BASE } from "../config";
 import { TNC_CONFIG, computeFees, formatINR } from "../data/tncConfig";
@@ -44,8 +45,16 @@ async function recordAction(action, snapshot = {}) {
 }
 
 function openClarificationWhatsApp() {
-  const text = encodeURIComponent("I need some clarification regarding Terms & Conditions.");
+  const text = encodeURIComponent("I need some clarification regarding your Terms & Conditions. Please contact me.");
   window.open(`${TNC_CONFIG.whatsappBusinessUrl}?text=${text}`, "_blank", "noopener,noreferrer");
+}
+
+function openAcceptanceWhatsApp() {
+  const text = encodeURIComponent("I agree with your Terms & Conditions, please schedule a demo.");
+  // Extract phone number from the business URL (wa.me/XXXXXXXXXX) and build with pre-filled text
+  const phoneMatch = TNC_CONFIG.whatsappBusinessUrl.match(/wa\.me\/(\d+)/);
+  const phone = phoneMatch ? phoneMatch[1] : "918904457689";
+  window.open(`https://wa.me/${phone}?text=${text}`, "_blank", "noopener,noreferrer");
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -55,7 +64,7 @@ const SERVICES = [
   {
     icon: ShieldCheck,
     color: "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40",
-    title: "Vetted Home Tutors",
+    title: "Tutor Verification",
     body: "Pre-verified tutors with Govt ID checks, degree validation, and background evaluation.",
   },
   {
@@ -92,11 +101,159 @@ const SERVICES = [
 
 const FEE_BREAKDOWN = [
   { label: "Tutor Sourcing", pct: 20, desc: "Matching from 3200+ verified tutor database." },
-  { label: "Verification", pct: 20, desc: "Govt ID & academic credentials validation." },
-  { label: "Allocation & Visit", pct: 20, desc: "Arranging direct physical doorstep setup." },
+  { label: "Tutor Verification", pct: 20, desc: "Govt ID & academic credentials validation." },
+  { label: "Tutor Allocation", pct: 20, desc: "Arranging direct physical doorstep setup." },
   { label: "Parents Dashboard", pct: 20, desc: "Digital attendance tracking portal." },
   { label: "Backup & Replacement", pct: 20, desc: "Guaranteed replacement support within 72h max." },
 ];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PAYMENT TIMELINE COMPONENT — the most important UX element
+// ─────────────────────────────────────────────────────────────────────────────
+function PaymentTimeline({ fees }) {
+  return (
+    <div className="space-y-4">
+      {/* Section header */}
+      <div className="flex items-center gap-2">
+        <div className="h-1 flex-1 rounded-full bg-gradient-to-r from-blue-500 to-emerald-500 opacity-40" />
+        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 px-2">
+          Your Payment Schedule at a Glance
+        </span>
+        <div className="h-1 flex-1 rounded-full bg-gradient-to-l from-blue-500 to-emerald-500 opacity-40" />
+      </div>
+
+      {/* Two-card layout */}
+      <div className="flex flex-col sm:flex-row gap-3 items-stretch">
+
+        {/* ── MONTH 1 CARD ── */}
+        <div className="flex-1 rounded-2xl overflow-hidden border-2 border-blue-300 dark:border-blue-700 shadow-md shadow-blue-100 dark:shadow-blue-950/30">
+          {/* Card header */}
+          <div className="bg-blue-600 dark:bg-blue-700 px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-blue-200 shrink-0" />
+              <span className="text-xs font-black text-white uppercase tracking-widest">First Month</span>
+            </div>
+            <span className="text-[10px] font-bold bg-blue-500 dark:bg-blue-600 text-blue-100 px-2 py-0.5 rounded-full border border-blue-400/50">
+              Month 1
+            </span>
+          </div>
+
+          {/* Card body */}
+          <div className="bg-blue-50 dark:bg-blue-950/30 px-4 py-4 space-y-3 h-full">
+            {/* Fee name */}
+            <div className="flex items-center gap-2">
+              <CreditCard className="h-4 w-4 text-blue-600 dark:text-blue-400 shrink-0" />
+              <strong className="text-sm font-black text-blue-900 dark:text-blue-200">
+                Parents Onboarding Fee
+              </strong>
+            </div>
+            <strong className="block text-2xl font-black text-blue-700 dark:text-blue-300">
+              {formatINR(fees.admissionFee)}
+            </strong>
+
+            {/* Bullets */}
+            <ul className="space-y-1.5">
+              {[
+                "Payable after tutor confirmation",
+                "Payable before the first class",
+                "One-time payment only",
+              ].map((point) => (
+                <li key={point} className="flex items-start gap-2">
+                  <Check className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
+                  <span className="text-[11px] font-semibold text-blue-800 dark:text-blue-300 leading-relaxed">
+                    {point}
+                  </span>
+                </li>
+              ))}
+            </ul>
+
+            {/* "No monthly tuition" callout — the key message */}
+            <div className="mt-1 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700 px-3 py-2.5 flex items-start gap-2">
+              <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+              <p className="text-[11px] font-black text-amber-800 dark:text-amber-300 leading-snug uppercase tracking-wide">
+                No Monthly Tuition Payment in the First Month
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* ── CONNECTOR ARROW ── */}
+        <div className="flex items-center justify-center sm:flex-col gap-2 sm:gap-0 py-0 sm:py-4 px-2 sm:px-0">
+          <div className="hidden sm:block h-full w-px bg-gradient-to-b from-blue-300 via-slate-300 to-emerald-300 dark:from-blue-700 dark:via-slate-600 dark:to-emerald-700" />
+          <div className="sm:my-3 flex flex-col sm:flex-row items-center gap-1">
+            <div className="h-px sm:h-0 w-8 sm:w-px bg-slate-300 dark:bg-slate-600 block sm:hidden" />
+            <div className="rounded-full bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 p-1.5 shadow-sm">
+              <ArrowRight className="h-3.5 w-3.5 text-slate-500 dark:text-slate-400 sm:rotate-0 rotate-0" />
+            </div>
+            <div className="h-px sm:h-0 w-8 sm:w-px bg-slate-300 dark:bg-slate-600 block sm:hidden" />
+          </div>
+          <div className="hidden sm:block h-full w-px bg-gradient-to-b from-blue-300 via-slate-300 to-emerald-300 dark:from-blue-700 dark:via-slate-600 dark:to-emerald-700" />
+        </div>
+
+        {/* ── MONTH 2 CARD ── */}
+        <div className="flex-1 rounded-2xl overflow-hidden border-2 border-emerald-300 dark:border-emerald-700 shadow-md shadow-emerald-100 dark:shadow-emerald-950/30">
+          {/* Card header */}
+          <div className="bg-emerald-600 dark:bg-emerald-700 px-4 py-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-emerald-200 shrink-0" />
+              <span className="text-xs font-black text-white uppercase tracking-widest">Second Month Onwards</span>
+            </div>
+            <span className="text-[10px] font-bold bg-emerald-500 dark:bg-emerald-600 text-emerald-100 px-2 py-0.5 rounded-full border border-emerald-400/50">
+              Month 2+
+            </span>
+          </div>
+
+          {/* Card body */}
+          <div className="bg-emerald-50 dark:bg-emerald-950/30 px-4 py-4 space-y-3 h-full">
+            {/* Fee name */}
+            <div className="flex items-center gap-2">
+              <IndianRupee className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <strong className="text-sm font-black text-emerald-900 dark:text-emerald-200">
+                Monthly Tuition Fee
+              </strong>
+            </div>
+            <strong className="block text-2xl font-black text-emerald-700 dark:text-emerald-300">
+              {formatINR(fees.tuition)}
+              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">/month</span>
+            </strong>
+
+            {/* Bullets */}
+            <ul className="space-y-1.5">
+              {[
+                "Tuition starts from the beginning of the second month",
+                "First monthly payment is due in the second month",
+                "Billed monthly thereafter",
+              ].map((point) => (
+                <li key={point} className="flex items-start gap-2">
+                  <Check className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
+                  <span className="text-[11px] font-semibold text-emerald-800 dark:text-emerald-300 leading-relaxed">
+                    {point}
+                  </span>
+                </li>
+              ))}
+            </ul>
+
+            {/* Timing callout */}
+            <div className="mt-1 rounded-xl bg-orange-50 dark:bg-orange-950/40 border border-orange-300 dark:border-orange-700 px-3 py-2.5 flex items-start gap-2">
+              <Clock className="h-4 w-4 text-orange-600 dark:text-orange-400 mt-0.5 shrink-0" />
+              <p className="text-[11px] font-black text-orange-800 dark:text-orange-300 leading-snug uppercase tracking-wide">
+                Your First Tuition Payment is Due from Month 2
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Summary sentence */}
+      <div className="bg-slate-100 dark:bg-slate-800/60 rounded-2xl px-4 py-3 border border-slate-200 dark:border-slate-700 text-[11px] font-semibold text-slate-600 dark:text-slate-300 leading-relaxed text-center">
+        <strong className="text-slate-900 dark:text-white">In summary:</strong>{" "}
+        Parents Onboarding Fee ({formatINR(fees.admissionFee)}) is payable after tutor confirmation and before the first class.{" "}
+        Monthly tuition starts from the beginning of the second month.{" "}
+        Your first monthly tuition payment ({formatINR(fees.tuition)}) is due from the second month.
+      </div>
+    </div>
+  );
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MAIN PAGE (FULLY READABLE SINGLE-PAGE LAYOUT)
@@ -122,14 +279,14 @@ export default function TermsConditions() {
       name: fullName,
       feeSnapshot: {
         tuition: fees.tuition,
-        admissionFee: fees.admissionFee,
+        onboardingFee: fees.admissionFee,
         backupComponent: fees.backupComponent,
       },
     });
     setFlow("accepted");
     setTimeout(() => {
-      window.location.href = TNC_CONFIG.whatsappReturnUrl;
-    }, 2000);
+      openAcceptanceWhatsApp();
+    }, 1500);
   };
 
   const handleBack = () => setFlow("idle");
@@ -155,6 +312,19 @@ export default function TermsConditions() {
           onBack={handleBack}
           submitting={flow === "submitting"}
         />
+      )}
+
+      {/* Accepted state overlay */}
+      {flow === "accepted" && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm">
+          <div className="text-center space-y-4 px-6">
+            <div className="h-16 w-16 rounded-full bg-emerald-500 flex items-center justify-center mx-auto shadow-xl shadow-emerald-500/30">
+              <Check className="h-8 w-8 text-white" />
+            </div>
+            <h2 className="text-xl font-black text-white">Terms Accepted!</h2>
+            <p className="text-sm text-slate-300 font-medium">Opening WhatsApp to schedule your demo…</p>
+          </div>
+        </div>
       )}
 
       <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-200 pb-24">
@@ -195,20 +365,19 @@ export default function TermsConditions() {
                 Please read the official policies below. All terms are clearly laid out for your complete transparency before signing.
               </p>
             </div>
-
           </div>
 
-          {/* Quick Jump Bar (Optional smooth scroll navigation) */}
+          {/* Quick Jump Bar */}
           <div className="bg-white dark:bg-slate-900 rounded-2xl p-2 border border-slate-200 dark:border-slate-800 shadow-sm flex items-center justify-between gap-2 text-xs overflow-x-auto scrollbar-none">
             <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 pl-2 shrink-0">
               Quick Jump:
             </span>
             <div className="flex items-center gap-1.5 shrink-0">
               {[
-                { id: "sec-services", label: "1. Services & Demo" },
-                { id: "sec-fees", label: "2. Fee Breakdown" },
-                { id: "sec-policies", label: "3. Replacement & Notice" },
-                { id: "sec-terms", label: "4. Direct Hiring & Penalty" },
+                { id: "sec-services", label: "1. Services" },
+                { id: "sec-fees", label: "2. Fee & Payment" },
+                { id: "sec-policies", label: "3. Replacement" },
+                { id: "sec-terms", label: "4. Hiring Policy" },
                 { id: "sec-sign", label: "5. Sign & Accept" },
               ].map((item) => (
                 <button
@@ -222,14 +391,14 @@ export default function TermsConditions() {
             </div>
           </div>
 
-          {/* ───────────────────────────────────────────────────────────────── */}
+          {/* ─────────────────────────────────────────────────────────────── */}
           {/* SECTION 1: SERVICES & DEMO POLICY */}
-          {/* ───────────────────────────────────────────────────────────────── */}
+          {/* ─────────────────────────────────────────────────────────────── */}
           <section id="sec-services" className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm space-y-5">
             <div className="flex items-center gap-2.5 text-indigo-600 dark:text-indigo-400 border-b border-slate-100 dark:border-slate-800 pb-3">
               <ShieldCheck className="h-5 w-5 shrink-0" />
               <h2 className="text-base font-black uppercase tracking-wider text-slate-900 dark:text-white">
-                1. What Services We Provide & Free Demo Policy
+                1. What We Provide & Free Demo Policy
               </h2>
             </div>
 
@@ -252,7 +421,7 @@ export default function TermsConditions() {
               })}
             </div>
 
-            {/* Demo Policy Callout (1st Demo FREE, 2nd Demo ₹500) */}
+            {/* Demo Policy Callout */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
               <div className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40 border border-emerald-200 dark:border-emerald-800/80 rounded-2xl p-4 flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-black text-base shadow-sm shrink-0">
@@ -276,14 +445,14 @@ export default function TermsConditions() {
             </div>
           </section>
 
-          {/* ───────────────────────────────────────────────────────────────── */}
-          {/* SECTION 2: FEE STRUCTURE & CALCULATION */}
-          {/* ───────────────────────────────────────────────────────────────── */}
+          {/* ─────────────────────────────────────────────────────────────── */}
+          {/* SECTION 2: FEE STRUCTURE & PAYMENT TIMELINE */}
+          {/* ─────────────────────────────────────────────────────────────── */}
           <section id="sec-fees" className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm space-y-5">
             <div className="flex items-center gap-2.5 text-blue-600 dark:text-blue-400 border-b border-slate-100 dark:border-slate-800 pb-3">
               <IndianRupee className="h-5 w-5 shrink-0" />
               <h2 className="text-base font-black uppercase tracking-wider text-slate-900 dark:text-white">
-                2. Fee Structure & Prepaid Onboarding Fee Calculation
+                2. Fee Structure
               </h2>
             </div>
 
@@ -302,14 +471,13 @@ export default function TermsConditions() {
               </div>
             </div>
 
-            <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed font-medium bg-slate-50 dark:bg-slate-955 p-4 rounded-2xl border border-slate-150 dark:border-slate-800">
-              <strong>Billing Schedule:</strong> In the <strong>1st Month</strong>, parents pay only the one-time Parents Onboarding Fee ({formatINR(fees.admissionFee)}). From the <strong>2nd Month onwards</strong>, regular monthly tuition ({formatINR(fees.tuition)}) is billed directly.
-            </p>
+            {/* ── PAYMENT TIMELINE — THE KEY UX ELEMENT ── */}
+            <PaymentTimeline fees={fees} />
 
-            {/* Itemized 20% Breakdown */}
+            {/* Itemized breakdown */}
             <div className="space-y-2">
               <h3 className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                What The {formatINR(fees.admissionFee)} Fee Covers (Dynamic 20% Itemized Allocation):
+                What The {formatINR(fees.admissionFee)} Parents Onboarding Fee Covers:
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {FEE_BREAKDOWN.map((item) => {
@@ -333,14 +501,14 @@ export default function TermsConditions() {
             </div>
           </section>
 
-          {/* ───────────────────────────────────────────────────────────────── */}
-          {/* SECTION 3: REPLACEMENT & COMPENSATION POLICY */}
-          {/* ───────────────────────────────────────────────────────────────── */}
+          {/* ─────────────────────────────────────────────────────────────── */}
+          {/* SECTION 3: TUTOR REPLACEMENT & CLASS COMPENSATION */}
+          {/* ─────────────────────────────────────────────────────────────── */}
           <section id="sec-policies" className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm space-y-5">
             <div className="flex items-center gap-2.5 text-amber-600 dark:text-amber-400 border-b border-slate-100 dark:border-slate-800 pb-3">
               <RefreshCw className="h-5 w-5 shrink-0" />
               <h2 className="text-base font-black uppercase tracking-wider text-slate-900 dark:text-white">
-                3. Tutor Replacement & Class Compensation Policy
+                3. Tutor Replacement & Class Compensation
               </h2>
             </div>
 
@@ -361,7 +529,7 @@ export default function TermsConditions() {
               <div className="bg-slate-50 dark:bg-slate-955 rounded-2xl p-4 border border-slate-150 dark:border-slate-800 space-y-2">
                 <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
                   <BadgeCheck className="h-4 w-4" />
-                  <strong className="text-xs font-black uppercase text-slate-900 dark:text-white">Class Compensation Rule</strong>
+                  <strong className="text-xs font-black uppercase text-slate-900 dark:text-white">Class Compensation</strong>
                 </div>
                 <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-semibold">
                   Missed classes are eligible for full makeup/compensation sessions provided parents inform the institute at least <strong>{TNC_CONFIG.classCompensationNoticeHours} hours</strong> in advance.
@@ -373,21 +541,21 @@ export default function TermsConditions() {
             </div>
           </section>
 
-          {/* ───────────────────────────────────────────────────────────────── */}
-          {/* SECTION 4: DIRECT HIRING / BYPASS PENALTY & DISCONTINUATION */}
-          {/* ───────────────────────────────────────────────────────────────── */}
+          {/* ─────────────────────────────────────────────────────────────── */}
+          {/* SECTION 4: HIRING POLICY & NOTICE PERIOD */}
+          {/* ─────────────────────────────────────────────────────────────── */}
           <section id="sec-terms" className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm space-y-5">
             <div className="flex items-center gap-2.5 text-rose-600 dark:text-rose-400 border-b border-slate-100 dark:border-slate-800 pb-3">
               <AlertTriangle className="h-5 w-5 shrink-0" />
               <h2 className="text-base font-black uppercase tracking-wider text-slate-900 dark:text-white">
-                4. Direct Hiring / Bypass Penalty & Notice Period
+                4. Hiring Policy & Notice Period
               </h2>
             </div>
 
             {/* Bypass Penalty Box */}
             <div className="bg-rose-50/70 dark:bg-rose-955/30 border border-rose-200 dark:border-rose-900/60 rounded-2xl p-5 space-y-3">
               <strong className="text-xs font-black uppercase text-rose-900 dark:text-rose-300 block">
-                Strict Prohibition of Direct Off-Platform Hiring
+                No Direct Off-Platform Hiring
               </strong>
               <p className="text-xs text-rose-800 dark:text-rose-300 font-medium leading-relaxed">
                 Parents are strictly prohibited from hiring or paying assigned home tutors directly outside Saraswati Tutorials without written confirmation.
@@ -399,33 +567,6 @@ export default function TermsConditions() {
                   <strong className="text-xs font-black text-rose-700 dark:text-rose-300">Equivalent to {TNC_CONFIG.bypassPenaltyMonths} Months' Tuition Fee</strong>
                 </div>
                 <strong className="text-lg font-black text-rose-600 dark:text-rose-400">{formatINR(fees.bypassPenalty)}</strong>
-              </div>
-            </div>
-
-            {/* Payment Timelines */}
-            <div className="bg-slate-50 dark:bg-slate-955 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
-              <div className="px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-400">Payment Timelines</span>
-              </div>
-              <div className="divide-y divide-slate-200 dark:divide-slate-800">
-                <div className="flex items-start justify-between gap-4 px-4 py-4 flex-wrap sm:flex-nowrap">
-                  <div className="shrink-0">
-                    <strong className="text-xs font-black text-blue-600 dark:text-blue-400 uppercase tracking-wider block">First Month</strong>
-                    <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">Registration &amp; setup window</span>
-                  </div>
-                  <p className="text-xs text-slate-700 dark:text-slate-300 font-bold sm:text-right leading-relaxed">
-                    Parents Onboarding Fee is payable after tutor confirmation and before the first class.
-                  </p>
-                </div>
-                <div className="flex items-start justify-between gap-4 px-4 py-4 flex-wrap sm:flex-nowrap">
-                  <div className="shrink-0">
-                    <strong className="text-xs font-black text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block">Second Month</strong>
-                    <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">Recurring tuition cycle</span>
-                  </div>
-                  <p className="text-xs text-slate-700 dark:text-slate-300 font-bold sm:text-right leading-relaxed">
-                    Monthly tuition starts from the beginning of the second month.
-                  </p>
-                </div>
               </div>
             </div>
 
@@ -444,16 +585,16 @@ export default function TermsConditions() {
             </div>
           </section>
 
-          {/* ───────────────────────────────────────────────────────────────── */}
-          {/* SECTION 5: DIGITAL ACCEPTANCE & SIGNATORY CONFIRMATION */}
-          {/* ───────────────────────────────────────────────────────────────── */}
+          {/* ─────────────────────────────────────────────────────────────── */}
+          {/* SECTION 5: SIGN & ACCEPT */}
+          {/* ─────────────────────────────────────────────────────────────── */}
           <section id="sec-sign" ref={acceptRef} className="bg-white dark:bg-slate-900 rounded-3xl border-2 border-indigo-200 dark:border-indigo-800 shadow-xl p-6 space-y-5">
             <div className="flex items-center justify-between gap-2 flex-wrap border-b border-slate-100 dark:border-slate-800 pb-3">
               <div>
                 <h2 className="text-base font-black uppercase tracking-widest text-slate-900 dark:text-white">
-                  5. Digital Acceptance & Signatory Confirmation
+                  5. Sign & Accept
                 </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">Please enter your full name to sign and record your acceptance.</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">Enter your name to digitally sign and confirm your acceptance.</p>
               </div>
               <span className="text-[10px] font-black uppercase tracking-wider bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 px-3 py-1 rounded-full border border-indigo-200 dark:border-indigo-800">
                 Official Consent
@@ -463,16 +604,21 @@ export default function TermsConditions() {
             {/* Name Input */}
             <div className="space-y-1.5">
               <label className="block text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                Full Name / Signatory Name <span className="text-rose-500">*</span>
+                Full Name —{" "}
+                <span className="text-indigo-600 dark:text-indigo-400 font-black">NAME AS PER DOCUMENTATION</span>{" "}
+                <span className="text-rose-500">*</span>
               </label>
               <input
                 type="text"
                 required
-                placeholder="Enter your full name to sign (e.g. Ramesh Sharma)"
+                placeholder="Enter your name exactly as on your ID (e.g. Ramesh Sharma)"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 className="w-full h-11 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-955 text-xs font-bold text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder:font-medium"
               />
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium pl-1">
+                Please enter your name exactly as it appears on your official ID or student documents.
+              </p>
             </div>
 
             {/* Checkbox Clause */}
@@ -529,7 +675,7 @@ export default function TermsConditions() {
                 className="inline-flex items-center gap-1.5 text-xs font-extrabold text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition cursor-pointer"
               >
                 <HelpCircle className="h-3.5 w-3.5" />
-                Have questions before signing? Talk to our support on WhatsApp
+                Need clarification before signing? Contact us on WhatsApp
               </button>
             </div>
           </section>
@@ -570,16 +716,24 @@ function PreviewModal({ fees, fullName, onConfirm, onBack, submitting }) {
 
         {/* Content */}
         <div className="overflow-y-auto flex-1 px-6 py-4 space-y-3 text-xs font-medium">
-          <Row label="Signatory Name" value={fullName} accent />
+          <Row label="NAME AS PER DOCUMENTATION" value={fullName} accent />
           <Row label="Monthly Tuition Fee" value={formatINR(fees.tuition)} />
           <Row label="Parents Onboarding Fee" value={`${cfg.admissionFeePercent}% — ${formatINR(fees.admissionFee)}`} accent />
           <Row label="Demo Sessions" value={`1st Demo FREE (₹0), 2nd Demo onwards ₹${cfg.additionalDemoFeeRs}`} />
           <Row label="Tutor Replacement" value={`Within ${cfg.replacementTimelineHours} hours`} />
           <Row label="Class Compensation" value={`With ${cfg.classCompensationNoticeHours}h advance notice`} />
-          <Row label="Billing Schedule" value="1st Month Onboarding Fee, 2nd Month Tuition" />
+          <Row label="Payment Schedule" value="Month 1: Onboarding Fee only · Month 2+: Monthly Tuition" />
           <Row label="Bypass Penalty" value={`${cfg.bypassPenaltyMonths} Months' Tuition`} warn />
           <Row label="Notice Period" value={`${cfg.noticePeriodDays} Days`} />
           <Row label="Terms Version" value={cfg.termsVersion} />
+
+          {/* Acceptance message preview */}
+          <div className="mt-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 px-4 py-3">
+            <p className="text-[10px] font-black uppercase text-emerald-600 dark:text-emerald-400 mb-1">WhatsApp Message on Confirm:</p>
+            <p className="text-xs font-semibold text-emerald-800 dark:text-emerald-300 italic">
+              "I agree with your Terms & Conditions, please schedule a demo."
+            </p>
+          </div>
         </div>
 
         {/* Footer */}
@@ -608,8 +762,8 @@ function PreviewModal({ fees, fullName, onConfirm, onBack, submitting }) {
 
 function Row({ label, value, accent, warn }) {
   return (
-    <div className="flex items-center justify-between gap-2 py-1.5 border-b border-slate-100 dark:border-slate-800/60 last:border-0">
-      <span className="text-slate-500 dark:text-slate-400 font-semibold">{label}</span>
+    <div className="flex items-start justify-between gap-2 py-1.5 border-b border-slate-100 dark:border-slate-800/60 last:border-0">
+      <span className="text-slate-500 dark:text-slate-400 font-semibold shrink-0">{label}</span>
       <span className={`font-bold text-right ${warn ? "text-rose-600 dark:text-rose-400 font-black" : accent ? "text-emerald-600 dark:text-emerald-400 font-black" : "text-slate-900 dark:text-white"}`}>
         {value}
       </span>

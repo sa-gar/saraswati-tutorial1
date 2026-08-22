@@ -266,7 +266,7 @@ export default function TutorRegistration() {
     try {
       const saved = JSON.parse(localStorage.getItem(DRAFT_KEY) || "null");
       if (saved?.formData) {
-        // File fields (File objects) cannot be stored in localStorage
+        // File objects cannot be stored in localStorage — restored as null
         const { photo, idProof, expCert, otherDoc, ...rest } = saved.formData;
         return {
           ...initialFormData,
@@ -281,6 +281,30 @@ export default function TutorRegistration() {
     } catch {}
     return { ...initialFormData, city: defaultIsMumbai ? "Mumbai" : "Bangalore" };
   });
+
+  // Persistent Cloudinary URLs for each document — these survive refresh/restore
+  const [uploadedUrls, setUploadedUrls] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(DRAFT_KEY) || "null");
+      const fd = saved?.formData || {};
+      return {
+        photo:    fd.photoUrl    || "",
+        idProof:  fd.idProofUrl  || "",
+        expCert:  fd.expCertUrl  || "",
+        otherDoc: fd.otherDocUrl || "",
+      };
+    } catch {}
+    return { photo: "", idProof: "", expCert: "", otherDoc: "" };
+  });
+
+  // Per-field upload in-progress flag
+  const [uploadingFile, setUploadingFile] = useState({
+    photo: false,
+    idProof: false,
+    expCert: false,
+    otherDoc: false,
+  });
+  const isAnyUploading = Object.values(uploadingFile).some(Boolean);
   const [showDraftBanner, setShowDraftBanner] = useState(() => {
     try {
       const saved = JSON.parse(localStorage.getItem(DRAFT_KEY) || "null");
@@ -314,15 +338,21 @@ export default function TutorRegistration() {
         sameAsMobile,
         formData: {
           ...formData,
+          // Strip File objects (cannot serialize)
           photo: null,
           idProof: null,
           expCert: null,
           otherDoc: null,
+          // Persist Cloudinary URL strings instead
+          photoUrl:    uploadedUrls.photo    || "",
+          idProofUrl:  uploadedUrls.idProof  || "",
+          expCertUrl:  uploadedUrls.expCert  || "",
+          otherDocUrl: uploadedUrls.otherDoc || "",
         },
       };
       localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
     } catch {}
-  }, [step, formData, sameAsMobile]);
+  }, [step, formData, sameAsMobile, uploadedUrls]);
 
   // Also save to backend when the tab is hidden / minimised
   useEffect(() => {
@@ -335,17 +365,21 @@ export default function TutorRegistration() {
             formData: {
               ...formData,
               photo: null, idProof: null, expCert: null, otherDoc: null,
+              photoUrl:    uploadedUrls.photo    || "",
+              idProofUrl:  uploadedUrls.idProof  || "",
+              expCertUrl:  uploadedUrls.expCert  || "",
+              otherDocUrl: uploadedUrls.otherDoc || "",
             },
           };
           localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
         } catch {}
         // Also silently push to backend if phone is known
-        if (formData.phone) { saveDraftToServer(step, formData, sameAsMobile); }
+        if (formData.phone) { saveDraftToServer(step, formData, sameAsMobile, uploadedUrls); }
       }
     };
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
-  }, [step, formData, sameAsMobile]);
+  }, [step, formData, sameAsMobile, uploadedUrls]);
 
 
   // Sync WhatsApp with phone when sameAsMobile is checked
@@ -643,10 +677,11 @@ export default function TutorRegistration() {
   // ─── Backend draft sync ──────────────────────────────────────────────────────
   // Mirrors the ParentEnquiry saveDraft pattern.
   // Called on every validated step advance and on tab-hide.
-  const saveDraftToServer = async (stepReached, currentFormData, currentSameAsMobile) => {
+  const saveDraftToServer = async (stepReached, currentFormData, currentSameAsMobile, currentUploadedUrls) => {
     const phone = currentFormData.phone;
     if (!phone) return; // phone is the key; cannot save without it
 
+    const urls = currentUploadedUrls || uploadedUrls;
     setDraftSyncStatus("saving");
     try {
       await fetch(`${API_BASE}/tutors/draft`, {
@@ -663,6 +698,11 @@ export default function TutorRegistration() {
             idProof: null,
             expCert: null,
             otherDoc: null,
+            // Persist Cloudinary URL strings so documents survive refresh
+            photoUrl:    urls.photo    || "",
+            idProofUrl:  urls.idProof  || "",
+            expCertUrl:  urls.expCert  || "",
+            otherDocUrl: urls.otherDoc || "",
           },
           visitor_id: localStorage.getItem("visitor_id") || "",
           session_id: sessionStorage.getItem("session_id") || "",
@@ -674,6 +714,33 @@ export default function TutorRegistration() {
       console.warn("[TutorDraft] Backend sync failed:", err.message);
       setDraftSyncStatus("error");
       setTimeout(() => setDraftSyncStatus(null), 4000);
+    }
+  };
+
+  // ─── Upload-on-select handler ─────────────────────────────────────────────────
+  // Called immediately when the tutor picks a file — uploads to Cloudinary and
+  // stores the returned URL. The URL is then included in every draft save.
+  const handleFileSelect = async (fieldName, file) => {
+    if (!file) {
+      setFormData((prev) => ({ ...prev, [fieldName]: null }));
+      return;
+    }
+
+    // Store File object for local preview
+    setFormData((prev) => ({ ...prev, [fieldName]: file }));
+
+    // Begin background upload
+    setUploadingFile((prev) => ({ ...prev, [fieldName]: true }));
+    try {
+      const processed = await processUploadFile(file, fieldName);
+      const result = await uploadSingleFile(fieldName, processed);
+      const url = result[fieldName] || "";
+      setUploadedUrls((prev) => ({ ...prev, [fieldName]: url }));
+    } catch (err) {
+      console.error(`[TutorDraft] Upload failed for ${fieldName}:`, err.message);
+      // Don't block the user — they can still submit (will re-upload on submit)
+    } finally {
+      setUploadingFile((prev) => ({ ...prev, [fieldName]: false }));
     }
   };
 
@@ -689,6 +756,10 @@ export default function TutorRegistration() {
 
   const handleSubmit = async () => {
     if (loading) return;
+    if (isAnyUploading) {
+      alert("Please wait — a document is still uploading.");
+      return;
+    }
 
     const error = validateForm();
 
@@ -717,29 +788,44 @@ export default function TutorRegistration() {
         }
       }
 
-      const photoFile = await processUploadFile(formData.photo, "photo");
-      const idFile = await processUploadFile(formData.idProof, "idproof");
-      const certFile = await processUploadFile(formData.expCert, "certificate");
-      const otherFile = await processUploadFile(formData.otherDoc, "otherdoc");
+      // For each document: reuse existing Cloudinary URL if already uploaded,
+      // otherwise upload now. This prevents double-uploading.
+      let finalPhotoUrl = uploadedUrls.photo;
+      if (!finalPhotoUrl) {
+        const photoFile = await processUploadFile(formData.photo, "photo");
+        const photoRes  = await uploadSingleFile("photo", photoFile);
+        finalPhotoUrl   = photoRes.photo || "";
+      }
 
-      const photoRes = await uploadSingleFile("photo", photoFile);
-      const idRes = await uploadSingleFile("idProof", idFile);
-      const certRes = await uploadSingleFile("expCert", certFile);
+      let finalIdProofUrl = uploadedUrls.idProof;
+      if (!finalIdProofUrl) {
+        const idFile      = await processUploadFile(formData.idProof, "idproof");
+        const idRes       = await uploadSingleFile("idProof", idFile);
+        finalIdProofUrl   = idRes.idProof || "";
+      }
 
-      let otherRes = {};
+      let finalExpCertUrl = uploadedUrls.expCert;
+      if (!finalExpCertUrl) {
+        const certFile    = await processUploadFile(formData.expCert, "certificate");
+        const certRes     = await uploadSingleFile("expCert", certFile);
+        finalExpCertUrl   = certRes.expCert || "";
+      }
 
-      if (otherFile) {
-        otherRes = await uploadSingleFile("otherDoc", otherFile);
+      let finalOtherDocUrl = uploadedUrls.otherDoc;
+      if (!finalOtherDocUrl && formData.otherDoc) {
+        const otherFile   = await processUploadFile(formData.otherDoc, "otherdoc");
+        const otherRes    = await uploadSingleFile("otherDoc", otherFile);
+        finalOtherDocUrl  = otherRes.otherDoc || "";
       }
 
       await axios.post(`${API_BASE}/tutors`, {
         ...formData,
         locations: formData.locations.map((loc) => `${loc}, ${isMumbai ? "Mumbai" : "Bangalore"}`),
-        photo: photoRes.photo || "",
+        photo: finalPhotoUrl,
         documents: {
-          idProof: idRes.idProof || "",
-          expCert: certRes.expCert || "",
-          otherDoc: otherRes.otherDoc || "",
+          idProof:  finalIdProofUrl,
+          expCert:  finalExpCertUrl,
+          otherDoc: finalOtherDocUrl,
         },
         status: "pending",
       });
@@ -785,8 +871,8 @@ export default function TutorRegistration() {
     }
 
     const nextStepVal = Math.min(step + 1, 3);
-    // Sync to backend on every validated step advance
-    saveDraftToServer(nextStepVal, formData, sameAsMobile);
+    // Sync to backend on every validated step advance (include latest URLs)
+    saveDraftToServer(nextStepVal, formData, sameAsMobile, uploadedUrls);
     setStep(nextStepVal);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -824,16 +910,18 @@ export default function TutorRegistration() {
     formData.locations.length > 0 &&
     formData.hasVehicle &&
     (formData.hasVehicle === "no" || formData.vehicleNumber.trim()) &&
-    formData.photo &&
-    formData.idProof &&
-    formData.expCert &&
+    // Accept either a File object (just selected) or an already-uploaded URL
+    (formData.photo    || uploadedUrls.photo) &&
+    (formData.idProof  || uploadedUrls.idProof) &&
+    (formData.expCert  || uploadedUrls.expCert) &&
     formData.timings.length > 0 &&
     formData.agreement &&
     formData.attendanceAgreement &&
     !errors.city &&
     !errors.fullAddress &&
     !errors.maxTravelDistance &&
-    (formData.hasVehicle === "no" || !errors.vehicleNumber);
+    (formData.hasVehicle === "no" || !errors.vehicleNumber) &&
+    !isAnyUploading;
 
   return (
     <>
@@ -1503,7 +1591,9 @@ export default function TutorRegistration() {
                         file={formData.photo}
                         accept="image/*"
                         preview={previewPhoto}
-                        onChange={(file) => setFormData((prev) => ({ ...prev, photo: file }))}
+                        uploadedUrl={uploadedUrls.photo}
+                        uploading={uploadingFile.photo}
+                        onChange={(file) => handleFileSelect("photo", file)}
                       />
 
                       <FileUploadCard
@@ -1514,7 +1604,9 @@ export default function TutorRegistration() {
                         inputId="idProof"
                         file={formData.idProof}
                         accept="image/*,.pdf"
-                        onChange={(file) => setFormData((prev) => ({ ...prev, idProof: file }))}
+                        uploadedUrl={uploadedUrls.idProof}
+                        uploading={uploadingFile.idProof}
+                        onChange={(file) => handleFileSelect("idProof", file)}
                       />
 
                       <FileUploadCard
@@ -1525,7 +1617,9 @@ export default function TutorRegistration() {
                         inputId="expCert"
                         file={formData.expCert}
                         accept="image/*,.pdf"
-                        onChange={(file) => setFormData((prev) => ({ ...prev, expCert: file }))}
+                        uploadedUrl={uploadedUrls.expCert}
+                        uploading={uploadingFile.expCert}
+                        onChange={(file) => handleFileSelect("expCert", file)}
                       />
 
                       <FileUploadCard
@@ -1535,7 +1629,9 @@ export default function TutorRegistration() {
                         inputId="otherDoc"
                         file={formData.otherDoc}
                         accept="image/*,.pdf"
-                        onChange={(file) => setFormData((prev) => ({ ...prev, otherDoc: file }))}
+                        uploadedUrl={uploadedUrls.otherDoc}
+                        uploading={uploadingFile.otherDoc}
+                        onChange={(file) => handleFileSelect("otherDoc", file)}
                       />
                     </div>
                   </div>
@@ -1699,9 +1795,9 @@ export default function TutorRegistration() {
                     <ChevronLeft className="h-4 w-4" />
                     Previous
                   </SecondaryButton>
-                  <PrimaryButton disabled={!isStep3Ready || loading} onClick={handleSubmit}>
-                    {loading ? "Submitting..." : "Confirm & Submit"}
-                    <CheckCircle2 className="h-4 w-4" />
+                  <PrimaryButton disabled={!isStep3Ready || loading || isAnyUploading} onClick={handleSubmit}>
+                    {loading ? "Submitting..." : isAnyUploading ? "Uploading..." : "Confirm & Submit"}
+                    {isAnyUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
                   </PrimaryButton>
                 </NavigationFooter>
               </section>
@@ -1867,13 +1963,20 @@ function FileUploadCard({
   preview,
   accept,
   onChange,
+  uploadedUrl = "",
+  uploading = false,
 }) {
-  const uploaded = Boolean(file);
+  // "done" = either a new File just selected OR a previously-uploaded Cloudinary URL
+  const hasFile = Boolean(file);
+  const hasUrl  = Boolean(uploadedUrl);
+  const done    = hasFile || hasUrl;
 
   return (
     <div
       className={`rounded-[2rem] border p-5 transition ${
-        uploaded
+        uploading
+          ? "border-blue-200 dark:border-blue-800/80 bg-blue-50 dark:bg-blue-950/20"
+          : done
           ? "border-emerald-200 dark:border-emerald-800/80 bg-emerald-50 dark:bg-emerald-950/20"
           : required
           ? "border-red-200 dark:border-red-800/80 bg-red-50 dark:bg-red-950/10"
@@ -1893,10 +1996,14 @@ function FileUploadCard({
           <div className="flex gap-4">
             <div
               className={`flex h-14 w-14 items-center justify-center rounded-2xl ${
-                uploaded ? "bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300" : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-100 dark:border-slate-700"
+                uploading
+                  ? "bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300"
+                  : done
+                  ? "bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300"
+                  : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-100 dark:border-slate-700"
               }`}
             >
-              <Icon className="h-6 w-6" />
+              {uploading ? <Loader2 className="h-6 w-6 animate-spin" /> : <Icon className="h-6 w-6" />}
             </div>
 
             <div>
@@ -1907,7 +2014,9 @@ function FileUploadCard({
             </div>
           </div>
 
-          {uploaded ? (
+          {uploading ? (
+            <Loader2 className="h-6 w-6 text-blue-500 animate-spin" />
+          ) : done ? (
             <CheckCircle2 className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
           ) : (
             <UploadCloud className="h-6 w-6 text-slate-400 dark:text-slate-500" />
@@ -1923,12 +2032,30 @@ function FileUploadCard({
         )}
 
         <div className="mt-4 rounded-2xl bg-white/70 dark:bg-slate-800/80 px-4 py-3 text-sm font-bold">
-          {uploaded ? (
+          {uploading ? (
+            <span className="text-blue-600 dark:text-blue-400">Uploading securely…</span>
+          ) : hasUrl && !hasFile ? (
+            // Draft restored — show URL badge + open link
+            <span className="flex items-center justify-between gap-2">
+              <span className="text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5">
+                <CheckCircle2 className="h-4 w-4" /> Previously uploaded — click to replace
+              </span>
+              <a
+                href={uploadedUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="text-xs text-blue-600 dark:text-blue-400 underline font-bold"
+              >
+                Open ↗
+              </a>
+            </span>
+          ) : hasFile ? (
             <span className="text-emerald-700 dark:text-emerald-300">✓ {file.name}</span>
           ) : required ? (
-            <span className="text-red-600 dark:text-red-400">Required - click to upload</span>
+            <span className="text-red-600 dark:text-red-400">Required — click to upload</span>
           ) : (
-            <span className="text-slate-500 dark:text-slate-400">Optional - click to upload</span>
+            <span className="text-slate-500 dark:text-slate-400">Optional — click to upload</span>
           )}
         </div>
       </label>

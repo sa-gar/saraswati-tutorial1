@@ -367,6 +367,17 @@ const parentEnquirySchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+
+    odooSyncStatus: {
+      type: String,
+      enum: ["synced", "failed", "pending"],
+      default: "pending",
+    },
+
+    odooSyncError: {
+      type: String,
+      default: "",
+    },
   },
   { timestamps: true }
 );

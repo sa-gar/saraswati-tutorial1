@@ -159,6 +159,35 @@ export async function createLead(data) {
         }
       }
 
+      const wardsInfo = (data.wards || []).map((w, idx) => 
+        `Student ${idx + 1}: ${w.studentName || 'N/A'} (Class: ${w.classGrade || 'N/A'}, Board: ${w.curriculum || 'N/A'}, Subjects: ${(w.subjectsNeeded || []).join(', ') || 'N/A'})`
+      ).join('\n');
+
+      const descriptionText = [
+        `--- WEBSITE PARENT ENQUIRY ---`,
+        `Parent Name: ${data.parentName || 'N/A'}`,
+        `Phone: ${data.phone || 'N/A'}`,
+        `Email: ${data.email || 'N/A'}`,
+        `Tuition Mode: ${data.preferredMode || 'Not Specified'}`,
+        `Plan Type: ${data.planType ? data.planType.toUpperCase() : 'Not Specified'}`,
+        `Days / Week: ${data.daysPerWeek ? `${data.daysPerWeek} Days` : 'Not Specified'}`,
+        `Hours / Day: ${data.hoursPerDay ? `${data.hoursPerDay} Hr` : 'Not Specified'}`,
+        `Preferred Days: ${Array.isArray(data.preferredDays) && data.preferredDays.length > 0 ? data.preferredDays.join(', ') : 'Not Specified'}`,
+        `Class Timing Slot: ${data.classTimingSlot || 'Not Specified'}`,
+        `Monthly Fees: ${data.monthlyFees ? `₹${data.monthlyFees}` : 'N/A'}`,
+        `Final Price: ${data.finalPrice ? `₹${data.finalPrice}` : 'N/A'}`,
+        `Pricing Consent: ${data.pricingConsent ? 'Yes (Accepted)' : 'No'}`,
+        `Address: ${data.address || data.area || 'N/A'}`,
+        `------------------------------`,
+        wardsInfo ? `STUDENTS:\n${wardsInfo}` : `Student Name: ${ward.studentName || 'N/A'}`,
+        `------------------------------`,
+        `UTM Source: ${data.utm_source || 'Direct'}`,
+        `UTM Medium: ${data.utm_medium || 'none'}`,
+        `UTM Campaign: ${data.utm_campaign || 'none'}`,
+        `UTM Content: ${data.utm_content || 'none'}`,
+        `UTM Term: ${data.utm_term || 'none'}`,
+      ].filter(Boolean).join('\n');
+
       leadPayload = {
         name: data.parentName || "",
         contact_name: data.parentName || "",
@@ -169,7 +198,7 @@ export async function createLead(data) {
         x_studio_type: "Parent",
         x_studio_source_1: "Website",
 
-        description: `UTM Source: ${data.utm_source || "Direct"}\nUTM Medium: ${data.utm_medium || "none"}\nUTM Campaign: ${data.utm_campaign || "none"}\nUTM Content: ${data.utm_content || "none"}\nUTM Term: ${data.utm_term || "none"}`,
+        description: descriptionText,
 
         x_studio_parent_name: data.parentName || "",
         x_studio_class: ward.classGrade || "",

@@ -258,10 +258,20 @@ router.post("/", async (req, res) => {
     }
 
     let odooRes = null;
+    let odooSyncStatus = "pending";
+    let odooSyncError = "";
     try {
       odooRes = await createLead({ ...req.body, userType: "parent" });
+      if (odooRes && (odooRes.id || typeof odooRes === "number")) {
+        odooSyncStatus = "synced";
+      } else {
+        odooSyncStatus = "failed";
+        odooSyncError = "Odoo returned invalid response";
+      }
     } catch (err) {
       console.error("Odoo create parent lead error:", err.message);
+      odooSyncStatus = "failed";
+      odooSyncError = err.message || "Odoo lead creation failed";
     }
 
     let requirementId = odooRes && typeof odooRes === "object" ? odooRes.requirementId : "";
@@ -287,6 +297,8 @@ router.post("/", async (req, res) => {
       status: req.body.status || "New Lead",
       odooLeadId: odooRes && typeof odooRes === "object" ? odooRes.id : odooRes,
       requirementId,
+      odooSyncStatus,
+      odooSyncError,
     });
 
     const saved = await enquiry.save();
