@@ -133,9 +133,7 @@ function PaymentTimeline({ fees }) {
               <Calendar className="h-4 w-4 text-blue-200 shrink-0" />
               <span className="text-xs font-black text-white uppercase tracking-widest">First Month</span>
             </div>
-            <span className="text-[10px] font-bold bg-blue-500 dark:bg-blue-600 text-blue-100 px-2 py-0.5 rounded-full border border-blue-400/50">
-              Month 1
-            </span>
+
           </div>
 
           {/* Card body */}
@@ -171,7 +169,7 @@ function PaymentTimeline({ fees }) {
             <div className="mt-1 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700 px-3 py-2.5 flex items-start gap-2">
               <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
               <p className="text-[11px] font-black text-amber-800 dark:text-amber-300 leading-snug uppercase tracking-wide">
-                No Monthly Tuition Payment in the First Month
+                Onboarding Fee Only
               </p>
             </div>
           </div>
@@ -198,9 +196,7 @@ function PaymentTimeline({ fees }) {
               <TrendingUp className="h-4 w-4 text-emerald-200 shrink-0" />
               <span className="text-xs font-black text-white uppercase tracking-widest">Second Month Onwards</span>
             </div>
-            <span className="text-[10px] font-bold bg-emerald-500 dark:bg-emerald-600 text-emerald-100 px-2 py-0.5 rounded-full border border-emerald-400/50">
-              Month 2+
-            </span>
+
           </div>
 
           {/* Card body */}
@@ -220,7 +216,7 @@ function PaymentTimeline({ fees }) {
             {/* Bullets */}
             <ul className="space-y-1.5">
               {[
-                "Tuition starts from the beginning of the second month",
+                "Tuition begins from the second month",
                 "First monthly payment is due in the second month",
                 "Billed monthly thereafter",
               ].map((point) => (
@@ -264,6 +260,7 @@ export default function TermsConditions() {
   const [fullName, setFullName] = useState("");
 
   const [flow, setFlow] = useState("idle"); // "idle" | "preview" | "submitting" | "accepted" | "declined"
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const acceptRef = useRef(null);
 
   const handleAcceptClick = () => setFlow("preview");
@@ -433,13 +430,13 @@ export default function TermsConditions() {
                 </div>
               </div>
 
-              <div className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/40 border border-amber-200 dark:border-amber-800/80 rounded-2xl p-4 flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-amber-600 text-white flex items-center justify-center font-black text-base shadow-sm shrink-0">
-                  ₹{TNC_CONFIG.additionalDemoFeeRs}
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 border border-blue-200 dark:border-blue-800/80 rounded-2xl p-4 flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-sm shrink-0">
+                  <span className="text-xs font-black leading-tight text-center">₹{TNC_CONFIG.additionalDemoFeeRs}</span>
                 </div>
                 <div>
-                  <strong className="text-xs font-black text-amber-900 dark:text-amber-300 uppercase tracking-wider block">2nd Demo Session Onwards</strong>
-                  <p className="text-[11px] text-amber-700 dark:text-amber-400 font-semibold mt-0.5">Charged at ₹{TNC_CONFIG.additionalDemoFeeRs} per demo session.</p>
+                  <strong className="text-xs font-black text-blue-900 dark:text-blue-300 uppercase tracking-wider block">2nd Demo Session Onwards</strong>
+                  <p className="text-[11px] text-blue-700 dark:text-blue-400 font-semibold mt-0.5">₹{TNC_CONFIG.additionalDemoFeeRs} per class, where applicable.</p>
                 </div>
               </div>
             </div>
@@ -476,7 +473,7 @@ export default function TermsConditions() {
 
             {/* Itemized breakdown */}
             <div className="space-y-2">
-              <h3 className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              <h3 className="text-xs font-black uppercase tracking-wider text-rose-700 dark:text-rose-400">
                 What The {formatINR(fees.admissionFee)} Parents Onboarding Fee Covers:
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -505,10 +502,10 @@ export default function TermsConditions() {
           {/* SECTION 3: TUTOR REPLACEMENT & CLASS COMPENSATION */}
           {/* ─────────────────────────────────────────────────────────────── */}
           <section id="sec-policies" className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm space-y-5">
-            <div className="flex items-center gap-2.5 text-amber-600 dark:text-amber-400 border-b border-slate-100 dark:border-slate-800 pb-3">
+            <div className="flex items-center gap-2.5 text-teal-600 dark:text-teal-400 border-b border-teal-100 dark:border-teal-900/40 pb-3">
               <RefreshCw className="h-5 w-5 shrink-0" />
               <h2 className="text-base font-black uppercase tracking-wider text-slate-900 dark:text-white">
-                3. Tutor Replacement & Class Compensation
+                3. Tutor Replacement &amp; Class Compensation
               </h2>
             </div>
 
@@ -548,7 +545,7 @@ export default function TermsConditions() {
             <div className="flex items-center gap-2.5 text-rose-600 dark:text-rose-400 border-b border-slate-100 dark:border-slate-800 pb-3">
               <AlertTriangle className="h-5 w-5 shrink-0" />
               <h2 className="text-base font-black uppercase tracking-wider text-slate-900 dark:text-white">
-                4. Hiring Policy & Notice Period
+                4. Bypass Policy and Notice Period
               </h2>
             </div>
 
@@ -572,15 +569,15 @@ export default function TermsConditions() {
 
             {/* Notice Period & Validity */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-              <div className="bg-slate-50 dark:bg-slate-955 p-4 rounded-2xl border border-slate-150 dark:border-slate-800 space-y-1">
-                <span className="text-[10px] font-extrabold uppercase text-slate-400 block">Notice Period</span>
-                <strong className="text-slate-900 dark:text-white font-black">{TNC_CONFIG.noticePeriodDays} Days' Advance Notice Required</strong>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">To discontinue tutoring services, advance written notice must be submitted.</p>
+              <div className="bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/60 rounded-2xl p-4 space-y-1">
+                <span className="text-[10px] font-extrabold uppercase text-blue-500 dark:text-blue-400 block">Notice Period</span>
+                <strong className="text-blue-900 dark:text-blue-200 font-black">{TNC_CONFIG.noticePeriodDays} Days' Advance Notice Required</strong>
+                <p className="text-[11px] text-blue-700 dark:text-blue-300 font-medium">15 days advance notice required for replacement and termination of service.</p>
               </div>
-              <div className="bg-slate-50 dark:bg-slate-955 p-4 rounded-2xl border border-slate-150 dark:border-slate-800 space-y-1">
-                <span className="text-[10px] font-extrabold uppercase text-slate-400 block">Service Validity</span>
-                <strong className="text-slate-900 dark:text-white font-black">{TNC_CONFIG.academicYearValidity}</strong>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Onboarding agreement remains active throughout the ongoing academic session.</p>
+              <div className="bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/60 rounded-2xl p-4 space-y-1">
+                <span className="text-[10px] font-extrabold uppercase text-emerald-500 dark:text-emerald-400 block">Service Validity</span>
+                <strong className="text-emerald-900 dark:text-emerald-200 font-black">{TNC_CONFIG.academicYearValidity}</strong>
+                <p className="text-[11px] text-emerald-700 dark:text-emerald-300 font-medium">Onboarding agreement remains active throughout the ongoing academic session, until the student promotes to next grade.</p>
               </div>
             </div>
           </section>
@@ -622,35 +619,37 @@ export default function TermsConditions() {
             </div>
 
             {/* Checkbox Clause */}
-            <label className="flex items-start gap-3 cursor-pointer group select-none">
-              <input
-                type="checkbox"
-                checked={fullName.trim().length > 0}
-                readOnly
-                className="sr-only"
-              />
+            <div className="flex items-start gap-3 select-none">
               <div
-                className={`mt-0.5 h-5 w-5 shrink-0 rounded-lg border-2 flex items-center justify-center transition-all ${
-                  fullName.trim()
+                onClick={() => setAgreedToTerms((v) => !v)}
+                role="checkbox"
+                aria-checked={agreedToTerms}
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); setAgreedToTerms((v) => !v); } }}
+                className={`mt-0.5 h-5 w-5 shrink-0 rounded-lg border-2 flex items-center justify-center transition-all cursor-pointer ${
+                  agreedToTerms
                     ? "bg-indigo-600 border-indigo-600 text-white"
                     : "bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600"
                 }`}
               >
-                {fullName.trim() && <Check className="h-3.5 w-3.5 text-white" />}
+                {agreedToTerms && <Check className="h-3.5 w-3.5 text-white" />}
               </div>
-              <span className="text-xs text-slate-700 dark:text-slate-300 font-semibold leading-relaxed">
-                I, <strong className="text-slate-900 dark:text-white underline">{fullName.trim() || "___________"}</strong>, have read and agree to all the Terms & Conditions outlined above for <strong>Saraswati Tutorials</strong> home tutoring services.
+              <span
+                onClick={() => setAgreedToTerms((v) => !v)}
+                className="text-xs text-slate-700 dark:text-slate-300 font-semibold leading-relaxed cursor-pointer"
+              >
+                I, <strong className="text-slate-900 dark:text-white underline">{fullName.trim() || "___________"}</strong>, have read and agree to all the Terms &amp; Conditions outlined above for <strong>Saraswati Tutorials</strong> home tutoring services.
               </span>
-            </label>
+            </div>
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <button
                 id="tnc-accept-btn"
                 onClick={handleAcceptClick}
-                disabled={!fullName.trim() || flow === "submitting"}
+                disabled={!fullName.trim() || !agreedToTerms || flow === "submitting"}
                 className={`flex-1 flex items-center justify-center gap-2 rounded-2xl font-black text-xs uppercase tracking-wider py-3.5 transition-all shadow-md ${
-                  !fullName.trim() || flow === "submitting"
+                  !fullName.trim() || !agreedToTerms || flow === "submitting"
                     ? "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed border border-slate-200 dark:border-slate-750"
                     : "bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20 cursor-pointer active:scale-[0.99]"
                 }`}
@@ -719,13 +718,12 @@ function PreviewModal({ fees, fullName, onConfirm, onBack, submitting }) {
           <Row label="NAME AS PER DOCUMENTATION" value={fullName} accent />
           <Row label="Monthly Tuition Fee" value={formatINR(fees.tuition)} />
           <Row label="Parents Onboarding Fee" value={`${cfg.admissionFeePercent}% — ${formatINR(fees.admissionFee)}`} accent />
-          <Row label="Demo Sessions" value={`1st Demo FREE (₹0), 2nd Demo onwards ₹${cfg.additionalDemoFeeRs}`} />
+          <Row label="Demo Sessions" value={`1st Demo FREE (₹0), 2nd Demo onwards ₹${cfg.additionalDemoFeeRs} per class, where applicable`} />
           <Row label="Tutor Replacement" value={`Within ${cfg.replacementTimelineHours} hours`} />
           <Row label="Class Compensation" value={`With ${cfg.classCompensationNoticeHours}h advance notice`} />
-          <Row label="Payment Schedule" value="Month 1: Onboarding Fee only · Month 2+: Monthly Tuition" />
+          <Row label="Payment Schedule" value="Month 1: Onboarding Fee Only · Month 2: Tuition Fee" />
           <Row label="Bypass Penalty" value={`${cfg.bypassPenaltyMonths} Months' Tuition`} warn />
           <Row label="Notice Period" value={`${cfg.noticePeriodDays} Days`} />
-          <Row label="Terms Version" value={cfg.termsVersion} />
 
           {/* Acceptance message preview */}
           <div className="mt-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 px-4 py-3">

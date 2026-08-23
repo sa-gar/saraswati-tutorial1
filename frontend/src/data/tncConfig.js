@@ -18,7 +18,7 @@ export const TNC_CONFIG = {
   backupReplacementPercent: 20,
 
   /** Fallback example tuition when no parent enquiry data is available */
-  exampleMonthlyTuition: 7500,
+  exampleMonthlyTuition: 6500,
 
   // ── Demo policy ──────────────────────────────────────────────────────────
   /** First demo is free. Additional demos are charged at this amount (₹). */
@@ -41,7 +41,7 @@ export const TNC_CONFIG = {
   noticePeriodDays: 15,
 
   /** Validity of admission/service arrangement */
-  academicYearValidity: "1 Academic Year",
+  academicYearValidity: "1 Academic Year (till March)",
 
   // ── Bypass penalty ───────────────────────────────────────────────────────
   /** Penalty for bypass = N × monthly tuition fee */
