@@ -64,32 +64,32 @@ const SERVICES = [
   {
     icon: ShieldCheck,
     color: "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40",
-    title: "Tutor Verification",
-    body: "Pre-verified tutors with Govt ID checks, degree validation, and background evaluation.",
+    title: "Verified Tutors",
+    body: "Every tutor is verified with ID, education, and background checks.",
   },
   {
     icon: Users,
     color: "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40",
-    title: "Custom Sourcing",
-    body: "Matched specifically to your location, syllabus (CBSE/ICSE/IB/State), timing, and subject preference.",
+    title: "Tutor Matching",
+    body: "We find a tutor based on your location, class, syllabus, subject, and preferred timing.",
   },
   {
     icon: Home,
     color: "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40",
-    title: "Direct Doorstep Visit",
-    body: "Tutors assigned visit your location directly for seamless home learning sessions.",
+    title: "Home Tuition",
+    body: "Your tutor comes directly to your home for the classes.",
   },
   {
     icon: RefreshCw,
     color: "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40",
-    title: "72h Replacement",
-    body: "Prompt tutor replacement within 72 hours if any genuine academic concern arises.",
+    title: "72-Hour Replacement",
+    body: "If there is a genuine issue with the tutor, we arrange a replacement within 72 hours.",
   },
   {
     icon: BadgeCheck,
     color: "text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/40",
-    title: "Class Compensation",
-    body: "Missed classes compensated when advance notice (24h) is provided.",
+    title: "Missed Class Support",
+    body: "If a class is missed with 24 hours\u2019 notice, we help arrange a replacement class.",
   },
   {
     icon: LayoutDashboard,
@@ -398,7 +398,7 @@ export default function TermsConditions() {
             <div className="flex items-center gap-2.5 text-indigo-600 dark:text-indigo-400 border-b border-slate-100 dark:border-slate-800 pb-3">
               <ShieldCheck className="h-5 w-5 shrink-0" />
               <h2 className="text-base font-black uppercase tracking-wider text-slate-900 dark:text-white">
-                1. What We Provide & Free Demo Policy
+                1. What You Get &amp; Free Demo
               </h2>
             </div>
 
