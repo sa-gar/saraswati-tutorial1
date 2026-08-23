@@ -17,6 +17,14 @@ const _USERNAME      = sanitizeEnv(process.env.ODOO_USERNAME);
 const _PASSWORD      = sanitizeEnv(process.env.ODOO_PASSWORD);
 const _JSONRPC_URL   = `${_ODOO_URL}/jsonrpc`;
 
+// ─── Startup diagnostic ─────────────────────────────────────────────────────
+// Logs the Odoo target on startup so Render logs can confirm the correct
+// hostname is in use. Credentials are NEVER logged.
+console.log(`[OdooService] Odoo base URL      : ${_ODOO_URL}`);
+console.log(`[OdooService] Odoo JSON-RPC endpoint: ${_JSONRPC_URL}`);
+console.log(`[OdooService] Odoo DB            : ${_DB}`);
+console.log(`[OdooService] Odoo username      : ${_USERNAME}`);
+
 async function callOdoo(service, method, args) {
   const payload = {
     jsonrpc: "2.0",
