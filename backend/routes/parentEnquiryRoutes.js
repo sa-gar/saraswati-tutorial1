@@ -70,15 +70,25 @@ router.get("/", verifyToken(["admin"]), async (req, res) => {
         if (lead.status === "Enrolled" || lead.assignedTutorId || (lead.totalClasses && lead.totalClasses > 0)) {
           const cycle = lead.currentPackageCycle || 1;
           const total = lead.totalClasses || 12;
-          const completedCount = await Attendance.countDocuments({
-            parentEnquiryId: lead._id,
-            packageCycle: cycle,
-            status: "Done",
-          });
-          const completed = Math.min(total, completedCount);
-          const pkgStatus = completed >= total && total > 0 ? "completed" : "active";
-          if (lead.completedClasses !== completed || lead.packageStatus !== pkgStatus) {
-            lead.completedClasses = completed;
+          const cycleFilter = cycle === 1
+            ? {
+                parentEnquiryId: lead._id,
+                status: "Done",
+                $or: [
+                  { packageCycle: 1 },
+                  { packageCycle: { $exists: false } },
+                  { packageCycle: null },
+                ],
+              }
+            : {
+                parentEnquiryId: lead._id,
+                packageCycle: cycle,
+                status: "Done",
+              };
+          const completedCount = await Attendance.countDocuments(cycleFilter);
+          const pkgStatus = completedCount >= total && total > 0 ? "completed" : "active";
+          if (lead.completedClasses !== completedCount || lead.packageStatus !== pkgStatus) {
+            lead.completedClasses = completedCount;
             lead.packageStatus = pkgStatus;
             await lead.save({ validateBeforeSave: false }).catch(() => {});
           }
@@ -373,10 +383,17 @@ router.put("/:id", verifyToken(["admin"]), async (req, res) => {
     };
 
     if (req.body.assignedTutor !== undefined) {
-      if (req.body.assignedTutor) {
-        const tutor = await Tutor.findOne({ name: req.body.assignedTutor });
+      if (req.body.assignedTutor && req.body.assignedTutor.trim()) {
+        const trimmedTutorName = req.body.assignedTutor.trim();
+        const escapedName = trimmedTutorName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const tutor = await Tutor.findOne({
+          name: { $regex: new RegExp(`^${escapedName}$`, "i") }
+        });
         if (tutor) {
           allowedUpdates.assignedTutorId = tutor._id;
+          allowedUpdates.assignedTutor = tutor.name;
+        } else if (req.body.assignedTutorId) {
+          allowedUpdates.assignedTutorId = req.body.assignedTutorId;
         } else {
           allowedUpdates.assignedTutorId = null;
         }

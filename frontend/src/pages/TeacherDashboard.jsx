@@ -37,7 +37,11 @@ export default function TeacherDashboard() {
       });
       const data = await res.json();
       if (res.ok) {
-        setHistoryLogs(prev => ({ ...prev, [studentId]: data.logs || [] }));
+        setHistoryLogs(prev => ({ 
+          ...prev, 
+          [studentId]: data.logs || [],
+          [`${studentId}_cycles`]: data.cycles || []
+        }));
       }
     } catch (err) {
       console.error(err);
@@ -188,6 +192,9 @@ export default function TeacherDashboard() {
           setStudents(prev => 
             prev.map(s => s._id === selectedStudent._id ? data.updatedStudentCard : s)
           );
+        }
+        if (historyLogs[selectedStudent._id]) {
+          fetchHistoryLogs(selectedStudent._id);
         }
         setShowModal(false);
       } else {
@@ -341,9 +348,14 @@ export default function TeacherDashboard() {
                               <span className="bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-[10px] font-black px-2 py-0.5 rounded-lg">
                                 {student.requirementId}
                               </span>
-                              <span className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-[10px] font-black px-2 py-0.5 rounded-lg">
-                                Cycle {student.currentPackageCycle || 1}
+                              <span className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-[10px] font-black px-2.5 py-0.5 rounded-lg">
+                                {student.currentMonthLabel || `Month ${student.currentPackageCycle || 1} (Cycle ${student.currentPackageCycle || 1})`}
                               </span>
+                              {student.cycleDates && (
+                                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-lg">
+                                  {student.cycleDates}
+                                </span>
+                              )}
                             </div>
                             <div className="flex items-center gap-1.5 justify-end text-[10px] font-bold text-slate-500 dark:text-slate-400">
                               <Clock className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
@@ -442,9 +454,14 @@ export default function TeacherDashboard() {
                               <span className="bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-[10px] font-black px-2 py-0.5 rounded-lg">
                                 {student.requirementId}
                               </span>
-                              <span className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-[10px] font-black px-2 py-0.5 rounded-lg">
-                                Cycle {student.currentPackageCycle || 1}
+                              <span className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-[10px] font-black px-2.5 py-0.5 rounded-lg">
+                                {student.currentMonthLabel || `Month ${student.currentPackageCycle || 1} (Cycle ${student.currentPackageCycle || 1})`}
                               </span>
+                              {student.cycleDates && (
+                                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-lg">
+                                  {student.cycleDates}
+                                </span>
+                              )}
                             </div>
                             <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 hover:underline">
                               {isLogsExpanded ? "Collapse" : "Tap to view timeline"}
@@ -497,7 +514,12 @@ export default function TeacherDashboard() {
                                   return (
                                     <div key={log._id} className="bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 rounded-xl p-3 text-xs">
                                       <div className="flex items-center justify-between mb-1 pb-1 border-b border-slate-100 dark:border-slate-800">
-                                        <span className="font-extrabold text-slate-800 dark:text-white">Class {classNum} ({log.date})</span>
+                                        <div className="flex items-center gap-1.5 flex-wrap">
+                                          <span className="font-extrabold text-slate-800 dark:text-white">Class {classNum} ({log.date})</span>
+                                          <span className="bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 text-[9px] font-black px-1.5 py-0.2 rounded">
+                                            Month {log.packageCycle || 1}
+                                          </span>
+                                        </div>
                                         <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${
                                           log.status === "Done"
                                             ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400"

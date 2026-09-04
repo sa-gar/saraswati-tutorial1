@@ -335,7 +335,11 @@ export default function AdminDashboard() {
       if (res.ok) {
         setAttendanceLogs(prev => ({
           ...prev,
-          [leadId]: data.logs || []
+          [leadId]: data.logs || [],
+          [`${leadId}_meta`]: {
+            cycles: data.cycles || [],
+            studentCard: data.studentCard || null
+          }
         }));
       }
     } catch (err) {
@@ -671,6 +675,8 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (currentMainTab === "analytics") {
       fetchAnalyticsData();
+    } else if (currentMainTab === "attendance") {
+      fetchData();
     }
   }, [currentMainTab, period]);
 
@@ -1223,7 +1229,10 @@ export default function AdminDashboard() {
 
           <button
             type="button"
-            onClick={() => setCurrentMainTab("attendance")}
+            onClick={() => {
+              setCurrentMainTab("attendance");
+              fetchData();
+            }}
             className={`pb-4 text-base font-extrabold transition-all relative cursor-pointer ${
               currentMainTab === "attendance"
                 ? "text-blue-650 font-extrabold"
@@ -3324,15 +3333,30 @@ function StatCard({ title, value, subtitle, icon: Icon, gradientClass }) {
   );
 }
 
+const COMPACT_HEADER_LABELS = {
+  requirementId: "Req ID",
+  studentName: "Student",
+  parentName: "Parent",
+  teacherName: "Teacher",
+  currentCycle: "Cycle",
+  cycleDates: "Dates",
+  totalClasses: "Total",
+  completedClasses: "Done",
+  missedClasses: "Missed",
+  remainingClasses: "Left",
+};
+
 const DEFAULT_ATTENDANCE_COLUMNS = [
-  { key: "requirementId", label: "Requirement ID", enabled: true },
-  { key: "studentName", label: "Student & Duration", enabled: true },
+  { key: "requirementId", label: "Req ID", enabled: true },
+  { key: "studentName", label: "Student", enabled: true },
   { key: "parentName", label: "Parent", enabled: true },
-  { key: "teacherName", label: "Teacher Name", enabled: true },
+  { key: "teacherName", label: "Teacher", enabled: true },
+  { key: "currentCycle", label: "Cycle", enabled: true },
+  { key: "cycleDates", label: "Dates", enabled: true },
   { key: "totalClasses", label: "Total", enabled: true },
-  { key: "completedClasses", label: "Completed", enabled: true },
+  { key: "completedClasses", label: "Done", enabled: true },
   { key: "missedClasses", label: "Missed", enabled: true },
-  { key: "remainingClasses", label: "Remaining", enabled: true },
+  { key: "remainingClasses", label: "Left", enabled: true },
 ];
 
 function AdminAttendanceConsole({
@@ -3346,14 +3370,32 @@ function AdminAttendanceConsole({
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedId, setExpandedId] = useState(null);
   const [showCustomizeModal, setShowCustomizeModal] = useState(false);
+  const [activeCycleFilter, setActiveCycleFilter] = useState({}); // { [leadId]: 'all' | cycleNumber }
   const [attendanceColumns, setAttendanceColumns] = useState(() => {
     try {
       const saved = localStorage.getItem("attendanceColumnsConfig");
-      return saved ? JSON.parse(saved) : DEFAULT_ATTENDANCE_COLUMNS;
+      if (!saved) return DEFAULT_ATTENDANCE_COLUMNS;
+      const parsed = JSON.parse(saved);
+      const existingKeys = new Set(parsed.map((c) => c.key));
+      const missingDefaults = DEFAULT_ATTENDANCE_COLUMNS.filter((c) => !existingKeys.has(c.key));
+      return [...parsed, ...missingDefaults];
     } catch {
       return DEFAULT_ATTENDANCE_COLUMNS;
     }
   });
+
+  const formatCycleDateRange = (lead, cycleNum, includeYear = false) => {
+    const cycle = cycleNum || lead.currentPackageCycle || 1;
+    const start = lead.classStartDate ? new Date(lead.classStartDate) : new Date(lead.createdAt || Date.now());
+    const cycleStart = new Date(start);
+    cycleStart.setMonth(cycleStart.getMonth() + (cycle - 1));
+    const cycleEnd = new Date(cycleStart);
+    cycleEnd.setMonth(cycleEnd.getMonth() + 1);
+    cycleEnd.setDate(cycleEnd.getDate() - 1);
+    const formatDate = (d) =>
+      d.toLocaleDateString("en-US", includeYear ? { month: "short", day: "numeric", year: "numeric" } : { month: "short", day: "numeric" });
+    return `${formatDate(cycleStart)} – ${formatDate(cycleEnd)}`;
+  };
 
   // Edit Tuition Inline States
   const [tDuration, setTDuration] = useState("");
@@ -3570,6 +3612,18 @@ function AdminAttendanceConsole({
 
           <button
             type="button"
+            onClick={() => {
+              fetchData();
+              if (expandedId) fetchLeadAttendanceLogs(expandedId);
+            }}
+            className="flex items-center gap-1.5 px-3.5 h-11 rounded-2xl border border-slate-250 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-black text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition cursor-pointer shrink-0 shadow-sm"
+          >
+            <RefreshCw className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+            Refresh
+          </button>
+
+          <button
+            type="button"
             onClick={() => setShowCustomizeModal(true)}
             className="flex items-center gap-1.5 px-3.5 h-11 rounded-2xl border border-slate-250 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-black text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition cursor-pointer shrink-0 shadow-sm"
           >
@@ -3579,19 +3633,26 @@ function AdminAttendanceConsole({
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-slate-200">
-        <table className="w-full text-left border-collapse">
+      <div className="w-full rounded-2xl border border-slate-200 bg-white dark:bg-slate-900 overflow-x-auto xl:overflow-x-hidden">
+        <table className="w-full text-left border-collapse table-auto text-xs">
           <thead>
-            <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-black text-slate-500 uppercase tracking-wider">
+            <tr className="bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
               {attendanceColumns.filter(c => c.enabled).map(c => (
-                <th key={c.key} className={`py-4 px-4 ${["totalClasses", "completedClasses", "missedClasses", "remainingClasses"].includes(c.key) ? "text-center" : ""}`}>
-                  {c.label}
+                <th
+                  key={c.key}
+                  className={`py-3 px-2 ${
+                    ["totalClasses", "completedClasses", "missedClasses", "remainingClasses", "currentCycle", "cycleDates"].includes(c.key)
+                      ? "text-center"
+                      : "text-left"
+                  }`}
+                >
+                  {COMPACT_HEADER_LABELS[c.key] || c.label}
                 </th>
               ))}
-              <th className="py-4 px-4 text-right">Actions</th>
+              <th className="py-3 px-2 text-right">Action</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 text-xs font-bold text-slate-700">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200">
             {filtered.length === 0 ? (
               <tr>
                 <td colSpan={attendanceColumns.filter(c => c.enabled).length + 1} className="py-12 text-center text-slate-400 font-bold">
@@ -3614,15 +3675,15 @@ function AdminAttendanceConsole({
                   <React.Fragment key={p._id}>
                     <tr
                       onClick={() => handleToggleExpand(p)}
-                      className={`hover:bg-slate-50/50 transition-all cursor-pointer border-b border-slate-100 ${
-                        isExpanded ? "bg-slate-50/30 font-extrabold" : ""
+                      className={`hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-all cursor-pointer border-b border-slate-100 dark:border-slate-800 ${
+                        isExpanded ? "bg-slate-50/40 dark:bg-slate-800/40 font-extrabold" : ""
                       }`}
                     >
                       {attendanceColumns.filter(c => c.enabled).map(c => {
                         if (c.key === "requirementId") {
                           return (
-                            <td key={c.key} className="py-4 px-4">
-                              <span className="bg-indigo-50 border border-indigo-100 text-indigo-700 px-2 py-0.5 rounded text-[10px] font-black">
+                            <td key={c.key} className="py-2.5 px-2">
+                              <span className="bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-100 dark:border-indigo-900 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded text-[10px] font-black font-mono whitespace-nowrap">
                                 {p.requirementId || "REQ-N/A"}
                               </span>
                             </td>
@@ -3630,54 +3691,79 @@ function AdminAttendanceConsole({
                         }
                         if (c.key === "studentName") {
                           return (
-                            <td key={c.key} className="py-4 px-4">
-                              <div className="font-black text-slate-800 truncate max-w-[160px]">{studentName}</div>
-                              <div className="text-[10px] text-slate-450 font-semibold mt-0.5">Duration: {p.classDuration || "Not provided"}</div>
+                            <td key={c.key} className="py-2.5 px-2">
+                              <div className="font-extrabold text-slate-800 dark:text-slate-100 truncate max-w-[130px]" title={studentName}>{studentName}</div>
+                              <div className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold truncate max-w-[130px]">{p.classDuration || "1 hr"}</div>
                             </td>
                           );
                         }
                         if (c.key === "parentName") {
                           return (
-                            <td key={c.key} className="py-4 px-4 truncate max-w-[160px]">{p.parentName || "Unknown"}</td>
+                            <td key={c.key} className="py-2.5 px-2">
+                              <div className="font-semibold text-slate-700 dark:text-slate-300 truncate max-w-[110px]" title={p.parentName || "Unknown"}>
+                                {p.parentName || "Unknown"}
+                              </div>
+                            </td>
                           );
                         }
                         if (c.key === "teacherName") {
                           return (
-                            <td key={c.key} className="py-4 px-4 text-slate-655 truncate max-w-[165px]">{p.assignedTutor || "Not Assigned"}</td>
+                            <td key={c.key} className="py-2.5 px-2">
+                              <div className="font-semibold text-slate-650 dark:text-slate-300 truncate max-w-[110px]" title={p.assignedTutor || "Not Assigned"}>
+                                {p.assignedTutor || "Not Assigned"}
+                              </div>
+                            </td>
+                          );
+                        }
+                        if (c.key === "currentCycle") {
+                          const cycle = p.currentPackageCycle || 1;
+                          return (
+                            <td key={c.key} className="py-2.5 px-1.5 text-center whitespace-nowrap">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-black bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 whitespace-nowrap">
+                                Month {cycle}
+                              </span>
+                            </td>
+                          );
+                        }
+                        if (c.key === "cycleDates") {
+                          return (
+                            <td key={c.key} className="py-2.5 px-1.5 text-[11px] font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap text-center">
+                              {formatCycleDateRange(p)}
+                            </td>
                           );
                         }
                         if (c.key === "totalClasses") {
                           return (
-                            <td key={c.key} className="py-4 px-4 text-center text-slate-500">{totalDisplay}</td>
+                            <td key={c.key} className="py-2.5 px-1 text-center text-slate-500 dark:text-slate-400 font-semibold">{totalDisplay}</td>
                           );
                         }
                         if (c.key === "completedClasses") {
                           return (
-                            <td key={c.key} className="py-4 px-4 text-center text-emerald-600 font-extrabold">{completed}</td>
+                            <td key={c.key} className="py-2.5 px-1 text-center text-emerald-600 dark:text-emerald-400 font-black">{completed}</td>
                           );
                         }
                         if (c.key === "missedClasses") {
                           return (
-                            <td key={c.key} className="py-4 px-4 text-center text-rose-500 font-extrabold">{missedCount}</td>
+                            <td key={c.key} className="py-2.5 px-1 text-center text-rose-500 dark:text-rose-400 font-black">{missedCount}</td>
                           );
                         }
                         if (c.key === "remainingClasses") {
                           return (
-                            <td key={c.key} className="py-4 px-4 text-center text-indigo-600 font-extrabold">{remainingDisplay}</td>
+                            <td key={c.key} className="py-2.5 px-1 text-center text-indigo-600 dark:text-indigo-400 font-black">{remainingDisplay}</td>
                           );
                         }
                         return null;
                       })}
-                      <td className="py-4 px-4 text-right">
+                      <td className="py-2.5 px-2 text-right whitespace-nowrap">
                         <button
                           type="button"
-                          className="text-[10px] font-black text-indigo-650 hover:text-indigo-800 underline cursor-pointer"
+                          className="inline-flex items-center px-2 py-1 rounded-lg text-[10px] font-black bg-indigo-50 dark:bg-indigo-950/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/80 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800 transition cursor-pointer"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleToggleExpand(p);
                           }}
                         >
-                          {isExpanded ? "Collapse" : "Edit / Logs"}
+                          {isExpanded ? "Close" : "Logs"}
                         </button>
                       </td>
                     </tr>
@@ -3713,160 +3799,284 @@ function AdminAttendanceConsole({
                                   <p className="text-xs font-bold text-slate-500 text-center py-4">
                                     No classes logged for this requirement yet.
                                   </p>
-                                ) : (
-                                  <div className="space-y-3">
-                                    {attendanceLogs[p._id].map((log, idx) => {
-                                      const logIndex = attendanceLogs[p._id].length - idx;
-                                      const isEditingThisLog = editingLogId === log._id;
+                                ) : (() => {
+                                  const allLogs = attendanceLogs[p._id] || [];
+                                  const meta = attendanceLogs[`${p._id}_meta`];
+                                  const leadCycles = meta?.cycles || [];
+                                  const logCycles = allLogs.map(l => l.packageCycle || 1);
+                                  const maxCycle = Math.max(p.currentPackageCycle || 1, ...logCycles, ...(leadCycles.map(c => c.cycleNumber || 1)), 1);
+                                  const availableCycles = [];
+                                  for (let cyc = 1; cyc <= maxCycle; cyc++) {
+                                    availableCycles.push(cyc);
+                                  }
+                                  const currentSelectedCycle = activeCycleFilter[p._id] !== undefined 
+                                    ? activeCycleFilter[p._id] 
+                                    : (p.currentPackageCycle || 1);
 
-                                      if (isEditingThisLog) {
-                                        return (
-                                          <form
-                                            key={log._id}
-                                            onSubmit={(e) => handleUpdateLogInline(e, log._id, p._id)}
-                                            className="bg-slate-55 rounded-xl border border-indigo-200 p-4 space-y-3 shadow-sm"
-                                          >
-                                            <p className="text-[10px] font-black text-indigo-700 uppercase tracking-wider">Editing Class {logIndex} log</p>
-                                            {logError && <p className="text-xs text-rose-600 font-bold">{logError}</p>}
-                                            
-                                            <div className="grid grid-cols-2 gap-3">
-                                              <div>
-                                                <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">Status</label>
-                                                <select
-                                                  value={logStatus}
-                                                  onChange={(e) => setLogStatus(e.target.value)}
-                                                  className="w-full h-9 px-3 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
-                                                >
-                                                  <option value="Done">Done</option>
-                                                  <option value="Missed">Missed</option>
-                                                </select>
+                                  const selectedCycleObj = leadCycles.find(c => c.cycleNumber === currentSelectedCycle);
+                                  const cycleDates = selectedCycleObj ? selectedCycleObj.dates : formatCycleDateRange(p, currentSelectedCycle, true);
+                                  
+                                  const filteredLogs = currentSelectedCycle === "all"
+                                    ? allLogs
+                                    : allLogs.filter(l => (l.packageCycle || 1) === currentSelectedCycle);
+
+                                  return (
+                                    <div className="space-y-4">
+                                      {/* Month / Cycle Selection Tabs */}
+                                      <div className="flex items-center gap-1.5 border-b border-slate-200 pb-2.5 overflow-x-auto">
+                                        <span className="text-[10px] font-black text-slate-400 uppercase mr-1 shrink-0">Month / Cycle:</span>
+                                        {availableCycles.map((cyc) => {
+                                          const isSelected = currentSelectedCycle === cyc;
+                                          const isCurrent = (p.currentPackageCycle || 1) === cyc;
+                                          return (
+                                            <button
+                                              key={cyc}
+                                              type="button"
+                                              onClick={() => setActiveCycleFilter(prev => ({ ...prev, [p._id]: cyc }))}
+                                              className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer shrink-0 flex items-center gap-1.5 ${
+                                                isSelected
+                                                  ? "bg-indigo-600 text-white shadow-sm"
+                                                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                              }`}
+                                            >
+                                              Month {cyc} (Cycle {cyc})
+                                              {isCurrent && (
+                                                <span className={`text-[9px] px-1.5 py-0.2 rounded font-extrabold ${isSelected ? "bg-indigo-800 text-white" : "bg-emerald-100 text-emerald-700"}`}>
+                                                  Active
+                                                </span>
+                                              )}
+                                            </button>
+                                          );
+                                        })}
+                                        <button
+                                          type="button"
+                                          onClick={() => setActiveCycleFilter(prev => ({ ...prev, [p._id]: "all" }))}
+                                          className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer shrink-0 ${
+                                            currentSelectedCycle === "all"
+                                              ? "bg-indigo-600 text-white shadow-sm"
+                                              : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                          }`}
+                                        >
+                                          All Cycles ({allLogs.length})
+                                        </button>
+                                      </div>
+
+                                      {/* Cycle Summary Card */}
+                                      {currentSelectedCycle !== "all" && (
+                                        <div className="bg-gradient-to-r from-indigo-50/80 via-slate-50 to-white rounded-2xl border border-indigo-100 p-4 shadow-xs">
+                                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                                            <div>
+                                              <div className="flex items-center gap-2">
+                                                <h5 className="text-sm font-black text-indigo-950">Month {currentSelectedCycle} (Cycle {currentSelectedCycle})</h5>
+                                                <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                                                  (p.currentPackageCycle || 1) === currentSelectedCycle 
+                                                    ? "bg-emerald-100 text-emerald-700 border border-emerald-200" 
+                                                    : "bg-slate-200 text-slate-700"
+                                                }`}>
+                                                  {(p.currentPackageCycle || 1) === currentSelectedCycle ? "Current Active Cycle" : "Archived Cycle"}
+                                                </span>
                                               </div>
-                                              <div>
-                                                <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">Date</label>
-                                                <input
-                                                  type="date"
-                                                  required
-                                                  value={logDate}
-                                                  onChange={(e) => setLogDate(e.target.value)}
-                                                  className="w-full h-9 px-3 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                                />
-                                              </div>
+                                              <p className="text-xs font-bold text-slate-500 mt-0.5">Cycle Dates: {cycleDates}</p>
                                             </div>
-
-                                            {logStatus === "Done" ? (
-                                              <div>
-                                                <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">Topics Covered</label>
-                                                <textarea
-                                                  rows="2"
-                                                  required
-                                                  value={logTopics}
-                                                  onChange={(e) => setLogTopics(e.target.value)}
-                                                  className="w-full p-3 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
-                                                />
-                                              </div>
-                                            ) : (
-                                              <div className="space-y-2">
-                                                <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">Missed Reason</label>
-                                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-                                                  {missedReasons.map((reason) => (
-                                                    <button
-                                                      key={reason}
-                                                      type="button"
-                                                      onClick={() => setLogMissedReason(reason)}
-                                                      className={`px-2 py-1.5 rounded-lg border text-[10px] font-bold text-center transition-all cursor-pointer ${
-                                                        logMissedReason === reason
-                                                          ? "border-rose-500 bg-rose-50 text-rose-700"
-                                                          : "border-slate-200 bg-white text-slate-650"
-                                                      }`}
-                                                    >
-                                                      {reason}
-                                                    </button>
-                                                  ))}
-                                                </div>
-                                                {logMissedReason === "Other" && (
-                                                  <input
-                                                    type="text"
-                                                    required
-                                                    placeholder="Specify custom reason..."
-                                                    value={logCustomReason}
-                                                    onChange={(e) => setLogCustomReason(e.target.value)}
-                                                    className="w-full h-9 px-3 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                                                  />
-                                                )}
-                                              </div>
-                                            )}
-
-                                            <div className="flex gap-2 justify-end">
-                                              <button
-                                                type="button"
-                                                onClick={() => setEditingLogId(null)}
-                                                className="px-3 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-700 cursor-pointer"
-                                              >
-                                                Cancel
-                                              </button>
-                                              <button
-                                                type="submit"
-                                                disabled={logUpdating}
-                                                className="px-3.5 py-1.5 rounded-lg text-xs font-black text-white bg-indigo-600 hover:bg-indigo-700 transition cursor-pointer"
-                                              >
-                                                {logUpdating ? "Saving..." : "Save Log"}
-                                              </button>
-                                            </div>
-                                          </form>
-                                        );
-                                      }
-
-                                      return (
-                                        <div key={log._id} className="bg-slate-50 rounded-xl border border-slate-200/80 p-3.5 flex justify-between gap-4 text-xs font-semibold">
-                                          <div className="space-y-1">
-                                            <div className="flex items-center gap-2">
-                                              <span className="font-extrabold text-slate-800">Class {logIndex} ({log.date})</span>
-                                              <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${
-                                                log.status === "Done"
-                                                  ? "bg-emerald-50 border border-emerald-100 text-emerald-700"
-                                                  : "bg-rose-50 border border-rose-100 text-rose-700"
-                                              }`}>
-                                                {log.status === "Done" ? "Done" : "Missed"}
-                                              </span>
-                                            </div>
-
-                                            {log.status === "Done" ? (
-                                              <p className="text-slate-655 mt-1">
-                                                <strong className="text-slate-700 font-extrabold">Topics Covered:</strong> {log.topicsCovered}
-                                              </p>
-                                            ) : (
-                                              <p className="text-slate-655 mt-1">
-                                                <strong className="text-slate-700 font-extrabold">Reason:</strong> {log.missedReason === "Other" ? log.customReason : log.missedReason}
-                                              </p>
-                                            )}
-
-                                            <div className="flex items-center gap-2 mt-2 pt-2 border-t border-slate-100">
-                                              <button
-                                                type="button"
-                                                onClick={() => startEditLogInline(log)}
-                                                className="text-[10px] font-black text-indigo-600 hover:underline cursor-pointer"
-                                              >
-                                                Edit Log
-                                              </button>
-                                              <button
-                                                type="button"
-                                                onClick={() => handleDeleteLog(p._id, log._id)}
-                                                className="text-[10px] font-black text-rose-600 hover:underline cursor-pointer"
-                                              >
-                                                Delete Log
-                                              </button>
+                                            <div className="text-xs font-bold text-slate-600">
+                                              Current Assigned: <strong className="text-slate-800">{p.assignedTutor || "Not Assigned"}</strong>
                                             </div>
                                           </div>
 
-                                          <div className="text-right text-[10px] font-bold text-slate-450 shrink-0 self-center">
-                                            <span>By {log.tutorName}</span>
-                                            <span className="block mt-0.5">{new Date(log.timestamp).toLocaleDateString()}</span>
+                                          <div className="grid grid-cols-4 gap-2 text-center text-xs">
+                                            <div className="bg-white rounded-xl p-2 border border-slate-150 shadow-xs">
+                                              <span className="text-[9px] font-black uppercase text-slate-400 block">Total</span>
+                                              <strong className="text-sm font-black text-slate-800">
+                                                {selectedCycleObj?.totalClasses ?? (p.totalClasses || 12)}
+                                              </strong>
+                                            </div>
+                                            <div className="bg-white rounded-xl p-2 border border-slate-150 shadow-xs">
+                                              <span className="text-[9px] font-black uppercase text-slate-400 block">Completed</span>
+                                              <strong className="text-sm font-black text-emerald-600">
+                                                {selectedCycleObj?.completedClasses ?? filteredLogs.filter(l => l.status === "Done").length}
+                                              </strong>
+                                            </div>
+                                            <div className="bg-white rounded-xl p-2 border border-slate-150 shadow-xs">
+                                              <span className="text-[9px] font-black uppercase text-slate-400 block">Missed</span>
+                                              <strong className="text-sm font-black text-rose-500">
+                                                {selectedCycleObj?.missedClasses ?? filteredLogs.filter(l => l.status === "Missed").length}
+                                              </strong>
+                                            </div>
+                                            <div className="bg-white rounded-xl p-2 border border-slate-150 shadow-xs">
+                                              <span className="text-[9px] font-black uppercase text-slate-400 block">Remaining</span>
+                                              <strong className="text-sm font-black text-indigo-600">
+                                                {selectedCycleObj?.remainingClasses ?? Math.max(0, (selectedCycleObj?.totalClasses ?? p.totalClasses ?? 12) - filteredLogs.filter(l => l.status === "Done").length)}
+                                              </strong>
+                                            </div>
                                           </div>
                                         </div>
-                                      );
-                                    })}
-                                  </div>
-                                )}
+                                      )}
+
+                                      {/* Logs in selected cycle */}
+                                      {filteredLogs.length === 0 ? (
+                                        <p className="text-xs font-bold text-slate-400 text-center py-4 bg-slate-50 rounded-xl">
+                                          No class logs recorded for Month {currentSelectedCycle}.
+                                        </p>
+                                      ) : (
+                                        <div className="space-y-3">
+                                          {filteredLogs.map((log, idx) => {
+                                            const logIndex = filteredLogs.length - idx;
+                                            const isEditingThisLog = editingLogId === log._id;
+
+                                            if (isEditingThisLog) {
+                                              return (
+                                                <form
+                                                  key={log._id}
+                                                  onSubmit={(e) => handleUpdateLogInline(e, log._id, p._id)}
+                                                  className="bg-slate-55 rounded-xl border border-indigo-200 p-4 space-y-3 shadow-sm"
+                                                >
+                                                  <p className="text-[10px] font-black text-indigo-700 uppercase tracking-wider">Editing Class {logIndex} log (Month {log.packageCycle || 1})</p>
+                                                  {logError && <p className="text-xs text-rose-600 font-bold">{logError}</p>}
+                                                  
+                                                  <div className="grid grid-cols-2 gap-3">
+                                                    <div>
+                                                      <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">Status</label>
+                                                      <select
+                                                        value={logStatus}
+                                                        onChange={(e) => setLogStatus(e.target.value)}
+                                                        className="w-full h-9 px-3 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+                                                      >
+                                                        <option value="Done">Done</option>
+                                                        <option value="Missed">Missed</option>
+                                                      </select>
+                                                    </div>
+                                                    <div>
+                                                      <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">Date</label>
+                                                      <input
+                                                        type="date"
+                                                        required
+                                                        value={logDate}
+                                                        onChange={(e) => setLogDate(e.target.value)}
+                                                        className="w-full h-9 px-3 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                      />
+                                                    </div>
+                                                  </div>
+
+                                                  {logStatus === "Done" ? (
+                                                    <div>
+                                                      <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">Topics Covered</label>
+                                                      <textarea
+                                                        rows="2"
+                                                        required
+                                                        value={logTopics}
+                                                        onChange={(e) => setLogTopics(e.target.value)}
+                                                        className="w-full p-3 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+                                                      />
+                                                    </div>
+                                                  ) : (
+                                                    <div className="space-y-2">
+                                                      <label className="block text-[10px] font-black text-slate-500 uppercase mb-1">Missed Reason</label>
+                                                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                                                        {missedReasons.map((reason) => (
+                                                          <button
+                                                            key={reason}
+                                                            type="button"
+                                                            onClick={() => setLogMissedReason(reason)}
+                                                            className={`px-2 py-1.5 rounded-lg border text-[10px] font-bold text-center transition-all cursor-pointer ${
+                                                              logMissedReason === reason
+                                                                ? "border-rose-500 bg-rose-50 text-rose-700"
+                                                                : "border-slate-200 bg-white text-slate-650"
+                                                            }`}
+                                                          >
+                                                            {reason}
+                                                          </button>
+                                                        ))}
+                                                      </div>
+                                                      {logMissedReason === "Other" && (
+                                                        <input
+                                                          type="text"
+                                                          required
+                                                          placeholder="Specify custom reason..."
+                                                          value={logCustomReason}
+                                                          onChange={(e) => setLogCustomReason(e.target.value)}
+                                                          className="w-full h-9 px-3 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                                        />
+                                                      )}
+                                                    </div>
+                                                  )}
+
+                                                  <div className="flex gap-2 justify-end">
+                                                    <button
+                                                      type="button"
+                                                      onClick={() => setEditingLogId(null)}
+                                                      className="px-3 py-1.5 text-xs font-bold text-slate-500 hover:text-slate-700 cursor-pointer"
+                                                    >
+                                                      Cancel
+                                                    </button>
+                                                    <button
+                                                      type="submit"
+                                                      disabled={logUpdating}
+                                                      className="px-3.5 py-1.5 rounded-lg text-xs font-black text-white bg-indigo-600 hover:bg-indigo-700 transition cursor-pointer"
+                                                    >
+                                                      {logUpdating ? "Saving..." : "Save Log"}
+                                                    </button>
+                                                  </div>
+                                                </form>
+                                              );
+                                            }
+
+                                            return (
+                                              <div key={log._id} className="bg-slate-50 rounded-xl border border-slate-200/80 p-3.5 flex justify-between gap-4 text-xs font-semibold">
+                                                <div className="space-y-1">
+                                                  <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className="font-extrabold text-slate-800">Class {logIndex} ({log.date})</span>
+                                                    <span className="bg-indigo-50 border border-indigo-150 text-indigo-700 text-[10px] font-black px-2 py-0.5 rounded">
+                                                      Month {log.packageCycle || 1}
+                                                    </span>
+                                                    <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${
+                                                      log.status === "Done"
+                                                        ? "bg-emerald-50 border border-emerald-100 text-emerald-700"
+                                                        : "bg-rose-50 border border-rose-100 text-rose-700"
+                                                    }`}>
+                                                      {log.status === "Done" ? "Done" : "Missed"}
+                                                    </span>
+                                                  </div>
+
+                                                  {log.status === "Done" ? (
+                                                    <p className="text-slate-655 mt-1">
+                                                      <strong className="text-slate-700 font-extrabold">Topics Covered:</strong> {log.topicsCovered}
+                                                    </p>
+                                                  ) : (
+                                                    <p className="text-slate-655 mt-1">
+                                                      <strong className="text-slate-700 font-extrabold">Reason:</strong> {log.missedReason === "Other" ? log.customReason : log.missedReason}
+                                                    </p>
+                                                  )}
+
+                                                  <div className="flex items-center gap-2 mt-2 pt-2 border-t border-slate-100">
+                                                    <button
+                                                      type="button"
+                                                      onClick={() => startEditLogInline(log)}
+                                                      className="text-[10px] font-black text-indigo-600 hover:underline cursor-pointer"
+                                                    >
+                                                      Edit Log
+                                                    </button>
+                                                    <button
+                                                      type="button"
+                                                      onClick={() => handleDeleteLog(p._id, log._id)}
+                                                      className="text-[10px] font-black text-rose-600 hover:underline cursor-pointer"
+                                                    >
+                                                      Delete Log
+                                                    </button>
+                                                  </div>
+                                                </div>
+
+                                                <div className="text-right text-[10px] font-bold text-slate-450 shrink-0 self-center">
+                                                  <span>By {log.tutorName || p.assignedTutor || "Teacher"}</span>
+                                                  <span className="block mt-0.5">{new Date(log.timestamp).toLocaleDateString()}</span>
+                                                </div>
+                                              </div>
+                                            );
+                                          })}
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })()}
                               </div>
 
                               {/* Right Column: Inline Edit Tuition Details */}

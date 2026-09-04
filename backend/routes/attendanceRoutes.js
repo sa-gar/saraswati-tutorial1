@@ -9,60 +9,189 @@ import { verifyToken } from "../middleware/authMiddleware.js";
 const router = express.Router();
 
 // =============================================================
-// Helper: Get student card with authoritative status
+// Helper: Date operations and cycle breakdown calculations
 // =============================================================
-async function formatStudentCard(lead) {
-  const cycle = lead.currentPackageCycle || 1;
+export function addOneMonth(dateStr) {
+  if (!dateStr) return "";
+  try {
+    const parts = dateStr.split("-");
+    if (parts.length === 3) {
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10);
+      const day = parseInt(parts[2], 10);
+      const d = new Date(year, month - 1, day);
+      d.setMonth(d.getMonth() + 1);
+      d.setDate(d.getDate() - 1);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const dt = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${dt}`;
+    }
+  } catch (e) {}
+  return "";
+}
+
+export function formatDateRange(startDate, endDate) {
+  if (!startDate) return "";
+  if (!endDate) return startDate;
+  const parsePart = (str) => {
+    try {
+      const parts = str.split("-");
+      if (parts.length === 3) {
+        const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+        return d.toLocaleDateString("en-US", { day: "numeric", month: "short" });
+      }
+    } catch (e) {}
+    return str;
+  };
+  return `${parsePart(startDate)} – ${parsePart(endDate)}`;
+}
+
+export function computeCycleBreakdown(lead, allLogs) {
+  const currentCycle = lead.currentPackageCycle || 1;
+  const totalClassesPerCycle = lead.totalClasses || 12;
+
+  // Group logs by cycle (treating missing/null packageCycle as Cycle 1)
+  const logsByCycle = {};
+  allLogs.forEach((log) => {
+    const c = log.packageCycle || 1;
+    if (!logsByCycle[c]) logsByCycle[c] = [];
+    logsByCycle[c].push(log);
+  });
+
+  const maxCycle = Math.max(
+    currentCycle,
+    ...Object.keys(logsByCycle).map(Number),
+    ...(lead.packageHistory || []).map((p) => p.cycle || 1),
+    1
+  );
+
+  const cycles = [];
+  for (let c = 1; c <= maxCycle; c++) {
+    const cycleLogs = logsByCycle[c] || [];
+    cycleLogs.sort((a, b) => {
+      const dComp = (a.date || "").localeCompare(b.date || "");
+      if (dComp !== 0) return dComp;
+      return new Date(a.timestamp || 0) - new Date(b.timestamp || 0);
+    });
+
+    const doneCount = cycleLogs.filter((l) => l.status === "Done").length;
+    const missedCount = cycleLogs.filter((l) => l.status === "Missed").length;
+
+    // Check archived history if available
+    const historyEntry = (lead.packageHistory || []).find((h) => h.cycle === c);
+    const scheduled = historyEntry?.totalClasses || totalClassesPerCycle;
+    const remaining = Math.max(0, scheduled - doneCount);
+
+    const isPastCycle = c < currentCycle;
+    const isCompleted = isPastCycle || (doneCount >= scheduled && scheduled > 0);
+    const status = isCompleted ? "Completed" : (c === currentCycle ? "Active" : "Upcoming");
+
+    // Cycle date calculation
+    let startDate = "";
+    let endDate = "";
+
+    if (cycleLogs.length > 0) {
+      startDate = cycleLogs[0].date;
+      if (isCompleted) {
+        endDate = cycleLogs[cycleLogs.length - 1].date;
+      } else {
+        endDate = addOneMonth(startDate);
+      }
+    } else if (c === 1) {
+      startDate = lead.demoDate || (lead.createdAt ? lead.createdAt.toISOString().split("T")[0] : "");
+      endDate = startDate ? addOneMonth(startDate) : "";
+    } else if (cycles[c - 2]?.endDate) {
+      startDate = cycles[c - 2].endDate;
+      endDate = addOneMonth(startDate);
+    }
+
+    cycles.push({
+      cycleNumber: c,
+      monthNumber: c,
+      monthLabel: `Month ${c} (Cycle ${c})`,
+      cycleName: `Month ${c}`,
+      startDate,
+      endDate,
+      dateRangeDisplay: formatDateRange(startDate, endDate),
+      totalScheduled: scheduled,
+      completedCount: doneCount,
+      missedCount,
+      remainingCount: remaining,
+      status,
+      logs: cycleLogs,
+    });
+  }
+
+  return cycles;
+}
+
+// =============================================================
+// Helper: Get student card with authoritative multi-cycle status
+// =============================================================
+export async function formatStudentCard(lead) {
+  const currentCycle = lead.currentPackageCycle || 1;
   const total = lead.totalClasses || 12;
 
-  // Count COMPLETED ("Done") classes for the active package cycle
-  const completedCount = await Attendance.countDocuments({
-    parentEnquiryId: lead._id,
-    packageCycle: cycle,
-    status: "Done",
-  });
+  // Retrieve all attendance logs for this student/parent enquiry
+  const allLogs = await Attendance.find({ parentEnquiryId: lead._id }).sort({ date: 1, timestamp: 1 });
 
-  const completed = Math.min(total, completedCount);
-  const remaining = Math.max(0, total - completed);
+  // Compute multi-cycle breakdown
+  const cycles = computeCycleBreakdown(lead, allLogs);
+  const activeCycleData = cycles.find((c) => c.cycleNumber === currentCycle) || cycles[cycles.length - 1];
 
-  const missedClasses = await Attendance.countDocuments({
-    parentEnquiryId: lead._id,
-    packageCycle: cycle,
-    status: "Missed",
-  });
+  const completed = activeCycleData ? activeCycleData.completedCount : 0;
+  const missed = activeCycleData ? activeCycleData.missedCount : 0;
+  const remaining = activeCycleData ? activeCycleData.remainingCount : Math.max(0, total - completed);
+  const packageStatus = activeCycleData ? (activeCycleData.status === "Completed" ? "completed" : "active") : "active";
 
-  const packageStatus = completed >= total ? "completed" : "active";
-
-  // Keep Lead document state in sync with single source of truth
+  // Keep Lead document state in sync with single source of truth without erasing
   if (lead.completedClasses !== completed || lead.packageStatus !== packageStatus) {
     lead.completedClasses = completed;
     lead.packageStatus = packageStatus;
     await lead.save({ validateBeforeSave: false }).catch(() => {});
   }
 
-  const latestLog = await Attendance.findOne({
-    parentEnquiryId: lead._id,
-    packageCycle: cycle,
-  }).sort({ timestamp: -1 });
-
-  const studentName = lead.wards?.map(w => w.studentName).join(", ") || "Unknown Student";
+  const latestLog = allLogs.length > 0 ? allLogs[allLogs.length - 1] : null;
+  const studentName = lead.wards?.map((w) => w.studentName).join(", ") || "Unknown Student";
 
   return {
     _id: lead._id,
     studentName,
     tutorName: lead.assignedTutor || "Not Assigned",
+    assignedTutorId: lead.assignedTutorId || null,
     requirementId: lead.requirementId || "REQ-N/A",
     totalClasses: total,
     completedClasses: completed,
     remainingClasses: remaining,
-    missedClasses,
-    currentPackageCycle: cycle,
+    missedClasses: missed,
+    currentPackageCycle: currentCycle,
+    currentMonthNumber: currentCycle,
+    currentMonthLabel: activeCycleData?.monthLabel || `Month ${currentCycle}`,
+    cycleStartDate: activeCycleData?.startDate || "",
+    cycleEndDate: activeCycleData?.endDate || "",
+    cycleDateRange: activeCycleData?.dateRangeDisplay || "",
     packageStatus,
     packageHistory: lead.packageHistory || [],
+    cycles: cycles.map((c) => ({
+      cycleNumber: c.cycleNumber,
+      monthNumber: c.monthNumber,
+      monthLabel: c.monthLabel,
+      cycleName: c.cycleName,
+      startDate: c.startDate,
+      endDate: c.endDate,
+      dateRangeDisplay: c.dateRangeDisplay,
+      totalScheduled: c.totalScheduled,
+      completedCount: c.completedCount,
+      missedCount: c.missedCount,
+      remainingCount: c.remainingCount,
+      status: c.status,
+    })),
     classSchedule: lead.classSchedule || lead.preferredTime || "Not Scheduled",
     classDuration: lead.classDuration || "Not provided",
     currentAttendanceStatus: latestLog ? latestLog.status : "Pending",
     latestLogDate: latestLog ? latestLog.date : null,
+    latestLogTopics: latestLog ? latestLog.topicsCovered : "",
     leadStatus: lead.status,
   };
 }
@@ -147,7 +276,7 @@ router.get("/tutor/:tutorId/students", verifyToken(["admin", "tutor"]), async (r
 });
 
 // =============================================================
-// POST: Mark Attendance (Done / Missed)
+// POST: Mark Attendance (Done / Missed) - Idempotent & Editable
 // =============================================================
 router.post("/mark", verifyToken(["admin", "tutor"]), async (req, res) => {
   try {
@@ -162,137 +291,112 @@ router.post("/mark", verifyToken(["admin", "tutor"]), async (req, res) => {
     } = req.body;
 
     if (!parentEnquiryId || !tutorId || !status || !date) {
-      return res.status(400).json({ message: "Missing required fields." });
+      return res.status(400).json({ success: false, message: "Missing required fields (parentEnquiryId, tutorId, status, date)." });
     }
 
     if (status === "Done" && !topicsCovered?.trim()) {
-      return res.status(400).json({ message: "Topics covered is required for completed classes." });
+      return res.status(400).json({ success: false, message: "Topics covered is required for completed classes." });
     }
 
     if (status === "Missed" && !missedReason?.trim()) {
-      return res.status(400).json({ message: "Reason is required for missed classes." });
+      return res.status(400).json({ success: false, message: "Reason is required for missed classes." });
     }
 
     if (status === "Missed" && missedReason === "Other" && !customReason?.trim()) {
-      return res.status(400).json({ message: "Custom reason description is required." });
+      return res.status(400).json({ success: false, message: "Custom reason description is required." });
     }
 
     // Fetch parent enquiry and tutor info
     const lead = await ParentEnquiry.findById(parentEnquiryId);
-    if (!lead) return res.status(404).json({ message: "Student enquiry not found." });
+    if (!lead) return res.status(404).json({ success: false, message: "Student enquiry not found." });
 
     const tutor = await Tutor.findById(tutorId);
-    if (!tutor) return res.status(404).json({ message: "Tutor not found." });
-
-    const packageCycle = lead.currentPackageCycle || 1;
-    const totalClasses = lead.totalClasses || 12;
-
-    // Check existing completed count for this cycle
-    const currentCompleted = await Attendance.countDocuments({
-      parentEnquiryId,
-      packageCycle,
-      status: "Done",
-    });
-
-    // DUPLICATE COMPLETION PROTECTION:
-    // If status is "Done", check if an attendance record for this exact date and student/cycle already exists
-    if (status === "Done") {
-      const existingDone = await Attendance.findOne({
-        parentEnquiryId,
-        packageCycle,
-        date,
-        status: "Done",
-      });
-
-      if (existingDone) {
-        // Class already marked for this date. Return authoritative state without double-counting!
-        const updatedCard = await formatStudentCard(lead);
-        return res.json({
-          success: true,
-          message: "Attendance for this class date has already been recorded.",
-          session: {
-            sessionNumber: existingDone.sessionNumber || currentCompleted,
-            status: "completed",
-            date: existingDone.date,
-          },
-          package: {
-            totalClasses: updatedCard.totalClasses,
-            completedClasses: updatedCard.completedClasses,
-            remainingClasses: updatedCard.remainingClasses,
-            packageCycle,
-            status: updatedCard.packageStatus,
-          },
-          attendance: existingDone,
-          updatedStudentCard: updatedCard,
-        });
-      }
-
-      // If current completed count reached or exceeded total classes, auto-rollover to next cycle
-      if (currentCompleted >= totalClasses) {
-        if (!lead.packageHistory) lead.packageHistory = [];
-        lead.packageHistory.push({
-          cycle: packageCycle,
-          totalClasses: totalClasses,
-          completedClasses: totalClasses,
-          completedAt: new Date(),
-        });
-        lead.currentPackageCycle = packageCycle + 1;
-        lead.completedClasses = 0;
-        lead.packageStatus = "active";
-        await lead.save({ validateBeforeSave: false });
-      }
-    }
+    if (!tutor) return res.status(404).json({ success: false, message: "Tutor not found." });
 
     const activeCycle = lead.currentPackageCycle || 1;
     const activeTotal = lead.totalClasses || 12;
 
-    const currentCompletedInActiveCycle = await Attendance.countDocuments({
-      parentEnquiryId,
-      packageCycle: activeCycle,
-      status: "Done",
-    });
+    const cycleFilter = activeCycle === 1
+      ? { $or: [{ packageCycle: 1 }, { packageCycle: { $exists: false } }, { packageCycle: null }] }
+      : { packageCycle: activeCycle };
 
-    const sessionNumber = currentCompletedInActiveCycle + 1;
-
-    // Create the Attendance entry
-    const attendance = new Attendance({
-      parentEnquiryId,
-      studentName: lead.wards?.map(w => w.studentName).join(", ") || "Unknown Student",
-      requirementId: lead.requirementId || "REQ-N/A",
-      tutorId,
-      tutorName: tutor.name,
-      packageCycle: activeCycle,
-      sessionNumber,
-      status,
-      topicsCovered: status === "Done" ? topicsCovered : "",
-      missedReason: status === "Missed" ? missedReason : "",
-      customReason: status === "Missed" && missedReason === "Other" ? customReason : "",
+    // Check if an attendance record for this student and date already exists
+    let existing = await Attendance.findOne({
+      parentEnquiryId: lead._id,
+      ...cycleFilter,
       date,
     });
 
-    await attendance.save();
+    // Fallback search across student and date regardless of cycle
+    if (!existing) {
+      existing = await Attendance.findOne({
+        parentEnquiryId: lead._id,
+        date,
+      });
+    }
 
-    // Recalculate Completed Classes count for active cycle
+    let attendanceDoc = null;
+    let isUpdate = false;
+
+    if (existing) {
+      // ── UPDATE EXISTING ATTENDANCE RECORD (NO FALSE SUCCESS, NO DUPLICATES) ──
+      isUpdate = true;
+      existing.status = status;
+      if (status === "Done") {
+        existing.topicsCovered = topicsCovered?.trim() || "";
+        existing.missedReason = "";
+        existing.customReason = "";
+      } else if (status === "Missed") {
+        existing.topicsCovered = "";
+        existing.missedReason = missedReason || "";
+        existing.customReason = missedReason === "Other" ? (customReason?.trim() || "") : "";
+      }
+      existing.tutorId = tutor._id;
+      existing.tutorName = tutor.name;
+      if (!existing.packageCycle) existing.packageCycle = activeCycle;
+      existing.timestamp = new Date();
+
+      await existing.save();
+      attendanceDoc = existing;
+    } else {
+      // ── CREATE NEW ATTENDANCE RECORD ─────────────────────────────
+      isUpdate = false;
+      const countInCycle = await Attendance.countDocuments({
+        parentEnquiryId: lead._id,
+        ...cycleFilter,
+      });
+      const sessionNumber = countInCycle + 1;
+
+      attendanceDoc = new Attendance({
+        parentEnquiryId: lead._id,
+        studentName: lead.wards?.map((w) => w.studentName).join(", ") || "Unknown Student",
+        requirementId: lead.requirementId || "REQ-N/A",
+        tutorId: tutor._id,
+        tutorName: tutor.name,
+        packageCycle: activeCycle,
+        sessionNumber,
+        status,
+        topicsCovered: status === "Done" ? (topicsCovered?.trim() || "") : "",
+        missedReason: status === "Missed" ? (missedReason || "") : "",
+        customReason: status === "Missed" && missedReason === "Other" ? (customReason?.trim() || "") : "",
+        date,
+      });
+
+      await attendanceDoc.save();
+    }
+
+    // Recalculate completed count for active cycle
     const newCompletedCount = await Attendance.countDocuments({
-      parentEnquiryId,
-      packageCycle: activeCycle,
+      parentEnquiryId: lead._id,
+      ...cycleFilter,
       status: "Done",
     });
 
-    // Check if this attendance completion finishes the active cycle
-    let cycleCompletedNotice = "";
-    if (newCompletedCount >= activeTotal) {
-      if (!lead.packageHistory) lead.packageHistory = [];
-      lead.packageHistory.push({
-        cycle: activeCycle,
-        totalClasses: activeTotal,
-        completedClasses: activeTotal,
-        completedAt: new Date(),
-      });
-      lead.currentPackageCycle = activeCycle + 1;
-      lead.completedClasses = 0;
-      lead.packageStatus = "active";
-      cycleCompletedNotice = ` Package Cycle ${activeCycle} is now completed! Automatically starting Cycle ${activeCycle + 1} (Class 1) for next month/period.`;
+    let cycleNotice = "";
+    if (newCompletedCount >= activeTotal && activeTotal > 0) {
+      lead.completedClasses = activeTotal;
+      lead.packageStatus = "completed";
+      cycleNotice = ` Month ${activeCycle} is now completed (${newCompletedCount}/${activeTotal} classes)!`;
     } else {
       lead.completedClasses = newCompletedCount;
       lead.packageStatus = "active";
@@ -321,11 +425,15 @@ router.post("/mark", verifyToken(["admin", "tutor"]), async (req, res) => {
 
     res.json({
       success: true,
-      message: `Attendance recorded successfully.${cycleCompletedNotice}`,
+      created: !isUpdate,
+      updated: isUpdate,
+      message: isUpdate
+        ? `Attendance record updated successfully.${cycleNotice}`
+        : `Attendance recorded successfully.${cycleNotice}`,
       session: {
-        sessionNumber,
-        status: attendance.status,
-        date: attendance.date,
+        sessionNumber: attendanceDoc.sessionNumber,
+        status: attendanceDoc.status,
+        date: attendanceDoc.date,
       },
       package: {
         totalClasses: updatedCard.totalClasses,
@@ -334,12 +442,12 @@ router.post("/mark", verifyToken(["admin", "tutor"]), async (req, res) => {
         packageCycle: updatedCard.currentPackageCycle,
         status: updatedCard.packageStatus,
       },
-      attendance,
+      attendance: attendanceDoc,
       updatedStudentCard: updatedCard,
     });
   } catch (error) {
     console.error("Mark attendance error:", error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 
@@ -352,29 +460,8 @@ router.get("/history/:parentEnquiryId", async (req, res) => {
     const lead = await ParentEnquiry.findById(parentEnquiryId);
     if (!lead) return res.status(404).json({ message: "Student enquiry not found." });
 
-    const logs = await Attendance.find({ parentEnquiryId }).sort({ timestamp: 1 });
-
-    // Group logs by package cycle
-    const cyclesMap = {};
-    logs.forEach(log => {
-      const cycleNum = log.packageCycle || 1;
-      if (!cyclesMap[cycleNum]) {
-        cyclesMap[cycleNum] = {
-          cycle: cycleNum,
-          logs: [],
-          doneCount: 0,
-          missedCount: 0,
-          startDate: log.date,
-          endDate: log.date,
-        };
-      }
-      cyclesMap[cycleNum].logs.push(log);
-      if (log.status === "Done") cyclesMap[cycleNum].doneCount++;
-      if (log.status === "Missed") cyclesMap[cycleNum].missedCount++;
-      cyclesMap[cycleNum].endDate = log.date;
-    });
-
-    const cycles = Object.values(cyclesMap);
+    const allLogs = await Attendance.find({ parentEnquiryId }).sort({ date: 1, timestamp: 1 });
+    const cycles = computeCycleBreakdown(lead, allLogs);
 
     res.json({
       success: true,
@@ -382,7 +469,7 @@ router.get("/history/:parentEnquiryId", async (req, res) => {
       totalClassesPerCycle: lead.totalClasses || 12,
       packageHistory: lead.packageHistory || [],
       cycles,
-      allLogs: logs,
+      allLogs,
     });
   } catch (error) {
     console.error("Fetch history error:", error);
@@ -403,25 +490,32 @@ router.get("/download-history/:parentEnquiryId", async (req, res) => {
 
     const query = { parentEnquiryId };
     if (cycleFilter && cycleFilter !== "all" && !isNaN(Number(cycleFilter))) {
-      query.packageCycle = Number(cycleFilter);
+      const cNum = Number(cycleFilter);
+      if (cNum === 1) {
+        query.$or = [{ packageCycle: 1 }, { packageCycle: { $exists: false } }, { packageCycle: null }];
+      } else {
+        query.packageCycle = cNum;
+      }
     }
 
     const logs = await Attendance.find(query).sort({ packageCycle: 1, sessionNumber: 1, timestamp: 1 });
 
-    const studentName = lead.wards?.map(w => w.studentName).join(", ") || "Student";
+    const studentName = lead.wards?.map((w) => w.studentName).join(", ") || "Student";
     const reqId = lead.requirementId || "REQ";
 
-    let csvContent = "Cycle,Class #,Date,Status,Student Name,Tutor Name,Requirement ID,Topics Covered / Reason\n";
+    let csvContent = "Cycle,Month,Class #,Date,Status,Student Name,Teacher,Requirement ID,Topics Covered / Reason\n";
 
-    logs.forEach(log => {
-      const cycleStr = `Cycle ${log.packageCycle || 1}`;
+    logs.forEach((log) => {
+      const cycleNumber = log.packageCycle || 1;
+      const cycleStr = `Cycle ${cycleNumber}`;
+      const monthStr = `Month ${cycleNumber}`;
       const sessionStr = log.sessionNumber || 1;
       const dateStr = log.date || "";
       const statusStr = log.status || "";
       const sName = `"${(log.studentName || studentName).replace(/"/g, '""')}"`;
       const tName = `"${(log.tutorName || lead.assignedTutor || "").replace(/"/g, '""')}"`;
       const rId = `"${(log.requirementId || reqId).replace(/"/g, '""')}"`;
-      
+
       let noteStr = "";
       if (log.status === "Done") {
         noteStr = log.topicsCovered || "";
@@ -430,10 +524,10 @@ router.get("/download-history/:parentEnquiryId", async (req, res) => {
       }
       noteStr = `"${noteStr.replace(/"/g, '""')}"`;
 
-      csvContent += `${cycleStr},${sessionStr},${dateStr},${statusStr},${sName},${tName},${rId},${noteStr}\n`;
+      csvContent += `${cycleStr},${monthStr},${sessionStr},${dateStr},${statusStr},${sName},${tName},${rId},${noteStr}\n`;
     });
 
-    const filename = `Attendance_History_${reqId}_${cycleFilter ? `cycle_${cycleFilter}` : 'all'}.csv`;
+    const filename = `Attendance_History_${reqId}_${cycleFilter ? `cycle_${cycleFilter}` : "all"}.csv`;
 
     res.setHeader("Content-Type", "text/csv");
     res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
@@ -450,8 +544,19 @@ router.get("/download-history/:parentEnquiryId", async (req, res) => {
 router.get("/logs/:parentEnquiryId", verifyToken(["admin", "tutor"]), async (req, res) => {
   try {
     const { parentEnquiryId } = req.params;
-    const logs = await Attendance.find({ parentEnquiryId }).sort({ timestamp: -1 });
-    res.json({ success: true, logs });
+    const lead = await ParentEnquiry.findById(parentEnquiryId);
+    if (!lead) return res.status(404).json({ message: "Student enquiry not found." });
+
+    const allLogs = await Attendance.find({ parentEnquiryId }).sort({ date: 1, timestamp: 1 });
+    const cycles = computeCycleBreakdown(lead, allLogs);
+    const card = await formatStudentCard(lead);
+
+    res.json({
+      success: true,
+      logs: [...allLogs].reverse(), // newest first
+      cycles,
+      card,
+    });
   } catch (error) {
     console.error("Fetch attendance logs error:", error);
     res.status(500).json({ message: error.message });
@@ -459,7 +564,7 @@ router.get("/logs/:parentEnquiryId", verifyToken(["admin", "tutor"]), async (req
 });
 
 // =============================================================
-// POST: Parent Login / Search (by phone number)
+// POST: Parent Login / Search (by phone number) - Normalized & Multi-Enquiry
 // =============================================================
 router.post("/parent-login", async (req, res) => {
   try {
@@ -468,25 +573,45 @@ router.post("/parent-login", async (req, res) => {
       return res.status(400).json({ message: "Phone number is required." });
     }
 
-    const cleanPhone = String(phone).trim().slice(-10);
+    // Normalize phone number: extract all digits
+    const digits = String(phone).replace(/\D/g, "");
+    if (digits.length < 5) {
+      return res.status(400).json({ message: "Please enter a valid phone number." });
+    }
+    const last10 = digits.slice(-10);
+    // Flexible regex allowing spaces/hyphens/dots between digits
+    const flexiblePattern = last10.split("").join("[\\s\\-\\.]*");
 
-    // Find enquiries matching parent's phone number
     const enquiries = await ParentEnquiry.find({
-      phone: { $regex: cleanPhone },
+      $or: [
+        { phone: { $regex: last10 } },
+        { phone: { $regex: flexiblePattern } },
+      ],
     }).sort({ createdAt: -1 });
 
     if (!enquiries.length) {
       return res.status(404).json({ message: "No active student enquiry found for this phone number." });
     }
 
-    // Format cards and retrieve history
+    // Sort enquiries: active tuitions (with assigned tutor or attendance) prioritized first
+    const sortedEnquiries = [...enquiries].sort((a, b) => {
+      const aHasTutor = Boolean(a.assignedTutor || a.assignedTutorId);
+      const bHasTutor = Boolean(b.assignedTutor || b.assignedTutorId);
+      if (aHasTutor && !bHasTutor) return -1;
+      if (!aHasTutor && bHasTutor) return 1;
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    });
+
+    // Format cards and retrieve history with cycles
     const results = await Promise.all(
-      enquiries.map(async (lead) => {
+      sortedEnquiries.map(async (lead) => {
+        const allLogs = await Attendance.find({ parentEnquiryId: lead._id }).sort({ date: 1, timestamp: 1 });
+        const cycles = computeCycleBreakdown(lead, allLogs);
         const card = await formatStudentCard(lead);
-        const logs = await Attendance.find({ parentEnquiryId: lead._id }).sort({ timestamp: -1 });
         return {
           card,
-          logs,
+          cycles,
+          logs: [...allLogs].reverse(),
         };
       })
     );
@@ -570,17 +695,28 @@ router.put("/update-tuition/:id", verifyToken(["admin"]), async (req, res) => {
     if (!lead) return res.status(404).json({ message: "Student enquiry not found." });
 
     if (startNewCycle) {
-      // Archive current cycle into packageHistory
+      // Calculate actual completed count from DB for the cycle being archived
+      const currentCycle = lead.currentPackageCycle || 1;
+      const cycleFilter = currentCycle === 1
+        ? { $or: [{ packageCycle: 1 }, { packageCycle: { $exists: false } }, { packageCycle: null }] }
+        : { packageCycle: currentCycle };
+      const actualDoneCount = await Attendance.countDocuments({
+        parentEnquiryId: lead._id,
+        ...cycleFilter,
+        status: "Done",
+      });
+
+      // Archive current cycle into packageHistory with accurate completed count
       if (!lead.packageHistory) lead.packageHistory = [];
       lead.packageHistory.push({
-        cycle: lead.currentPackageCycle || 1,
+        cycle: currentCycle,
         totalClasses: lead.totalClasses || 12,
-        completedClasses: lead.completedClasses || 0,
+        completedClasses: actualDoneCount || lead.completedClasses || 0,
         completedAt: new Date(),
       });
 
-      // Increment cycle, reset active counter to 0 (all DB attendance records from previous cycle remain untouched!)
-      lead.currentPackageCycle = (lead.currentPackageCycle || 1) + 1;
+      // Increment cycle, activate next cycle
+      lead.currentPackageCycle = currentCycle + 1;
       lead.completedClasses = 0;
       lead.packageStatus = "active";
       if (totalClasses !== undefined && totalClasses > 0) {
@@ -702,12 +838,15 @@ router.put("/log/:logId", verifyToken(["admin"]), async (req, res) => {
       const activeCycle = lead.currentPackageCycle || 1;
       const logCycle = log.packageCycle || 1;
       if (logCycle === activeCycle) {
-        const completedCount = await Attendance.countDocuments({
-          parentEnquiryId,
-          packageCycle: activeCycle,
-          status: "Done",
-        });
-        lead.completedClasses = Math.min(lead.totalClasses || 12, completedCount);
+        const cycleFilter = activeCycle === 1
+          ? {
+              parentEnquiryId,
+              status: "Done",
+              $or: [{ packageCycle: 1 }, { packageCycle: { $exists: false } }, { packageCycle: null }]
+            }
+          : { parentEnquiryId, packageCycle: activeCycle, status: "Done" };
+        const completedCount = await Attendance.countDocuments(cycleFilter);
+        lead.completedClasses = completedCount;
         lead.packageStatus = lead.completedClasses >= (lead.totalClasses || 12) ? "completed" : "active";
         await lead.save({ validateBeforeSave: false });
 
