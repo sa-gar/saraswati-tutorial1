@@ -3586,6 +3586,62 @@ function AdminAttendanceConsole({
     }
   };
 
+  const [syncingOdoo, setSyncingOdoo] = useState(false);
+  const [syncingLeadId, setSyncingLeadId] = useState(null);
+
+  const handleSyncAllToOdoo = async () => {
+    if (syncingOdoo) return;
+    if (!window.confirm("🔄 Sync all student attendance metrics and session logs to Odoo CRM?")) return;
+    setSyncingOdoo(true);
+    try {
+      const res = await fetch(`${API_BASE}/attendance/sync-all-to-odoo`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${adminToken}`,
+        },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(`✅ ${data.message}`);
+        fetchData();
+        if (expandedId) fetchLeadAttendanceLogs(expandedId);
+      } else {
+        alert(`❌ Odoo sync failed: ${data.message}`);
+      }
+    } catch (err) {
+      alert("Failed to connect to the server during Odoo sync.");
+    } finally {
+      setSyncingOdoo(false);
+    }
+  };
+
+  const handleSyncSingleLeadToOdoo = async (leadId) => {
+    if (syncingLeadId === leadId) return;
+    setSyncingLeadId(leadId);
+    try {
+      const res = await fetch(`${API_BASE}/attendance/sync-lead-to-odoo/${leadId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${adminToken}`,
+        },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(`✅ ${data.message}`);
+        fetchData();
+        fetchLeadAttendanceLogs(leadId);
+      } else {
+        alert(`❌ Sync failed: ${data.message}`);
+      }
+    } catch (err) {
+      alert("Failed to connect to the server.");
+    } finally {
+      setSyncingLeadId(null);
+    }
+  };
+
   return (
     <div className="rounded-3xl bg-white dark:bg-slate-900 p-6 shadow-sm border border-slate-200/80 dark:border-slate-800">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -3609,6 +3665,17 @@ function AdminAttendanceConsole({
               className="w-full h-11 pl-9 pr-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-slate-800 transition-all text-slate-800 dark:text-white"
             />
           </div>
+
+          <button
+            type="button"
+            onClick={handleSyncAllToOdoo}
+            disabled={syncingOdoo}
+            className="flex items-center gap-1.5 px-3.5 h-11 rounded-2xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/60 text-xs font-black text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition cursor-pointer shrink-0 shadow-sm disabled:opacity-50"
+            title="Sync all student attendance metrics and class logs to Odoo CRM"
+          >
+            <RefreshCw className={`h-4 w-4 ${syncingOdoo ? "animate-spin text-indigo-600" : "text-indigo-500"}`} />
+            {syncingOdoo ? "Syncing Odoo..." : "Sync Odoo"}
+          </button>
 
           <button
             type="button"
@@ -3683,9 +3750,23 @@ function AdminAttendanceConsole({
                         if (c.key === "requirementId") {
                           return (
                             <td key={c.key} className="py-2.5 px-2">
-                              <span className="bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-100 dark:border-indigo-900 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded text-[10px] font-black font-mono whitespace-nowrap">
-                                {p.requirementId || "REQ-N/A"}
-                              </span>
+                              <div className="flex items-center gap-1 flex-wrap">
+                                <span className="bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-100 dark:border-indigo-900 text-indigo-700 dark:text-indigo-300 px-1.5 py-0.5 rounded text-[10px] font-black font-mono whitespace-nowrap">
+                                  {p.requirementId || "REQ-N/A"}
+                                </span>
+                                {p.odooLeadId && (
+                                  <a
+                                    href={`https://saraswati-tutorials.odoo.com/web#id=${p.odooLeadId}&model=crm.lead&view_type=form`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="text-[9px] font-black text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 px-1 py-0.2 rounded hover:underline inline-flex items-center"
+                                    title={`Linked to Odoo Lead #${p.odooLeadId} — Click to view in Odoo`}
+                                  >
+                                    Odoo
+                                  </a>
+                                )}
+                              </div>
                             </td>
                           );
                         }
@@ -3778,13 +3859,25 @@ function AdminAttendanceConsole({
                               <div className="lg:col-span-2 space-y-4">
                                 <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
                                   <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider">Class Logs & Topics History</h4>
-                                  <button
-                                    type="button"
-                                    onClick={() => window.open(`${API_BASE}/attendance/download-history/${p._id}?cycle=all`, "_blank")}
-                                    className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 text-xs font-black rounded-xl transition-all cursor-pointer shadow-xs"
-                                  >
-                                    <FileDown className="h-3.5 w-3.5" /> Download History CSV
-                                  </button>
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSyncSingleLeadToOdoo(p._id)}
+                                      disabled={syncingLeadId === p._id}
+                                      className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 dark:bg-purple-950/60 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/60 text-xs font-black rounded-xl transition-all cursor-pointer shadow-xs disabled:opacity-50"
+                                      title="Sync this student's attendance metrics and logs to Odoo CRM"
+                                    >
+                                      <RefreshCw className={`h-3.5 w-3.5 ${syncingLeadId === p._id ? "animate-spin text-purple-600" : "text-purple-500"}`} />
+                                      {syncingLeadId === p._id ? "Syncing..." : "Push to Odoo"}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => window.open(`${API_BASE}/attendance/download-history/${p._id}?cycle=all`, "_blank")}
+                                      className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 text-xs font-black rounded-xl transition-all cursor-pointer shadow-xs"
+                                    >
+                                      <FileDown className="h-3.5 w-3.5" /> Download History CSV
+                                    </button>
+                                  </div>
                                 </div>
 
                                 {fetchingLogsLeadId === p._id ? (

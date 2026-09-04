@@ -60,6 +60,19 @@ const attendanceSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    odooAttendanceId: {
+      type: Number,
+      default: null,
+    },
+    odooSyncStatus: {
+      type: String,
+      enum: ["pending", "synced", "failed"],
+      default: "pending",
+    },
+    odooSyncedAt: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );

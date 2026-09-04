@@ -3,7 +3,12 @@ import jwt from "jsonwebtoken";
 import Tutor from "../models/Tutor.js";
 import ParentEnquiry from "../models/ParentEnquiry.js";
 import Attendance from "../models/Attendance.js";
-import { updateLead } from "../utils/odooService.js";
+import {
+  updateLead,
+  syncAttendanceLogToOdoo,
+  syncLeadAttendanceSummaryToOdoo,
+  deleteOdooAttendanceLog,
+} from "../utils/odooService.js";
 import { verifyToken } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
@@ -404,22 +409,20 @@ router.post("/mark", verifyToken(["admin", "tutor"]), async (req, res) => {
 
     await lead.save({ validateBeforeSave: false });
 
-    // Sync to Odoo crm.lead asynchronously
-    if (lead.odooLeadId) {
-      try {
-        const remaining = Math.max(0, activeTotal - lead.completedClasses);
-        await updateLead(lead.odooLeadId, {
-          x_studio_completed_classes: lead.completedClasses,
-          x_studio_total_classes: activeTotal,
-          x_studio_remaining_classes: remaining,
-          x_studio_last_attendance_status: status,
-          x_studio_last_class_topics: status === "Done" ? topicsCovered : "",
-          x_studio_last_missed_reason: status === "Missed" ? (missedReason === "Other" ? customReason : missedReason) : "",
-        });
-      } catch (odooErr) {
-        console.error("[Odoo Attendance Sync Error]:", odooErr.message);
-      }
-    }
+    // Sync to Odoo (x_attendance_log, crm.lead summary, and Chatter) asynchronously
+    syncAttendanceLogToOdoo({ log: attendanceDoc, lead, tutor, postChatter: true }).catch((odooErr) => {
+      console.error("[Odoo Attendance Log Sync Error]:", odooErr.message);
+    });
+    syncLeadAttendanceSummaryToOdoo(lead, {
+      cycleNumber: activeCycle,
+      totalScheduled: activeTotal,
+      completedCount: lead.completedClasses,
+      remainingCount: Math.max(0, activeTotal - lead.completedClasses),
+      status: lead.packageStatus,
+      logs: [attendanceDoc],
+    }).catch((odooErr) => {
+      console.error("[Odoo Lead Summary Sync Error]:", odooErr.message);
+    });
 
     const updatedCard = await formatStudentCard(lead);
 
@@ -736,21 +739,10 @@ router.put("/update-tuition/:id", verifyToken(["admin"]), async (req, res) => {
 
     await lead.save({ validateBeforeSave: false });
 
-    // Sync to Odoo if needed
-    if (lead.odooLeadId) {
-      try {
-        const comp = lead.completedClasses || 0;
-        const tot = lead.totalClasses || 12;
-        const rem = Math.max(0, tot - comp);
-        await updateLead(lead.odooLeadId, {
-          x_studio_total_classes: tot,
-          x_studio_completed_classes: comp,
-          x_studio_remaining_classes: rem,
-        });
-      } catch (odooErr) {
-        console.error("[Odoo sync error during manual update]:", odooErr.message);
-      }
-    }
+    // Sync to Odoo
+    syncLeadAttendanceSummaryToOdoo(lead).catch((odooErr) => {
+      console.error("[Odoo sync error during manual update]:", odooErr.message);
+    });
 
     const card = await formatStudentCard(lead);
     res.json({ success: true, studentCard: card });
@@ -770,7 +762,16 @@ router.delete("/log/:logId", verifyToken(["admin"]), async (req, res) => {
 
     const parentEnquiryId = log.parentEnquiryId;
     const logCycle = log.packageCycle || 1;
+    const odooAttId = log.odooAttendanceId;
+
     await Attendance.findByIdAndDelete(req.params.logId);
+
+    // If synced to Odoo, delete from Odoo x_attendance_log
+    if (odooAttId) {
+      deleteOdooAttendanceLog(odooAttId).catch((odooErr) => {
+        console.error("[Odoo Delete Log Error]:", odooErr.message);
+      });
+    }
 
     // Recalculate Completed Classes count
     const lead = await ParentEnquiry.findById(parentEnquiryId);
@@ -786,18 +787,9 @@ router.delete("/log/:logId", verifyToken(["admin"]), async (req, res) => {
         lead.packageStatus = lead.completedClasses >= (lead.totalClasses || 12) ? "completed" : "active";
         await lead.save({ validateBeforeSave: false });
 
-        if (lead.odooLeadId) {
-          try {
-            const remaining = Math.max(0, (lead.totalClasses || 12) - lead.completedClasses);
-            await updateLead(lead.odooLeadId, {
-              x_studio_completed_classes: lead.completedClasses,
-              x_studio_total_classes: lead.totalClasses || 12,
-              x_studio_remaining_classes: remaining,
-            });
-          } catch (odooErr) {
-            console.error("[Odoo Sync Error after delete log]:", odooErr.message);
-          }
-        }
+        syncLeadAttendanceSummaryToOdoo(lead).catch((odooErr) => {
+          console.error("[Odoo Sync Error after delete log]:", odooErr.message);
+        });
       }
     }
 
@@ -834,6 +826,12 @@ router.put("/log/:logId", verifyToken(["admin"]), async (req, res) => {
     // Recalculate Completed Classes count for parent lead if in active cycle
     const parentEnquiryId = log.parentEnquiryId;
     const lead = await ParentEnquiry.findById(parentEnquiryId);
+
+    // Sync updated log to Odoo x_attendance_log and chatter
+    syncAttendanceLogToOdoo({ log, lead, tutor: null, postChatter: true }).catch((odooErr) => {
+      console.error("[Odoo Sync Error after update log]:", odooErr.message);
+    });
+
     if (lead) {
       const activeCycle = lead.currentPackageCycle || 1;
       const logCycle = log.packageCycle || 1;
@@ -850,19 +848,9 @@ router.put("/log/:logId", verifyToken(["admin"]), async (req, res) => {
         lead.packageStatus = lead.completedClasses >= (lead.totalClasses || 12) ? "completed" : "active";
         await lead.save({ validateBeforeSave: false });
 
-        if (lead.odooLeadId) {
-          try {
-            const remaining = Math.max(0, (lead.totalClasses || 12) - lead.completedClasses);
-            await updateLead(lead.odooLeadId, {
-              x_studio_completed_classes: lead.completedClasses,
-              x_studio_total_classes: lead.totalClasses || 12,
-              x_studio_remaining_classes: remaining,
-              x_studio_last_attendance_status: status,
-            });
-          } catch (odooErr) {
-            console.error("[Odoo Sync Error after update log]:", odooErr.message);
-          }
-        }
+        syncLeadAttendanceSummaryToOdoo(lead).catch((odooErr) => {
+          console.error("[Odoo Lead Summary Sync Error after log edit]:", odooErr.message);
+        });
       }
     }
 
@@ -870,6 +858,95 @@ router.put("/log/:logId", verifyToken(["admin"]), async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: err.message });
+  }
+});
+
+// =============================================================
+// POST: Batch Sync all Attendance & Leads to Odoo (Admin only)
+// =============================================================
+router.post("/sync-all-to-odoo", verifyToken(["admin"]), async (req, res) => {
+  try {
+    const leads = await ParentEnquiry.find({
+      status: { $nin: ["Lost", "Rejected", "Demo Cancelled", "Cancelled"] },
+    });
+
+    let totalSyncedLogs = 0;
+    let totalSyncedLeads = 0;
+    let failedCount = 0;
+
+    for (const lead of leads) {
+      try {
+        const allLogs = await Attendance.find({ parentEnquiryId: lead._id }).sort({ date: 1, sessionNumber: 1 });
+        const cycles = computeCycleBreakdown(lead, allLogs);
+        const activeCycle = lead.currentPackageCycle || 1;
+        const activeCycleData = cycles.find((c) => c.cycleNumber === activeCycle) || cycles[cycles.length - 1];
+
+        // 1. Sync lead summary
+        const summaryOk = await syncLeadAttendanceSummaryToOdoo(lead, activeCycleData);
+        if (summaryOk) totalSyncedLeads++;
+
+        // 2. Sync individual logs (postChatter: false during bulk to prevent flood, logs are preserved in x_attendance_log)
+        for (const log of allLogs) {
+          try {
+            await syncAttendanceLogToOdoo({ log, lead, tutor: null, postChatter: false });
+            totalSyncedLogs++;
+          } catch (e) {
+            failedCount++;
+          }
+        }
+      } catch (leadErr) {
+        console.error(`[Batch Sync Error for lead ${lead._id}]:`, leadErr.message);
+        failedCount++;
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Batch sync complete: ${totalSyncedLeads} student leads and ${totalSyncedLogs} attendance logs synced to Odoo.`,
+      stats: {
+        syncedLeads: totalSyncedLeads,
+        syncedLogs: totalSyncedLogs,
+        failedCount,
+      },
+    });
+  } catch (err) {
+    console.error("Batch sync to Odoo failed:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// =============================================================
+// POST: Sync single Lead & all its logs to Odoo (Admin only)
+// =============================================================
+router.post("/sync-lead-to-odoo/:leadId", verifyToken(["admin"]), async (req, res) => {
+  try {
+    const lead = await ParentEnquiry.findById(req.params.leadId);
+    if (!lead) return res.status(404).json({ success: false, message: "Student enquiry not found." });
+
+    const allLogs = await Attendance.find({ parentEnquiryId: lead._id }).sort({ date: 1, sessionNumber: 1 });
+    const cycles = computeCycleBreakdown(lead, allLogs);
+    const activeCycle = lead.currentPackageCycle || 1;
+    const activeCycleData = cycles.find((c) => c.cycleNumber === activeCycle) || cycles[cycles.length - 1];
+
+    // Sync summary
+    await syncLeadAttendanceSummaryToOdoo(lead, activeCycleData);
+
+    // Sync all logs
+    let syncedLogs = 0;
+    for (const log of allLogs) {
+      await syncAttendanceLogToOdoo({ log, lead, tutor: null, postChatter: false });
+      syncedLogs++;
+    }
+
+    res.json({
+      success: true,
+      message: `Synced ${lead.wards?.[0]?.studentName || lead.parentName} to Odoo with ${syncedLogs} attendance log(s).`,
+      odooLeadId: lead.odooLeadId,
+      syncedLogs,
+    });
+  } catch (err) {
+    console.error("Single lead sync to Odoo failed:", err);
+    res.status(500).json({ success: false, message: err.message });
   }
 });
 

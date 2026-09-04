@@ -709,3 +709,274 @@ export async function updateLeadRecommendedTutors(odooLeadId, odooIds = []) {
   }
 }
 
+/**
+ * Locate or link an Odoo crm.lead ID for a given ParentEnquiry document.
+ * Tries lead.odooLeadId -> x_studio_requirement_id -> phone last 10 digits.
+ * Persists the resolved odooLeadId back to MongoDB so future queries are instant.
+ *
+ * @param {Object} lead - ParentEnquiry document
+ * @returns {Promise<number|null>}
+ */
+export async function findOrLinkOdooLead(lead) {
+  if (!lead) return null;
+  if (lead.odooLeadId && !isNaN(Number(lead.odooLeadId))) {
+    return Number(lead.odooLeadId);
+  }
+
+  try {
+    const uid = await callOdoo("common", "authenticate", [_DB, _USERNAME, _PASSWORD, {}]);
+    if (!uid) return null;
+
+    // Pass 1: Search by Requirement ID if present
+    if (lead.requirementId && lead.requirementId.trim()) {
+      const byReq = await callOdoo("object", "execute_kw", [
+        _DB, uid, _PASSWORD,
+        "crm.lead", "search_read",
+        [[["x_studio_requirement_id", "=", lead.requirementId.trim()]]],
+        { fields: ["id"], limit: 1 }
+      ]);
+      if (byReq && byReq.length > 0) {
+        const foundId = byReq[0].id;
+        lead.odooLeadId = foundId;
+        await lead.save({ validateBeforeSave: false }).catch(() => {});
+        console.log(`[OdooService] Linked lead ${lead._id} to Odoo crm.lead #${foundId} via requirement ID ${lead.requirementId}`);
+        return foundId;
+      }
+    }
+
+    // Pass 2: Search by phone (last 10 digits)
+    if (lead.phone) {
+      const digits = String(lead.phone).replace(/\D/g, "").slice(-10);
+      if (digits.length >= 8) {
+        const byPhone = await callOdoo("object", "execute_kw", [
+          _DB, uid, _PASSWORD,
+          "crm.lead", "search_read",
+          [[["phone", "like", digits]]],
+          { fields: ["id"], limit: 1 }
+        ]);
+        if (byPhone && byPhone.length > 0) {
+          const foundId = byPhone[0].id;
+          lead.odooLeadId = foundId;
+          await lead.save({ validateBeforeSave: false }).catch(() => {});
+          console.log(`[OdooService] Linked lead ${lead._id} to Odoo crm.lead #${foundId} via phone suffix ${digits}`);
+          return foundId;
+        }
+      }
+    }
+  } catch (err) {
+    console.error("[OdooService] findOrLinkOdooLead error:", err.message);
+  }
+  return null;
+}
+
+/**
+ * Synchronize a single Attendance log document to Odoo.
+ * Upserts x_attendance_log and adds a structured note to the crm.lead Chatter.
+ *
+ * @param {Object} params
+ * @param {Object} params.log - Attendance Mongoose document
+ * @param {Object} [params.lead] - ParentEnquiry Mongoose document
+ * @param {Object} [params.tutor] - Tutor Mongoose document
+ * @param {boolean} [params.postChatter=true] - Whether to post a note to Odoo Chatter
+ * @returns {Promise<{ success: boolean, odooAttendanceId?: number, odooLeadId?: number, error?: string }>}
+ */
+export async function syncAttendanceLogToOdoo({ log, lead, tutor, postChatter = true }) {
+  try {
+    const uid = await callOdoo("common", "authenticate", [_DB, _USERNAME, _PASSWORD, {}]);
+    if (!uid) throw new Error("Odoo login failed");
+
+    let odooLeadId = null;
+    if (lead) {
+      odooLeadId = await findOrLinkOdooLead(lead);
+    }
+
+    const studentName = lead?.wards?.map((w) => w.studentName).join(", ") || log.studentName || "Unknown Student";
+    const parentName = lead?.parentName || "Unknown Parent";
+    const reqId = lead?.requirementId || log.requirementId || "";
+    const tutorName = tutor?.name || log.tutorName || "Unknown Tutor";
+    const cycle = log.packageCycle || 1;
+    const sessionNum = log.sessionNumber || 1;
+    const logDate = log.date || new Date().toISOString().split("T")[0];
+    const logRef = `ATT-${reqId || (lead?._id?.toString().slice(-6)) || "LOG"}-${logDate}-${sessionNum}`;
+
+    const payload = {
+      x_name: logRef,
+      x_student_name: studentName,
+      x_parent_name: parentName,
+      x_requirement_id: reqId,
+      x_tutor_name: tutorName,
+      x_date: logDate,
+      x_package_cycle: cycle,
+      x_session_number: sessionNum,
+      x_status: log.status || "Done",
+      x_topics_covered: log.status === "Done" ? (log.topicsCovered || "") : "",
+      x_missed_reason: log.status === "Missed" ? (log.missedReason === "Other" ? (log.customReason || "Other") : (log.missedReason || "")) : "",
+    };
+    if (odooLeadId) {
+      payload.x_lead_id = odooLeadId;
+    }
+
+    // Check if x_attendance_log already exists by reference or odooAttendanceId
+    let existingLogId = log.odooAttendanceId;
+    if (!existingLogId) {
+      const existing = await callOdoo("object", "execute_kw", [
+        _DB, uid, _PASSWORD,
+        "x_attendance_log", "search_read",
+        [[["x_name", "=", logRef]]],
+        { fields: ["id"], limit: 1 }
+      ]);
+      if (existing && existing.length > 0) {
+        existingLogId = existing[0].id;
+      }
+    }
+
+    let odooRecordId = existingLogId;
+    if (existingLogId) {
+      await callOdoo("object", "execute_kw", [
+        _DB, uid, _PASSWORD,
+        "x_attendance_log", "write",
+        [[existingLogId], payload]
+      ]);
+      console.log(`[OdooService] Updated x_attendance_log #${existingLogId} (${logRef})`);
+    } else {
+      odooRecordId = await callOdoo("object", "execute_kw", [
+        _DB, uid, _PASSWORD,
+        "x_attendance_log", "create",
+        [payload]
+      ]);
+      console.log(`[OdooService] Created x_attendance_log #${odooRecordId} (${logRef})`);
+    }
+
+    // Update log document in MongoDB
+    log.odooAttendanceId = odooRecordId;
+    log.odooSyncStatus = "synced";
+    log.odooSyncedAt = new Date();
+    await log.save({ validateBeforeSave: false }).catch(() => {});
+
+    // Post to Odoo Lead Chatter if linked and requested
+    if (odooLeadId && postChatter) {
+      const isDone = log.status === "Done";
+      const statusHtml = isDone
+        ? `<span style="color: #059669; font-weight: bold;">Completed (Done)</span>`
+        : `<span style="color: #dc2626; font-weight: bold;">Missed</span>`;
+      
+      const detailHtml = isDone
+        ? `<p style="margin: 2px 0 0 0;"><strong>Topics:</strong> ${log.topicsCovered || "General Practice"}</p>`
+        : `<p style="margin: 2px 0 0 0;"><strong>Reason:</strong> ${payload.x_missed_reason || "Unspecified"}</p>`;
+
+      const chatterHtml = `
+        <div style="font-family: sans-serif; font-size: 13px; line-height: 1.4;">
+          <p style="margin: 0; font-weight: bold; color: #4338ca;">
+            ${isDone ? "📚 Class" : "⚠️ Class Missed"} ${sessionNum} Logged (Month ${cycle})
+          </p>
+          <p style="margin: 4px 0 0 0;"><strong>Status:</strong> ${statusHtml}</p>
+          <p style="margin: 2px 0 0 0;"><strong>Date:</strong> ${logDate}</p>
+          <p style="margin: 2px 0 0 0;"><strong>Tutor:</strong> ${tutorName}</p>
+          ${detailHtml}
+          ${lead ? `<p style="margin: 4px 0 0 0; color: #64748b; font-size: 11px;">Cycle Progress: ${lead.completedClasses || 0}/${lead.totalClasses || 12} Completed</p>` : ""}
+        </div>
+      `;
+
+      await callOdoo("object", "execute_kw", [
+        _DB, uid, _PASSWORD,
+        "crm.lead", "message_post",
+        [[odooLeadId]],
+        {
+          body: chatterHtml,
+          message_type: "comment",
+          subtype_xmlid: "mail.mt_note",
+        }
+      ]);
+      console.log(`[OdooService] Posted chatter log to crm.lead #${odooLeadId}`);
+    }
+
+    return { success: true, odooAttendanceId: odooRecordId, odooLeadId };
+  } catch (err) {
+    console.error("[OdooService] syncAttendanceLogToOdoo error:", err.message);
+    log.odooSyncStatus = "failed";
+    await log.save({ validateBeforeSave: false }).catch(() => {});
+    return { success: false, error: err.message };
+  }
+}
+
+/**
+ * Synchronize attendance summary metrics directly to crm.lead in Odoo.
+ *
+ * @param {Object} lead - ParentEnquiry document
+ * @param {Object} [activeCycleData] - Current cycle stats computed by computeCycleBreakdown
+ * @returns {Promise<boolean>}
+ */
+export async function syncLeadAttendanceSummaryToOdoo(lead, activeCycleData) {
+  if (!lead) return false;
+  try {
+    const odooLeadId = await findOrLinkOdooLead(lead);
+    if (!odooLeadId) {
+      console.warn(`[OdooService] Cannot sync lead summary: No Odoo Lead ID found for lead ${lead._id}`);
+      return false;
+    }
+
+    const uid = await callOdoo("common", "authenticate", [_DB, _USERNAME, _PASSWORD, {}]);
+    if (!uid) return false;
+
+    const currentCycle = activeCycleData?.cycleNumber || lead.currentPackageCycle || 1;
+    const scheduled = activeCycleData?.totalScheduled || lead.totalClasses || 12;
+    const completed = activeCycleData?.completedCount ?? (lead.completedClasses || 0);
+    const remaining = activeCycleData?.remainingCount ?? Math.max(0, scheduled - completed);
+    const status = activeCycleData?.status || lead.packageStatus || (completed >= scheduled ? "Completed" : "Active");
+
+    const payload = {
+      x_completed_classes: completed,
+      x_total_classes: scheduled,
+      x_remaining_classes: remaining,
+      x_current_cycle: currentCycle,
+      x_package_status: status === "Completed" ? `Month ${currentCycle} Completed` : "Active",
+    };
+
+    if (activeCycleData?.logs && activeCycleData.logs.length > 0) {
+      const latestLog = activeCycleData.logs[activeCycleData.logs.length - 1];
+      payload.x_last_class_date = latestLog.date || "";
+      payload.x_last_attendance_status = latestLog.status || "";
+      payload.x_last_class_topics = latestLog.status === "Done" ? (latestLog.topicsCovered || "") : "";
+      payload.x_last_missed_reason = latestLog.status === "Missed" ? (latestLog.missedReason || "") : "";
+    }
+
+    await callOdoo("object", "execute_kw", [
+      _DB, uid, _PASSWORD,
+      "crm.lead", "write",
+      [[odooLeadId], payload]
+    ]);
+
+    console.log(`[OdooService] ✅ Synced attendance summary to crm.lead #${odooLeadId}`);
+    return true;
+  } catch (err) {
+    console.error("[OdooService] syncLeadAttendanceSummaryToOdoo error:", err.message);
+    return false;
+  }
+}
+
+/**
+ * Delete an x_attendance_log record from Odoo when removed in the dashboard.
+ *
+ * @param {number|string} odooAttendanceId
+ * @returns {Promise<boolean>}
+ */
+export async function deleteOdooAttendanceLog(odooAttendanceId) {
+  if (!odooAttendanceId) return false;
+  try {
+    const uid = await callOdoo("common", "authenticate", [_DB, _USERNAME, _PASSWORD, {}]);
+    if (!uid) return false;
+
+    await callOdoo("object", "execute_kw", [
+      _DB, uid, _PASSWORD,
+      "x_attendance_log", "unlink",
+      [[Number(odooAttendanceId)]]
+    ]);
+    console.log(`[OdooService] Deleted x_attendance_log #${odooAttendanceId}`);
+    return true;
+  } catch (err) {
+    console.error("[OdooService] deleteOdooAttendanceLog error:", err.message);
+    return false;
+  }
+}
+
+
