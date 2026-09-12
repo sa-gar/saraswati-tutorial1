@@ -1160,13 +1160,240 @@ export async function createLead(data) {
     }
 
 
-    console.log(
-      "[Odoo] Creating lead for:",
-      data.userType
-    );
+    /* ------------------------------------------------------------------------
+       IDEMPOTENCY CHECK (Parent leads only)
+       Search for an existing CRM lead by requirement_id before creating.
+       If found  → update (write) the existing lead and return its ID.
+       If not    → create a new lead.
+       Tutor leads have no requirementId, so they always create.
+    ------------------------------------------------------------------------ */
+
+    const searchReqId =
+      leadPayload.requirement_id ||
+      leadPayload.x_studio_requirement_id ||
+      "";
 
 
-    const leadId =
+    let existingLeadId = null;
+
+
+    if (
+      data.userType === "parent" &&
+      searchReqId
+    ) {
+
+      console.log(
+        "[Odoo] Idempotency check — searching for existing lead:",
+        searchReqId
+      );
+
+
+      /* ── Pass 1: requirement_id (Community native field) ── */
+
+      try {
+
+        const byReqNative =
+          await callOdoo(
+            "object",
+            "execute_kw",
+            [
+              _DB,
+              uid,
+              _PASSWORD,
+
+              "crm.lead",
+
+              "search_read",
+
+              [
+                [
+                  [
+                    "requirement_id",
+                    "=",
+                    searchReqId,
+                  ],
+                ],
+              ],
+
+              {
+                fields: ["id"],
+                limit: 1,
+              },
+            ]
+          );
+
+
+        if (
+          byReqNative &&
+          byReqNative.length > 0
+        ) {
+
+          existingLeadId =
+            byReqNative[0].id;
+
+          console.log(
+            `[Odoo] Idempotency — found existing lead #${existingLeadId} via requirement_id`
+          );
+        }
+
+      } catch (searchErr) {
+
+        console.warn(
+          "[Odoo] Idempotency search (requirement_id) failed:",
+          searchErr.message
+        );
+      }
+
+
+      /* ── Pass 2: x_studio_requirement_id (legacy Studio field) ── */
+
+      if (!existingLeadId) {
+
+        try {
+
+          const byReqStudio =
+            await callOdoo(
+              "object",
+              "execute_kw",
+              [
+                _DB,
+                uid,
+                _PASSWORD,
+
+                "crm.lead",
+
+                "search_read",
+
+                [
+                  [
+                    [
+                      "x_studio_requirement_id",
+                      "=",
+                      searchReqId,
+                    ],
+                  ],
+                ],
+
+                {
+                  fields: ["id"],
+                  limit: 1,
+                },
+              ]
+            );
+
+
+          if (
+            byReqStudio &&
+            byReqStudio.length > 0
+          ) {
+
+            existingLeadId =
+              byReqStudio[0].id;
+
+            console.log(
+              `[Odoo] Idempotency — found existing lead #${existingLeadId} via x_studio_requirement_id`
+            );
+          }
+
+        } catch (searchErr) {
+
+          console.warn(
+            "[Odoo] Idempotency search (x_studio_requirement_id) failed:",
+            searchErr.message
+          );
+        }
+      }
+
+
+      /* ── Pass 3: website_student_id ── */
+
+      if (
+        !existingLeadId &&
+        (
+          leadPayload.website_student_id ||
+          data.websiteStudentId
+        )
+      ) {
+
+        const wsId =
+          leadPayload.website_student_id ||
+          data.websiteStudentId;
+
+
+        try {
+
+          const byStudentId =
+            await callOdoo(
+              "object",
+              "execute_kw",
+              [
+                _DB,
+                uid,
+                _PASSWORD,
+
+                "crm.lead",
+
+                "search_read",
+
+                [
+                  [
+                    [
+                      "website_student_id",
+                      "=",
+                      wsId,
+                    ],
+                  ],
+                ],
+
+                {
+                  fields: ["id"],
+                  limit: 1,
+                },
+              ]
+            );
+
+
+          if (
+            byStudentId &&
+            byStudentId.length > 0
+          ) {
+
+            existingLeadId =
+              byStudentId[0].id;
+
+            console.log(
+              `[Odoo] Idempotency — found existing lead #${existingLeadId} via website_student_id`
+            );
+          }
+
+        } catch (searchErr) {
+
+          console.warn(
+            "[Odoo] Idempotency search (website_student_id) failed:",
+            searchErr.message
+          );
+        }
+      }
+    }
+
+
+    /* ------------------------------------------------------------------------
+       WRITE (update) or CREATE
+    ------------------------------------------------------------------------ */
+
+    let leadId;
+
+
+    if (existingLeadId) {
+
+      /* ── UPDATE existing lead ── */
+
+      console.log(
+        "[Odoo] Updating existing lead (idempotent):",
+        existingLeadId
+      );
+
+
       await callOdoo(
         "object",
         "execute_kw",
@@ -1177,17 +1404,56 @@ export async function createLead(data) {
 
           "crm.lead",
 
-          "create",
+          "write",
 
-          [leadPayload],
+          [
+            [existingLeadId],
+            leadPayload,
+          ],
         ]
       );
 
 
-    console.log(
-      "[Odoo] Lead created:",
-      leadId
-    );
+      leadId = existingLeadId;
+
+      console.log(
+        "[Odoo] Lead updated (no duplicate created):",
+        leadId
+      );
+
+    } else {
+
+      /* ── CREATE new lead ── */
+
+      console.log(
+        "[Odoo] Creating new lead for:",
+        data.userType
+      );
+
+
+      leadId =
+        await callOdoo(
+          "object",
+          "execute_kw",
+          [
+            _DB,
+            uid,
+            _PASSWORD,
+
+            "crm.lead",
+
+            "create",
+
+            [leadPayload],
+          ]
+        );
+
+
+      console.log(
+        "[Odoo] Lead created:",
+        leadId
+      );
+    }
 
 
     return {
