@@ -267,33 +267,20 @@ router.post("/", async (req, res) => {
       console.error("Failed to log backend validation success:", logErr.message);
     }
 
-    let odooRes = null;
-    let odooSyncStatus = "pending";
-    let odooSyncError = "";
+    // ── Step 1: Generate stable IDs before saving (MongoDB count-based) ──────
+    let requirementId = "";
+    let websiteStudentId = "";
     try {
-      odooRes = await createLead({ ...req.body, userType: "parent" });
-      if (odooRes && (odooRes.id || typeof odooRes === "number")) {
-        odooSyncStatus = "synced";
-      } else {
-        odooSyncStatus = "failed";
-        odooSyncError = "Odoo returned invalid response";
-      }
-    } catch (err) {
-      console.error("Odoo create parent lead error:", err.message);
-      odooSyncStatus = "failed";
-      odooSyncError = err.message || "Odoo lead creation failed";
-    }
-
-    let requirementId = odooRes && typeof odooRes === "object" ? odooRes.requirementId : "";
-    if (!requirementId) {
-      try {
-        const count = await ParentEnquiry.countDocuments({});
-        requirementId = `REQ-${String(count + 1).padStart(5, "0")}`;
-        console.log("[Fallback] Generated sequential Requirement ID:", requirementId);
-      } catch (seqErr) {
-        console.error("[Fallback] Failed to generate Requirement ID:", seqErr.message);
-        requirementId = `REQ-${String(Date.now()).slice(-5)}`;
-      }
+      const count = await ParentEnquiry.countDocuments({});
+      const seq = String(count + 1).padStart(5, "0");
+      requirementId = `REQ-${seq}`;
+      websiteStudentId = `STU-${seq}`;
+      console.log("[ParentEnquiry] Generated IDs:", requirementId, websiteStudentId);
+    } catch (seqErr) {
+      console.error("[ParentEnquiry] Failed to generate sequential IDs:", seqErr.message);
+      const ts = String(Date.now()).slice(-5);
+      requirementId = `REQ-${ts}`;
+      websiteStudentId = `STU-${ts}`;
     }
 
     let finalTotalClasses = req.body.totalClasses;
@@ -301,14 +288,16 @@ router.post("/", async (req, res) => {
       finalTotalClasses = Number(req.body.daysPerWeek) * 4;
     }
 
+    // ── Step 2: Save to MongoDB FIRST (parent is never blocked by Odoo) ───────
     const enquiry = new ParentEnquiry({
       ...req.body,
       totalClasses: finalTotalClasses,
       status: req.body.status || "New Lead",
-      odooLeadId: odooRes && typeof odooRes === "object" ? odooRes.id : odooRes,
       requirementId,
-      odooSyncStatus,
-      odooSyncError,
+      websiteStudentId,
+      odooSyncStatus: "pending",
+      odooSyncError: "",
+      odooLastSyncAt: null,
     });
 
     const saved = await enquiry.save();
@@ -333,7 +322,7 @@ router.post("/", async (req, res) => {
       console.error("Failed to log database saved success:", logErr.message);
     }
 
-    // Clear drafts
+    // ── Step 3: Clear drafts ─────────────────────────────────────────────────
     try {
       const email = req.body.email;
       const phone = req.body.phone;
@@ -347,12 +336,40 @@ router.post("/", async (req, res) => {
       console.error("Error clearing draft on submit:", draftErr.message);
     }
 
-    // Trigger auto-broadcast asynchronously to best-matched tutors
+    // ── Step 4: Trigger auto-broadcast asynchronously ────────────────────────
     autoBroadcastTutorsForLead(saved).catch(err => {
       console.error("[Auto-Broadcast] Trigger failed:", err.message);
     });
 
+    // ── Step 5: Sync to Odoo Community asynchronously (non-blocking) ─────────
+    // Parent gets HTTP 201 immediately. Odoo sync happens in background.
+    setImmediate(async () => {
+      try {
+        const odooRes = await createLead({ ...req.body, requirementId, websiteStudentId, userType: "parent" });
+        const odooLeadId = odooRes && typeof odooRes === "object" ? odooRes.id : odooRes;
+        const odooReqId = (odooRes && typeof odooRes === "object" && odooRes.requirementId) || requirementId;
+
+        await ParentEnquiry.findByIdAndUpdate(saved._id, {
+          odooLeadId: odooLeadId || null,
+          requirementId: odooReqId || requirementId,
+          odooSyncStatus: odooLeadId ? "synced" : "failed",
+          odooSyncError: odooLeadId ? "" : "Odoo returned no lead ID",
+          odooLastSyncAt: new Date(),
+        });
+
+        console.log(`[Odoo Sync] ✅ Parent enquiry ${requirementId} synced to Odoo Community → Lead #${odooLeadId}`);
+      } catch (odooErr) {
+        console.error(`[Odoo Sync] ❌ Parent enquiry ${requirementId} failed:`, odooErr.message);
+        await ParentEnquiry.findByIdAndUpdate(saved._id, {
+          odooSyncStatus: "failed",
+          odooSyncError: odooErr.message || "Unknown Odoo error",
+          odooLastSyncAt: new Date(),
+        }).catch(() => {});
+      }
+    });
+
     res.status(201).json(saved);
+
   } catch (error) {
     console.error("Parent enquiry create error:", error);
     res.status(400).json({ message: error.message });
@@ -596,7 +613,7 @@ router.post("/:id/broadcast", verifyToken(["admin"]), async (req, res) => {
         // Fallback if no specific link is found, to prevent WhatsApp parameter validation errors
         if (!tutorSignLink) {
           console.warn(`[Odoo Sign] Fallback to general sign dashboard for tutor ${tutor.name}`);
-          const odooBaseUrl = (process.env.ODOO_URL || "https://saraswati-tutorials.odoo.com").replace(/\/+$/, "");
+          const odooBaseUrl = (process.env.ODOO_URL || "https://odoo.saraswatitutorial.com").replace(/\/+$/, "");
           tutorSignLink = `${odooBaseUrl}/sign`;
         }
 
@@ -1245,7 +1262,7 @@ async function autoBroadcastTutorsForLead(leadData) {
         }
 
         if (!tutorSignLink) {
-          const odooBaseUrl = (process.env.ODOO_URL || "https://saraswati-tutorials.odoo.com").replace(/\/+$/, "");
+          const odooBaseUrl = (process.env.ODOO_URL || "https://odoo.saraswatitutorial.com").replace(/\/+$/, "");
           tutorSignLink = `${odooBaseUrl}/sign`;
         }
 

@@ -73,6 +73,17 @@ const attendanceSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+
+    externalAttendanceId: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    odooSyncError: {
+      type: String,
+      default: "",
+    },
   },
   { timestamps: true }
 );
@@ -81,5 +92,6 @@ const attendanceSchema = new mongoose.Schema(
 attendanceSchema.index({ parentEnquiryId: 1, packageCycle: 1, date: 1, status: 1 });
 attendanceSchema.index({ parentEnquiryId: 1, packageCycle: 1, sessionNumber: 1 });
 attendanceSchema.index({ tutorId: 1 });
+attendanceSchema.index({ externalAttendanceId: 1 }, { sparse: true });
 
 export default mongoose.model("Attendance", attendanceSchema);

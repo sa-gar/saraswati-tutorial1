@@ -208,6 +208,12 @@ const parentEnquirySchema = new mongoose.Schema(
       default: "",
     },
 
+    websiteStudentId: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
     geoInfo: {
       type: mongoose.Schema.Types.Mixed,
       default: {},
@@ -370,13 +376,18 @@ const parentEnquirySchema = new mongoose.Schema(
 
     odooSyncStatus: {
       type: String,
-      enum: ["synced", "failed", "pending"],
+      enum: ["synced", "failed", "pending", "retrying"],
       default: "pending",
     },
 
     odooSyncError: {
       type: String,
       default: "",
+    },
+
+    odooLastSyncAt: {
+      type: Date,
+      default: null,
     },
   },
   { timestamps: true }

@@ -3756,7 +3756,7 @@ function AdminAttendanceConsole({
                                 </span>
                                 {p.odooLeadId && (
                                   <a
-                                    href={`https://saraswati-tutorials.odoo.com/web#id=${p.odooLeadId}&model=crm.lead&view_type=form`}
+                                    href={`https://odoo.saraswatitutorial.com/web#id=${p.odooLeadId}&model=crm.lead&view_type=form`}
                                     target="_blank"
                                     rel="noreferrer"
                                     onClick={(e) => e.stopPropagation()}

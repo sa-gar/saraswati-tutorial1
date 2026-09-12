@@ -341,7 +341,7 @@ class BroadcastService {
     }).save();
 
     // Fetch Odoo sign link for onboarding template
-    const odooBaseUrl = (process.env.ODOO_URL || "https://saraswati-tutorials.odoo.com").replace(/\/+$/, "");
+    const odooBaseUrl = (process.env.ODOO_URL || "https://odoo.saraswatitutorial.com").replace(/\/+$/, "");
     let tutorSignLink = `${odooBaseUrl}/sign`;
     let tutorSignRequestId = null;
     try {

@@ -388,6 +388,12 @@ router.post("/mark", verifyToken(["admin", "tutor"]), async (req, res) => {
       });
 
       await attendanceDoc.save();
+
+      // Set stable externalAttendanceId immediately after first save (uses MongoDB _id)
+      if (!attendanceDoc.externalAttendanceId) {
+        attendanceDoc.externalAttendanceId = `ATT-${attendanceDoc._id}`;
+        await attendanceDoc.save({ validateBeforeSave: false });
+      }
     }
 
     // Recalculate completed count for active cycle

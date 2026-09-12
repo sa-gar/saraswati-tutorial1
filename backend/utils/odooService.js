@@ -964,6 +964,44 @@ export async function createLead(data) {
           data.email || "",
 
 
+        // ── Odoo Community native fields ──────────────────────────────────────
+        lead_category:
+          "Parent",
+
+        website_student_id:
+          data.websiteStudentId || "",
+
+        requirement_id:
+          data.requirementId || "",
+
+        parent_name:
+          data.parentName || "",
+
+        student_name:
+          ward.studentName || "",
+
+        student_class:
+          ward.classGrade || "",
+
+        tuition_parent_whatsapp:
+          data.phone || "",
+
+        locality:
+          data.address || data.area || "",
+
+        subjects_intrested:
+          (ward.subjectsNeeded || []).join(", "),
+
+        preferred_timings:
+          data.preferredTime || "",
+
+        preferred_tutor_gender:
+          data.preferredGender === "Flexible"
+            ? "No Preference"
+            : (data.preferredGender?.toString() || "No Preference"),
+
+
+        // ── Odoo Studio/legacy fields (kept for backward compat) ──────────────
         x_studio_type:
           "Parent",
 
@@ -1042,64 +1080,82 @@ export async function createLead(data) {
       }
 
 
-      console.log(
-        "[Odoo] Generating Requirement ID..."
-      );
+      // Use caller-supplied requirementId (from MongoDB) if available,
+      // otherwise fall back to querying Odoo for sequential count.
+      if (data.requirementId) {
+
+        leadPayload.x_studio_requirement_id = data.requirementId;
+        leadPayload.requirement_id = data.requirementId;
+
+        console.log(
+          "[Odoo] Using pre-supplied Requirement ID:",
+          data.requirementId
+        );
+
+      } else {
+
+        console.log(
+          "[Odoo] Generating Requirement ID from Odoo count..."
+        );
 
 
-      try {
+        try {
 
-        const count =
-          await callOdoo(
-            "object",
-            "execute_kw",
-            [
-              _DB,
-              uid,
-              _PASSWORD,
-
-              "crm.lead",
-
-              "search_count",
-
+          const count =
+            await callOdoo(
+              "object",
+              "execute_kw",
               [
+                _DB,
+                uid,
+                _PASSWORD,
+
+                "crm.lead",
+
+                "search_count",
+
                 [
                   [
-                    "x_studio_type",
-                    "=",
-                    "Parent",
+                    [
+                      "x_studio_type",
+                      "=",
+                      "Parent",
+                    ],
                   ],
                 ],
-              ],
-            ]
+              ]
+            );
+
+
+          const reqId =
+            `REQ-${String(
+              count + 1
+            ).padStart(
+              5,
+              "0"
+            )}`;
+
+
+          leadPayload.x_studio_requirement_id =
+            reqId;
+
+          leadPayload.requirement_id =
+            reqId;
+
+
+          console.log(
+            "[Odoo] Requirement ID:",
+            reqId
           );
 
 
-        const reqId =
-          `REQ-${String(
-            count + 1
-          ).padStart(
-            5,
-            "0"
-          )}`;
+        } catch (seqErr) {
 
-
-        leadPayload.x_studio_requirement_id =
-          reqId;
-
-
-        console.log(
-          "[Odoo] Requirement ID:",
-          reqId
-        );
-
-
-      } catch (seqErr) {
-
-        console.error(
-          "[Odoo] Failed to generate Requirement ID:",
-          seqErr
-        );
+          console.error(
+            "[Odoo] Failed to generate Requirement ID:",
+            seqErr
+          );
+        }
       }
     }
 
@@ -1141,6 +1197,7 @@ export async function createLead(data) {
 
       requirementId:
         leadPayload.x_studio_requirement_id ||
+        leadPayload.requirement_id ||
         "",
 
     };
