@@ -956,4 +956,32 @@ router.post("/sync-lead-to-odoo/:leadId", verifyToken(["admin"]), async (req, re
   }
 });
 
+// =============================================================
+// POST: Retry sync single attendance log to Odoo Community
+// POST /api/attendance/retry-sync/:logId
+// =============================================================
+router.post("/retry-sync/:logId", verifyToken(["admin"]), async (req, res) => {
+  try {
+    const log = await Attendance.findById(req.params.logId);
+    if (!log) return res.status(404).json({ success: false, message: "Attendance log not found." });
+
+    const lead = await ParentEnquiry.findById(log.parentEnquiryId);
+    const tutor = log.tutorId ? await Tutor.findById(log.tutorId) : null;
+
+    const result = await syncAttendanceLogToOdoo({ log, lead, tutor });
+
+    res.json({
+      success: result.success,
+      externalAttendanceId: result.externalAttendanceId,
+      websiteStudentId: result.websiteStudentId,
+      odooSyncStatus: log.odooSyncStatus,
+      odooAttendanceId: log.odooAttendanceId,
+      error: result.error,
+    });
+  } catch (err) {
+    const cleanError = err.message.replace(/Bearer\s+[A-Za-z0-9_\-\.]+/gi, "Bearer [MASKED]");
+    res.status(500).json({ success: false, message: cleanError });
+  }
+});
+
 export default router;

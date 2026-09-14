@@ -434,7 +434,7 @@ router.put("/:id", verifyToken(["admin"]), async (req, res) => {
     // Sync status to Odoo
     if (enquiry.odooLeadId && allowedUpdates.status) {
       try {
-        await updateLead(enquiry.odooLeadId, { x_studio_lead_status: allowedUpdates.status });
+        await updateLead(enquiry.odooLeadId, { status: allowedUpdates.status });
       } catch (err) {
         console.error("Odoo update lead status error:", err.message);
       }
@@ -444,6 +444,66 @@ router.put("/:id", verifyToken(["admin"]), async (req, res) => {
   } catch (error) {
     console.error("Parent enquiry update error:", error);
     res.status(500).json({ message: "Failed to update parent enquiry", error: error.message });
+  }
+});
+
+// =============================================================
+// RETRY / SYNC parent enquiry to Odoo Community CRM
+// POST /api/parent-enquiries/:id/sync-odoo
+// =============================================================
+router.post("/:id/sync-odoo", verifyToken(["admin"]), async (req, res) => {
+  try {
+    const lead = await ParentEnquiry.findById(req.params.id);
+    if (!lead) return res.status(404).json({ message: "Parent enquiry not found" });
+
+    // Ensure stable requirementId & websiteStudentId exist without regenerating
+    let requirementId = lead.requirementId;
+    let websiteStudentId = lead.websiteStudentId;
+    if (!requirementId) {
+      const count = await ParentEnquiry.countDocuments({});
+      requirementId = `REQ-${String(count).padStart(5, "0")}`;
+      lead.requirementId = requirementId;
+    }
+    if (!websiteStudentId) {
+      const seq = requirementId.replace(/\D/g, "");
+      websiteStudentId = seq ? `STU-${seq.padStart(5, "0")}` : `STU-${String(lead._id).slice(-5).toUpperCase()}`;
+      lead.websiteStudentId = websiteStudentId;
+    }
+    await lead.save({ validateBeforeSave: false });
+
+    const leadData = lead.toObject();
+    const odooRes = await createLead({
+      ...leadData,
+      requirementId,
+      websiteStudentId,
+      userType: "parent",
+    });
+
+    const odooLeadId = odooRes && typeof odooRes === "object" ? odooRes.id : odooRes;
+
+    lead.odooLeadId = odooLeadId || lead.odooLeadId || null;
+    lead.odooSyncStatus = odooLeadId ? "synced" : "failed";
+    lead.odooSyncError = odooLeadId ? "" : "Odoo returned no lead ID";
+    lead.odooLastSyncAt = new Date();
+    await lead.save({ validateBeforeSave: false });
+
+    res.json({
+      success: !!odooLeadId,
+      odooLeadId,
+      requirementId: lead.requirementId,
+      websiteStudentId: lead.websiteStudentId,
+      odooSyncStatus: lead.odooSyncStatus,
+    });
+  } catch (err) {
+    const cleanError = err.message.replace(/Bearer\s+[A-Za-z0-9_\-\.]+/gi, "Bearer [MASKED]");
+    console.error(`[Odoo Retry Sync Error for ${req.params.id}]:`, cleanError);
+    await ParentEnquiry.findByIdAndUpdate(req.params.id, {
+      odooSyncStatus: "failed",
+      odooSyncError: cleanError,
+      odooLastSyncAt: new Date(),
+    }).catch(() => {});
+
+    res.status(500).json({ success: false, message: cleanError });
   }
 });
 

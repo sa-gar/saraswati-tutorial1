@@ -11,19 +11,21 @@ function sanitizeEnv(val) {
   return (val || "").trim().replace(/^['"]|['"]$/g, "");
 }
 
-const _ODOO_URL = sanitizeEnv(process.env.ODOO_URL).replace(/\/+$/, "");
-const _DB = sanitizeEnv(process.env.ODOO_DB);
-const _USERNAME = sanitizeEnv(process.env.ODOO_USERNAME);
-const _PASSWORD = sanitizeEnv(process.env.ODOO_PASSWORD);
+const _ODOO_URL = sanitizeEnv(
+  process.env.ODOO_COMMUNITY_URL || process.env.ODOO_URL || "https://odoo.saraswatitutorial.com"
+).replace(/\/+$/, "");
+const _DB = sanitizeEnv(process.env.ODOO_DB || "saraswati-tutorial");
+const _USERNAME = sanitizeEnv(process.env.ODOO_USERNAME || "admin");
+const _PASSWORD = sanitizeEnv(process.env.ODOO_PASSWORD || "");
 
 const _ATTENDANCE_API_TOKEN = sanitizeEnv(
-  process.env.ODOO_ATTENDANCE_API_TOKEN
+  process.env.ODOO_COMMUNITY_API_TOKEN || process.env.ODOO_ATTENDANCE_API_TOKEN || ""
 );
 
-const _JSONRPC_URL = `${_ODOO_URL}/jsonrpc`;
+const _JSONRPC_URL = process.env.ODOO_JSONRPC_URL || `${_ODOO_URL}/jsonrpc`;
 
 const _ATTENDANCE_API_URL =
-  `${_ODOO_URL}/tuition/api/v1/attendance`;
+  process.env.ODOO_ATTENDANCE_API_URL || `${_ODOO_URL}/tuition/api/v1/attendance`;
 
 
 /* ============================================================================
@@ -47,7 +49,7 @@ console.log(
    GENERIC ODOO JSON-RPC CALL
 ============================================================================ */
 
-async function callOdoo(service, method, args) {
+export async function callOdoo(service, method, args) {
 
   const payload = {
     jsonrpc: "2.0",
@@ -597,960 +599,360 @@ export async function syncAttendanceToOdooApi({
 
 
 /* ============================================================================
-   CREATE CRM LEAD
+   CREATE CRM LEAD (ODOO COMMUNITY COMPATIBLE)
 ============================================================================ */
 
 export async function createLead(data) {
-
   try {
-
-    const uid =
-      await callOdoo(
-        "common",
-        "authenticate",
-        [
-          _DB,
-          _USERNAME,
-          _PASSWORD,
-          {},
-        ]
-      );
-
-
-    console.log(
-      "[Odoo] UID:",
-      uid
-    );
-
+    const uid = await callOdoo("common", "authenticate", [
+      _DB,
+      _USERNAME,
+      _PASSWORD,
+      {},
+    ]);
 
     if (!uid) {
-      throw new Error(
-        "Odoo login failed"
-      );
+      throw new Error("Odoo login failed: invalid credentials or database");
     }
 
-
     let leadPayload = {};
-
 
     /* ------------------------------------------------------------------------
        TUTOR LEAD
     ------------------------------------------------------------------------ */
-
     if (data.userType === "tutor") {
-
       leadPayload = {
-
-        name:
-          data.name || "",
-
-        phone:
-          data.phone || "",
-
-        email_from:
-          data.email || "",
-
-
-        x_studio_type:
-          "Tutor",
-
-        x_studio_experience:
-          data.experience || "",
-
-
-        x_studio_hasoccupation:
-          data.hasOccupation || false,
-
-        x_studio_occupation:
-          data.occupation || "",
-
-
-        x_studio_has_vehicle:
-          data.hasVehicle || false,
-
-        x_studio_vehicle_no:
-          data.vehicleNumber || "",
-
-
-        x_studio_source_1:
-          "Website",
-
+        name: data.name || "New Tutor",
+        contact_name: data.name || "",
+        phone: data.phone || "",
+        email_from: data.email || false,
+        lead_category: "Tutor",
+        x_user_type: "tutor",
+        description: [
+          `--- WEBSITE TUTOR REGISTRATION ---`,
+          `Name: ${data.name || "N/A"}`,
+          `Phone: ${data.phone || "N/A"}`,
+          `Email: ${data.email || "N/A"}`,
+          `Qualification: ${data.qualification || "N/A"}`,
+          `Experience: ${data.experience || "N/A"}`,
+          `Occupation: ${data.occupation || "N/A"}`,
+          `Has Vehicle: ${data.hasVehicle ? "Yes" : "No"} (${data.vehicleNumber || "N/A"})`,
+          `Locations: ${Array.isArray(data.locations) ? data.locations.join(", ") : (data.area || data.location || "N/A")}`,
+          `Subjects: ${Array.isArray(data.subjects) ? data.subjects.join(", ") : (data.subject || "N/A")}`,
+        ].join("\n"),
       };
     }
 
-
     /* ------------------------------------------------------------------------
-       PARENT LEAD
+       PARENT LEAD (ODOO COMMUNITY CRM FIELD MAPPING)
     ------------------------------------------------------------------------ */
-
-    else if (data.userType === "parent") {
-
+    if (data.userType === "parent" || !data.userType) {
       const ward =
-        data.wards?.[0] || {};
+        Array.isArray(data.wards) && data.wards.length > 0 ? data.wards[0] : {};
+      const studentName = ward.studentName || data.studentName || "";
+      const studentClass = ward.classGrade || data.studentClass || data.classGrade || "";
+      const subjects =
+        Array.isArray(ward.subjectsNeeded) && ward.subjectsNeeded.length > 0
+          ? ward.subjectsNeeded.join(", ")
+          : (Array.isArray(data.subjects) ? data.subjects.join(", ") : (data.subjects || ""));
 
-
-      let curriculumVal = "";
-
-      const curr =
-        String(
-          ward.curriculum || ""
-        ).toUpperCase();
-
-
-      if (
-        curr.includes("STATE")
-      ) {
-
-        curriculumVal =
-          "STATE";
-
-      } else if (
-        [
-          "CBSE",
-          "ICSE",
-          "NIOS",
-          "IB",
-          "IGCSE",
-        ].includes(curr)
-      ) {
-
-        curriculumVal =
-          curr;
+      // Curriculum / Board selection mapping:
+      // Available in Odoo Community: ['CBSE', 'ICSE', 'NIOS', 'IB', 'STATE', 'IGCSE']
+      let curriculumVal = false;
+      const rawCurr = String(ward.curriculum || data.curriculum || "").toUpperCase().trim();
+      if (rawCurr.includes("STATE")) {
+        curriculumVal = "STATE";
+      } else if (["CBSE", "ICSE", "NIOS", "IB", "IGCSE"].includes(rawCurr)) {
+        curriculumVal = rawCurr;
       }
 
-
-      let daysWeekVal = "";
-
-
-      if (data.daysPerWeek) {
-
-        daysWeekVal =
-          `${data.daysPerWeek} Days`;
-
-      } else {
-
-        const daysCount =
-          (data.preferredDays || []).length;
-
-
-        if (
-          daysCount >= 2 &&
-          daysCount <= 6
-        ) {
-
-          daysWeekVal =
-            `${daysCount} Days`;
-
-        } else if (
-          daysCount === 1
-        ) {
-
-          daysWeekVal =
-            "2 Days";
-
-        } else if (
-          daysCount >= 7
-        ) {
-
-          daysWeekVal =
-            "6 Days";
-        }
+      // Days/Week selection mapping:
+      // Available in Odoo Community: ['2 Days', '3 Days', '4 Days', '5 Days', '6 Days']
+      let daysWeekVal = false;
+      let daysCount = data.daysPerWeek
+        ? Number(data.daysPerWeek)
+        : (Array.isArray(data.preferredDays) ? data.preferredDays.length : null);
+      if (daysCount) {
+        if (daysCount <= 2) daysWeekVal = "2 Days";
+        else if (daysCount === 3) daysWeekVal = "3 Days";
+        else if (daysCount === 4) daysWeekVal = "4 Days";
+        else if (daysCount === 5) daysWeekVal = "5 Days";
+        else if (daysCount >= 6) daysWeekVal = "6 Days";
       }
 
-
-      let hoursDaysVal = "";
-
-
+      // Hours/Days selection mapping:
+      // Available in Odoo Community: ['1 Hr', '1.5 Hr', '2 Hrs', '3 Hrs', '4 Hrs', '6 Hrs']
+      let hoursDaysVal = false;
       if (data.hoursPerDay) {
-
-        const h =
-          Number(
-            data.hoursPerDay
-          );
-
-
-        hoursDaysVal =
-          `${h} ${
-            h === 1 || h === 1.5
-              ? "Hr"
-              : "Hrs"
-          }`;
-
-      } else {
-
-        const dur =
-          String(
-            data.classDuration || ""
-          ).toLowerCase();
-
-
-        if (
-          dur.includes("1.5")
-        ) {
-
-          hoursDaysVal =
-            "1.5 Hr";
-
-        } else if (
-          dur.includes("1")
-        ) {
-
-          hoursDaysVal =
-            "1 Hr";
-
-        } else if (
-          dur.includes("2")
-        ) {
-
-          hoursDaysVal =
-            "2 Hrs";
-        }
+        const h = Number(data.hoursPerDay);
+        if (h === 1) hoursDaysVal = "1 Hr";
+        else if (h === 1.5) hoursDaysVal = "1.5 Hr";
+        else if (h === 2) hoursDaysVal = "2 Hrs";
+        else if (h === 3) hoursDaysVal = "3 Hrs";
+        else if (h === 4) hoursDaysVal = "4 Hrs";
+        else if (h >= 6) hoursDaysVal = "6 Hrs";
+      } else if (data.classDuration) {
+        const dStr = String(data.classDuration).toLowerCase();
+        if (dStr.includes("1.5")) hoursDaysVal = "1.5 Hr";
+        else if (dStr.includes("1")) hoursDaysVal = "1 Hr";
+        else if (dStr.includes("2")) hoursDaysVal = "2 Hrs";
       }
 
+      // Preferred tutor gender:
+      // tutor_gender selection in Odoo Community: ['Male', 'Female', 'Both']
+      let tutorGenderVal = false;
+      const prefGen = String(data.preferredGender || "").trim();
+      if (prefGen.toLowerCase() === "male") tutorGenderVal = "Male";
+      else if (prefGen.toLowerCase() === "female") tutorGenderVal = "Female";
+      else if (["flexible", "both", "no preference"].includes(prefGen.toLowerCase())) tutorGenderVal = "Both";
 
-      const wardsInfo =
-        (data.wards || [])
-          .map(
-            (w, idx) =>
+      const preferredTutorGenderText =
+        prefGen.toLowerCase() === "flexible" || !prefGen ? "No Preference" : prefGen;
 
-              `Student ${idx + 1}: ` +
+      // Fee & package calculations
+      const totalClasses = Number(
+        data.totalClasses ||
+        (data.daysPerWeek ? Number(data.daysPerWeek) * 4 : 12)
+      );
+      const tuitionFee = Number(data.finalPrice || data.monthlyFees || 0);
 
-              `${w.studentName || "N/A"} ` +
-
-              `(Class: ${w.classGrade || "N/A"}, ` +
-
-              `Board: ${w.curriculum || "N/A"}, ` +
-
-              `Subjects: ${
-                (w.subjectsNeeded || [])
-                  .join(", ") || "N/A"
-              })`
-
-          )
-          .join("\n");
-
-
-      const descriptionText = [
-
-        `--- WEBSITE PARENT ENQUIRY ---`,
-
-        `Parent Name: ${
-          data.parentName || "N/A"
-        }`,
-
-        `Phone: ${
-          data.phone || "N/A"
-        }`,
-
-        `Email: ${
-          data.email || "N/A"
-        }`,
-
-        `Tuition Mode: ${
-          data.preferredMode ||
-          "Not Specified"
-        }`,
-
-        `Plan Type: ${
-          data.planType
-            ? data.planType.toUpperCase()
-            : "Not Specified"
-        }`,
-
-        `Days / Week: ${
-          data.daysPerWeek
-            ? `${data.daysPerWeek} Days`
-            : "Not Specified"
-        }`,
-
-        `Hours / Day: ${
-          data.hoursPerDay
-            ? `${data.hoursPerDay} Hr`
-            : "Not Specified"
-        }`,
-
-        `Preferred Days: ${
-          Array.isArray(
-            data.preferredDays
-          ) &&
-          data.preferredDays.length > 0
-
-            ? data.preferredDays.join(", ")
-
-            : "Not Specified"
-        }`,
-
-        `Class Timing Slot: ${
-          data.classTimingSlot ||
-          "Not Specified"
-        }`,
-
-        `Monthly Fees: ${
-          data.monthlyFees
-            ? `₹${data.monthlyFees}`
-            : "N/A"
-        }`,
-
-        `Final Price: ${
-          data.finalPrice
-            ? `₹${data.finalPrice}`
-            : "N/A"
-        }`,
-
-        `Pricing Consent: ${
-          data.pricingConsent
-            ? "Yes (Accepted)"
-            : "No"
-        }`,
-
-        `Address: ${
-          data.address ||
-          data.area ||
-          "N/A"
-        }`,
-
-        `------------------------------`,
-
-        wardsInfo
-          ? `STUDENTS:\n${wardsInfo}`
-          : `Student Name: ${
-              ward.studentName || "N/A"
-            }`,
-
-        `------------------------------`,
-
-        `UTM Source: ${
-          data.utm_source ||
-          "Direct"
-        }`,
-
-        `UTM Medium: ${
-          data.utm_medium ||
-          "none"
-        }`,
-
-        `UTM Campaign: ${
-          data.utm_campaign ||
-          "none"
-        }`,
-
-        `UTM Content: ${
-          data.utm_content ||
-          "none"
-        }`,
-
-        `UTM Term: ${
-          data.utm_term ||
-          "none"
-        }`,
-
-      ]
-        .filter(Boolean)
+      const wardsInfo = (data.wards || [])
+        .map((w, idx) =>
+          `Student ${idx + 1}: ${w.studentName || "N/A"} (Class: ${w.classGrade || "N/A"}, Board: ${w.curriculum || "N/A"}, Subjects: ${(w.subjectsNeeded || []).join(", ") || "N/A"})`
+        )
         .join("\n");
 
+      const descriptionText = [
+        `--- WEBSITE PARENT ENQUIRY ---`,
+        `Parent Name: ${data.parentName || "N/A"}`,
+        `Phone: ${data.phone || "N/A"}`,
+        `Email: ${data.email || "N/A"}`,
+        `Tuition Mode: ${data.preferredMode || "Not Specified"}`,
+        `Plan Type: ${data.planType ? String(data.planType).toUpperCase() : "Not Specified"}`,
+        `Days / Week: ${daysWeekVal || (data.daysPerWeek ? `${data.daysPerWeek} Days` : "Not Specified")}`,
+        `Hours / Day: ${hoursDaysVal || (data.hoursPerDay ? `${data.hoursPerDay} Hr` : "Not Specified")}`,
+        `Preferred Days: ${Array.isArray(data.preferredDays) && data.preferredDays.length > 0 ? data.preferredDays.join(", ") : "Not Specified"}`,
+        `Class Timing Slot: ${data.classTimingSlot || data.preferredTime || "Not Specified"}`,
+        `Monthly Fees: ${data.monthlyFees ? `₹${data.monthlyFees}` : "N/A"}`,
+        `Final Price: ${data.finalPrice ? `₹${data.finalPrice}` : "N/A"}`,
+        `Pricing Consent: ${data.pricingConsent ? "Yes (Accepted)" : "No"}`,
+        `Address: ${data.address || data.area || "N/A"}`,
+        `------------------------------`,
+        wardsInfo ? `STUDENTS:\n${wardsInfo}` : `Student Name: ${studentName || "N/A"}`,
+        `------------------------------`,
+        `UTM Source: ${data.utm_source || "Direct"}`,
+        `UTM Medium: ${data.utm_medium || "none"}`,
+        `UTM Campaign: ${data.utm_campaign || "none"}`,
+      ].filter(Boolean).join("\n");
+
+      const opportunityName = `${data.parentName || "Parent"} - ${studentName || "Student"}${data.requirementId ? ` (${data.requirementId})` : ""}`;
 
       leadPayload = {
+        name: opportunityName,
+        contact_name: data.parentName || "",
+        parent_name: data.parentName || "",
+        student_name: studentName,
+        student_class: studentClass,
+        ward_name: studentName,
+        phone: data.phone || "",
+        tuition_parent_whatsapp: data.phone || "",
+        email_from: data.email || false,
+        locality: data.address || data.area || "",
+        subjects_intrested: subjects,
+        preferred_timings: data.preferredTime || data.classTimingSlot || "",
+        preferred_tutor_gender: preferredTutorGenderText,
+        description: descriptionText,
 
-        name:
-          data.parentName || "",
+        // Stable identifiers
+        requirement_id: data.requirementId || "",
+        x_studio_requirement_id: data.requirementId || "",
+        website_student_id: data.websiteStudentId || "",
 
-        contact_name:
-          data.parentName || "",
-
-        phone:
-          data.phone || "",
-
-        email_from:
-          data.email || "",
-
-
-        // ── Odoo Community native fields ──────────────────────────────────────
-        lead_category:
-          "Parent",
-
-        website_student_id:
-          data.websiteStudentId || "",
-
-        requirement_id:
-          data.requirementId || "",
-
-        parent_name:
-          data.parentName || "",
-
-        student_name:
-          ward.studentName || "",
-
-        student_class:
-          ward.classGrade || "",
-
-        tuition_parent_whatsapp:
-          data.phone || "",
-
-        locality:
-          data.address || data.area || "",
-
-        subjects_intrested:
-          (ward.subjectsNeeded || []).join(", "),
-
-        preferred_timings:
-          data.preferredTime || "",
-
-        preferred_tutor_gender:
-          data.preferredGender === "Flexible"
-            ? "No Preference"
-            : (data.preferredGender?.toString() || "No Preference"),
-
-
-        // ── Odoo Studio/legacy fields (kept for backward compat) ──────────────
-        x_studio_type:
-          "Parent",
-
-        x_studio_source_1:
-          "Website",
-
-
-        description:
-          descriptionText,
-
-
-        x_studio_parent_name:
-          data.parentName || "",
-
-        x_studio_class:
-          ward.classGrade || "",
-
-        x_studio_student_name:
-          ward.studentName || "",
-
-
-        x_studio_subjects_intrested:
-          (ward.subjectsNeeded || [])
-            .join(", "),
-
-
-        x_studio_preferred_timings:
-          data.preferredTime || "",
-
-
-        x_studio_locality:
-          data.address ||
-          data.area ||
-          "",
-
-
-        x_studio_preferred_tutor_gender:
-          data.preferredGender ===
-          "Flexible"
-
-            ? "No Preference"
-
-            : (
-                data.preferredGender
-                  ?.toString() ||
-                "No Preference"
-              ),
-
-
-        x_studio_registration_date:
-          new Date()
-            .toISOString()
-            .split("T")[0],
-
+        // Community classifications
+        lead_category: "Parent",
+        x_user_type: "parent",
+        tuition_total_classes: totalClasses,
+        tuition_fee_amount: tuitionFee,
       };
 
-
-      if (curriculumVal) {
-
-        leadPayload.x_studio_curriculumboard =
-          curriculumVal;
-      }
-
-
-      if (daysWeekVal) {
-
-        leadPayload.x_studio_daysweek =
-          daysWeekVal;
-      }
-
-
-      if (hoursDaysVal) {
-
-        leadPayload.x_studio_hoursdays =
-          hoursDaysVal;
-      }
-
-
-      // Use caller-supplied requirementId (from MongoDB) if available,
-      // otherwise fall back to querying Odoo for sequential count.
-      if (data.requirementId) {
-
-        leadPayload.x_studio_requirement_id = data.requirementId;
-        leadPayload.requirement_id = data.requirementId;
-
-        console.log(
-          "[Odoo] Using pre-supplied Requirement ID:",
-          data.requirementId
-        );
-
-      } else {
-
-        console.log(
-          "[Odoo] Generating Requirement ID from Odoo count..."
-        );
-
-
-        try {
-
-          const count =
-            await callOdoo(
-              "object",
-              "execute_kw",
-              [
-                _DB,
-                uid,
-                _PASSWORD,
-
-                "crm.lead",
-
-                "search_count",
-
-                [
-                  [
-                    [
-                      "x_studio_type",
-                      "=",
-                      "Parent",
-                    ],
-                  ],
-                ],
-              ]
-            );
-
-
-          const reqId =
-            `REQ-${String(
-              count + 1
-            ).padStart(
-              5,
-              "0"
-            )}`;
-
-
-          leadPayload.x_studio_requirement_id =
-            reqId;
-
-          leadPayload.requirement_id =
-            reqId;
-
-
-          console.log(
-            "[Odoo] Requirement ID:",
-            reqId
-          );
-
-
-        } catch (seqErr) {
-
-          console.error(
-            "[Odoo] Failed to generate Requirement ID:",
-            seqErr
-          );
-        }
-      }
+      if (curriculumVal) leadPayload.curriculumboard = curriculumVal;
+      if (daysWeekVal) leadPayload.daysweek = daysWeekVal;
+      if (hoursDaysVal) leadPayload.hoursdays = hoursDaysVal;
+      if (tutorGenderVal) leadPayload.tutor_gender = tutorGenderVal;
     }
 
-
     /* ------------------------------------------------------------------------
-       IDEMPOTENCY CHECK (Parent leads only)
-       Search for an existing CRM lead by requirement_id before creating.
-       If found  → update (write) the existing lead and return its ID.
-       If not    → create a new lead.
-       Tutor leads have no requirementId, so they always create.
+       IDEMPOTENCY CHECK (Duplicate Prevention for Leads)
+       Search before creating:
+       1. odooLeadId if provided
+       2. requirement_id
+       3. website_student_id
+       4. phone with lead_category = Parent
     ------------------------------------------------------------------------ */
-
-    const searchReqId =
-      leadPayload.requirement_id ||
-      leadPayload.x_studio_requirement_id ||
-      "";
-
-
     let existingLeadId = null;
 
-
-    if (
-      data.userType === "parent" &&
-      searchReqId
-    ) {
-
-      console.log(
-        "[Odoo] Idempotency check — searching for existing lead:",
-        searchReqId
-      );
-
-
-      /* ── Pass 1: requirement_id (Community native field) ── */
-
+    if (data.odooLeadId && !Number.isNaN(Number(data.odooLeadId))) {
       try {
-
-        const byReqNative =
-          await callOdoo(
-            "object",
-            "execute_kw",
-            [
-              _DB,
-              uid,
-              _PASSWORD,
-
-              "crm.lead",
-
-              "search_read",
-
-              [
-                [
-                  [
-                    "requirement_id",
-                    "=",
-                    searchReqId,
-                  ],
-                ],
-              ],
-
-              {
-                fields: ["id"],
-                limit: 1,
-              },
-            ]
-          );
-
-
-        if (
-          byReqNative &&
-          byReqNative.length > 0
-        ) {
-
-          existingLeadId =
-            byReqNative[0].id;
-
-          console.log(
-            `[Odoo] Idempotency — found existing lead #${existingLeadId} via requirement_id`
-          );
+        const found = await callOdoo("object", "execute_kw", [
+          _DB, uid, _PASSWORD, "crm.lead", "search_read",
+          [[["id", "=", Number(data.odooLeadId)]]],
+          { fields: ["id"], limit: 1 }
+        ]);
+        if (found && found.length > 0) {
+          existingLeadId = found[0].id;
+          console.log(`[Odoo] Idempotency — found existing lead #${existingLeadId} via odooLeadId`);
         }
-
-      } catch (searchErr) {
-
-        console.warn(
-          "[Odoo] Idempotency search (requirement_id) failed:",
-          searchErr.message
-        );
-      }
-
-
-      /* ── Pass 2: x_studio_requirement_id (legacy Studio field) ── */
-
-      if (!existingLeadId) {
-
-        try {
-
-          const byReqStudio =
-            await callOdoo(
-              "object",
-              "execute_kw",
-              [
-                _DB,
-                uid,
-                _PASSWORD,
-
-                "crm.lead",
-
-                "search_read",
-
-                [
-                  [
-                    [
-                      "x_studio_requirement_id",
-                      "=",
-                      searchReqId,
-                    ],
-                  ],
-                ],
-
-                {
-                  fields: ["id"],
-                  limit: 1,
-                },
-              ]
-            );
-
-
-          if (
-            byReqStudio &&
-            byReqStudio.length > 0
-          ) {
-
-            existingLeadId =
-              byReqStudio[0].id;
-
-            console.log(
-              `[Odoo] Idempotency — found existing lead #${existingLeadId} via x_studio_requirement_id`
-            );
-          }
-
-        } catch (searchErr) {
-
-          console.warn(
-            "[Odoo] Idempotency search (x_studio_requirement_id) failed:",
-            searchErr.message
-          );
-        }
-      }
-
-
-      /* ── Pass 3: website_student_id ── */
-
-      if (
-        !existingLeadId &&
-        (
-          leadPayload.website_student_id ||
-          data.websiteStudentId
-        )
-      ) {
-
-        const wsId =
-          leadPayload.website_student_id ||
-          data.websiteStudentId;
-
-
-        try {
-
-          const byStudentId =
-            await callOdoo(
-              "object",
-              "execute_kw",
-              [
-                _DB,
-                uid,
-                _PASSWORD,
-
-                "crm.lead",
-
-                "search_read",
-
-                [
-                  [
-                    [
-                      "website_student_id",
-                      "=",
-                      wsId,
-                    ],
-                  ],
-                ],
-
-                {
-                  fields: ["id"],
-                  limit: 1,
-                },
-              ]
-            );
-
-
-          if (
-            byStudentId &&
-            byStudentId.length > 0
-          ) {
-
-            existingLeadId =
-              byStudentId[0].id;
-
-            console.log(
-              `[Odoo] Idempotency — found existing lead #${existingLeadId} via website_student_id`
-            );
-          }
-
-        } catch (searchErr) {
-
-          console.warn(
-            "[Odoo] Idempotency search (website_student_id) failed:",
-            searchErr.message
-          );
-        }
+      } catch (err) {
+        console.warn(`[Odoo] Search by odooLeadId failed:`, err.message);
       }
     }
 
+    if (!existingLeadId && leadPayload.requirement_id) {
+      try {
+        const found = await callOdoo("object", "execute_kw", [
+          _DB, uid, _PASSWORD, "crm.lead", "search_read",
+          [[["requirement_id", "=", leadPayload.requirement_id]]],
+          { fields: ["id"], limit: 1 }
+        ]);
+        if (found && found.length > 0) {
+          existingLeadId = found[0].id;
+          console.log(`[Odoo] Idempotency — found existing lead #${existingLeadId} via requirement_id`);
+        }
+      } catch (err) {
+        console.warn(`[Odoo] Search by requirement_id failed:`, err.message);
+      }
+    }
+
+    if (!existingLeadId && leadPayload.website_student_id) {
+      try {
+        const found = await callOdoo("object", "execute_kw", [
+          _DB, uid, _PASSWORD, "crm.lead", "search_read",
+          [[["website_student_id", "=", leadPayload.website_student_id]]],
+          { fields: ["id"], limit: 1 }
+        ]);
+        if (found && found.length > 0) {
+          existingLeadId = found[0].id;
+          console.log(`[Odoo] Idempotency — found existing lead #${existingLeadId} via website_student_id`);
+        }
+      } catch (err) {
+        console.warn(`[Odoo] Search by website_student_id failed:`, err.message);
+      }
+    }
+
+    if (!existingLeadId && leadPayload.phone && data.userType !== "tutor") {
+      const phoneDigits = String(leadPayload.phone).replace(/\D/g, "").slice(-10);
+      if (phoneDigits.length >= 8) {
+        try {
+          const found = await callOdoo("object", "execute_kw", [
+            _DB, uid, _PASSWORD, "crm.lead", "search_read",
+            [[["phone", "like", phoneDigits], ["lead_category", "=", "Parent"]]],
+            { fields: ["id"], limit: 1 }
+          ]);
+          if (found && found.length > 0) {
+            existingLeadId = found[0].id;
+            console.log(`[Odoo] Idempotency — found existing lead #${existingLeadId} via phone matching`);
+          }
+        } catch (err) {
+          console.warn(`[Odoo] Search by phone failed:`, err.message);
+        }
+      }
+    }
 
     /* ------------------------------------------------------------------------
-       WRITE (update) or CREATE
+       WRITE (Update) or CREATE
     ------------------------------------------------------------------------ */
-
     let leadId;
 
-
     if (existingLeadId) {
-
-      /* ── UPDATE existing lead ── */
-
-      console.log(
-        "[Odoo] Updating existing lead (idempotent):",
-        existingLeadId
-      );
-
-
-      await callOdoo(
-        "object",
-        "execute_kw",
-        [
-          _DB,
-          uid,
-          _PASSWORD,
-
-          "crm.lead",
-
-          "write",
-
-          [
-            [existingLeadId],
-            leadPayload,
-          ],
-        ]
-      );
-
-
+      console.log(`[Odoo] Updating existing lead #${existingLeadId} (idempotent, no duplicate)`);
+      await callOdoo("object", "execute_kw", [
+        _DB, uid, _PASSWORD, "crm.lead", "write",
+        [[existingLeadId], leadPayload]
+      ]);
       leadId = existingLeadId;
-
-      console.log(
-        "[Odoo] Lead updated (no duplicate created):",
-        leadId
-      );
-
     } else {
-
-      /* ── CREATE new lead ── */
-
-      console.log(
-        "[Odoo] Creating new lead for:",
-        data.userType
-      );
-
-
-      leadId =
-        await callOdoo(
-          "object",
-          "execute_kw",
-          [
-            _DB,
-            uid,
-            _PASSWORD,
-
-            "crm.lead",
-
-            "create",
-
-            [leadPayload],
-          ]
-        );
-
-
-      console.log(
-        "[Odoo] Lead created:",
-        leadId
-      );
+      console.log(`[Odoo] Creating new lead in Odoo Community for ${data.userType || "parent"}...`);
+      leadId = await callOdoo("object", "execute_kw", [
+        _DB, uid, _PASSWORD, "crm.lead", "create",
+        [leadPayload]
+      ]);
+      console.log(`[Odoo] Lead created with ID: #${leadId}`);
     }
 
-
     return {
-
-      id:
-        leadId,
-
-      requirementId:
-        leadPayload.x_studio_requirement_id ||
-        leadPayload.requirement_id ||
-        "",
-
+      id: leadId,
+      requirementId: leadPayload.requirement_id || data.requirementId || "",
+      websiteStudentId: leadPayload.website_student_id || data.websiteStudentId || "",
     };
-
-
   } catch (err) {
-
-    console.error(
-      "ODOO ERROR:",
-      err
-    );
-
+    console.error("[Odoo] createLead error:", err.message);
     throw err;
   }
 }
-
 
 /* ============================================================================
    UPDATE CRM LEAD
 ============================================================================ */
 
-export async function updateLead(
-  leadId,
-  values
-) {
-
+export async function updateLead(leadId, values) {
   try {
+    if (!leadId) throw new Error("Lead ID is required to update lead");
 
-    const uid =
-      await callOdoo(
-        "common",
-        "authenticate",
-        [
-          _DB,
-          _USERNAME,
-          _PASSWORD,
-          {},
-        ]
-      );
+    const uid = await callOdoo("common", "authenticate", [
+      _DB,
+      _USERNAME,
+      _PASSWORD,
+      {},
+    ]);
+    if (!uid) throw new Error("Odoo login failed");
 
+    // Sanitize values to only include valid Odoo Community fields
+    const sanitized = {};
+    const stageMap = {
+      "New Lead": 1,
+      "Lead posted": 1,
+      "Demo Scheduled": 3,
+      "Feedback Pending": 8,
+      "Feedback": 8,
+      "Fees Finalized": 7,
+      "Fee Confirmation": 7,
+      "Enrolled": 4,
+      "Won": 4,
+      "Lost": 9,
+      "Rejected": 9,
+      "Demo Cancelled": 9,
+    };
 
-    if (!uid) {
-
-      throw new Error(
-        "Odoo login failed"
-      );
+    for (const [key, val] of Object.entries(values || {})) {
+      if (key === "x_studio_lead_status" || key === "status") {
+        if (stageMap[val]) {
+          sanitized.stage_id = stageMap[val];
+        }
+      } else if (key === "x_studio_response_status") {
+        sanitized.response_status = val;
+      } else if (key.startsWith("x_studio_") && key !== "x_studio_requirement_id" && key !== "x_studio_regular_class_scheduled") {
+        // Skip obsolete studio fields that don't exist in Odoo Community
+        continue;
+      } else {
+        sanitized[key] = val;
+      }
     }
 
+    if (Object.keys(sanitized).length === 0) {
+      return true;
+    }
 
-    await callOdoo(
-      "object",
-      "execute_kw",
-      [
-        _DB,
-        uid,
-        _PASSWORD,
-
-        "crm.lead",
-
-        "write",
-
-        [
-          [parseInt(leadId)],
-          values,
-        ],
-      ]
-    );
-
+    await callOdoo("object", "execute_kw", [
+      _DB, uid, _PASSWORD, "crm.lead", "write",
+      [[parseInt(leadId)], sanitized]
+    ]);
 
     return true;
-
-
   } catch (err) {
-
-    console.error(
-      "UPDATE LEAD ERROR:",
-      err
-    );
-
+    console.error("[Odoo] updateLead error:", err.message);
     throw err;
   }
 }
-
-
-/* ============================================================================
-   MASTER TUTOR UPSERT
-============================================================================ */
 
 export async function upsertMasterTutor(data) {
 
@@ -2682,850 +2084,267 @@ export async function updateLeadRecommendedTutors(
    FIND / LINK MONGODB PARENT ENQUIRY TO ODOO CRM LEAD
 ============================================================================ */
 
-export async function findOrLinkOdooLead(
-  lead
-) {
+export async function findOrLinkOdooLead(lead) {
+  if (!lead) return null;
 
-  if (!lead) {
-    return null;
+  if (lead.odooLeadId && !Number.isNaN(Number(lead.odooLeadId))) {
+    return Number(lead.odooLeadId);
   }
-
-
-  if (
-    lead.odooLeadId &&
-    !Number.isNaN(
-      Number(
-        lead.odooLeadId
-      )
-    )
-  ) {
-
-    return Number(
-      lead.odooLeadId
-    );
-  }
-
 
   try {
+    const uid = await callOdoo("common", "authenticate", [
+      _DB,
+      _USERNAME,
+      _PASSWORD,
+      {},
+    ]);
+    if (!uid) return null;
 
-    const uid =
-      await callOdoo(
-        "common",
-        "authenticate",
-        [
-          _DB,
-          _USERNAME,
-          _PASSWORD,
-          {},
-        ]
-      );
-
-
-    if (!uid) {
-      return null;
-    }
-
-
-    /* ------------------------------------------------------------------------
-       PASS 1: REQUIREMENT ID
-    ------------------------------------------------------------------------ */
-
-    if (
-      lead.requirementId &&
-      lead.requirementId.trim()
-    ) {
-
-      const byReq =
-        await callOdoo(
-          "object",
-          "execute_kw",
-          [
-            _DB,
-            uid,
-            _PASSWORD,
-
-            "crm.lead",
-
-            "search_read",
-
-            [
-              [
-                [
-                  "x_studio_requirement_id",
-                  "=",
-                  lead.requirementId.trim(),
-                ],
-              ],
-            ],
-
-            {
-              fields: ["id"],
-              limit: 1,
-            },
-          ]
-        );
-
-
-      if (
-        byReq &&
-        byReq.length > 0
-      ) {
-
-        const foundId =
-          byReq[0].id;
-
-
-        lead.odooLeadId =
-          foundId;
-
-
-        await lead
-          .save({
-            validateBeforeSave: false,
-          })
-          .catch(
-            () => {}
-          );
-
-
-        console.log(
-          `[OdooService] Linked Mongo lead ${lead._id} → Odoo #${foundId} using requirement ID`
-        );
-
-
+    // PASS 1: Native requirement_id
+    if (lead.requirementId && lead.requirementId.trim()) {
+      const byReq = await callOdoo("object", "execute_kw", [
+        _DB, uid, _PASSWORD, "crm.lead", "search_read",
+        [[["requirement_id", "=", lead.requirementId.trim()]]],
+        { fields: ["id"], limit: 1 }
+      ]);
+      if (byReq && byReq.length > 0) {
+        const foundId = byReq[0].id;
+        lead.odooLeadId = foundId;
+        await lead.save({ validateBeforeSave: false }).catch(() => {});
+        console.log(`[OdooService] Linked Mongo lead ${lead._id} → Odoo #${foundId} via requirement_id`);
         return foundId;
       }
     }
 
+    // PASS 2: website_student_id
+    if (lead.websiteStudentId && lead.websiteStudentId.trim()) {
+      const byWsId = await callOdoo("object", "execute_kw", [
+        _DB, uid, _PASSWORD, "crm.lead", "search_read",
+        [[["website_student_id", "=", lead.websiteStudentId.trim()]]],
+        { fields: ["id"], limit: 1 }
+      ]);
+      if (byWsId && byWsId.length > 0) {
+        const foundId = byWsId[0].id;
+        lead.odooLeadId = foundId;
+        await lead.save({ validateBeforeSave: false }).catch(() => {});
+        console.log(`[OdooService] Linked Mongo lead ${lead._id} → Odoo #${foundId} via website_student_id`);
+        return foundId;
+      }
+    }
 
-    /* ------------------------------------------------------------------------
-       PASS 2: PHONE
-    ------------------------------------------------------------------------ */
-
+    // PASS 3: Phone (last 10 digits)
     if (lead.phone) {
-
-      const digits =
-        String(
-          lead.phone
-        )
-          .replace(/\D/g, "")
-          .slice(-10);
-
-
-      if (
-        digits.length >= 8
-      ) {
-
-        const byPhone =
-          await callOdoo(
-            "object",
-            "execute_kw",
-            [
-              _DB,
-              uid,
-              _PASSWORD,
-
-              "crm.lead",
-
-              "search_read",
-
-              [
-                [
-                  [
-                    "phone",
-                    "like",
-                    digits,
-                  ],
-                ],
-              ],
-
-              {
-                fields: ["id"],
-                limit: 1,
-              },
-            ]
-          );
-
-
-        if (
-          byPhone &&
-          byPhone.length > 0
-        ) {
-
-          const foundId =
-            byPhone[0].id;
-
-
-          lead.odooLeadId =
-            foundId;
-
-
-          await lead
-            .save({
-              validateBeforeSave: false,
-            })
-            .catch(
-              () => {}
-            );
-
-
-          console.log(
-            `[OdooService] Linked Mongo lead ${lead._id} → Odoo #${foundId} using phone`
-          );
-
-
+      const digits = String(lead.phone).replace(/\D/g, "").slice(-10);
+      if (digits.length >= 8) {
+        const byPhone = await callOdoo("object", "execute_kw", [
+          _DB, uid, _PASSWORD, "crm.lead", "search_read",
+          [[["phone", "like", digits], ["lead_category", "=", "Parent"]]],
+          { fields: ["id"], limit: 1 }
+        ]);
+        if (byPhone && byPhone.length > 0) {
+          const foundId = byPhone[0].id;
+          lead.odooLeadId = foundId;
+          await lead.save({ validateBeforeSave: false }).catch(() => {});
+          console.log(`[OdooService] Linked Mongo lead ${lead._id} → Odoo #${foundId} via phone`);
           return foundId;
         }
       }
     }
-
-
   } catch (err) {
-
-    console.error(
-      "[OdooService] findOrLinkOdooLead:",
-      err.message
-    );
+    console.error("[OdooService] findOrLinkOdooLead error:", err.message);
   }
-
 
   return null;
 }
 
-
-/* ============================================================================
-   NEW ATTENDANCE SYNCHRONIZATION
-============================================================================ */
-
-/**
- * IMPORTANT:
- *
- * This replaces the old direct x_attendance_log create/write logic.
- *
- * Attendance is now sent through:
- *
- * /tuition/api/v1/attendance
- *
- * Odoo handles attendance calculations and tuition/payment automation.
- */
 export async function syncAttendanceLogToOdoo({
-
   log,
   lead,
   tutor,
-
-  // Kept for backward compatibility.
-  // Chatter is intentionally no longer required for the attendance engine.
-  postChatter = true,
-
+  postChatter = false,
 }) {
-
   try {
+    if (!log) throw new Error("Attendance log is required");
 
-    if (!log) {
-
-      throw new Error(
-        "Attendance log is required"
-      );
+    // Fetch lead if missing
+    let parentLead = lead;
+    if (!parentLead && log.parentEnquiryId) {
+      const ParentEnquiry = (await import("../models/ParentEnquiry.js")).default;
+      parentLead = await ParentEnquiry.findById(log.parentEnquiryId);
     }
 
-
-    /* ------------------------------------------------------------------------
-       STUDENT ID
-    ------------------------------------------------------------------------ */
-
-    const websiteStudentId =
-      resolveWebsiteStudentId(
-        log,
-        lead
-      );
-
-
+    // 1. Resolve and ensure stable websiteStudentId
+    let websiteStudentId = resolveWebsiteStudentId(log, parentLead);
+    if (!websiteStudentId && parentLead) {
+      const reqSeq = (parentLead.requirementId || "").replace(/\D/g, "");
+      websiteStudentId = reqSeq
+        ? `STU-${reqSeq.padStart(5, "0")}`
+        : `STU-${String(parentLead._id).slice(-5).toUpperCase()}`;
+      parentLead.websiteStudentId = websiteStudentId;
+      await parentLead.save({ validateBeforeSave: false }).catch(() => {});
+    }
     if (!websiteStudentId) {
-
       throw new Error(
-        "No website_student_id found. " +
-        "Add a permanent student ID to the Ward/Student record before syncing attendance."
+        "No website_student_id found or resolvable. Cannot sync attendance to Odoo without stable student identity."
       );
     }
+    if (!log.websiteStudentId) {
+      log.websiteStudentId = websiteStudentId;
+    }
 
+    // 2. Resolve and ensure stable externalAttendanceId
+    const externalAttendanceId = resolveExternalAttendanceId(log);
+    if (!log.externalAttendanceId) {
+      log.externalAttendanceId = externalAttendanceId;
+      await log.save({ validateBeforeSave: false }).catch(() => {});
+    }
 
-    /* ------------------------------------------------------------------------
-       EXTERNAL ATTENDANCE ID
-    ------------------------------------------------------------------------ */
-
-    const externalAttendanceId =
-      resolveExternalAttendanceId(
-        log
-      );
-
-
-    /* ------------------------------------------------------------------------
-       STATUS
-    ------------------------------------------------------------------------ */
-
-    const status =
-      mapAttendanceStatus(
-        log.status
-      );
-
-
-    /* ------------------------------------------------------------------------
-       DATETIME
-    ------------------------------------------------------------------------ */
-
-    let classDatetime =
-
-      log.classDatetime ||
-
-      log.classDateTime ||
-
-      log.datetime ||
-
-      null;
-
-
-    /*
-     * If your current attendance schema contains only `date`,
-     * combine it with available class time.
-     */
-    if (
-      !classDatetime &&
-      log.date
-    ) {
-
-      const rawDate =
-        String(
-          log.date
-        );
-
-
-      if (
-        /^\d{4}-\d{2}-\d{2}$/.test(
-          rawDate
-        )
-      ) {
-
-        let time =
-          log.classTime ||
-          log.time ||
-          "10:00";
-
-
-        time =
-          String(time);
-
-
-        if (
-          /^\d{2}:\d{2}$/.test(
-            time
-          )
-        ) {
-
-          time =
-            `${time}:00`;
+    // 3. Ensure student exists in Odoo Community CRM before sending attendance
+    // (Odoo Community /tuition/api/v1/attendance requires a crm.lead with matching website_student_id)
+    if (parentLead) {
+      if (!parentLead.odooLeadId || parentLead.odooSyncStatus !== "synced") {
+        try {
+          console.log(`[Odoo Attendance] Ensuring CRM lead is synced to Odoo Community for student ${websiteStudentId}...`);
+          const leadData = parentLead.toObject ? parentLead.toObject() : parentLead;
+          const leadRes = await createLead({
+            ...leadData,
+            websiteStudentId,
+            requirementId: parentLead.requirementId,
+            userType: "parent",
+          });
+          if (leadRes?.id) {
+            parentLead.odooLeadId = leadRes.id;
+            parentLead.odooSyncStatus = "synced";
+            parentLead.odooLastSyncAt = new Date();
+            await parentLead.save({ validateBeforeSave: false }).catch(() => {});
+          }
+        } catch (leadSyncErr) {
+          console.warn(`[Odoo Attendance] Pre-attendance lead sync note: ${leadSyncErr.message}`);
         }
-
-
-        classDatetime =
-          `${rawDate}T${time}+05:30`;
-
-      } else {
-
-        classDatetime =
-          log.date;
       }
     }
 
-
-    if (!classDatetime) {
-
-      throw new Error(
-        "Attendance record does not contain classDatetime or date"
-      );
+    // 4. Resolve tutor information
+    let tutorExternalId = tutor?.tutorCode || tutor?.externalId || "";
+    let tutorName = tutor?.name || log?.tutorName || "";
+    if (!tutorExternalId && log.tutorId) {
+      try {
+        const Tutor = (await import("../models/Tutor.js")).default;
+        const tutorDoc = await Tutor.findById(log.tutorId);
+        if (tutorDoc) {
+          tutorExternalId = tutorDoc.tutorCode || `TUT-${tutorDoc._id}`;
+          tutorName = tutorDoc.name;
+        }
+      } catch (e) {}
     }
 
-
-    /* ------------------------------------------------------------------------
-       NOTES
-    ------------------------------------------------------------------------ */
+    // 5. Datetime, Status, Notes
+    const classDatetime = normalizeClassDatetime(log.classDatetime || log.date);
+    const status = mapAttendanceStatus(log.status);
 
     let notes = "";
-
-
-    if (
-      status === "completed"
-    ) {
-
-      notes =
-        log.topicsCovered ||
-        log.notes ||
-        "Class completed successfully";
-
-    } else if (
-      status === "absent"
-    ) {
-
-      notes =
-
-        log.customReason ||
-
-        log.missedReason ||
-
-        log.notes ||
-
-        "Student absent";
-
-    } else if (
-      status === "cancelled"
-    ) {
-
-      notes =
-
-        log.customReason ||
-
-        log.missedReason ||
-
-        log.notes ||
-
-        "Class cancelled";
+    if (status === "completed") {
+      notes = log.topicsCovered || "Class completed successfully";
+    } else if (status === "absent") {
+      notes = log.customReason || log.missedReason || "Student absent";
+    } else if (status === "cancelled") {
+      notes = log.customReason || log.missedReason || "Class cancelled";
     }
 
-
-    /* ------------------------------------------------------------------------
-       TUTOR ID
-    ------------------------------------------------------------------------ */
-
-    const tutorExternalId =
-
-      tutor?.tutorCode ||
-
-      tutor?.externalId ||
-
-      tutor?.tutorId ||
-
-      log?.tutorExternalId ||
-
-      "";
-
-
-    const tutorName =
-
-      tutor?.name ||
-
-      log?.tutorName ||
-
-      "";
-
-
-    /* ------------------------------------------------------------------------
-       SEND TO NEW ODOO API
-    ------------------------------------------------------------------------ */
-
-    const result =
-      await syncAttendanceToOdooApi({
-
-        websiteStudentId,
-
-        externalAttendanceId,
-
-        tutorExternalId,
-
-        tutorName,
-
-        classDatetime,
-
-        status,
-
-        notes,
-
-      });
-
-
-    /* ------------------------------------------------------------------------
-       UPDATE MONGODB SYNC STATE
-    ------------------------------------------------------------------------ */
+    // 6. Call Attendance API
+    const result = await syncAttendanceToOdooApi({
+      websiteStudentId,
+      externalAttendanceId,
+      tutorExternalId,
+      tutorName,
+      classDatetime,
+      status,
+      notes,
+    });
 
     if (result.success) {
+      log.externalAttendanceId = externalAttendanceId;
+      log.websiteStudentId = websiteStudentId;
+      log.odooAttendanceId = result.data?.attendance_id || log.odooAttendanceId || null;
+      log.odooSyncStatus = "synced";
+      log.odooSyncedAt = new Date();
+      log.odooSyncError = "";
+      await log.save({ validateBeforeSave: false }).catch(() => {});
 
-      log.externalAttendanceId =
-        externalAttendanceId;
-
-      log.websiteStudentId =
-        websiteStudentId;
-
-      log.odooSyncStatus =
-        "synced";
-
-      log.odooSyncedAt =
-        new Date();
-
-
-      // Only assign if the schema supports it.
-      if (
-        Object.prototype.hasOwnProperty.call(
-          log,
-          "odooSyncError"
-        ) ||
-        log.schema?.path?.(
-          "odooSyncError"
-        )
-      ) {
-
-        log.odooSyncError =
-          "";
-      }
-
-
-      await log
-        .save({
-          validateBeforeSave: false,
-        })
-        .catch(
-          (saveErr) => {
-
-            console.error(
-              "[Odoo Attendance] Mongo sync metadata save failed:",
-              saveErr.message
-            );
-          }
-        );
-
-
-      console.log(
-        `[Odoo Attendance] ✅ Mongo attendance ${externalAttendanceId} synchronized`
-      );
-
+      console.log(`[Odoo Attendance API] ✅ Attendance ${externalAttendanceId} synced (Attendance ID #${log.odooAttendanceId})`);
+      return {
+        success: true,
+        externalAttendanceId,
+        websiteStudentId,
+        data: result.data,
+      };
+    } else {
+      const sanitizedError = (result.error || "Unknown Attendance API error")
+        .replace(/Bearer\s+[A-Za-z0-9_\-\.]+/gi, "Bearer [MASKED]");
+      log.externalAttendanceId = externalAttendanceId;
+      log.odooSyncStatus = "failed";
+      log.odooSyncError = sanitizedError;
+      await log.save({ validateBeforeSave: false }).catch(() => {});
 
       return {
-
-        success: true,
-
+        success: false,
         externalAttendanceId,
-
         websiteStudentId,
-
-        data:
-          result.data,
-
+        error: sanitizedError,
       };
     }
-
-
-    log.odooSyncStatus =
-      "failed";
-
-
-    if (
-      Object.prototype.hasOwnProperty.call(
-        log,
-        "odooSyncError"
-      ) ||
-      log.schema?.path?.(
-        "odooSyncError"
-      )
-    ) {
-
-      log.odooSyncError =
-        result.error ||
-        "Unknown Odoo Attendance API error";
-    }
-
-
-    await log
-      .save({
-        validateBeforeSave: false,
-      })
-      .catch(
-        () => {}
-      );
-
-
-    return result;
-
-
   } catch (err) {
-
-    console.error(
-      "[Odoo Attendance Sync] ❌",
-      err.message
-    );
-
+    const sanitizedError = err.message.replace(/Bearer\s+[A-Za-z0-9_\-\.]+/gi, "Bearer [MASKED]");
+    console.error(`[Odoo Attendance Sync] ❌ Error:`, sanitizedError);
 
     if (log) {
-
-      log.odooSyncStatus =
-        "failed";
-
-
-      if (
-        Object.prototype.hasOwnProperty.call(
-          log,
-          "odooSyncError"
-        ) ||
-        log.schema?.path?.(
-          "odooSyncError"
-        )
-      ) {
-
-        log.odooSyncError =
-          err.message;
-      }
-
-
-      await log
-        .save({
-          validateBeforeSave: false,
-        })
-        .catch(
-          () => {}
-        );
+      log.odooSyncStatus = "failed";
+      log.odooSyncError = sanitizedError;
+      await log.save({ validateBeforeSave: false }).catch(() => {});
     }
-
 
     return {
-
       success: false,
-
-      error:
-        err.message,
-
+      externalAttendanceId: log?.externalAttendanceId || "",
+      error: sanitizedError,
     };
   }
 }
 
-
-/* ============================================================================
-   ATTENDANCE SUMMARY
-============================================================================ */
-
-/**
- * The dedicated Odoo attendance API now handles attendance calculations
- * internally.
- *
- * This function is retained so existing backend imports/calls do not break.
- *
- * It can still update CRM display-only attendance summary fields if your
- * dashboard currently depends on them.
- */
-export async function syncLeadAttendanceSummaryToOdoo(
-  lead,
-  activeCycleData
-) {
-
-  if (!lead) {
-    return false;
-  }
-
-
+export async function syncLeadAttendanceSummaryToOdoo(lead, activeCycleData = null) {
+  if (!lead) return false;
   try {
+    const odooLeadId = await findOrLinkOdooLead(lead);
+    if (!odooLeadId) return false;
 
-    const odooLeadId =
-      await findOrLinkOdooLead(
-        lead
-      );
+    const uid = await callOdoo("common", "authenticate", [_DB, _USERNAME, _PASSWORD, {}]);
+    if (!uid) return false;
 
-
-    if (!odooLeadId) {
-
-      console.warn(
-        `[OdooService] Cannot sync attendance summary: no Odoo lead for ${lead._id}`
-      );
-
-      return false;
+    // In Odoo Community, tuition_completed_classes and tuition_remaining_classes
+    // are readonly computed fields managed by the tuition module.
+    // We only update tuition_total_classes or fee amount if needed.
+    const payload = {};
+    if (lead.totalClasses) {
+      payload.tuition_total_classes = Number(lead.totalClasses);
+    }
+    if (lead.finalPrice || lead.monthlyFees) {
+      payload.tuition_fee_amount = Number(lead.finalPrice || lead.monthlyFees);
     }
 
-
-    const uid =
-      await callOdoo(
-        "common",
-        "authenticate",
-        [
-          _DB,
-          _USERNAME,
-          _PASSWORD,
-          {},
-        ]
-      );
-
-
-    if (!uid) {
-      return false;
+    if (Object.keys(payload).length > 0) {
+      await callOdoo("object", "execute_kw", [
+        _DB, uid, _PASSWORD, "crm.lead", "write",
+        [[odooLeadId], payload]
+      ]);
+      console.log(`[OdooService] ✅ Tuition configuration updated on CRM lead #${odooLeadId}`);
     }
-
-
-    const currentCycle =
-
-      activeCycleData?.cycleNumber ||
-
-      lead.currentPackageCycle ||
-
-      1;
-
-
-    const scheduled =
-
-      activeCycleData?.totalScheduled ||
-
-      lead.totalClasses ||
-
-      12;
-
-
-    const completed =
-
-      activeCycleData?.completedCount ??
-
-      lead.completedClasses ??
-
-      0;
-
-
-    const remaining =
-
-      activeCycleData?.remainingCount ??
-
-      Math.max(
-        0,
-        scheduled - completed
-      );
-
-
-    const status =
-
-      activeCycleData?.status ||
-
-      lead.packageStatus ||
-
-      (
-        completed >= scheduled
-          ? "Completed"
-          : "Active"
-      );
-
-
-    const payload = {
-
-      x_completed_classes:
-        completed,
-
-      x_total_classes:
-        scheduled,
-
-      x_remaining_classes:
-        remaining,
-
-      x_current_cycle:
-        currentCycle,
-
-      x_package_status:
-        status === "Completed"
-          ? `Month ${currentCycle} Completed`
-          : "Active",
-
-    };
-
-
-    if (
-      activeCycleData?.logs &&
-      activeCycleData.logs.length > 0
-    ) {
-
-      const latestLog =
-        activeCycleData.logs[
-          activeCycleData.logs.length - 1
-        ];
-
-
-      payload.x_last_class_date =
-        latestLog.date || "";
-
-
-      payload.x_last_attendance_status =
-        latestLog.status || "";
-
-
-      payload.x_last_class_topics =
-        latestLog.status === "Done"
-
-          ? (
-              latestLog.topicsCovered ||
-              ""
-            )
-
-          : "";
-
-
-      payload.x_last_missed_reason =
-        latestLog.status === "Missed"
-
-          ? (
-              latestLog.missedReason ||
-              ""
-            )
-
-          : "";
-    }
-
-
-    await callOdoo(
-      "object",
-      "execute_kw",
-      [
-        _DB,
-        uid,
-        _PASSWORD,
-
-        "crm.lead",
-
-        "write",
-
-        [
-          [
-            odooLeadId,
-          ],
-
-          payload,
-        ],
-      ]
-    );
-
-
-    console.log(
-      `[OdooService] ✅ Attendance summary synced to CRM lead #${odooLeadId}`
-    );
-
-
     return true;
-
-
   } catch (err) {
-
-    console.error(
-      "[OdooService] syncLeadAttendanceSummaryToOdoo:",
-      err.message
-    );
-
-
+    console.warn("[OdooService] syncLeadAttendanceSummaryToOdoo note:", err.message);
     return false;
   }
 }
 
-
-/* ============================================================================
-   DELETE ATTENDANCE
-============================================================================ */
-
-/**
- * IMPORTANT:
- *
- * The new API specification you received only defines POST attendance sync.
- *
- * Therefore we should NOT directly unlink Odoo attendance records anymore,
- * because Odoo now owns the attendance/payment workflow.
- *
- * This function is retained for compatibility so existing imports do not crash.
- */
 export async function deleteOdooAttendanceLog(
   odooAttendanceId
 ) {
