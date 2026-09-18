@@ -66,20 +66,27 @@ const attendanceSchema = new mongoose.Schema(
     },
     odooSyncStatus: {
       type: String,
-      enum: ["pending", "synced", "failed"],
+      enum: ["pending", "synced", "failed", "retrying"],
       default: "pending",
     },
     odooSyncedAt: {
       type: Date,
       default: null,
     },
-
+    odooLastSyncAt: {
+      type: Date,
+      default: null,
+    },
+    websiteStudentId: {
+      type: String,
+      default: "",
+      trim: true,
+    },
     externalAttendanceId: {
       type: String,
       default: "",
       trim: true,
     },
-
     odooSyncError: {
       type: String,
       default: "",
@@ -87,6 +94,14 @@ const attendanceSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// Pre-save hook: Ensure immutable stable externalAttendanceId (ATT-<MongoDB ObjectId>)
+attendanceSchema.pre("save", function (next) {
+  if (!this.externalAttendanceId && this._id) {
+    this.externalAttendanceId = `ATT-${this._id}`;
+  }
+  next();
+});
 
 // Indexes for fast querying & uniqueness
 attendanceSchema.index({ parentEnquiryId: 1, packageCycle: 1, date: 1, status: 1 });

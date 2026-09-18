@@ -5,6 +5,7 @@ import Attendance from "../models/Attendance.js";
 import { sendWhatsAppToTutor } from "./whatsappService.js";
 import { broadcastService, RETRYABLE_FAILURE_REASONS } from "./broadcastService.js";
 import { startSyncScheduler } from "./syncService.js";
+import { syncAttendanceLogToOdoo } from "./odooService.js";
 
 const MAX_RETRY_COUNT = Number(process.env.RETRY_COUNT || 3);
 
@@ -277,8 +278,40 @@ async function runRetryBatch() {
 }
 
 /**
- * Start the 5-minute retry scheduler for failed broadcasts.
- * Picks up transient failures that were not retried inline by whatsappService.
+ * Run one batch of retries for failed or pending attendance synchronizations.
+ * Checks for records where odooSyncStatus is 'failed' or 'pending' within the last 48 hours.
+ */
+async function runAttendanceRetryBatch() {
+  try {
+    const twoDaysAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
+    const unsyncedLogs = await Attendance.find({
+      odooSyncStatus: { $in: ["failed", "pending"] },
+      createdAt: { $gte: twoDaysAgo },
+    })
+      .sort({ updatedAt: 1 })
+      .limit(20);
+
+    if (unsyncedLogs.length === 0) return;
+
+    console.log(`[Attendance Retry Scheduler] Retrying ${unsyncedLogs.length} unsynced attendance record(s)...`);
+
+    for (const log of unsyncedLogs) {
+      try {
+        const lead = await ParentEnquiry.findById(log.parentEnquiryId);
+        const tutor = log.tutorId ? await Tutor.findById(log.tutorId) : null;
+        await syncAttendanceLogToOdoo({ log, lead, tutor, postChatter: false });
+      } catch (retryErr) {
+        console.warn(`[Attendance Retry Scheduler] Retry failed for log ${log._id}:`, retryErr.message);
+      }
+    }
+  } catch (err) {
+    console.error(`[Attendance Retry Scheduler] Batch error:`, err.message);
+  }
+}
+
+/**
+ * Start the 5-minute retry scheduler for failed broadcasts and attendance synchronizations.
+ * Picks up transient failures that were not retried inline.
  */
 export function startRetryScheduler() {
   const intervalMs = 5 * 60 * 1000; // 5 minutes
@@ -286,7 +319,10 @@ export function startRetryScheduler() {
 
   setInterval(() => {
     runRetryBatch().catch((err) =>
-      console.error("[Retry Scheduler] Unhandled error:", err.message)
+      console.error("[Retry Scheduler] Unhandled broadcast retry error:", err.message)
+    );
+    runAttendanceRetryBatch().catch((err) =>
+      console.error("[Retry Scheduler] Unhandled attendance retry error:", err.message)
     );
   }, intervalMs);
 }

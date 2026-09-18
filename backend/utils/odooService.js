@@ -2252,6 +2252,11 @@ export async function syncAttendanceLogToOdoo({
     }
 
     // 6. Call Attendance API
+    if (log.odooSyncStatus === "failed" || log.odooSyncStatus === "pending") {
+      log.odooSyncStatus = "retrying";
+      await log.save({ validateBeforeSave: false }).catch(() => {});
+    }
+
     const result = await syncAttendanceToOdooApi({
       websiteStudentId,
       externalAttendanceId,
@@ -2268,6 +2273,7 @@ export async function syncAttendanceLogToOdoo({
       log.odooAttendanceId = result.data?.attendance_id || log.odooAttendanceId || null;
       log.odooSyncStatus = "synced";
       log.odooSyncedAt = new Date();
+      log.odooLastSyncAt = new Date();
       log.odooSyncError = "";
       await log.save({ validateBeforeSave: false }).catch(() => {});
 
@@ -2284,6 +2290,7 @@ export async function syncAttendanceLogToOdoo({
       log.externalAttendanceId = externalAttendanceId;
       log.odooSyncStatus = "failed";
       log.odooSyncError = sanitizedError;
+      log.odooLastSyncAt = new Date();
       await log.save({ validateBeforeSave: false }).catch(() => {});
 
       return {
@@ -2300,6 +2307,7 @@ export async function syncAttendanceLogToOdoo({
     if (log) {
       log.odooSyncStatus = "failed";
       log.odooSyncError = sanitizedError;
+      log.odooLastSyncAt = new Date();
       await log.save({ validateBeforeSave: false }).catch(() => {});
     }
 

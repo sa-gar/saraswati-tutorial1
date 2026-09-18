@@ -361,6 +361,13 @@ router.post("/mark", verifyToken(["admin", "tutor"]), async (req, res) => {
       if (!existing.packageCycle) existing.packageCycle = activeCycle;
       existing.timestamp = new Date();
 
+      if (!existing.externalAttendanceId) {
+        existing.externalAttendanceId = `ATT-${existing._id}`;
+      }
+      if (!existing.websiteStudentId && lead.websiteStudentId) {
+        existing.websiteStudentId = lead.websiteStudentId;
+      }
+
       await existing.save();
       attendanceDoc = existing;
     } else {
@@ -376,6 +383,7 @@ router.post("/mark", verifyToken(["admin", "tutor"]), async (req, res) => {
         parentEnquiryId: lead._id,
         studentName: lead.wards?.map((w) => w.studentName).join(", ") || "Unknown Student",
         requirementId: lead.requirementId || "REQ-N/A",
+        websiteStudentId: lead.websiteStudentId || "",
         tutorId: tutor._id,
         tutorName: tutor.name,
         packageCycle: activeCycle,
@@ -387,13 +395,12 @@ router.post("/mark", verifyToken(["admin", "tutor"]), async (req, res) => {
         date,
       });
 
-      await attendanceDoc.save();
-
-      // Set stable externalAttendanceId immediately after first save (uses MongoDB _id)
+      // Stable externalAttendanceId (uses MongoDB _id)
       if (!attendanceDoc.externalAttendanceId) {
         attendanceDoc.externalAttendanceId = `ATT-${attendanceDoc._id}`;
-        await attendanceDoc.save({ validateBeforeSave: false });
       }
+
+      await attendanceDoc.save();
     }
 
     // Recalculate completed count for active cycle
@@ -827,13 +834,19 @@ router.put("/log/:logId", verifyToken(["admin"]), async (req, res) => {
       log.customReason = customReason || "";
     }
 
-    await log.save();
+    if (!log.externalAttendanceId) {
+      log.externalAttendanceId = `ATT-${log._id}`;
+    }
 
-    // Recalculate Completed Classes count for parent lead if in active cycle
     const parentEnquiryId = log.parentEnquiryId;
     const lead = await ParentEnquiry.findById(parentEnquiryId);
+    if (!log.websiteStudentId && lead?.websiteStudentId) {
+      log.websiteStudentId = lead.websiteStudentId;
+    }
 
-    // Sync updated log to Odoo x_attendance_log and chatter
+    await log.save();
+
+    // Sync updated log to Odoo Community asynchronously (non-blocking)
     syncAttendanceLogToOdoo({ log, lead, tutor: null, postChatter: true }).catch((odooErr) => {
       console.error("[Odoo Sync Error after update log]:", odooErr.message);
     });

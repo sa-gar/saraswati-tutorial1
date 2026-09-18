@@ -3642,6 +3642,32 @@ function AdminAttendanceConsole({
     }
   };
 
+  const [retryingLogId, setRetryingLogId] = useState(null);
+
+  const handleRetryLogSync = async (logId, leadId) => {
+    setRetryingLogId(logId);
+    try {
+      const res = await fetch(`${API_BASE}/attendance/retry-sync/${logId}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${adminToken}`,
+        },
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        alert("✅ Attendance successfully synchronized to Odoo Community!");
+        fetchLeadAttendanceLogs(leadId);
+      } else {
+        alert(`❌ Retry failed: ${data.error || data.message || "Unknown error"}`);
+        fetchLeadAttendanceLogs(leadId);
+      }
+    } catch (err) {
+      alert("Failed to connect to the server.");
+    } finally {
+      setRetryingLogId(null);
+    }
+  };
+
   return (
     <div className="rounded-3xl bg-white dark:bg-slate-900 p-6 shadow-sm border border-slate-200/80 dark:border-slate-800">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -4128,6 +4154,33 @@ function AdminAttendanceConsole({
                                                     }`}>
                                                       {log.status === "Done" ? "Done" : "Missed"}
                                                     </span>
+
+                                                    {/* Odoo Community Sync Status Badge */}
+                                                    {log.odooSyncStatus === "synced" ? (
+                                                      <span
+                                                        className="inline-flex items-center gap-1 text-[10px] font-black px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                                        title={log.odooAttendanceId ? `Synchronized to Odoo (Attendance #${log.odooAttendanceId})` : "Synchronized to Odoo Community"}
+                                                      >
+                                                        <Check className="h-2.5 w-2.5" />
+                                                        Odoo Synced {log.odooAttendanceId ? `#${log.odooAttendanceId}` : ""}
+                                                      </span>
+                                                    ) : log.odooSyncStatus === "failed" ? (
+                                                      <span
+                                                        className="inline-flex items-center gap-1 text-[10px] font-black px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200"
+                                                        title={log.odooSyncError ? `Odoo Sync Error: ${log.odooSyncError}` : "Odoo synchronization failed"}
+                                                      >
+                                                        <X className="h-2.5 w-2.5" />
+                                                        Odoo Sync Failed
+                                                      </span>
+                                                    ) : (
+                                                      <span
+                                                        className="inline-flex items-center gap-1 text-[10px] font-black px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200"
+                                                        title="Odoo synchronization pending or retrying"
+                                                      >
+                                                        <Clock className="h-2.5 w-2.5" />
+                                                        {log.odooSyncStatus === "retrying" ? "Odoo Retrying..." : "Odoo Pending"}
+                                                      </span>
+                                                    )}
                                                   </div>
 
                                                   {log.status === "Done" ? (
@@ -4140,7 +4193,7 @@ function AdminAttendanceConsole({
                                                     </p>
                                                   )}
 
-                                                  <div className="flex items-center gap-2 mt-2 pt-2 border-t border-slate-100">
+                                                  <div className="flex items-center gap-2 mt-2 pt-2 border-t border-slate-100 flex-wrap">
                                                     <button
                                                       type="button"
                                                       onClick={() => startEditLogInline(log)}
@@ -4155,6 +4208,18 @@ function AdminAttendanceConsole({
                                                     >
                                                       Delete Log
                                                     </button>
+                                                    {log.odooSyncStatus !== "synced" && (
+                                                      <button
+                                                        type="button"
+                                                        disabled={retryingLogId === log._id}
+                                                        onClick={() => handleRetryLogSync(log._id, p._id)}
+                                                        className="text-[10px] font-black text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-2 py-0.5 rounded-md cursor-pointer inline-flex items-center gap-1 transition"
+                                                        title="Retry synchronizing this attendance record to Odoo Community"
+                                                      >
+                                                        <RefreshCw className={`h-2.5 w-2.5 ${retryingLogId === log._id ? "animate-spin text-amber-700" : ""}`} />
+                                                        {retryingLogId === log._id ? "Retrying..." : "Retry Odoo Sync"}
+                                                      </button>
+                                                    )}
                                                   </div>
                                                 </div>
 
