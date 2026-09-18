@@ -907,8 +907,12 @@ router.post("/sync-all-to-odoo", verifyToken(["admin"]), async (req, res) => {
         // 2. Sync individual logs (postChatter: false during bulk to prevent flood, logs are preserved in x_attendance_log)
         for (const log of allLogs) {
           try {
-            await syncAttendanceLogToOdoo({ log, lead, tutor: null, postChatter: false });
-            totalSyncedLogs++;
+            const syncRes = await syncAttendanceLogToOdoo({ log, lead, tutor: null, postChatter: false });
+            if (syncRes && syncRes.success) {
+              totalSyncedLogs++;
+            } else {
+              failedCount++;
+            }
           } catch (e) {
             failedCount++;
           }

@@ -2202,25 +2202,23 @@ export async function syncAttendanceLogToOdoo({
     // 3. Ensure student exists in Odoo Community CRM before sending attendance
     // (Odoo Community /tuition/api/v1/attendance requires a crm.lead with matching website_student_id)
     if (parentLead) {
-      if (!parentLead.odooLeadId || parentLead.odooSyncStatus !== "synced") {
-        try {
-          console.log(`[Odoo Attendance] Ensuring CRM lead is synced to Odoo Community for student ${websiteStudentId}...`);
-          const leadData = parentLead.toObject ? parentLead.toObject() : parentLead;
-          const leadRes = await createLead({
-            ...leadData,
-            websiteStudentId,
-            requirementId: parentLead.requirementId,
-            userType: "parent",
-          });
-          if (leadRes?.id) {
-            parentLead.odooLeadId = leadRes.id;
-            parentLead.odooSyncStatus = "synced";
-            parentLead.odooLastSyncAt = new Date();
-            await parentLead.save({ validateBeforeSave: false }).catch(() => {});
-          }
-        } catch (leadSyncErr) {
-          console.warn(`[Odoo Attendance] Pre-attendance lead sync note: ${leadSyncErr.message}`);
+      try {
+        console.log(`[Odoo Attendance] Ensuring CRM lead exists in Odoo Community for student ${websiteStudentId}...`);
+        const leadData = parentLead.toObject ? parentLead.toObject() : parentLead;
+        const leadRes = await createLead({
+          ...leadData,
+          websiteStudentId,
+          requirementId: parentLead.requirementId,
+          userType: "parent",
+        });
+        if (leadRes?.id) {
+          parentLead.odooLeadId = leadRes.id;
+          parentLead.odooSyncStatus = "synced";
+          parentLead.odooLastSyncAt = new Date();
+          await parentLead.save({ validateBeforeSave: false }).catch(() => {});
         }
+      } catch (leadSyncErr) {
+        console.warn(`[Odoo Attendance] Pre-attendance lead sync note: ${leadSyncErr.message}`);
       }
     }
 
