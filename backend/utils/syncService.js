@@ -77,31 +77,31 @@ async function fetchOdooTutorsSince(since) {
 
     const records = await callOdooMethod(
       uid,
-      "x_master_tutors",
+      "master_tutors",
       "search_read",
       [domain],
       {
         fields: [
           "id",
-          "x_tutor_id",
-          "x_name",
-          "x_gender",
-          "x_mobile",
-          "x_whatsapp",
-          "x_email",
-          "x_city",
-          "x_area",
-          "x_full_address",
-          "x_pincode",
-          "x_grades",
-          "x_boards",
-          "x_subjects",
-          "x_preferred_timings",
-          "x_max_travel_distance",
-          "x_experience",
-          "x_qualification",
-          "x_availability",
-          "x_locations_can_teach",
+          "tutor_id",
+          "name",
+          "gender",
+          "mobile",
+          "whatsapp",
+          "email",
+          "city",
+          "area",
+          "full_address",
+          "pincode",
+          "grades",
+          "boards",
+          "subjects",
+          "preferred_timings",
+          "max_travel_distance",
+          "experience",
+          "qualification",
+          "availability",
+          "locations_can_teach",
           "write_date",
         ],
         limit: 500, // process max 500 per sync cycle
@@ -145,7 +145,7 @@ export async function syncOdooTutorsToMongo() {
 
     for (const ot of odooTutors) {
       try {
-        if (!ot.x_tutor_id && !ot.x_mobile) {
+        if (!ot.tutor_id && !ot.mobile) {
           continue; // Can't match without tutor code or mobile
         }
 
@@ -153,33 +153,33 @@ export async function syncOdooTutorsToMongo() {
         // NEVER include: onboardingCompleted, onboardingMessageSentAt,
         //                availabilityStatus, broadcastHistory
         const profileUpdate = {
-          name:              ot.x_name || undefined,
-          gender:            ot.x_gender || undefined,
-          email:             ot.x_email || undefined,
-          city:              ot.x_city || undefined,
-          area:              ot.x_area || undefined,
-          fullAddress:       ot.x_full_address || undefined,
-          pincode:           ot.x_pincode || undefined,
-          experience:        ot.x_experience || undefined,
-          qualification:     ot.x_qualification || undefined,
-          maxTravelDistance: ot.x_max_travel_distance || undefined,
+          name:              ot.name || undefined,
+          gender:            ot.gender || undefined,
+          email:             ot.email || undefined,
+          city:              ot.city || undefined,
+          area:              ot.area || undefined,
+          fullAddress:       ot.full_address || undefined,
+          pincode:           ot.pincode || undefined,
+          experience:        ot.experience || undefined,
+          qualification:     ot.qualification || undefined,
+          maxTravelDistance: ot.max_travel_distance || undefined,
         };
 
         // Array fields — only update if Odoo has data
-        if (ot.x_grades) {
-          profileUpdate.grades = parseCommaSeparated(ot.x_grades);
+        if (ot.grades) {
+          profileUpdate.grades = parseCommaSeparated(ot.grades);
         }
-        if (ot.x_boards) {
-          profileUpdate.boards = parseCommaSeparated(ot.x_boards);
+        if (ot.boards) {
+          profileUpdate.boards = parseCommaSeparated(ot.boards);
         }
-        if (ot.x_subjects) {
-          profileUpdate.subjects = parseCommaSeparated(ot.x_subjects);
+        if (ot.subjects) {
+          profileUpdate.subjects = parseCommaSeparated(ot.subjects);
         }
-        if (ot.x_preferred_timings) {
-          profileUpdate.timings = parseCommaSeparated(ot.x_preferred_timings);
+        if (ot.preferred_timings) {
+          profileUpdate.timings = parseCommaSeparated(ot.preferred_timings);
         }
-        if (ot.x_locations_can_teach) {
-          profileUpdate.locations = parseCommaSeparated(ot.x_locations_can_teach);
+        if (ot.locations_can_teach) {
+          profileUpdate.locations = parseCommaSeparated(ot.locations_can_teach);
         }
 
         // Remove undefined keys
@@ -188,12 +188,12 @@ export async function syncOdooTutorsToMongo() {
         );
 
         // ── Match by tutorCode first, fallback to mobile number ─────────────
-        const matchQuery = ot.x_tutor_id
-          ? { tutorCode: ot.x_tutor_id }
+        const matchQuery = ot.tutor_id
+          ? { tutorCode: ot.tutor_id }
           : {
               $or: [
-                { phone: { $regex: String(ot.x_mobile || "").replace(/\D/g, "").slice(-10) } },
-                { whatsapp: { $regex: String(ot.x_whatsapp || ot.x_mobile || "").replace(/\D/g, "").slice(-10) } },
+                { phone: { $regex: String(ot.mobile || "").replace(/\D/g, "").slice(-10) } },
+                { whatsapp: { $regex: String(ot.whatsapp || ot.mobile || "").replace(/\D/g, "").slice(-10) } },
               ],
             };
 
@@ -209,12 +209,12 @@ export async function syncOdooTutorsToMongo() {
         } else {
           console.warn(
             `[SyncService] Tutor not found in MongoDB for Odoo record: ` +
-            `tutorCode=${ot.x_tutor_id}, mobile=${ot.x_mobile}`
+            `tutorCode=${ot.tutor_id}, mobile=${ot.mobile}`
           );
         }
       } catch (tutorErr) {
         console.error(
-          `[SyncService] Error syncing Odoo tutor ${ot.x_tutor_id}: ${tutorErr.message}`
+          `[SyncService] Error syncing Odoo tutor ${ot.tutor_id}: ${tutorErr.message}`
         );
         errors++;
       }
@@ -472,10 +472,10 @@ export async function syncXTutorToMongo(fullResync = false) {
  */
 export function startSyncScheduler() {
   const intervalMs = SYNC_INTERVAL_MIN * 60 * 1000;
-  console.log(`[SyncService] Starting Odoo→MongoDB tutor sync every ${SYNC_INTERVAL_MIN} min (both x_master_tutors + x_tutor)`);
+  console.log(`[SyncService] Starting Odoo→MongoDB tutor sync every ${SYNC_INTERVAL_MIN} min (both master_tutors + x_tutor)`);
 
   const runBothSyncs = () => Promise.allSettled([
-    syncOdooTutorsToMongo().catch(err => console.error("[SyncService] x_master_tutors sync error:", err.message)),
+    syncOdooTutorsToMongo().catch(err => console.error("[SyncService] master_tutors sync error:", err.message)),
     syncXTutorToMongo().catch(err => console.error("[SyncService] x_tutor sync error:", err.message)),
   ]);
 

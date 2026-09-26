@@ -1085,75 +1085,75 @@ export async function upsertMasterTutor(data) {
 
     const payload = {
 
-      x_name:
+      name:
         data.name || "",
 
-      x_gender:
+      gender:
         genderMapped || "Male",
 
-      x_mobile:
+      mobile:
         data.phone || "",
 
-      x_whatsapp:
+      whatsapp:
         data.whatsapp ||
         data.phone ||
         "",
 
-      x_email:
+      email:
         data.email || "",
 
-      x_city:
+      city:
         data.city || "",
 
-      x_area:
+      area:
         data.area || "",
 
-      x_full_address:
+      full_address:
         data.fullAddress || "",
 
-      x_pincode:
+      pincode:
         data.pincode || "",
 
 
-      x_grades:
+      grades:
         Array.isArray(data.grades)
           ? data.grades.join(", ")
           : data.grades || "",
 
 
-      x_boards:
+      boards:
         Array.isArray(data.boards)
           ? data.boards.join(", ")
           : data.boards || "",
 
 
-      x_subjects:
+      subjects:
         Array.isArray(data.subjects)
           ? data.subjects.join(", ")
           : data.subjects || "",
 
 
-      x_preferred_timings:
+      preferred_timings:
         Array.isArray(data.timings)
           ? data.timings.join(", ")
           : data.timings || "",
 
 
-      x_max_travel_distance:
+      max_travel_distance:
         data.maxTravelDistance || "",
 
-      x_experience:
+      experience:
         data.experience || "",
 
-      x_qualification:
+      qualification:
         data.qualification || "",
 
-      x_availability:
+      availability:
         data.availabilityStatus ||
         "Available",
 
 
-      x_locations_can_teach:
+      locations_can_teach:
         Array.isArray(data.locations)
           ? data.locations.join(", ")
           : data.locations || "",
@@ -1163,14 +1163,14 @@ export async function upsertMasterTutor(data) {
 
     if (photoBase64) {
 
-      payload.x_profile_photo =
+      payload.profile_photo =
         photoBase64;
     }
 
 
     if (dobFormatted) {
 
-      payload.x_dob =
+      payload.dob =
         dobFormatted;
     }
 
@@ -1190,14 +1190,14 @@ export async function upsertMasterTutor(data) {
           uid,
           _PASSWORD,
 
-          "x_master_tutors",
+          "master_tutors",
 
           "search_read",
 
           [
             [
               [
-                "x_mobile",
+                "mobile",
                 "=",
                 data.phone,
               ],
@@ -1207,7 +1207,7 @@ export async function upsertMasterTutor(data) {
           {
             fields: [
               "id",
-              "x_tutor_id",
+              "tutor_id",
             ],
           },
         ]
@@ -1224,7 +1224,7 @@ export async function upsertMasterTutor(data) {
 
 
       const tutorCode =
-        existing[0].x_tutor_id;
+        existing[0].tutor_id;
 
 
       console.log(
@@ -1242,7 +1242,7 @@ export async function upsertMasterTutor(data) {
           uid,
           _PASSWORD,
 
-          "x_master_tutors",
+          "master_tutors",
 
           "write",
 
@@ -1280,7 +1280,7 @@ export async function upsertMasterTutor(data) {
             uid,
             _PASSWORD,
 
-            "x_master_tutors",
+            "master_tutors",
 
             "search_count",
 
@@ -1298,7 +1298,7 @@ export async function upsertMasterTutor(data) {
         )}`;
 
 
-      payload.x_tutor_id =
+      payload.tutor_id =
         tutorCode;
 
 
@@ -1311,7 +1311,7 @@ export async function upsertMasterTutor(data) {
             uid,
             _PASSWORD,
 
-            "x_master_tutors",
+            "master_tutors",
 
             "create",
 
@@ -1455,7 +1455,7 @@ export async function syncTutorStats(
         uid,
         _PASSWORD,
 
-        "x_master_tutors",
+        "master_tutors",
 
         "write",
 
@@ -1721,7 +1721,7 @@ export async function lookupOdooMasterTutorIds(
   const odooIds = [];
 
   const odooModel =
-    "x_master_tutors";
+    "master_tutors";
 
 
   if (
@@ -1832,14 +1832,14 @@ export async function lookupOdooMasterTutorIds(
             uid,
             _PASSWORD,
 
-            "x_master_tutors",
+            "master_tutors",
 
             "search_read",
 
             [
               [
                 [
-                  "x_tutor_id",
+                  "tutor_id",
                   "in",
                   codes,
                 ],
@@ -1877,7 +1877,7 @@ export async function lookupOdooMasterTutorIds(
 
           leaves.push(
             [
-              "x_mobile",
+              "mobile",
               "like",
               p,
             ]
@@ -1885,7 +1885,7 @@ export async function lookupOdooMasterTutorIds(
 
           leaves.push(
             [
-              "x_whatsapp",
+              "whatsapp",
               "like",
               p,
             ]
@@ -1924,7 +1924,7 @@ export async function lookupOdooMasterTutorIds(
             uid,
             _PASSWORD,
 
-            "x_master_tutors",
+            "master_tutors",
 
             "search_read",
 
